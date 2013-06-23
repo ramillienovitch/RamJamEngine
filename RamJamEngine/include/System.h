@@ -2,26 +2,45 @@
 
 #include "stdafx.h"
 
-class System
+struct System
 {
 public:
 	System();
-	System(const System&);
 	~System();
 
 	HWND		mHWnd;
-	HINSTANCE	mHInst;								// current instance
-	TCHAR		mSzTitle[MAX_LOADSTRING];			// The title bar text
-	TCHAR		mSzWindowClass[MAX_LOADSTRING];	// the main window class name
+	HINSTANCE	mHInst;					// current instance
+	TCHAR		mSzTitle[100];			// The title bar text
+	TCHAR		mSzWindowClass[100];	// the main window class name
+	BOOL		mAppPaused;
+	BOOL		mMinimized;
+	BOOL		mMaximized;
+	BOOL		mResizing;
+	int			mScreenWidth;
+	int			mScreenHeight;
+	GraphicAPI* mGraphicAPI;
+
+	Timer mTimer;
 
 	BOOL				Initialize(int);
 	void				Shutdown();
-	void				Launch();
+	void				Run();
+	void				OnResize();
+	float				AspectRatio()const;
 	LRESULT CALLBACK	MessageHandler(HWND, UINT, WPARAM, LPARAM);
 
+	void OnMouseDown(WPARAM, int, int);
+	void OnMouseUp(WPARAM, int, int);
+	void OnMouseMove(WPARAM, int, int);
+
+protected:
+	BOOL InitMainWindow();
+	BOOL InitGraphicAPI();
+	void CalculateFrameStats();
 
 private:
-	BOOL Update();
+	BOOL UpdateScene(float dt);
+	BOOL DrawScene();
 	BOOL InitializeWindows(int);
 	ATOM RegisterMyClass(HINSTANCE);
 	void ShutdownWindows();

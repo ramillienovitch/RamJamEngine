@@ -3076,6 +3076,10 @@ template<UINT VSLeftRotateElements, UINT Select0, UINT Select1, UINT Select2, UI
 // times in a function, but if the constant is used (and declared) in a 
 // separate math routine it would be reloaded.
 
+#ifndef XMGLOBALCONST
+#define XMGLOBALCONST extern const __declspec(selectany)
+#endif
+
 XMGLOBALCONST XMVECTORF32 g_XMSinCoefficients0    = {1.0f, -0.166666667f, 8.333333333e-3f, -1.984126984e-4f};
 XMGLOBALCONST XMVECTORF32 g_XMSinCoefficients1    = {2.755731922e-6f, -2.505210839e-8f, 1.605904384e-10f, -7.647163732e-13f};
 XMGLOBALCONST XMVECTORF32 g_XMSinCoefficients2    = {2.811457254e-15f, -8.220635247e-18f, 1.957294106e-20f, -3.868170171e-23f};

@@ -1,8 +1,19 @@
 #include "stdafx.h"
 
 //////////////////////////////////////////////////////////////////////////
-System::System() {}
-System::System(const System& other)	{}
+System::System()
+{
+	mAppPaused = false;
+	mMinimized = false;
+	mMaximized = false;
+	mResizing = false;
+
+#if (RJE_GRAPHIC_API == DIRECTX_11)
+	mGraphicAPI = new DX11Wrapper();
+#else
+	mGraphicAPI = new OglWrapper();
+#endif
+}
 System::~System(){}
 
 //////////////////////////////////////////////////////////////////////////
@@ -13,13 +24,15 @@ BOOL System::Initialize(int nCmdShow)
 	sInstance = this;
 
 	// Initialize global strings
-	LoadString(mHInst, IDS_APP_TITLE, mSzTitle, MAX_LOADSTRING);
-	LoadString(mHInst, IDC_RAMJAMENGINE, mSzWindowClass, MAX_LOADSTRING);
+	LoadString(mHInst, IDS_APP_TITLE, mSzTitle, 100);
+	LoadString(mHInst, IDC_RAMJAMENGINE, mSzWindowClass, 100);
 	hAccelTable = LoadAccelerators(mHInst, MAKEINTRESOURCE(IDC_RAMJAMENGINE));
 
 	RegisterMyClass(mHInst);
-	if (!InitializeWindows(nCmdShow))
-		return false;
+	RJE_ASSERT(InitializeWindows(nCmdShow));
+	
+	// We launch DirectX or OpenGL
+	mGraphicAPI->Initialize(mHWnd, RJE_GLOBALS::gScreenWidth, RJE_GLOBALS::gScreenHeight);
 
 	return true;
 }
@@ -29,18 +42,23 @@ void System::Shutdown()
 {
 	ShutdownWindows();
 
-	return;
+	mGraphicAPI->Shutdown();
+
+	RJE_SAFE_DELETE(mGraphicAPI);
 }
 
 //////////////////////////////////////////////////////////////////////////
-void System::Launch()
+void System::Run()
 {
 	MSG msg;
 
 	ZeroMemory(&msg, sizeof(MSG));
 
+	mTimer.Reset();
+	mTimer.Start();
+
 	// Enter the infinite message loop
-	while(TRUE)
+	while(msg.message != WM_QUIT)
 	{
 		// Check to see if any messages are waiting in the queue
 		if(PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
@@ -49,17 +67,27 @@ void System::Launch()
 			TranslateMessage(&msg);
 			// send the message to the WindowProc function
 			DispatchMessage(&msg);
-
-			if(msg.message == WM_QUIT)
-				break;
 		}
-		else
+		else	// Otherwise, do animation/game stuff.
 		{
-			if (!Update())	// If the Update fails, we quit the program
-				break;
+			mTimer.Update();
+
+			if(mAppPaused)
+				Sleep(100);
+			else
+			{
+				CalculateFrameStats();
+				UpdateScene(mTimer.DeltaTime());
+				DrawScene();
+			}
 		}
 	}
-	return;
+}
+
+//////////////////////////////////////////////////////////////////////////
+void System::OnResize()
+{
+	mGraphicAPI->ResizeWindow(mScreenWidth, mScreenHeight);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -67,29 +95,173 @@ LRESULT CALLBACK System::MessageHandler(HWND hwnd, UINT umsg, WPARAM wparam, LPA
 {
 	switch(umsg)
 	{
-		// Check if a key has been pressed on the keyboard.
+	// Check if a key has been pressed on the keyboard.
 	case WM_KEYDOWN:
 		{
 			return 0;
 		}
 
-		// Check if a key has been released on the keyboard.
+	// Check if a key has been released on the keyboard.
 	case WM_KEYUP:
 		{
 			return 0;
 		}
 
-		// Any other messages send to the default message handler as our application won't make use of them.
-	default:
+	// WM_ACTIVATE is sent when the window is activated or deactivated.
+	// We pause the game when the window is deactivated and unpause it
+	// when it becomes active.  
+	case WM_ACTIVATE:
+		if( LOWORD(wparam) == WA_INACTIVE )
 		{
-			return DefWindowProc(hwnd, umsg, wparam, lparam);
+			mAppPaused = true;
+			mTimer.Stop();
 		}
+		else
+		{
+			mAppPaused = false;
+			mTimer.Start();
+		}
+		return 0;
+
+	// WM_SIZE is sent when the user resizes the window.  
+	case WM_SIZE:
+		// Save the new client area dimensions.
+		mScreenWidth  = LOWORD(lparam);
+		mScreenHeight = HIWORD(lparam);
+		
+		if( mGraphicAPI )
+		{
+			if( wparam == SIZE_MINIMIZED )
+			{
+				mAppPaused = true;
+				mMinimized = true;
+				mMaximized = false;
+			}
+			else if( wparam == SIZE_MAXIMIZED )
+			{
+				mAppPaused = false;
+				mMinimized = false;
+				mMaximized = true;
+				OnResize();
+			}
+			else if( wparam == SIZE_RESTORED )
+			{
+
+				// Restoring from minimized state?
+				if( mMinimized )
+				{
+					mAppPaused = false;
+					mMinimized = false;
+					OnResize();
+				}
+
+				// Restoring from maximized state?
+				else if( mMaximized )
+				{
+					mAppPaused = false;
+					mMaximized = false;
+					OnResize();
+				}
+				else if( mResizing )
+				{
+					// If user is dragging the resize bars, we do not resize 
+					// the buffers here because as the user continuously 
+					// drags the resize bars, a stream of WM_SIZE messages are
+					// sent to the window, and it would be pointless (and slow)
+					// to resize for each WM_SIZE message received from dragging
+					// the resize bars.  So instead, we reset after the user is 
+					// done resizing the window and releases the resize bars, which 
+					// sends a WM_EXITSIZEMOVE message.
+				}
+				else // API call such as SetWindowPos or mSwapChain->SetFullscreenState.
+				{
+					OnResize();
+				}
+			}
+		}
+		
+		return 0;
+
+	// WM_EXITSIZEMOVE is sent when the user grabs the resize bars.
+	case WM_ENTERSIZEMOVE:
+		mAppPaused = true;
+		mResizing  = true;
+		mTimer.Stop();
+		return 0;
+
+	// WM_EXITSIZEMOVE is sent when the user releases the resize bars.
+	// Here we reset everything based on the new window dimensions.
+	case WM_EXITSIZEMOVE:
+		mAppPaused = false;
+		mResizing  = false;
+		mTimer.Start();
+		OnResize();
+		return 0;
+
+	// WM_DESTROY is sent when the window is being destroyed.
+	case WM_DESTROY:
+		PostQuitMessage(0);
+		return 0;
+
+	// The WM_MENUCHAR message is sent when a menu is active and the user presses 
+	// a key that does not correspond to any mnemonic or accelerator key. 
+	case WM_MENUCHAR:
+		// Don't beep when we alt-enter.
+		return MAKELRESULT(0, MNC_CLOSE);
+
+	// Catch this message so to prevent the window from becoming too small.
+	case WM_GETMINMAXINFO:
+		((MINMAXINFO*)lparam)->ptMinTrackSize.x = 200;
+		((MINMAXINFO*)lparam)->ptMinTrackSize.y = 200; 
+		return 0;
+
+	case WM_LBUTTONDOWN:
+	case WM_MBUTTONDOWN:
+	case WM_RBUTTONDOWN:
+		OnMouseDown(wparam, GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam));
+		return 0;
+	case WM_LBUTTONUP:
+	case WM_MBUTTONUP:
+	case WM_RBUTTONUP:
+		OnMouseUp(wparam, GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam));
+		return 0;
+	case WM_MOUSEMOVE:
+		OnMouseMove(wparam, GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam));
+		return 0;
 	}
+
+	// Any other messages send to the default message handler as our application won't make use of them.
+	return DefWindowProc(hwnd, umsg, wparam, lparam);
 }
 
 //////////////////////////////////////////////////////////////////////////
-BOOL System::Update()
+void System::OnMouseDown(WPARAM btnState, int x, int y)
 {
+	return;
+}
+
+//////////////////////////////////////////////////////////////////////////
+void System::OnMouseUp(WPARAM btnState, int x, int y)
+{
+	return;
+}
+
+//////////////////////////////////////////////////////////////////////////
+void System::OnMouseMove(WPARAM btnState, int x, int y)
+{
+	return;
+}
+
+//////////////////////////////////////////////////////////////////////////
+BOOL System::UpdateScene(float dt)
+{
+	return true;
+}
+
+//////////////////////////////////////////////////////////////////////////
+BOOL System::DrawScene()
+{
+	mGraphicAPI->DrawScene();
 	return true;
 }
 
@@ -97,57 +269,62 @@ BOOL System::Update()
 BOOL System::InitializeWindows(int nCmdShow)
 {
 	int posX, posY;
-	int screenWidth, screenHeight;
-	
-#if FULL_SCREEN == 1
-	DEVMODE dmScreenSettings;
-	screenWidth		= GetSystemMetrics(SM_CXSCREEN);
-	screenHeight	= GetSystemMetrics(SM_CYSCREEN);
-	posX = posY = 0;
+	DWORD dwStyle;
 
-	// If full screen set the screen to maximum size of the users desktop and 32bit.
-	memset(&dmScreenSettings, 0, sizeof(dmScreenSettings));
-	dmScreenSettings.dmSize       = sizeof(dmScreenSettings);
-	dmScreenSettings.dmPelsWidth  = (unsigned long)screenWidth;
-	dmScreenSettings.dmPelsHeight = (unsigned long)screenHeight;
-	dmScreenSettings.dmBitsPerPel = 32;			
-	dmScreenSettings.dmFields     = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
+	if (RJE_GLOBALS::gFullScreen)
+	{
+		DEVMODE dmScreenSettings;
+		mScreenWidth	= GetSystemMetrics(SM_CXSCREEN);
+		mScreenHeight	= GetSystemMetrics(SM_CYSCREEN);
+		posX = posY = 0;
 
-	// Change the display settings to full screen.
-	ChangeDisplaySettings(&dmScreenSettings, CDS_FULLSCREEN);
+		// If full screen set the screen to maximum size of the users desktop and 32bit.
+		memset(&dmScreenSettings, 0, sizeof(dmScreenSettings));
+		dmScreenSettings.dmSize       = sizeof(dmScreenSettings);
+		dmScreenSettings.dmPelsWidth  = (unsigned long)mScreenWidth;
+		dmScreenSettings.dmPelsHeight = (unsigned long)mScreenHeight;
+		dmScreenSettings.dmBitsPerPel = 32;			
+		dmScreenSettings.dmFields     = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
 
-	DWORD dwStyle = WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_POPUP;
-#else
-	screenHeight	= SCREEN_HEIGHT;
-	screenWidth		= SCREEN_WIDTH;
-	posX = (GetSystemMetrics(SM_CXSCREEN) - SCREEN_WIDTH)  / 2;
-	posY = (GetSystemMetrics(SM_CYSCREEN) - SCREEN_HEIGHT) / 2;
+		// Change the display settings to full screen.
+		ChangeDisplaySettings(&dmScreenSettings, CDS_FULLSCREEN);
 
-	DWORD dwStyle = WS_OVERLAPPEDWINDOW;
-#endif // FULL_SCREEN
+		DWORD dwStyle = WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_POPUP;
+	}
+	else
+	{
+		mScreenHeight	= RJE_GLOBALS::gScreenHeight;
+		mScreenWidth	= RJE_GLOBALS::gScreenWidth;
+		posX = (GetSystemMetrics(SM_CXSCREEN) - RJE_GLOBALS::gScreenWidth)  / 2;
+		posY = (GetSystemMetrics(SM_CYSCREEN) - RJE_GLOBALS::gScreenHeight) / 2;
+
+		DWORD dwStyle = WS_OVERLAPPEDWINDOW;
+	}
 
 	// Create the window with the screen settings and get the handle to it.
 	mHWnd = CreateWindowEx(	WS_EX_APPWINDOW,			\
-								sInstance->mSzWindowClass,	\
-								sInstance->mSzTitle,		\
-								dwStyle,					\
-								posX,						\
-								posY,						\
-								screenWidth,				\
-								screenHeight,				\
-								NULL,						\
-								NULL,						\
-								sInstance->mHInst,			\
-								NULL);
+							sInstance->mSzWindowClass,	\
+							sInstance->mSzTitle,		\
+							dwStyle,					\
+							posX,						\
+							posY,						\
+							mScreenWidth,				\
+							mScreenHeight,				\
+							NULL,						\
+							NULL,						\
+							sInstance->mHInst,			\
+							NULL);
 	if (!mHWnd)
+	{
 		return FALSE;
+	}
 
 	// Bring the window up on the screen and set it as main focus.
 	ShowWindow(mHWnd, nCmdShow);
 	UpdateWindow(mHWnd);
 	SetForegroundWindow(mHWnd);
 	SetFocus(mHWnd);
-	ShowCursor(SHOW_CURSOR);
+	ShowCursor(RJE_GLOBALS::gShowCursor);
 
 	UpdateWindow(mHWnd);
 
@@ -205,6 +382,37 @@ void System::ShutdownWindows()
 	sInstance = nullptr;
 
 	return;
+}
+
+//////////////////////////////////////////////////////////////////////////
+void System::CalculateFrameStats()
+{
+	// Code computes the average frames per second, and also the 
+	// average time it takes to render one frame.  These stats 
+	// are appended to the window caption bar.
+
+	static int frameCnt = 0;
+	static float timeElapsed = 0.0f;
+
+	frameCnt++;
+
+	// Compute averages over one second period.
+	if( (mTimer.Time() - timeElapsed) >= 1.0f )
+	{
+		float fps = (float)frameCnt; // fps = frameCnt / 1
+		float mspf = 1000.0f / fps;
+
+		std::wostringstream outs;   
+		outs.precision(6);
+		outs << sInstance->mSzTitle << L"    "
+			<< L"FPS: " << fps << L"    " 
+			<< L"Frame Time: " << mspf << L" (ms)";
+		SetWindowText(mHWnd, outs.str().c_str());
+
+		// Reset for next average.
+		frameCnt = 0;
+		timeElapsed += 1.0f;
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////

@@ -152,3 +152,6 @@ $RECYCLE.BIN/
 
 # Mac desktop service store files
 .DS_Store
+
+# Asset Importer Models
+Models

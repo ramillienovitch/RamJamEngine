@@ -14,8 +14,11 @@
 
 
 //////////////////////////////////////////////////////////////////////////////////////
-// The RamJamEngine is for learning purposes only.
-// I don't pretend to make the next big real-time 3D engine
+// The RamJamEngine is a game/rendering engine for learning purposes only.
+// I wanted to learn 3D graphics using OpenGL and DirectX.
+// I first began with the Rastertek tutorials (http://www.rastertek.com/)
+// but unfortunately, the architecture wasn't robust enough (IMO), so I decided to
+// create my own Game/Rendering Engine.
 //
 // The RJE is based on the following : 
 //  - Architecture : 
@@ -26,6 +29,8 @@
 //     + OpenGL Programming Guide: The Official Guide to Learning OpenGL, Version 4.3
 //////////////////////////////////////////////////////////////////////////////////////
 
+//------------------------------------------------------------------------------------
+
 #include "stdafx.h"
 
 int APIENTRY _tWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPTSTR lpCmdLine, _In_ int nCmdShow)
@@ -33,15 +38,18 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstanc
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(lpCmdLine);
 
+	// Enable run-time memory check for debug builds.
+#if defined(DEBUG) | defined(_DEBUG)
+	_CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
+#endif
+
 	System*	system	= new System;
-	BOOL result;
 
-	if(!system)
-		return 0;
+	RJE_ASSERT(system != nullptr);
+	system->mHInst = hInstance;
+	RJE_ASSERT(system->Initialize(nCmdShow));
 
-	result = system->Initialize(nCmdShow);
-	if(result)
-		system->Launch();
+	system->Run();
 
 	RJE_SHUTDOWN(system);
 
