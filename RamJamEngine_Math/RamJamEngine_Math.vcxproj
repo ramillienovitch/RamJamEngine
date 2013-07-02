@@ -252,12 +252,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="include\MathHelper.h" />
     <ClInclude Include="include\Quaternion.h" />
     <ClInclude Include="include\Vector2.h" />
     <ClInclude Include="include\Vector3.h" />
     <ClInclude Include="include\Vector4.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\MathHelper.cpp" />
     <ClCompile Include="src\Quaternion.cpp" />
     <ClCompile Include="src\Vector2.cpp" />
     <ClCompile Include="src\Vector3.cpp" />

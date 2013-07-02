@@ -19,18 +19,6 @@
     <Filter Include="Resource Files\Textures">
       <UniqueIdentifier>{98cf6776-5712-4728-bb56-b0b060855913}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Shaders">
-      <UniqueIdentifier>{68b4fdfc-5c58-4b24-9448-c0101969f533}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Shaders\GLSL">
-      <UniqueIdentifier>{178dbd31-5e86-45e3-a1bc-bdb873d50384}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Shaders\HLSL">
-      <UniqueIdentifier>{7542064e-3bbf-493b-b7fb-73266eb486c2}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Shaders\FX">
-      <UniqueIdentifier>{c80c92ec-169f-40c7-8dc4-ee77f18ef68f}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\RJE_Graphic">
       <UniqueIdentifier>{6af15578-1565-4af3-a659-1600bb6f85ba}</UniqueIdentifier>
     </Filter>

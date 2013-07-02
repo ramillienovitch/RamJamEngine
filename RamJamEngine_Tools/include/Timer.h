@@ -13,9 +13,9 @@ struct Timer
 {
 	Timer();
 
-	float	Time() const;				// Return the Elapsed time the Game has been active in seconds since Reset
+	float	Time() const;		// Return the Elapsed time the Game has been active in seconds since Reset
 	void	Time(float time);	// Set the Elapsed playing time -- used for restarting in the middle of a game
-	float	DeltaTime() const;		// Return the Delta time between the last two updates
+	float	DeltaTime() const;	// Return the Delta time between the last two updates
 
 	void Reset();
 	void Start();

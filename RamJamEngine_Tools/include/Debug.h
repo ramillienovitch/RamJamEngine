@@ -22,8 +22,9 @@ namespace RJE
 
 #	define RJE_BREAK()						DebugBreak()
 #	define RJE_BREAK_PROCESS()				DebugBreakProcess()
-#	define RJE_PRINT( X )					DebugPrint( X )
-#	define RJE_PRINT_RAW( X )				OutputDebugString( (LPCWSTR) X )
+#	define RJE_PRINT						DebugPrintf
+#	define RJE_PRINT_VERBOSE				DebugPrintVerbose
+#	define RJE_PRINT_RAW( X )				OutputDebugStringA( X )
 #	define RJE_MESSAGE_BOX( X, Y, Z, W )	MessageBox( X, Y, Z, W )
 
 #	define RJE_QUOTE_INPLACE(x)		# x
@@ -36,11 +37,8 @@ namespace RJE
 #	define RJE_SHUTDOWN( X )				if(X) { X->Shutdown(); delete X; X=nullptr; }
 }
 
-////////////////////////////////////////////////////////////////////////
-int VDebugPrint(const char* format, va_list argList);
+//////////////////////////////////////////////////////////////////////////
+void DebugPrintf(LPCSTR szFormat, ...);
 
 //////////////////////////////////////////////////////////////////////////
-int DebugPrint(const char* format, ...);
-
-//////////////////////////////////////////////////////////////////////////
-int DebugPrintVerbose(int verbosity, const char* format, ...);
+void DebugPrintVerbose(int verbosity, LPCSTR szFormat, ...);

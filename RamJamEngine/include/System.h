@@ -18,6 +18,12 @@ public:
 	BOOL		mResizing;
 	int			mScreenWidth;
 	int			mScreenHeight;
+
+	POINT		mLastMousePos;
+	float		mCameraTheta;
+	float		mCameraPhi;
+	float		mCameraRadius;
+
 	GraphicAPI* mGraphicAPI;
 
 	Timer mTimer;
@@ -39,7 +45,7 @@ protected:
 	void CalculateFrameStats();
 
 private:
-	BOOL UpdateScene(float dt);
+	BOOL UpdateScene(float dt, float theta, float phi, float radius);
 	BOOL DrawScene();
 	BOOL InitializeWindows(int);
 	ATOM RegisterMyClass(HINSTANCE);

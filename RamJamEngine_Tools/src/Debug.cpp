@@ -1,39 +1,31 @@
 #include "Debug.h"
 #include "Globals.h"
 
-////////////////////////////////////////////////////////////////////////
-int VDebugPrint(const char* format, va_list argList)
+//////////////////////////////////////////////////////////////////////////
+void DebugPrintf(LPCSTR szFormat, ...)
 {
-	char sBuffer[MAX_STRING_DBG];
-	int charsWritten = vsnprintf_s(sBuffer, MAX_STRING_DBG-1, format, argList);
-	sBuffer[MAX_STRING_DBG-1] = '\0'; // be sure to NIL-terminate
+	char strA[MAX_STRING_DBG];
+	char strB[MAX_STRING_DBG];
 
-	// Now that we have a formatted string, call the Win32 API.
-	RJE_PRINT_RAW(sBuffer);
-	return charsWritten;
+	va_list ap;
+	va_start(ap, szFormat);
+	vsprintf_s(strA, sizeof(strA), szFormat, ap);
+	strA[MAX_STRING_DBG-1] = '\0';
+	va_end(ap);
+
+	sprintf_s(strB, sizeof(strB), "%s", strA);
+
+	strB[MAX_STRING_DBG-1] = '\0';
+
+	OutputDebugStringA(strB);
 }
 
 //////////////////////////////////////////////////////////////////////////
-int DebugPrint(const char* format, ...)
-{
-	va_list argList;
-	va_start(argList, format);
-	int charsWritten = VDebugPrint(format, argList);
-	va_end(argList);
-	return charsWritten;
-}
-
-//////////////////////////////////////////////////////////////////////////
-int DebugPrintVerbose(int verbosity, const char* format, ...)
+void DebugPrintVerbose(int verbosity, LPCSTR szFormat, ...)
 {
 	// Only print when the global verbosity level is high enough.
 	if (verbosity <= RJE_GLOBALS::gDebugVerbosity)
 	{
-		va_list argList;
-		va_start(argList, format);
-		int charsWritten = VDebugPrint(format, argList);
-		va_end(argList);
-		return charsWritten;
+		DebugPrintf(szFormat);
 	}
-	return 0;
 }

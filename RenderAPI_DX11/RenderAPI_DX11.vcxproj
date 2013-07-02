@@ -43,7 +43,7 @@
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v110</PlatformToolset>
-    <CharacterSet>MultiByte</CharacterSet>
+    <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
@@ -116,13 +116,18 @@
     <IncludePath>$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
+    <LibraryPath>$(SolutionDir)\lib\x86;$(VCInstallDir)lib;$(VCInstallDir)atlmfc\lib;$(WindowsSDK_LibraryPath_x86);</LibraryPath>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <BrowseInformation>true</BrowseInformation>
-      <AdditionalIncludeDirectories>include;../RamJamEngine_Tools/include/</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>include;../RamJamEngine_Tools/include/;../RamJamEngine_Math/include/</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -130,6 +135,11 @@
     <Bscmake>
       <PreserveSbr>true</PreserveSbr>
     </Bscmake>
+    <Lib>
+      <AdditionalDependencies>
+      </AdditionalDependencies>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -167,7 +177,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <BrowseInformation>true</BrowseInformation>
-      <AdditionalIncludeDirectories>include;../RamJamEngine_Tools/include/</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>include;../RamJamEngine_Tools/include/;../RamJamEngine_Math/include/</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -217,7 +227,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release64|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>include;../RamJamEngine_Tools/include/</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>include;../RamJamEngine_Tools/include/;../RamJamEngine_Math/include/</AdditionalIncludeDirectories>
     </ClCompile>
     <Lib>
       <AdditionalDependencies>
@@ -229,21 +239,28 @@
     <ClInclude Include="include\DX11DepthBuffer.h" />
     <ClInclude Include="include\DX11Device.h" />
     <ClInclude Include="include\DX11Helper.h" />
+    <ClInclude Include="include\DX11Math.h" />
     <ClInclude Include="include\DX11Wrapper.h" />
     <ClInclude Include="include\DxErr.h" />
-    <ClInclude Include="include\xnacollision.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="include\xnamathconvert.inl" />
-    <None Include="include\xnamathmatrix.inl" />
-    <None Include="include\xnamathmisc.inl" />
-    <None Include="include\xnamathvector.inl" />
+    <ClInclude Include="include\GeometryGenerator.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\DX11DepthBuffer.cpp" />
     <ClCompile Include="src\DX11Device.cpp" />
+    <ClCompile Include="src\DX11Math.cpp" />
     <ClCompile Include="src\DX11Wrapper.cpp" />
-    <ClCompile Include="src\xnacollision.cpp" />
+    <ClCompile Include="src\GeometryGenerator.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="..\RamJamEngine\data\shaders\HLSL\color.fx">
+      <FileType>Document</FileType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Effect</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug64|x64'">Effect</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug64|x64'">5.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release64|x64'">Effect</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release64|x64'">5.0</ShaderModel>
+    </FxCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

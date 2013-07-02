@@ -10,6 +10,7 @@ struct GraphicAPI
 	//virtual ~GraphicAPI();
 
 	virtual void Initialize(HWND hMainWnd, int windowWidth, int windowHeight) = 0;
+	virtual void UpdateScene( float dt, float theta, float phi, float radius) = 0;
 	virtual void DrawScene() = 0;
 	virtual void Shutdown() = 0;
 	virtual void ResizeWindow(int newSizeWidth, int newSizeHeight) = 0;

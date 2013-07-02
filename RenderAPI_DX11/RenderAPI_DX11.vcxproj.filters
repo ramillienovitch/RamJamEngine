@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Resource Files\Shaders">
+      <UniqueIdentifier>{686256f3-de63-45fa-ad1c-ed8131c4d5d9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\DX11DepthBuffer.h">
@@ -24,9 +27,6 @@
     <ClInclude Include="include\D3DX11Effect.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\xnacollision.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="include\DX11Wrapper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -36,20 +36,12 @@
     <ClInclude Include="include\DxErr.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="include\xnamathconvert.inl">
+    <ClInclude Include="include\GeometryGenerator.h">
       <Filter>Header Files</Filter>
-    </None>
-    <None Include="include\xnamathmatrix.inl">
+    </ClInclude>
+    <ClInclude Include="include\DX11Math.h">
       <Filter>Header Files</Filter>
-    </None>
-    <None Include="include\xnamathmisc.inl">
-      <Filter>Header Files</Filter>
-    </None>
-    <None Include="include\xnamathvector.inl">
-      <Filter>Header Files</Filter>
-    </None>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\DX11DepthBuffer.cpp">
@@ -58,11 +50,19 @@
     <ClCompile Include="src\DX11Device.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\xnacollision.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\DX11Wrapper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\GeometryGenerator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DX11Math.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="..\RamJamEngine\data\shaders\HLSL\color.fx">
+      <Filter>Resource Files\Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

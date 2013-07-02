@@ -1,12 +1,19 @@
 #include "stdafx.h"
 
+
 //////////////////////////////////////////////////////////////////////////
 System::System()
 {
 	mAppPaused = false;
 	mMinimized = false;
 	mMaximized = false;
-	mResizing = false;
+	mResizing  = false;
+
+	mLastMousePos.x = 0;
+	mLastMousePos.y = 0;
+	mCameraTheta	= 1.5f*RJE::Math::Pi;
+	mCameraPhi		= 0.25f*RJE::Math::Pi;
+	mCameraRadius	= 5.0f;
 
 #if (RJE_GRAPHIC_API == DIRECTX_11)
 	mGraphicAPI = new DX11Wrapper();
@@ -51,10 +58,8 @@ void System::Shutdown()
 void System::Run()
 {
 	MSG msg;
-
 	ZeroMemory(&msg, sizeof(MSG));
 
-	mTimer.Reset();
 	mTimer.Start();
 
 	// Enter the infinite message loop
@@ -73,11 +78,11 @@ void System::Run()
 			mTimer.Update();
 
 			if(mAppPaused)
-				Sleep(100);
+				Sleep(50);
 			else
 			{
 				CalculateFrameStats();
-				UpdateScene(mTimer.DeltaTime());
+				UpdateScene(mTimer.DeltaTime(), mCameraTheta, mCameraPhi, mCameraRadius);
 				DrawScene();
 			}
 		}
@@ -93,6 +98,8 @@ void System::OnResize()
 //////////////////////////////////////////////////////////////////////////
 LRESULT CALLBACK System::MessageHandler(HWND hwnd, UINT umsg, WPARAM wparam, LPARAM lparam)
 {
+	short zDelta=0;
+
 	switch(umsg)
 	{
 	// Check if a key has been pressed on the keyboard.
@@ -215,6 +222,21 @@ LRESULT CALLBACK System::MessageHandler(HWND hwnd, UINT umsg, WPARAM wparam, LPA
 		((MINMAXINFO*)lparam)->ptMinTrackSize.y = 200; 
 		return 0;
 
+	case WM_MOUSEWHEEL:
+		zDelta = GET_WHEEL_DELTA_WPARAM(wparam);
+		if (wparam & MK_SHIFT)
+		{
+			if (zDelta >= 0)	mCameraRadius -= 0.5f;
+			else				mCameraRadius += 0.5f;
+		}
+		else
+		{
+			if (zDelta >= 0)	mCameraRadius -= 0.25f;
+			else				mCameraRadius += 0.25f;
+		}
+		mCameraRadius = RJE::Math::Clamp(mCameraRadius, 3.0f, 15.0f);
+		return 0;
+
 	case WM_LBUTTONDOWN:
 	case WM_MBUTTONDOWN:
 	case WM_RBUTTONDOWN:
@@ -229,32 +251,63 @@ LRESULT CALLBACK System::MessageHandler(HWND hwnd, UINT umsg, WPARAM wparam, LPA
 		OnMouseMove(wparam, GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam));
 		return 0;
 	}
-
+	
 	// Any other messages send to the default message handler as our application won't make use of them.
-	return DefWindowProc(hwnd, umsg, wparam, lparam);
+	return DefWindowProc(hwnd, umsg, wparam, lparam);	
 }
 
 //////////////////////////////////////////////////////////////////////////
 void System::OnMouseDown(WPARAM btnState, int x, int y)
 {
-	return;
+	mLastMousePos.x = x;
+	mLastMousePos.y = y;
+
+	SetCapture(mHWnd);
 }
 
 //////////////////////////////////////////////////////////////////////////
 void System::OnMouseUp(WPARAM btnState, int x, int y)
 {
-	return;
+	ReleaseCapture();
 }
 
 //////////////////////////////////////////////////////////////////////////
 void System::OnMouseMove(WPARAM btnState, int x, int y)
 {
-	return;
+	if( (btnState & MK_LBUTTON) != 0 )
+	{
+		// Make each pixel correspond to a quarter of a degree.
+		float dx = DegreesToRadian(0.25f*static_cast<float>(x - mLastMousePos.x));
+		float dy = DegreesToRadian(0.25f*static_cast<float>(y - mLastMousePos.y));
+
+		// Update angles based on input to orbit camera around box.
+		mCameraTheta -= dx;
+		mCameraPhi   -= dy;
+
+		// Restrict the angle mPhi.
+		mCameraPhi = RJE::Math::Clamp(mCameraPhi, 0.1f, RJE::Math::Pi-0.1f);
+	}
+	else if( (btnState & MK_RBUTTON) != 0 )
+	{
+		// Make each pixel correspond to 0.005 unit in the scene.
+		float dx = 0.005f*static_cast<float>(x - mLastMousePos.x);
+		float dy = 0.005f*static_cast<float>(y - mLastMousePos.y);
+
+		// Update the camera radius based on input.
+		mCameraRadius += dx - dy;
+
+		// Restrict the radius.
+		mCameraRadius = RJE::Math::Clamp(mCameraRadius, 3.0f, 15.0f);
+	}
+
+	mLastMousePos.x = x;
+	mLastMousePos.y = y;
 }
 
 //////////////////////////////////////////////////////////////////////////
-BOOL System::UpdateScene(float dt)
+BOOL System::UpdateScene(float dt, float theta, float phi, float radius)
 {
+	mGraphicAPI->UpdateScene(dt, theta, phi, radius);
 	return true;
 }
 
@@ -269,7 +322,7 @@ BOOL System::DrawScene()
 BOOL System::InitializeWindows(int nCmdShow)
 {
 	int posX, posY;
-	DWORD dwStyle;
+	DWORD dwStyle = WS_OVERLAPPEDWINDOW;
 
 	if (RJE_GLOBALS::gFullScreen)
 	{
@@ -321,7 +374,6 @@ BOOL System::InitializeWindows(int nCmdShow)
 
 	// Bring the window up on the screen and set it as main focus.
 	ShowWindow(mHWnd, nCmdShow);
-	UpdateWindow(mHWnd);
 	SetForegroundWindow(mHWnd);
 	SetFocus(mHWnd);
 	ShowCursor(RJE_GLOBALS::gShowCursor);
@@ -350,11 +402,10 @@ ATOM System::RegisterMyClass( HINSTANCE hInstance )
 	wcex.hIconSm		= LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
 	wcex.cbSize			= sizeof(WNDCLASSEX);
 
-#if FULL_SCREEN == 1
-	wcex.lpszMenuName	= NULL;
-#else
-	wcex.lpszMenuName	= MAKEINTRESOURCE(IDC_RAMJAMENGINE);
-#endif // !FULL_SCREEN
+	if (RJE_GLOBALS::gFullScreen)
+		wcex.lpszMenuName	= NULL;
+	else
+		wcex.lpszMenuName	= MAKEINTRESOURCE(IDC_RAMJAMENGINE);
 
 	return RegisterClassEx(&wcex);
 }
@@ -365,10 +416,8 @@ void System::ShutdownWindows()
 	// Show the mouse cursor.
 	ShowCursor(true);
 
-#if FULL_SCREEN == 1
-	// Fix the display settings if leaving full screen mode.
-	ChangeDisplaySettings(NULL, 0);
-#endif // FULL_SCREEN
+	if (RJE_GLOBALS::gFullScreen)
+		ChangeDisplaySettings(NULL, 0);	// Fix the display settings if leaving full screen mode.
 
 	// Remove the window.
 	DestroyWindow(mHWnd);
@@ -399,13 +448,13 @@ void System::CalculateFrameStats()
 	// Compute averages over one second period.
 	if( (mTimer.Time() - timeElapsed) >= 1.0f )
 	{
-		float fps = (float)frameCnt; // fps = frameCnt / 1
+		float fps = (float)frameCnt;
 		float mspf = 1000.0f / fps;
 
-		std::wostringstream outs;   
+		std::wostringstream outs;
 		outs.precision(6);
 		outs << sInstance->mSzTitle << L"    "
-			<< L"FPS: " << fps << L"    " 
+			<< L"FPS: " << fps << L"    "
 			<< L"Frame Time: " << mspf << L" (ms)";
 		SetWindowText(mHWnd, outs.str().c_str());
 
