@@ -8,13 +8,14 @@ DX11Wrapper::DX11Wrapper()
 	md3dDriverType		= D3D_DRIVER_TYPE_HARDWARE;
 	ZeroMemory(&mScreenViewport, sizeof(D3D11_VIEWPORT));
 
-	mVertexBuffer    = nullptr;
-	mIndexBuffer     = nullptr;
-	mFX              = nullptr;
-	mTech            = nullptr;
-	mfxWorldViewProj = nullptr;
-	mInputLayout     = nullptr;
-	mRasterizerState = nullptr;
+	mVertexBuffer              = nullptr;
+	mIndexBuffer               = nullptr;
+	mFX                        = nullptr;
+	mTech                      = nullptr;
+	mfxWorldViewProj           = nullptr;
+	mInputLayout               = nullptr;
+	mRasterizerState_Solid     = nullptr;
+	mRasterizerState_Wireframe = nullptr;
 
 	DirectX::XMMATRIX Id = DirectX::XMMatrixIdentity();
 	XMStoreFloat4x4(&mWorld, Id);
@@ -116,82 +117,75 @@ void DX11Wrapper::Initialize(HWND hMainWnd, int windowWidth, int windowHeight)
 	BuildFX();
 	BuildVertexLayout();
 
-	D3D11_RASTERIZER_DESC RasterizerDesc;
-	ZeroMemory(&RasterizerDesc, sizeof(D3D11_RASTERIZER_DESC));
-	RasterizerDesc.FillMode = D3D11_FILL_WIREFRAME;
-	RasterizerDesc.CullMode = D3D11_CULL_NONE;
-	RasterizerDesc.FrontCounterClockwise = false;
-	RasterizerDesc.DepthClipEnable = true;
+	//////////////////////////////////////////////////////////////////////////
+	D3D11_RASTERIZER_DESC RasterizerDesc_Solid;
+	ZeroMemory(&RasterizerDesc_Solid, sizeof(D3D11_RASTERIZER_DESC));
+	RasterizerDesc_Solid.FillMode = D3D11_FILL_SOLID;
+	RasterizerDesc_Solid.CullMode = D3D11_CULL_BACK;
+	RasterizerDesc_Solid.FrontCounterClockwise = false;
+	RasterizerDesc_Solid.DepthClipEnable = true;
+	D3D11_RASTERIZER_DESC RasterizerDesc_Wireframe;
+	ZeroMemory(&RasterizerDesc_Wireframe, sizeof(D3D11_RASTERIZER_DESC));
+	RasterizerDesc_Wireframe.FillMode = D3D11_FILL_WIREFRAME;
+	RasterizerDesc_Wireframe.CullMode = D3D11_CULL_NONE;
+	RasterizerDesc_Wireframe.FrontCounterClockwise = false;
+	RasterizerDesc_Wireframe.DepthClipEnable = true;
 
-	RJE_CHECK_FOR_SUCCESS(mDX11Device->md3dDevice->CreateRasterizerState(&RasterizerDesc, &mRasterizerState));
+	RJE_CHECK_FOR_SUCCESS(mDX11Device->md3dDevice->CreateRasterizerState(&RasterizerDesc_Solid, &mRasterizerState_Solid));
+	RJE_CHECK_FOR_SUCCESS(mDX11Device->md3dDevice->CreateRasterizerState(&RasterizerDesc_Wireframe, &mRasterizerState_Wireframe));
 }
 
 //////////////////////////////////////////////////////////////////////////
 void DX11Wrapper::BuildGeometryBuffers()
 {
-	GeometryGenerator::MeshData grid;
+	std::ifstream fin("..\\..\\RamJamEngine\\data\\models\\dragon.mesh");
 
-	GeometryGenerator geoGen;
-	geoGen.CreateGrid(160.0f, 160.0f, 250, 250, grid);
-
-	mIndexCount = (UINT) grid.Indices.size();
-
-	//
-	// Extract the vertex elements we are interested and apply the height function to
-	// each vertex.  In addition, color the vertices based on their height so we have
-	// sandy looking beaches, grassy low hills, and snow mountain peaks.
-	//
-
-	std::vector<Vertex> vertices(grid.Vertices.size());
-	for(size_t i = 0; i < grid.Vertices.size(); ++i)
+	if(!fin)
 	{
-		XMFLOAT3 p = grid.Vertices[i].Position;
-
-		p.y = GetHeight(p.x, p.z);
-
-		vertices[i].Pos   = p;
-
-		// Color the vertex based on its height.
-		if( p.y < -10.0f )
-		{
-			// Sandy beach color.
-			vertices[i].Color = XMFLOAT4(1.0f, 0.96f, 0.62f, 1.0f);
-		}
-		else if( p.y < 5.0f )
-		{
-			// Light yellow-green.
-			vertices[i].Color = XMFLOAT4(0.48f, 0.77f, 0.46f, 1.0f);
-		}
-		else if( p.y < 12.0f )
-		{
-			// Dark yellow-green.
-			vertices[i].Color = XMFLOAT4(0.1f, 0.48f, 0.19f, 1.0f);
-		}
-		else if( p.y < 20.0f )
-		{
-			// Dark brown.
-			vertices[i].Color = XMFLOAT4(0.45f, 0.39f, 0.34f, 1.0f);
-		}
-		else
-		{
-			// White snow.
-			vertices[i].Color = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-		}
+		RJE_MESSAGE_BOX(0, L"dragon.mesh not found.", 0, 0);
+		return;
 	}
+
+	UINT vcount = 0;
+	UINT tcount = 0;
+	std::string ignore;
+
+	fin >> ignore >> ignore >> vcount;
+	fin >> ignore >> ignore >> tcount;
+	fin >> ignore;
+
+	float tu, tv;
+	float nx, ny, nz;
+
+	std::vector<Vertex> vertices(vcount);
+	for(UINT i = 0; i < vcount; ++i)
+	{
+		fin >> vertices[i].Pos.x >> vertices[i].Pos.y >> vertices[i].Pos.z;
+		XMFLOAT4 rnd(RJE::Math::RandF(), RJE::Math::RandF(), RJE::Math::RandF(), 1.0f);
+		vertices[i].Color = rnd;
+
+		fin >> tu >> tv;
+		fin >> nx >> ny >> nz;
+	}
+
+	mIndexCount = 3*tcount;
+	std::vector<UINT> indices(mIndexCount);
+	for(UINT i = 0; i < tcount; ++i)
+	{
+		fin >> indices[i*3+0] >> indices[i*3+1] >> indices[i*3+2];
+	}
+
+	fin.close();
 
 	D3D11_BUFFER_DESC vbd;
 	vbd.Usage = D3D11_USAGE_IMMUTABLE;
-	vbd.ByteWidth = (UINT) (sizeof(Vertex) * grid.Vertices.size());
+	vbd.ByteWidth = (UINT) (sizeof(Vertex) * vcount);
 	vbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	vbd.CPUAccessFlags = 0;
 	vbd.MiscFlags = 0;
 	D3D11_SUBRESOURCE_DATA vinitData;
 	vinitData.pSysMem = &vertices[0];
 	RJE_CHECK_FOR_SUCCESS(mDX11Device->md3dDevice->CreateBuffer(&vbd, &vinitData, &mVertexBuffer));
-
-	//
-	// Pack the indices of all the meshes into one index buffer.
-	//
 
 	D3D11_BUFFER_DESC ibd;
 	ibd.Usage = D3D11_USAGE_IMMUTABLE;
@@ -200,7 +194,7 @@ void DX11Wrapper::BuildGeometryBuffers()
 	ibd.CPUAccessFlags = 0;
 	ibd.MiscFlags = 0;
 	D3D11_SUBRESOURCE_DATA iinitData;
-	iinitData.pSysMem = &grid.Indices[0];
+	iinitData.pSysMem = &indices[0];
 	RJE_CHECK_FOR_SUCCESS(mDX11Device->md3dDevice->CreateBuffer(&ibd, &iinitData, &mIndexBuffer));
 }
 
@@ -319,7 +313,7 @@ void DX11Wrapper::DrawScene()
 	mDX11Device->md3dImmediateContext->IASetInputLayout(mInputLayout);
 	mDX11Device->md3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-	mDX11Device->md3dImmediateContext->RSSetState(mRasterizerState);
+	mDX11Device->md3dImmediateContext->RSSetState(mRasterizerState_Wireframe);
 
 	UINT stride = sizeof(Vertex);
 	UINT offset = 0;
@@ -359,7 +353,7 @@ void DX11Wrapper::Shutdown()
 	RJE_SAFE_RELEASE(mIndexBuffer);
 	RJE_SAFE_RELEASE(mFX);
 	RJE_SAFE_RELEASE(mInputLayout);
-	RJE_SAFE_RELEASE(mRasterizerState);
+	RJE_SAFE_RELEASE(mRasterizerState_Solid);
 
 	RJE_SAFE_RELEASE(mRenderTargetView);
 	mDX11DepthBuffer->Release();

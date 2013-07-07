@@ -27,7 +27,8 @@ struct DX11Wrapper : GraphicAPI
 	ID3DX11EffectMatrixVariable*	mfxWorldViewProj;
 
 	ID3D11InputLayout*		mInputLayout;
-	ID3D11RasterizerState*	mRasterizerState;
+	ID3D11RasterizerState*	mRasterizerState_Solid;
+	ID3D11RasterizerState*	mRasterizerState_Wireframe;
 
 	DirectX::XMFLOAT4X4 mWorld;
 	DirectX::XMFLOAT4X4 mView;

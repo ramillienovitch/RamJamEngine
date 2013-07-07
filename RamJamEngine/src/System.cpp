@@ -13,7 +13,7 @@ System::System()
 	mLastMousePos.y = 0;
 	mCameraTheta	= 1.5f*RJE::Math::Pi;
 	mCameraPhi		= 0.25f*RJE::Math::Pi;
-	mCameraRadius	= 100.0f;
+	mCameraRadius	= 10.0f;
 
 #if (RJE_GRAPHIC_API == DIRECTX_11)
 	mGraphicAPI = new DX11Wrapper();
@@ -234,7 +234,7 @@ LRESULT CALLBACK System::MessageHandler(HWND hwnd, UINT umsg, WPARAM wparam, LPA
 			if (zDelta >= 0)	mCameraRadius -= 0.25f;
 			else				mCameraRadius += 0.25f;
 		}
-		mCameraRadius = RJE::Math::Clamp(mCameraRadius, 50.0f, 500.0f);
+		mCameraRadius = RJE::Math::Clamp(mCameraRadius, 2.0f, 500.0f);
 		return 0;
 
 	case WM_LBUTTONDOWN:
@@ -297,7 +297,7 @@ void System::OnMouseMove(WPARAM btnState, int x, int y)
 		mCameraRadius += dx - dy;
 
 		// Restrict the radius.
-		mCameraRadius = RJE::Math::Clamp(mCameraRadius, 50.0f, 500.0f);
+		mCameraRadius = RJE::Math::Clamp(mCameraRadius, 2.0f, 500.0f);
 	}
 
 	mLastMousePos.x = x;
