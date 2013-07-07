@@ -19,8 +19,6 @@ struct DX11Wrapper : GraphicAPI
 	//////////////////////////////////////////////////////////////////////////
 	ID3D11Buffer*	mVertexBuffer;
 	ID3D11Buffer*	mIndexBuffer;
-	UINT			mVertexCount;
-	UINT			mIndexCount;
 
 	ID3DX11Effect*					mFX;
 	ID3DX11EffectTechnique*			mTech;
@@ -30,9 +28,32 @@ struct DX11Wrapper : GraphicAPI
 	ID3D11RasterizerState*	mRasterizerState_Solid;
 	ID3D11RasterizerState*	mRasterizerState_Wireframe;
 
-	DirectX::XMFLOAT4X4 mWorld;
-	DirectX::XMFLOAT4X4 mView;
-	DirectX::XMFLOAT4X4 mProj;
+	XMFLOAT4X4 mSphereWorld[10];
+	XMFLOAT4X4 mCylWorld[10];
+	XMFLOAT4X4 mBoxWorld;
+	XMFLOAT4X4 mGridWorld;
+	XMFLOAT4X4 mDragonWorld;
+
+	XMFLOAT4X4 mView;
+	XMFLOAT4X4 mProj;
+
+	int mBoxVertexOffset;
+	int mGridVertexOffset;
+	int mSphereVertexOffset;
+	int mCylinderVertexOffset;
+	int mDragonVertexOffset;
+
+	UINT mBoxIndexOffset;
+	UINT mGridIndexOffset;
+	UINT mSphereIndexOffset;
+	UINT mCylinderIndexOffset;
+	UINT mDragonIndexOffset;
+
+	UINT mBoxIndexCount;
+	UINT mGridIndexCount;
+	UINT mSphereIndexCount;
+	UINT mCylinderIndexCount;
+	UINT mDragonIndexCount;
 	//////////////////////////////////////////////////////////////////////////
 
 	virtual void Initialize(HWND hMainWnd, int windowWidth, int windowHeight);
@@ -44,6 +65,4 @@ struct DX11Wrapper : GraphicAPI
 	void BuildGeometryBuffers();
 	void BuildFX();
 	void BuildVertexLayout();
-
-	float GetHeight(float x, float z) const;
 };
