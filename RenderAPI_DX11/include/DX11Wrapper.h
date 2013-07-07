@@ -17,14 +17,17 @@ struct DX11Wrapper : GraphicAPI
 	D3D_DRIVER_TYPE			md3dDriverType;
 
 	//////////////////////////////////////////////////////////////////////////
-	ID3D11Buffer* mBoxVB;
-	ID3D11Buffer* mBoxIB;
+	ID3D11Buffer*	mVertexBuffer;
+	ID3D11Buffer*	mIndexBuffer;
+	UINT			mVertexCount;
+	UINT			mIndexCount;
 
-	ID3DX11Effect* mFX;
-	ID3DX11EffectTechnique* mTech;
-	ID3DX11EffectMatrixVariable* mfxWorldViewProj;
+	ID3DX11Effect*					mFX;
+	ID3DX11EffectTechnique*			mTech;
+	ID3DX11EffectMatrixVariable*	mfxWorldViewProj;
 
-	ID3D11InputLayout* mInputLayout;
+	ID3D11InputLayout*		mInputLayout;
+	ID3D11RasterizerState*	mRasterizerState;
 
 	DirectX::XMFLOAT4X4 mWorld;
 	DirectX::XMFLOAT4X4 mView;
@@ -40,4 +43,6 @@ struct DX11Wrapper : GraphicAPI
 	void BuildGeometryBuffers();
 	void BuildFX();
 	void BuildVertexLayout();
+
+	float GetHeight(float x, float z) const;
 };

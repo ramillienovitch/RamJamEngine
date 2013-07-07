@@ -8,12 +8,13 @@ DX11Wrapper::DX11Wrapper()
 	md3dDriverType		= D3D_DRIVER_TYPE_HARDWARE;
 	ZeroMemory(&mScreenViewport, sizeof(D3D11_VIEWPORT));
 
-	mBoxVB = nullptr;
-	mBoxIB = nullptr;
-	mFX = nullptr;
-	mTech = nullptr;
+	mVertexBuffer    = nullptr;
+	mIndexBuffer     = nullptr;
+	mFX              = nullptr;
+	mTech            = nullptr;
 	mfxWorldViewProj = nullptr;
-	mInputLayout = nullptr;
+	mInputLayout     = nullptr;
+	mRasterizerState = nullptr;
 
 	DirectX::XMMATRIX Id = DirectX::XMMatrixIdentity();
 	XMStoreFloat4x4(&mWorld, Id);
@@ -114,73 +115,99 @@ void DX11Wrapper::Initialize(HWND hMainWnd, int windowWidth, int windowHeight)
 	BuildGeometryBuffers();
 	BuildFX();
 	BuildVertexLayout();
+
+	D3D11_RASTERIZER_DESC RasterizerDesc;
+	ZeroMemory(&RasterizerDesc, sizeof(D3D11_RASTERIZER_DESC));
+	RasterizerDesc.FillMode = D3D11_FILL_WIREFRAME;
+	RasterizerDesc.CullMode = D3D11_CULL_NONE;
+	RasterizerDesc.FrontCounterClockwise = false;
+	RasterizerDesc.DepthClipEnable = true;
+
+	RJE_CHECK_FOR_SUCCESS(mDX11Device->md3dDevice->CreateRasterizerState(&RasterizerDesc, &mRasterizerState));
 }
 
 //////////////////////////////////////////////////////////////////////////
 void DX11Wrapper::BuildGeometryBuffers()
 {
-	// Create vertex buffer
-	Vertex vertices[] =
+	GeometryGenerator::MeshData grid;
+
+	GeometryGenerator geoGen;
+	geoGen.CreateGrid(160.0f, 160.0f, 250, 250, grid);
+
+	mIndexCount = (UINT) grid.Indices.size();
+
+	//
+	// Extract the vertex elements we are interested and apply the height function to
+	// each vertex.  In addition, color the vertices based on their height so we have
+	// sandy looking beaches, grassy low hills, and snow mountain peaks.
+	//
+
+	std::vector<Vertex> vertices(grid.Vertices.size());
+	for(size_t i = 0; i < grid.Vertices.size(); ++i)
 	{
-		{ DirectX::XMFLOAT3(-1.0f, -1.0f, -1.0f), DirectX::XMFLOAT4((const float*)&DirectX::Colors::White)   },
-		{ DirectX::XMFLOAT3(-1.0f, +1.0f, -1.0f), DirectX::XMFLOAT4((const float*)&DirectX::Colors::Black)   },
-		{ DirectX::XMFLOAT3(+1.0f, +1.0f, -1.0f), DirectX::XMFLOAT4((const float*)&DirectX::Colors::Red)     },
-		{ DirectX::XMFLOAT3(+1.0f, -1.0f, -1.0f), DirectX::XMFLOAT4((const float*)&DirectX::Colors::Green)   },
-		{ DirectX::XMFLOAT3(-1.0f, -1.0f, +1.0f), DirectX::XMFLOAT4((const float*)&DirectX::Colors::Blue)    },
-		{ DirectX::XMFLOAT3(-1.0f, +1.0f, +1.0f), DirectX::XMFLOAT4((const float*)&DirectX::Colors::Yellow)  },
-		{ DirectX::XMFLOAT3(+1.0f, +1.0f, +1.0f), DirectX::XMFLOAT4((const float*)&DirectX::Colors::Cyan)    },
-		{ DirectX::XMFLOAT3(+1.0f, -1.0f, +1.0f), DirectX::XMFLOAT4((const float*)&DirectX::Colors::Magenta) }
-	};
+		XMFLOAT3 p = grid.Vertices[i].Position;
+
+		p.y = GetHeight(p.x, p.z);
+
+		vertices[i].Pos   = p;
+
+		// Color the vertex based on its height.
+		if( p.y < -10.0f )
+		{
+			// Sandy beach color.
+			vertices[i].Color = XMFLOAT4(1.0f, 0.96f, 0.62f, 1.0f);
+		}
+		else if( p.y < 5.0f )
+		{
+			// Light yellow-green.
+			vertices[i].Color = XMFLOAT4(0.48f, 0.77f, 0.46f, 1.0f);
+		}
+		else if( p.y < 12.0f )
+		{
+			// Dark yellow-green.
+			vertices[i].Color = XMFLOAT4(0.1f, 0.48f, 0.19f, 1.0f);
+		}
+		else if( p.y < 20.0f )
+		{
+			// Dark brown.
+			vertices[i].Color = XMFLOAT4(0.45f, 0.39f, 0.34f, 1.0f);
+		}
+		else
+		{
+			// White snow.
+			vertices[i].Color = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+		}
+	}
 
 	D3D11_BUFFER_DESC vbd;
 	vbd.Usage = D3D11_USAGE_IMMUTABLE;
-	vbd.ByteWidth = sizeof(Vertex) * 8;
+	vbd.ByteWidth = (UINT) (sizeof(Vertex) * grid.Vertices.size());
 	vbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	vbd.CPUAccessFlags = 0;
 	vbd.MiscFlags = 0;
-	vbd.StructureByteStride = 0;
 	D3D11_SUBRESOURCE_DATA vinitData;
-	vinitData.pSysMem = vertices;
-	RJE_CHECK_FOR_SUCCESS(mDX11Device->md3dDevice->CreateBuffer(&vbd, &vinitData, &mBoxVB));
+	vinitData.pSysMem = &vertices[0];
+	RJE_CHECK_FOR_SUCCESS(mDX11Device->md3dDevice->CreateBuffer(&vbd, &vinitData, &mVertexBuffer));
 
-
-	// Create the index buffer
-	UINT indices[] = {
-		// front face
-		0, 1, 2,
-		0, 2, 3,
-		// back face
-		4, 6, 5,
-		4, 7, 6,
-		// left face
-		4, 5, 1,
-		4, 1, 0,
-		// right face
-		3, 2, 6,
-		3, 6, 7,
-		// top face
-		1, 5, 6,
-		1, 6, 2,
-		// bottom face
-		4, 0, 3, 
-		4, 3, 7
-	};
+	//
+	// Pack the indices of all the meshes into one index buffer.
+	//
 
 	D3D11_BUFFER_DESC ibd;
 	ibd.Usage = D3D11_USAGE_IMMUTABLE;
-	ibd.ByteWidth = sizeof(UINT) * 36;
+	ibd.ByteWidth = sizeof(UINT) * mIndexCount;
 	ibd.BindFlags = D3D11_BIND_INDEX_BUFFER;
 	ibd.CPUAccessFlags = 0;
 	ibd.MiscFlags = 0;
-	ibd.StructureByteStride = 0;
 	D3D11_SUBRESOURCE_DATA iinitData;
-	iinitData.pSysMem = indices;
-	RJE_CHECK_FOR_SUCCESS(mDX11Device->md3dDevice->CreateBuffer(&ibd, &iinitData, &mBoxIB));
+	iinitData.pSysMem = &grid.Indices[0];
+	RJE_CHECK_FOR_SUCCESS(mDX11Device->md3dDevice->CreateBuffer(&ibd, &iinitData, &mIndexBuffer));
 }
 
 //////////////////////////////////////////////////////////////////////////
 void DX11Wrapper::BuildFX()
 {
+#if COMPILE_SHADER == COMPILE_SHADER_RUNTIME
 	DWORD shaderFlags = 0;
 #if defined( DEBUG ) || defined( _DEBUG )
 	shaderFlags |= D3D10_SHADER_DEBUG;
@@ -189,7 +216,7 @@ void DX11Wrapper::BuildFX()
 
 	ID3D10Blob* compiledShader = nullptr;
 	ID3D10Blob* compilationMsgs = nullptr;
-	RJE_CHECK_FOR_SUCCESS( D3DCompileFromFile(	L"C:\\Users\\RamJam\\Documents\\GitHub\\RamJamEngine\\RamJamEngine\\data\\shaders\\HLSL\\color.fx",
+	RJE_CHECK_FOR_SUCCESS( D3DCompileFromFile(	L"..\\..\\RamJamEngine\\data\\shaders\\HLSL\\color.fx",
 												0,
 												0,
 												0,
@@ -205,7 +232,7 @@ void DX11Wrapper::BuildFX()
 		MessageBoxA(0, (char*)compilationMsgs->GetBufferPointer(), 0, 0);
 		RJE_SAFE_RELEASE(compilationMsgs);
 	}
-
+	
 	RJE_CHECK_FOR_SUCCESS(D3DX11CreateEffectFromMemory(	compiledShader->GetBufferPointer(),
 														compiledShader->GetBufferSize(),
 														0,
@@ -214,6 +241,24 @@ void DX11Wrapper::BuildFX()
 
 	// Done with compiled shader.
 	RJE_SAFE_RELEASE(compiledShader);
+#else
+	std::ifstream shader("..\\..\\RamJamEngine\\data\\shaders\\HLSL\\color.cso", std::ios::binary);
+
+	shader.seekg(0, std::ios_base::end);
+	int size = (int)shader.tellg();
+	shader.seekg(0, std::ios_base::beg);
+	std::vector<char> compiledShader(size);
+
+	shader.read(&compiledShader[0], size);
+	shader.close();
+
+	RJE_CHECK_FOR_SUCCESS(D3DX11CreateEffectFromMemory(	&compiledShader[0],
+														size,
+														0,
+														mDX11Device->md3dDevice,
+														&mFX));
+#endif
+
 
 	mTech = mFX->GetTechniqueByName("ColorTech");
 	mfxWorldViewProj = mFX->GetVariableByName("gWorldViewProj")->AsMatrix();
@@ -274,10 +319,12 @@ void DX11Wrapper::DrawScene()
 	mDX11Device->md3dImmediateContext->IASetInputLayout(mInputLayout);
 	mDX11Device->md3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
+	mDX11Device->md3dImmediateContext->RSSetState(mRasterizerState);
+
 	UINT stride = sizeof(Vertex);
 	UINT offset = 0;
-	mDX11Device->md3dImmediateContext->IASetVertexBuffers(0, 1, &mBoxVB, &stride, &offset);
-	mDX11Device->md3dImmediateContext->IASetIndexBuffer(mBoxIB, DXGI_FORMAT_R32_UINT, 0);
+	mDX11Device->md3dImmediateContext->IASetVertexBuffers(0, 1, &mVertexBuffer, &stride, &offset);
+	mDX11Device->md3dImmediateContext->IASetIndexBuffer(mIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
 	// Set constants
 	DirectX::XMMATRIX world = XMLoadFloat4x4(&mWorld);
@@ -292,9 +339,7 @@ void DX11Wrapper::DrawScene()
 	for(UINT p = 0; p < techDesc.Passes; ++p)
 	{
 		mTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
-
-		// 36 indices for the box.
-		mDX11Device->md3dImmediateContext->DrawIndexed(36, 0, 0);
+		mDX11Device->md3dImmediateContext->DrawIndexed(mIndexCount, 0, 0);
 	}
 
 	if (RJE_GLOBALS::gVsyncEnabled)
@@ -310,10 +355,11 @@ void DX11Wrapper::DrawScene()
 //////////////////////////////////////////////////////////////////////////
 void DX11Wrapper::Shutdown()
 {
-	RJE_SAFE_RELEASE(mBoxVB);
-	RJE_SAFE_RELEASE(mBoxIB);
+	RJE_SAFE_RELEASE(mVertexBuffer);
+	RJE_SAFE_RELEASE(mIndexBuffer);
 	RJE_SAFE_RELEASE(mFX);
 	RJE_SAFE_RELEASE(mInputLayout);
+	RJE_SAFE_RELEASE(mRasterizerState);
 
 	RJE_SAFE_RELEASE(mRenderTargetView);
 	mDX11DepthBuffer->Release();
@@ -390,4 +436,9 @@ void DX11Wrapper::ResizeWindow(int newSizeWidth, int newSizeHeight)
 	// The window resized, so update the aspect ratio and recompute the projection matrix.
 	DirectX::XMMATRIX P = DirectX::XMMatrixPerspectiveFovLH(0.25f*RJE::Math::Pi, static_cast<float>(newSizeWidth) / newSizeHeight, 1.0f, 1000.0f);
 	XMStoreFloat4x4(&mProj, P);
+}
+
+float DX11Wrapper::GetHeight(float x, float z) const
+{
+	return 0.3f*( z*sinf(0.1f*x) + x*cosf(0.1f*z) );
 }

@@ -121,8 +121,7 @@ HRESULT WINAPI D3DX11CreateEffectFromMemory(LPCVOID pData, SIZE_T DataLength, UI
 	// Note that pData must point to a compiled effect, not HLSL
 	VN( *ppEffect = new CEffect( FXFlags & D3DX11_EFFECT_RUNTIME_VALID_FLAGS) );
 	VH( ((CEffect*)(*ppEffect))->LoadEffect(pData, static_cast<uint32_t>(DataLength) ) );
-	//VH( ((CEffect*)(*ppEffect))->BindToDevice(pDevice, (srcName) ? srcName : "D3DX11Effect" ) );
-	VH( ((CEffect*)(*ppEffect))->BindToDevice(pDevice, "D3DX11Effect" ) );
+	VH( ((CEffect*)(*ppEffect))->BindToDevice(pDevice, (srcName) ? srcName : "D3DX11Effect" ) );
 
 lExit:
 	if (FAILED(hr))
