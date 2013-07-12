@@ -20,13 +20,15 @@ struct DX11Wrapper : GraphicAPI
 	ID3D11Buffer*	mVertexBuffer;
 	ID3D11Buffer*	mIndexBuffer;
 
-	ID3DX11Effect*					mFX;
-	ID3DX11EffectTechnique*			mTech;
-	ID3DX11EffectMatrixVariable*	mfxWorldViewProj;
-
-	ID3D11InputLayout*		mInputLayout;
 	ID3D11RasterizerState*	mRasterizerState_Solid;
 	ID3D11RasterizerState*	mRasterizerState_Wireframe;
+
+	DirectionalLight mDirLights[3];
+	Material mGridMat;
+	Material mBoxMat;
+	Material mCylinderMat;
+	Material mSphereMat;
+	Material mDragonMat;
 
 	XMFLOAT4X4 mSphereWorld[10];
 	XMFLOAT4X4 mCylWorld[10];
@@ -54,6 +56,10 @@ struct DX11Wrapper : GraphicAPI
 	UINT mSphereIndexCount;
 	UINT mCylinderIndexCount;
 	UINT mDragonIndexCount;
+
+	UINT mLightCount;
+
+	XMFLOAT3 mEyePosW;
 	//////////////////////////////////////////////////////////////////////////
 
 	virtual void Initialize(HWND hMainWnd, int windowWidth, int windowHeight);
@@ -63,6 +69,4 @@ struct DX11Wrapper : GraphicAPI
 	virtual void ResizeWindow(int newSizeWidth, int newSizeHeight);
 
 	void BuildGeometryBuffers();
-	void BuildFX();
-	void BuildVertexLayout();
 };

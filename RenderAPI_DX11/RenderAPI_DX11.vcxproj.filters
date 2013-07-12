@@ -42,6 +42,18 @@
     <ClInclude Include="include\DX11Math.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\DX11Light.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\DX11Effect.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\DX11Vertex.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\DX11InputLayout.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\DX11DepthBuffer.cpp">
@@ -59,9 +71,24 @@
     <ClCompile Include="src\DX11Math.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\DX11Effect.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DX11InputLayout.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="..\RamJamEngine\data\shaders\HLSL\color.fx">
+      <Filter>Resource Files\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\RamJamEngine\data\shaders\HLSL\lighting.fx">
+      <Filter>Resource Files\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\RamJamEngine\data\shaders\HLSL\lightHelper.fx">
+      <Filter>Resource Files\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\RamJamEngine\data\shaders\HLSL\basic.fx">
       <Filter>Resource Files\Shaders</Filter>
     </FxCompile>
   </ItemGroup>
