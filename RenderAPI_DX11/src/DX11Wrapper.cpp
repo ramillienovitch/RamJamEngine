@@ -218,8 +218,8 @@ void DX11Wrapper::BuildGeometryBuffers()
 	GeometryGenerator geoGen;
 	geoGen.CreateBox(1.0f, 1.0f, 1.0f, box);
 	geoGen.CreateGrid(20.0f, 30.0f, 60, 40, grid);
-	geoGen.CreateSphere(0.5f, 20, 20, sphere);
-	//geoGen.CreateGeosphere(0.5f, 2, sphere);
+	//geoGen.CreateSphere(0.5f, 20, 20, sphere);
+	geoGen.CreateGeosphere(0.5f, 2, sphere);
 	geoGen.CreateCylinder(0.5f, 0.3f, 3.0f, 20, 20, cylinder);
 
 	// Cache the vertex offsets to each object in the concatenated vertex buffer.
@@ -335,6 +335,8 @@ void DX11Wrapper::UpdateScene( float dt, float theta, float phi, float radius )
 	float z = radius*sinf(phi)*sinf(theta);
 	float y = radius*cosf(phi);
 
+	mEyePosW = XMFLOAT3(x, y, z);
+
 	// Build the view matrix.
 	DirectX::XMVECTOR pos    = DirectX::XMVectorSet(x, y, z, 1.0f);
 	DirectX::XMVECTOR target = DirectX::XMVectorZero();
@@ -357,7 +359,7 @@ void DX11Wrapper::UpdateScene( float dt, float theta, float phi, float radius )
 		mLightCount = 2; 
 
 	if( GetAsyncKeyState('3') & 0x8000 )
-		mLightCount = 3; 
+		mLightCount = 3;
 }
 
 //////////////////////////////////////////////////////////////////////////
