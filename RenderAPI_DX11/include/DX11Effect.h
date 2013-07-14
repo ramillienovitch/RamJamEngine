@@ -35,15 +35,19 @@ public:
 	void SetPointLights(const PointLight* lights)       { PointLights->SetRawValue(lights, 0, 3*sizeof(PointLight)); }
 	void SetMaterial(const Material& mat)               { Mat->SetRawValue(&mat, 0, sizeof(Material)); }
 
+	ID3DX11EffectTechnique* Light0_0Tech;
 	ID3DX11EffectTechnique* Light1_0Tech;
 	ID3DX11EffectTechnique* Light2_0Tech;
 	ID3DX11EffectTechnique* Light3_0Tech;
+	ID3DX11EffectTechnique* Light0_1Tech;
 	ID3DX11EffectTechnique* Light1_1Tech;
 	ID3DX11EffectTechnique* Light2_1Tech;
 	ID3DX11EffectTechnique* Light3_1Tech;
+	ID3DX11EffectTechnique* Light0_2Tech;
 	ID3DX11EffectTechnique* Light1_2Tech;
 	ID3DX11EffectTechnique* Light2_2Tech;
 	ID3DX11EffectTechnique* Light3_2Tech;
+	ID3DX11EffectTechnique* Light0_3Tech;
 	ID3DX11EffectTechnique* Light1_3Tech;
 	ID3DX11EffectTechnique* Light2_3Tech;
 	ID3DX11EffectTechnique* Light3_3Tech;

@@ -121,6 +121,46 @@ float4 PS(VertexOut pin, uniform int gDirLightCount, uniform int gPointLightCoun
 
 //--------------------------------------------------------------------------------------------------
 
+technique11 Light0_0
+{
+	pass P0
+	{
+		SetVertexShader( CompileShader( vs_5_0, VS() ) );
+		SetGeometryShader( NULL );
+		SetPixelShader( CompileShader( ps_5_0, PS(0,0) ) );
+	}
+}
+
+technique11 Light0_1
+{
+	pass P0
+	{
+		SetVertexShader( CompileShader( vs_5_0, VS() ) );
+		SetGeometryShader( NULL );
+		SetPixelShader( CompileShader( ps_5_0, PS(0,1) ) );
+	}
+}
+
+technique11 Light0_2
+{
+	pass P0
+	{
+		SetVertexShader( CompileShader( vs_5_0, VS() ) );
+		SetGeometryShader( NULL );
+		SetPixelShader( CompileShader( ps_5_0, PS(0,2) ) );
+	}
+}
+
+technique11 Light0_3
+{
+	pass P0
+	{
+		SetVertexShader( CompileShader( vs_5_0, VS() ) );
+		SetGeometryShader( NULL );
+		SetPixelShader( CompileShader( ps_5_0, PS(0,3) ) );
+	}
+}
+
 technique11 Light1_0
 {
 	pass P0

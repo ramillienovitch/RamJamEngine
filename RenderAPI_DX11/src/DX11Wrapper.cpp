@@ -13,7 +13,8 @@ DX11Wrapper::DX11Wrapper()
 	mRasterizerState_Solid     = nullptr;
 	mRasterizerState_Wireframe = nullptr;
 
-	mLightCount = 1;
+	mDirLightCount   = 1;
+	mPointLightCount = 0;
 	mEyePosW = XMFLOAT3(0.0f, 0.0f, 0.0f);
 
 	DirectX::XMMATRIX Id = DirectX::XMMatrixIdentity();
@@ -29,7 +30,7 @@ DX11Wrapper::DX11Wrapper()
 	XMMATRIX dragonOffset   = XMMatrixTranslation(0.0f, 1.0f, 0.0f);
 	XMMATRIX dragonRotation = XMMatrixRotationY(-45);
 	dragonScale = XMMatrixMultiply(dragonScale, dragonOffset);
-	XMStoreFloat4x4(&mDragonWorld, XMMatrixMultiply(dragonScale, dragonRotation));
+	XMStoreFloat4x4(&mModelWorld, XMMatrixMultiply(dragonScale, dragonRotation));
 
 	for(int i = 0; i < 5; ++i)
 	{
@@ -40,23 +41,23 @@ DX11Wrapper::DX11Wrapper()
 		XMStoreFloat4x4(&mSphereWorld[i*2+1], XMMatrixTranslation(+5.0f, 3.5f, -10.0f + i*5.0f));
 	}
 
-	mPointLights[0].Ambient  = XMFLOAT4(0.3f, 0.3f, 0.3f, 1.0f);
+	mPointLights[0].Ambient  = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
 	mPointLights[0].Diffuse  = XMFLOAT4(0.1f, 0.1f, 0.75f, 1.0f);
 	mPointLights[0].Specular = XMFLOAT4(0.7f, 0.7f, 0.7f, 1.0f);
-	mPointLights[0].Att      = XMFLOAT3(0, 2, 0);
-	mPointLights[0].Range    = 3.0f;
+	mPointLights[0].Att      = XMFLOAT3(0.175f, 0.175f, 0.175f);
+	mPointLights[0].Range    = 50.0f;
 
-	mPointLights[1].Ambient  = XMFLOAT4(0.3f, 0.3f, 0.3f, 1.0f);
-	mPointLights[1].Diffuse  = XMFLOAT4(0.7f, 0.7f, 0.7f, 1.0f);
+	mPointLights[1].Ambient  = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
+	mPointLights[1].Diffuse  = XMFLOAT4(0.75f, 0.1f, 0.1f, 1.0f);
 	mPointLights[1].Specular = XMFLOAT4(0.7f, 0.7f, 0.7f, 1.0f);
-	mPointLights[1].Att      = XMFLOAT3(0.0f, 0.1f, 0.0f);
-	mPointLights[1].Range    = 3.0f;
+	mPointLights[1].Att      = XMFLOAT3(0.175f, 0.175f, 0.175f);
+	mPointLights[1].Range    = 50.0f;
 
-	mPointLights[2].Ambient  = XMFLOAT4(0.3f, 0.3f, 0.3f, 1.0f);
-	mPointLights[2].Diffuse  = XMFLOAT4(0.7f, 0.7f, 0.7f, 1.0f);
+	mPointLights[2].Ambient  = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
+	mPointLights[2].Diffuse  = XMFLOAT4(0.1f, 0.75f, 0.1f, 1.0f);
 	mPointLights[2].Specular = XMFLOAT4(0.7f, 0.7f, 0.7f, 1.0f);
-	mPointLights[2].Att      = XMFLOAT3(0.0f, 0.1f, 0.0f);
-	mPointLights[2].Range    = 3.0f;
+	mPointLights[2].Att      = XMFLOAT3(0.175f, 0.175f, 0.175f);
+	mPointLights[2].Range    = 50.0f;
 
 	mDirLights[0].Ambient   = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
 	mDirLights[0].Diffuse   = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
@@ -90,9 +91,9 @@ DX11Wrapper::DX11Wrapper()
 	mBoxMat.Diffuse  = XMFLOAT4(0.651f, 0.5f, 0.392f, 1.0f);
 	mBoxMat.Specular = XMFLOAT4(0.2f, 0.2f, 0.2f, 16.0f);
 
-	mDragonMat.Ambient  = XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f);
-	mDragonMat.Diffuse  = XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f);
-	mDragonMat.Specular = XMFLOAT4(0.8f, 0.8f, 0.8f, 16.0f);
+	mModelMat.Ambient  = XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f);
+	mModelMat.Diffuse  = XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f);
+	mModelMat.Specular = XMFLOAT4(0.8f, 0.8f, 0.8f, 16.0f);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -203,6 +204,7 @@ void DX11Wrapper::Initialize(HWND hMainWnd, int windowWidth, int windowHeight)
 
 	RJE_CHECK_FOR_SUCCESS(mDX11Device->md3dDevice->CreateRasterizerState(&RasterizerDesc_Solid, &mRasterizerState_Solid));
 	RJE_CHECK_FOR_SUCCESS(mDX11Device->md3dDevice->CreateRasterizerState(&RasterizerDesc_Wireframe, &mRasterizerState_Wireframe));
+	mCurrentRasterizerState = mRasterizerState_Solid;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -226,7 +228,7 @@ void DX11Wrapper::BuildGeometryBuffers()
 
 	float tu, tv;
 
-	mDragonIndexCount = 3*dragonTriangleCount;
+	mModelIndexCount = 3*dragonTriangleCount;
 
 	GeometryGenerator::MeshData box;
 	GeometryGenerator::MeshData grid;
@@ -245,7 +247,7 @@ void DX11Wrapper::BuildGeometryBuffers()
 	mGridVertexOffset     = (int) box.Vertices.size();
 	mSphereVertexOffset   = (int) (mGridVertexOffset + grid.Vertices.size());
 	mCylinderVertexOffset = (int) (mSphereVertexOffset + sphere.Vertices.size());
-	mDragonVertexOffset   = (int) (mCylinderVertexOffset + cylinder.Vertices.size());
+	mModelVertexOffset    = (int) (mCylinderVertexOffset + cylinder.Vertices.size());
 
 	// Cache the index count of each object.
 	mBoxIndexCount      = (UINT) box.Indices.size();
@@ -258,21 +260,19 @@ void DX11Wrapper::BuildGeometryBuffers()
 	mGridIndexOffset     = mBoxIndexCount;
 	mSphereIndexOffset   = mGridIndexOffset + mGridIndexCount;
 	mCylinderIndexOffset = mSphereIndexOffset + mSphereIndexCount;
-	mDragonIndexOffset   = mCylinderIndexOffset + mCylinderIndexCount;
+	mModelIndexOffset    = mCylinderIndexOffset + mCylinderIndexCount;
 
-	UINT totalVertexCount = 
-		(UINT) box.Vertices.size() + 
-		(UINT) grid.Vertices.size() + 
-		(UINT) sphere.Vertices.size() +
-		(UINT) cylinder.Vertices.size() +
-		dragonVertexCount;
+	UINT totalVertexCount = (UINT) box.Vertices.size() +
+							(UINT) grid.Vertices.size() +
+							(UINT) sphere.Vertices.size() +
+							(UINT) cylinder.Vertices.size() +
+							dragonVertexCount;
 
-	UINT totalIndexCount = 
-		mBoxIndexCount + 
-		mGridIndexCount + 
-		mSphereIndexCount +
-		mCylinderIndexCount +
-		mDragonIndexCount;
+	UINT totalIndexCount =  mBoxIndexCount +
+							mGridIndexCount + 
+							mSphereIndexCount +
+							mCylinderIndexCount +
+							mModelIndexCount;
 
 
 	std::vector<Vertex::PosNormal> vertices(totalVertexCount);
@@ -309,7 +309,7 @@ void DX11Wrapper::BuildGeometryBuffers()
 		fin >> tu >> tv;
 		fin >> vertices[k].Normal.x >> vertices[k].Normal.y >> vertices[k].Normal.z;
 	}
-	std::vector<UINT> dragonIndices(mDragonIndexCount);
+	std::vector<UINT> dragonIndices(mModelIndexCount);
 	for(UINT i = 0; i < dragonTriangleCount; ++i)
 	{
 		fin >> dragonIndices[i*3+0] >> dragonIndices[i*3+1] >> dragonIndices[i*3+2];
@@ -369,31 +369,49 @@ void DX11Wrapper::UpdateScene( float dt, float theta, float phi, float radius )
 	// Switch the number of lights based on key presses.
 	//
 	if( GetAsyncKeyState('0') & 0x8000 )
-		mLightCount = 0; 
+		mDirLightCount = 0; 
 
 	if( GetAsyncKeyState('1') & 0x8000 )
-		mLightCount = 1; 
+		mDirLightCount = 1; 
 
 	if( GetAsyncKeyState('2') & 0x8000 )
-		mLightCount = 2; 
+		mDirLightCount = 2; 
 
 	if( GetAsyncKeyState('3') & 0x8000 )
-		mLightCount = 3;
+		mDirLightCount = 3;
+
+	if( GetAsyncKeyState('4') & 0x8000 )
+		mPointLightCount = 0; 
+
+	if( GetAsyncKeyState('5') & 0x8000 )
+		mPointLightCount = 1; 
+
+	if( GetAsyncKeyState('6') & 0x8000 )
+		mPointLightCount = 2; 
+
+	if( GetAsyncKeyState('7') & 0x8000 )
+		mPointLightCount = 3;
+
+	if ( GetAsyncKeyState(VK_RETURN) & 0x8000 )
+		mCurrentRasterizerState = mRasterizerState_Solid;
+
+	if ( GetAsyncKeyState(VK_BACK) & 0x8000 )
+		mCurrentRasterizerState = mRasterizerState_Wireframe;
 
 	static float timer = 0.0f;
-	timer += dt;
+	timer += dt*0.5f;
 
-	mPointLights[0].Position.x = 10.0f*cosf(2*RJE::Math::Pi/3 + timer );
-	mPointLights[0].Position.z = 10.0f*sinf(2*RJE::Math::Pi/3 + timer );
-	mPointLights[0].Position.y = 2.0f;
+	mPointLights[0].Position.x = 3.0f*cosf(2*RJE::Math::Pi/3 + timer );
+	mPointLights[0].Position.z = 3.0f*sinf(2*RJE::Math::Pi/3 + timer );
+	mPointLights[0].Position.y = 2.0f + cosf( timer );
 
-	mPointLights[1].Position.x = 10.0f*cosf(-2*RJE::Math::Pi/3 + timer );
-	mPointLights[1].Position.z = 10.0f*sinf(-2*RJE::Math::Pi/3 + timer );
-	mPointLights[1].Position.y = 2.0f;
+	mPointLights[1].Position.x = 3.0f*cosf(-2*RJE::Math::Pi/3 + timer );
+	mPointLights[1].Position.z = 3.0f*sinf(-2*RJE::Math::Pi/3 + timer );
+	mPointLights[1].Position.y = 2.0f + cosf( timer );
 
-	mPointLights[2].Position.x = 10.0f*cosf( timer );
-	mPointLights[2].Position.z = 10.0f*sinf( timer );
-	mPointLights[2].Position.y = 2.0f;
+	mPointLights[2].Position.x = 3.0f*cosf( timer );
+	mPointLights[2].Position.z = 3.0f*sinf( timer );
+	mPointLights[2].Position.y = 2.0f + cosf( timer );
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -408,7 +426,7 @@ void DX11Wrapper::DrawScene()
 	mDX11Device->md3dImmediateContext->IASetInputLayout(InputLayouts::PosNormal);
 	mDX11Device->md3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-	mDX11Device->md3dImmediateContext->RSSetState(mRasterizerState_Solid);
+	mDX11Device->md3dImmediateContext->RSSetState(mCurrentRasterizerState);
 
 	UINT stride = sizeof(Vertex::PosNormal);
 	UINT offset = 0;
@@ -426,19 +444,78 @@ void DX11Wrapper::DrawScene()
 	Effects::BasicFX->SetEyePosW(mEyePosW);
 
 	// Figure out which technique to use.
-	ID3DX11EffectTechnique* activeTech = Effects::BasicFX->Light1_1Tech;
+	ID3DX11EffectTechnique* activeTech = Effects::BasicFX->Light0_0Tech;
 	
-	// WARNING : Tutorial Only
-	switch(mLightCount)
+	// WARNING : Dir & Point Light < 3
+	switch(mDirLightCount)
 	{
+	case 0:
+		switch (mPointLightCount)
+		{
+		case 0:
+			activeTech = Effects::BasicFX->Light0_0Tech;
+			break;
+		case 1:
+			activeTech = Effects::BasicFX->Light0_1Tech;
+			break;
+		case 2:
+			activeTech = Effects::BasicFX->Light0_2Tech;
+			break;
+		case 3:
+			activeTech = Effects::BasicFX->Light0_3Tech;
+			break;
+		}
+		break;
 	case 1:
-		activeTech = Effects::BasicFX->Light1_1Tech;
+		switch (mPointLightCount)
+		{
+		case 0:
+			activeTech = Effects::BasicFX->Light1_0Tech;
+			break;
+		case 1:
+			activeTech = Effects::BasicFX->Light1_1Tech;
+			break;
+		case 2:
+			activeTech = Effects::BasicFX->Light1_2Tech;
+			break;
+		case 3:
+			activeTech = Effects::BasicFX->Light1_3Tech;
+			break;
+		}
 		break;
 	case 2:
-		activeTech = Effects::BasicFX->Light2_2Tech;
+		switch (mPointLightCount)
+		{
+		case 0:
+			activeTech = Effects::BasicFX->Light2_0Tech;
+			break;
+		case 1:
+			activeTech = Effects::BasicFX->Light2_1Tech;
+			break;
+		case 2:
+			activeTech = Effects::BasicFX->Light2_2Tech;
+			break;
+		case 3:
+			activeTech = Effects::BasicFX->Light2_3Tech;
+			break;
+		}
 		break;
 	case 3:
-		activeTech = Effects::BasicFX->Light3_3Tech;
+		switch (mPointLightCount)
+		{
+		case 0:
+			activeTech = Effects::BasicFX->Light3_0Tech;
+			break;
+		case 1:
+			activeTech = Effects::BasicFX->Light3_1Tech;
+			break;
+		case 2:
+			activeTech = Effects::BasicFX->Light3_2Tech;
+			break;
+		case 3:
+			activeTech = Effects::BasicFX->Light3_3Tech;
+			break;
+		}
 		break;
 	}
 
@@ -504,17 +581,17 @@ void DX11Wrapper::DrawScene()
 		}
 
 		// Draw the dragon.
-		world = XMLoadFloat4x4(&mDragonWorld);
+		world = XMLoadFloat4x4(&mModelWorld);
 		worldInvTranspose = DX11Math::InverseTranspose(world);
 		worldViewProj = world*view*proj;
 
 		Effects::BasicFX->SetWorld(world);
 		Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
 		Effects::BasicFX->SetWorldViewProj(worldViewProj);
-		Effects::BasicFX->SetMaterial(mDragonMat);
+		Effects::BasicFX->SetMaterial(mModelMat);
 
 		activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
-		mDX11Device->md3dImmediateContext->DrawIndexed(mDragonIndexCount, mDragonIndexOffset, mDragonVertexOffset);
+		mDX11Device->md3dImmediateContext->DrawIndexed(mModelIndexCount, mModelIndexOffset, mModelVertexOffset);
 	}
 
 	if (RJE_GLOBALS::gVsyncEnabled)

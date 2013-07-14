@@ -22,6 +22,7 @@ struct DX11Wrapper : GraphicAPI
 
 	ID3D11RasterizerState*	mRasterizerState_Solid;
 	ID3D11RasterizerState*	mRasterizerState_Wireframe;
+	ID3D11RasterizerState*	mCurrentRasterizerState;
 
 	PointLight       mPointLights[3];
 	DirectionalLight mDirLights[3];
@@ -29,13 +30,13 @@ struct DX11Wrapper : GraphicAPI
 	Material mBoxMat;
 	Material mCylinderMat;
 	Material mSphereMat;
-	Material mDragonMat;
+	Material mModelMat;
 
 	XMFLOAT4X4 mSphereWorld[10];
 	XMFLOAT4X4 mCylWorld[10];
 	XMFLOAT4X4 mBoxWorld;
 	XMFLOAT4X4 mGridWorld;
-	XMFLOAT4X4 mDragonWorld;
+	XMFLOAT4X4 mModelWorld;
 
 	XMFLOAT4X4 mView;
 	XMFLOAT4X4 mProj;
@@ -44,21 +45,22 @@ struct DX11Wrapper : GraphicAPI
 	int mGridVertexOffset;
 	int mSphereVertexOffset;
 	int mCylinderVertexOffset;
-	int mDragonVertexOffset;
+	int mModelVertexOffset;
 
 	UINT mBoxIndexOffset;
 	UINT mGridIndexOffset;
 	UINT mSphereIndexOffset;
 	UINT mCylinderIndexOffset;
-	UINT mDragonIndexOffset;
+	UINT mModelIndexOffset;
 
 	UINT mBoxIndexCount;
 	UINT mGridIndexCount;
 	UINT mSphereIndexCount;
 	UINT mCylinderIndexCount;
-	UINT mDragonIndexCount;
+	UINT mModelIndexCount;
 
-	UINT mLightCount;
+	UINT mDirLightCount;
+	UINT mPointLightCount;
 
 	XMFLOAT3 mEyePosW;
 	//////////////////////////////////////////////////////////////////////////
