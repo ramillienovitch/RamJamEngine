@@ -23,6 +23,7 @@ struct DX11Wrapper : GraphicAPI
 	ID3D11RasterizerState*	mRasterizerState_Solid;
 	ID3D11RasterizerState*	mRasterizerState_Wireframe;
 
+	PointLight       mPointLights[3];
 	DirectionalLight mDirLights[3];
 	Material mGridMat;
 	Material mBoxMat;

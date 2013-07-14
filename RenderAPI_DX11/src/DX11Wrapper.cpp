@@ -40,7 +40,24 @@ DX11Wrapper::DX11Wrapper()
 		XMStoreFloat4x4(&mSphereWorld[i*2+1], XMMatrixTranslation(+5.0f, 3.5f, -10.0f + i*5.0f));
 	}
 
-	// Material Specs
+	mPointLights[0].Ambient  = XMFLOAT4(0.3f, 0.3f, 0.3f, 1.0f);
+	mPointLights[0].Diffuse  = XMFLOAT4(0.1f, 0.1f, 0.75f, 1.0f);
+	mPointLights[0].Specular = XMFLOAT4(0.7f, 0.7f, 0.7f, 1.0f);
+	mPointLights[0].Att      = XMFLOAT3(0, 2, 0);
+	mPointLights[0].Range    = 3.0f;
+
+	mPointLights[1].Ambient  = XMFLOAT4(0.3f, 0.3f, 0.3f, 1.0f);
+	mPointLights[1].Diffuse  = XMFLOAT4(0.7f, 0.7f, 0.7f, 1.0f);
+	mPointLights[1].Specular = XMFLOAT4(0.7f, 0.7f, 0.7f, 1.0f);
+	mPointLights[1].Att      = XMFLOAT3(0.0f, 0.1f, 0.0f);
+	mPointLights[1].Range    = 3.0f;
+
+	mPointLights[2].Ambient  = XMFLOAT4(0.3f, 0.3f, 0.3f, 1.0f);
+	mPointLights[2].Diffuse  = XMFLOAT4(0.7f, 0.7f, 0.7f, 1.0f);
+	mPointLights[2].Specular = XMFLOAT4(0.7f, 0.7f, 0.7f, 1.0f);
+	mPointLights[2].Att      = XMFLOAT3(0.0f, 0.1f, 0.0f);
+	mPointLights[2].Range    = 3.0f;
+
 	mDirLights[0].Ambient   = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
 	mDirLights[0].Diffuse   = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
 	mDirLights[0].Specular  = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
@@ -56,6 +73,7 @@ DX11Wrapper::DX11Wrapper()
 	mDirLights[2].Specular  = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
 	mDirLights[2].Direction = XMFLOAT3(0.0f, -0.707f, -0.707f);
 
+	// Material Specs
 	mGridMat.Ambient  = XMFLOAT4(0.48f, 0.77f, 0.46f, 1.0f);
 	mGridMat.Diffuse  = XMFLOAT4(0.48f, 0.77f, 0.46f, 1.0f);
 	mGridMat.Specular = XMFLOAT4(0.2f, 0.2f, 0.2f, 16.0f);
@@ -284,6 +302,7 @@ void DX11Wrapper::BuildGeometryBuffers()
 	for(size_t i = 0; i < dragonVertexCount; ++i, ++k)
 	{
 		fin >> vertices[k].Pos.x >> vertices[k].Pos.y >> vertices[k].Pos.z;
+
 		//XMFLOAT4 rnd(RJE::Math::RandF(), RJE::Math::RandF(), RJE::Math::RandF(), 1.0f);
 		//vertices[k].Color = rnd;
 
@@ -360,6 +379,21 @@ void DX11Wrapper::UpdateScene( float dt, float theta, float phi, float radius )
 
 	if( GetAsyncKeyState('3') & 0x8000 )
 		mLightCount = 3;
+
+	static float timer = 0.0f;
+	timer += dt;
+
+	mPointLights[0].Position.x = 10.0f*cosf(2*RJE::Math::Pi/3 + timer );
+	mPointLights[0].Position.z = 10.0f*sinf(2*RJE::Math::Pi/3 + timer );
+	mPointLights[0].Position.y = 2.0f;
+
+	mPointLights[1].Position.x = 10.0f*cosf(-2*RJE::Math::Pi/3 + timer );
+	mPointLights[1].Position.z = 10.0f*sinf(-2*RJE::Math::Pi/3 + timer );
+	mPointLights[1].Position.y = 2.0f;
+
+	mPointLights[2].Position.x = 10.0f*cosf( timer );
+	mPointLights[2].Position.z = 10.0f*sinf( timer );
+	mPointLights[2].Position.y = 2.0f;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -388,22 +422,23 @@ void DX11Wrapper::DrawScene()
 
 	// Set per frame constants.
 	Effects::BasicFX->SetDirLights(mDirLights);
+	Effects::BasicFX->SetPointLights(mPointLights);
 	Effects::BasicFX->SetEyePosW(mEyePosW);
 
 	// Figure out which technique to use.
-	ID3DX11EffectTechnique* activeTech = Effects::BasicFX->Light1Tech;
+	ID3DX11EffectTechnique* activeTech = Effects::BasicFX->Light1_1Tech;
 	
 	// WARNING : Tutorial Only
 	switch(mLightCount)
 	{
 	case 1:
-		activeTech = Effects::BasicFX->Light1Tech;
+		activeTech = Effects::BasicFX->Light1_1Tech;
 		break;
 	case 2:
-		activeTech = Effects::BasicFX->Light2Tech;
+		activeTech = Effects::BasicFX->Light2_2Tech;
 		break;
 	case 3:
-		activeTech = Effects::BasicFX->Light3Tech;
+		activeTech = Effects::BasicFX->Light3_3Tech;
 		break;
 	}
 
@@ -480,7 +515,6 @@ void DX11Wrapper::DrawScene()
 
 		activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
 		mDX11Device->md3dImmediateContext->DrawIndexed(mDragonIndexCount, mDragonIndexOffset, mDragonVertexOffset);
-
 	}
 
 	if (RJE_GLOBALS::gVsyncEnabled)

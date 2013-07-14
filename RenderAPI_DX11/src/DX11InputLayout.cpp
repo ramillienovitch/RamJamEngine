@@ -23,7 +23,7 @@ void InputLayouts::InitAll(ID3D11Device* device)
 	//
 
 	D3DX11_PASS_DESC passDesc;
-	Effects::BasicFX->Light1Tech->GetPassByIndex(0)->GetDesc(&passDesc);
+	Effects::BasicFX->Light1_1Tech->GetPassByIndex(0)->GetDesc(&passDesc);
 	RJE_CHECK_FOR_SUCCESS(device->CreateInputLayout(	InputLayoutDesc::PosNormal,
 														2,
 														passDesc.pIAInputSignature,

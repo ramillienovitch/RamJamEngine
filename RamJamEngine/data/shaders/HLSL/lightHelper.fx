@@ -4,6 +4,10 @@
 // Structures and functions for lighting calculations.
 //***************************************************************************************
 
+#define MAX_LIGHT_DIR 3
+#define MAX_POINT_DIR 3
+#define MAX_SPOT_DIR 3
+
 struct DirectionalLight
 {
 	float4 Ambient;

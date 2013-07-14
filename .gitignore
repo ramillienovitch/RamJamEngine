@@ -155,3 +155,7 @@ $RECYCLE.BIN/
 
 # Asset Importer Models
 Models
+
+# Shaders Binaries
+*.cso
+*.fxo
