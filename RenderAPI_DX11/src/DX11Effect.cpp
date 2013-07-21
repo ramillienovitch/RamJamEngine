@@ -31,28 +31,33 @@ BasicEffect::BasicEffect(ID3D11Device* device, const std::wstring& filename)
 	: Effect(device, filename)
 {
 	Light0_0Tech      = mFX->GetTechniqueByName("Light0_0");
-	Light0_1Tech      = mFX->GetTechniqueByName("Light0_1");
-	Light0_2Tech      = mFX->GetTechniqueByName("Light0_2");
-	Light0_3Tech      = mFX->GetTechniqueByName("Light0_3");
-	Light1_0Tech      = mFX->GetTechniqueByName("Light1_0");
 	Light2_0Tech      = mFX->GetTechniqueByName("Light2_0");
+	Light1_0Tech      = mFX->GetTechniqueByName("Light1_0");
 	Light3_0Tech      = mFX->GetTechniqueByName("Light3_0");
+	Light0_1Tech      = mFX->GetTechniqueByName("Light0_1");
 	Light1_1Tech      = mFX->GetTechniqueByName("Light1_1");
 	Light2_1Tech      = mFX->GetTechniqueByName("Light2_1");
 	Light3_1Tech      = mFX->GetTechniqueByName("Light3_1");
+	Light0_2Tech      = mFX->GetTechniqueByName("Light0_2");
 	Light1_2Tech      = mFX->GetTechniqueByName("Light1_2");
 	Light2_2Tech      = mFX->GetTechniqueByName("Light2_2");
 	Light3_2Tech      = mFX->GetTechniqueByName("Light3_2");
+	Light0_3Tech      = mFX->GetTechniqueByName("Light0_3");
 	Light1_3Tech      = mFX->GetTechniqueByName("Light1_3");
 	Light2_3Tech      = mFX->GetTechniqueByName("Light2_3");
 	Light3_3Tech      = mFX->GetTechniqueByName("Light3_3");
+	Light1_3NoTexTech = mFX->GetTechniqueByName("Light1_3NoTex");
+
 	WorldViewProj     = mFX->GetVariableByName("gWorldViewProj")->AsMatrix();
 	World             = mFX->GetVariableByName("gWorld")->AsMatrix();
 	WorldInvTranspose = mFX->GetVariableByName("gWorldInvTranspose")->AsMatrix();
+	TexTransform      = mFX->GetVariableByName("gTexTransform")->AsMatrix();
 	EyePosW           = mFX->GetVariableByName("gEyePosW")->AsVector();
 	DirLights         = mFX->GetVariableByName("gDirLights");
 	PointLights       = mFX->GetVariableByName("gPointLights");
 	Mat               = mFX->GetVariableByName("gMaterial");
+	DiffuseMap        = mFX->GetVariableByName("gDiffuseMap")->AsShaderResource();
+	TextureSampler    = (ID3DX11EffectSamplerVariable*) mFX->GetVariableByName("gTextureSampler");
 }
 
 BasicEffect::~BasicEffect()

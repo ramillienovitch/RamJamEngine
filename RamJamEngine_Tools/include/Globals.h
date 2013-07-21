@@ -24,7 +24,7 @@ namespace RJE_GLOBALS
 	static int		gMultiSamplingCount		= 1;
 	static int		gMultisamplingQuality	= 0;
 	static BOOL		gUse4xMsaa				= true;
-	static u32		g4xMsaaQuality;
+	static u32		g4xMsaaQuality			= 4;
 
 	//************************************************************************
 	//	Debug

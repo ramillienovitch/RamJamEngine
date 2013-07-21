@@ -8,8 +8,14 @@ DX11Wrapper::DX11Wrapper()
 	md3dDriverType		= D3D_DRIVER_TYPE_HARDWARE;
 	ZeroMemory(&mScreenViewport, sizeof(D3D11_VIEWPORT));
 
-	mVertexBuffer              = nullptr;
-	mIndexBuffer               = nullptr;
+	mVertexBuffer = nullptr;
+	mIndexBuffer  = nullptr;
+	
+	mBoxMap      = nullptr;
+	mGridMap     = nullptr;
+	mSphereMap   = nullptr;
+	mCylinderMap = nullptr;
+	
 	mRasterizerState_Solid     = nullptr;
 	mRasterizerState_Wireframe = nullptr;
 
@@ -22,6 +28,17 @@ DX11Wrapper::DX11Wrapper()
 	XMStoreFloat4x4(&mView, Id);
 	XMStoreFloat4x4(&mProj, Id);
 
+	// Texture transforms
+	XMMATRIX gridTexScale   = XMMatrixScaling(5.0f, 5.0f, 0.0f);
+	XMMATRIX boxTexScale    = XMMatrixScaling(1.0f, 1.0f, 0.0f);
+	XMMATRIX cylTexScale    = boxTexScale;
+	XMMATRIX sphereTexScale = boxTexScale;
+	XMStoreFloat4x4(&mGridTexTransform,     gridTexScale);
+	XMStoreFloat4x4(&mBoxTexTransform,      boxTexScale);
+	XMStoreFloat4x4(&mCylinderTexTransform, cylTexScale);
+	XMStoreFloat4x4(&mSphereTexTransform,   sphereTexScale);
+
+	// Meshes transforms
 	XMMATRIX boxScale = XMMatrixScaling(2.0f, 1.0f, 2.0f);
 	XMMATRIX boxOffset = XMMatrixTranslation(0.0f, 0.5f, 0.0f);
 	XMStoreFloat4x4(&mBoxWorld, XMMatrixMultiply(boxScale, boxOffset));
@@ -75,20 +92,20 @@ DX11Wrapper::DX11Wrapper()
 	mDirLights[2].Direction = XMFLOAT3(0.0f, -0.707f, -0.707f);
 
 	// Material Specs
-	mGridMat.Ambient  = XMFLOAT4(0.48f, 0.77f, 0.46f, 1.0f);
-	mGridMat.Diffuse  = XMFLOAT4(0.48f, 0.77f, 0.46f, 1.0f);
+	mGridMat.Ambient  = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
+	mGridMat.Diffuse  = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 	mGridMat.Specular = XMFLOAT4(0.2f, 0.2f, 0.2f, 16.0f);
 
-	mCylinderMat.Ambient  = XMFLOAT4(0.7f, 0.85f, 0.7f, 1.0f);
-	mCylinderMat.Diffuse  = XMFLOAT4(0.7f, 0.85f, 0.7f, 1.0f);
-	mCylinderMat.Specular = XMFLOAT4(0.8f, 0.8f, 0.8f, 16.0f);
+	mCylinderMat.Ambient  = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
+	mCylinderMat.Diffuse  = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+	mCylinderMat.Specular = XMFLOAT4(0.2f, 0.2f, 0.2f, 16.0f);
 
-	mSphereMat.Ambient  = XMFLOAT4(0.1f, 0.2f, 0.3f, 1.0f);
-	mSphereMat.Diffuse  = XMFLOAT4(0.2f, 0.4f, 0.6f, 1.0f);
+	mSphereMat.Ambient  = XMFLOAT4(0.6f, 0.8f, 0.9f, 1.0f);
+	mSphereMat.Diffuse  = XMFLOAT4(0.6f, 0.8f, 0.9f, 1.0f);
 	mSphereMat.Specular = XMFLOAT4(0.9f, 0.9f, 0.9f, 16.0f);
 
-	mBoxMat.Ambient  = XMFLOAT4(0.651f, 0.5f, 0.392f, 1.0f);
-	mBoxMat.Diffuse  = XMFLOAT4(0.651f, 0.5f, 0.392f, 1.0f);
+	mBoxMat.Ambient  = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
+	mBoxMat.Diffuse  = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 	mBoxMat.Specular = XMFLOAT4(0.2f, 0.2f, 0.2f, 16.0f);
 
 	mModelMat.Ambient  = XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f);
@@ -99,9 +116,9 @@ DX11Wrapper::DX11Wrapper()
 //////////////////////////////////////////////////////////////////////////
 void DX11Wrapper::Initialize(HWND hMainWnd, int windowWidth, int windowHeight)
 {
-	mDX11Device      = new DX11Device;
-	mDX11DepthBuffer = new DX11DepthBuffer;
-
+	mDX11Device       = new DX11Device;
+	mDX11DepthBuffer  = new DX11DepthBuffer;
+	mDX11CommonStates = new DX11CommonStates;
 
 	// Create the device and device context.
 	UINT createDeviceFlags = 0;
@@ -138,7 +155,8 @@ void DX11Wrapper::Initialize(HWND hMainWnd, int windowWidth, int windowHeight)
 	sd.BufferDesc.Height					= windowHeight;
 	sd.BufferDesc.RefreshRate.Numerator		= 60;
 	sd.BufferDesc.RefreshRate.Denominator	= 1;
-	sd.BufferDesc.Format					= DXGI_FORMAT_R8G8B8A8_UNORM;
+	//sd.BufferDesc.Format					= DXGI_FORMAT_R8G8B8A8_UNORM;
+	sd.BufferDesc.Format					= DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
 	sd.BufferDesc.ScanlineOrdering			= DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
 	sd.BufferDesc.Scaling					= DXGI_MODE_SCALING_UNSPECIFIED;
 
@@ -186,25 +204,35 @@ void DX11Wrapper::Initialize(HWND hMainWnd, int windowWidth, int windowHeight)
 	Effects::InitAll(mDX11Device->md3dDevice);
 	InputLayouts::InitAll(mDX11Device->md3dDevice);
 
+	// Load textures
+	RJE_CHECK_FOR_SUCCESS(CreateDDSTextureFromFile(	mDX11Device->md3dDevice,
+													L"..\\..\\RamJamEngine\\data\\textures\\WoodCrate02.dds",
+													nullptr,
+													&mBoxMap));
+	RJE_CHECK_FOR_SUCCESS(CreateDDSTextureFromFile(	mDX11Device->md3dDevice,
+													L"..\\..\\RamJamEngine\\data\\textures\\floor.dds",
+													nullptr,
+													&mGridMap));
+	RJE_CHECK_FOR_SUCCESS(CreateDDSTextureFromFile(	mDX11Device->md3dDevice,
+													L"..\\..\\RamJamEngine\\data\\textures\\stone.dds",
+													nullptr,
+													&mSphereMap));
+	RJE_CHECK_FOR_SUCCESS(CreateDDSTextureFromFile(	mDX11Device->md3dDevice,
+													L"..\\..\\RamJamEngine\\data\\textures\\bricks.dds",
+													nullptr,
+													&mCylinderMap));
+
 	BuildGeometryBuffers();
 
 	//////////////////////////////////////////////////////////////////////////
-	D3D11_RASTERIZER_DESC RasterizerDesc_Solid;
-	ZeroMemory(&RasterizerDesc_Solid, sizeof(D3D11_RASTERIZER_DESC));
-	RasterizerDesc_Solid.FillMode = D3D11_FILL_SOLID;
-	RasterizerDesc_Solid.CullMode = D3D11_CULL_BACK;
-	RasterizerDesc_Solid.FrontCounterClockwise = false;
-	RasterizerDesc_Solid.DepthClipEnable = true;
-	D3D11_RASTERIZER_DESC RasterizerDesc_Wireframe;
-	ZeroMemory(&RasterizerDesc_Wireframe, sizeof(D3D11_RASTERIZER_DESC));
-	RasterizerDesc_Wireframe.FillMode = D3D11_FILL_WIREFRAME;
-	RasterizerDesc_Wireframe.CullMode = D3D11_CULL_NONE;
-	RasterizerDesc_Wireframe.FrontCounterClockwise = false;
-	RasterizerDesc_Wireframe.DepthClipEnable = true;
-
-	RJE_CHECK_FOR_SUCCESS(mDX11Device->md3dDevice->CreateRasterizerState(&RasterizerDesc_Solid, &mRasterizerState_Solid));
-	RJE_CHECK_FOR_SUCCESS(mDX11Device->md3dDevice->CreateRasterizerState(&RasterizerDesc_Wireframe, &mRasterizerState_Wireframe));
+	// Create the common states
+	RJE_CHECK_FOR_SUCCESS(mDX11CommonStates->Wireframe(           mDX11Device->md3dDevice, &mRasterizerState_Wireframe));
+	RJE_CHECK_FOR_SUCCESS(mDX11CommonStates->CullCounterClockwise(mDX11Device->md3dDevice, &mRasterizerState_Solid));
 	mCurrentRasterizerState = mRasterizerState_Solid;
+
+	RJE_CHECK_FOR_SUCCESS(mDX11CommonStates->AnisotropicWrap(mDX11Device->md3dDevice, &mSamplerState_Anisotropic));
+	RJE_CHECK_FOR_SUCCESS(mDX11CommonStates->LinearWrap(mDX11Device->md3dDevice, &mSamplerState_Linear));
+	mCurrentSamplerState = mSamplerState_Anisotropic;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -226,8 +254,6 @@ void DX11Wrapper::BuildGeometryBuffers()
 	fin >> ignore >> ignore >> dragonTriangleCount;
 	fin >> ignore;
 
-	float tu, tv;
-
 	mModelIndexCount = 3*dragonTriangleCount;
 
 	GeometryGenerator::MeshData box;
@@ -239,7 +265,7 @@ void DX11Wrapper::BuildGeometryBuffers()
 	geoGen.CreateBox(1.0f, 1.0f, 1.0f, box);
 	geoGen.CreateGrid(20.0f, 30.0f, 60, 40, grid);
 	//geoGen.CreateSphere(0.5f, 20, 20, sphere);
-	geoGen.CreateGeosphere(0.5f, 2, sphere);
+	geoGen.CreateGeosphere(0.5f, 3, sphere);
 	geoGen.CreateCylinder(0.5f, 0.3f, 3.0f, 20, 20, cylinder);
 
 	// Cache the vertex offsets to each object in the concatenated vertex buffer.
@@ -275,7 +301,7 @@ void DX11Wrapper::BuildGeometryBuffers()
 							mModelIndexCount;
 
 
-	std::vector<Vertex::PosNormal> vertices(totalVertexCount);
+	std::vector<Vertex::PosNormalTex> vertices(totalVertexCount);
 	XMFLOAT4 black(0.0f, 0.0f, 0.0f, 1.0f);
 	UINT k = 0;
 
@@ -283,21 +309,25 @@ void DX11Wrapper::BuildGeometryBuffers()
 	{
 		vertices[k].Pos    = box.Vertices[i].Position;
 		vertices[k].Normal = box.Vertices[i].Normal;
+		vertices[k].Tex    = box.Vertices[i].TexC;
 	}
 	for(size_t i = 0; i < grid.Vertices.size(); ++i, ++k)
 	{
 		vertices[k].Pos    = grid.Vertices[i].Position;
 		vertices[k].Normal = grid.Vertices[i].Normal;
+		vertices[k].Tex    = grid.Vertices[i].TexC;
 	}
 	for(size_t i = 0; i < sphere.Vertices.size(); ++i, ++k)
 	{
 		vertices[k].Pos    = sphere.Vertices[i].Position;
 		vertices[k].Normal = sphere.Vertices[i].Normal;
+		vertices[k].Tex    = sphere.Vertices[i].TexC;
 	}
 	for(size_t i = 0; i < cylinder.Vertices.size(); ++i, ++k)
 	{
 		vertices[k].Pos    = cylinder.Vertices[i].Position;
 		vertices[k].Normal = cylinder.Vertices[i].Normal;
+		vertices[k].Tex    = cylinder.Vertices[i].TexC;
 	}
 	for(size_t i = 0; i < dragonVertexCount; ++i, ++k)
 	{
@@ -306,7 +336,7 @@ void DX11Wrapper::BuildGeometryBuffers()
 		//XMFLOAT4 rnd(RJE::Math::RandF(), RJE::Math::RandF(), RJE::Math::RandF(), 1.0f);
 		//vertices[k].Color = rnd;
 
-		fin >> tu >> tv;
+		fin >> vertices[k].Tex.x >> vertices[k].Tex.y;
 		fin >> vertices[k].Normal.x >> vertices[k].Normal.y >> vertices[k].Normal.z;
 	}
 	std::vector<UINT> dragonIndices(mModelIndexCount);
@@ -319,7 +349,7 @@ void DX11Wrapper::BuildGeometryBuffers()
 
 	D3D11_BUFFER_DESC vbd;
 	vbd.Usage = D3D11_USAGE_IMMUTABLE;
-	vbd.ByteWidth = (UINT) (sizeof(Vertex::PosNormal) * totalVertexCount);
+	vbd.ByteWidth = (UINT) (sizeof(Vertex::PosNormalTex) * totalVertexCount);
 	vbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	vbd.CPUAccessFlags = 0;
 	vbd.MiscFlags = 0;
@@ -398,6 +428,12 @@ void DX11Wrapper::UpdateScene( float dt, float theta, float phi, float radius )
 	if ( GetAsyncKeyState(VK_BACK) & 0x8000 )
 		mCurrentRasterizerState = mRasterizerState_Wireframe;
 
+	if ( GetAsyncKeyState(0x41) & 0x8000 )	// A key
+		mCurrentSamplerState = mSamplerState_Anisotropic;
+
+	if ( GetAsyncKeyState(0x5A) & 0x8000 )	// Z key
+		mCurrentSamplerState = mSamplerState_Linear;
+
 	static float timer = 0.0f;
 	timer += dt*0.5f;
 
@@ -423,28 +459,30 @@ void DX11Wrapper::DrawScene()
 	mDX11Device->md3dImmediateContext->ClearRenderTargetView(mRenderTargetView, DirectX::Colors::LightSteelBlue);
 	mDX11Device->md3dImmediateContext->ClearDepthStencilView(mDX11DepthBuffer->mDepthStencilView, D3D11_CLEAR_DEPTH|D3D11_CLEAR_STENCIL, 1.0f, 0);
 
-	mDX11Device->md3dImmediateContext->IASetInputLayout(InputLayouts::PosNormal);
+	mDX11Device->md3dImmediateContext->IASetInputLayout(InputLayouts::PosNormalTex);
 	mDX11Device->md3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	mDX11Device->md3dImmediateContext->RSSetState(mCurrentRasterizerState);
 
-	UINT stride = sizeof(Vertex::PosNormal);
+	UINT stride = sizeof(Vertex::PosNormalTex);
 	UINT offset = 0;
 	mDX11Device->md3dImmediateContext->IASetVertexBuffers(0, 1, &mVertexBuffer, &stride, &offset);
 	mDX11Device->md3dImmediateContext->IASetIndexBuffer(mIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
 	// Set constants
-	DirectX::XMMATRIX view  = XMLoadFloat4x4(&mView);
-	DirectX::XMMATRIX proj  = XMLoadFloat4x4(&mProj);
+	DirectX::XMMATRIX view     = XMLoadFloat4x4(&mView);
+	DirectX::XMMATRIX proj     = XMLoadFloat4x4(&mProj);
 	DirectX::XMMATRIX viewProj = view*proj;
 
 	// Set per frame constants.
 	Effects::BasicFX->SetDirLights(mDirLights);
 	Effects::BasicFX->SetPointLights(mPointLights);
 	Effects::BasicFX->SetEyePosW(mEyePosW);
+	Effects::BasicFX->SetSamplerState(mCurrentSamplerState);
 
-	// Figure out which technique to use.
+	// Figure out which technique to use. The model doesn't have any text coordinates so we use another technique
 	ID3DX11EffectTechnique* activeTech = Effects::BasicFX->Light0_0Tech;
+	ID3DX11EffectTechnique* activeTechModel = Effects::BasicFX->Light1_3NoTexTech;
 	
 	// WARNING : Dir & Point Light < 3
 	switch(mDirLightCount)
@@ -520,30 +558,38 @@ void DX11Wrapper::DrawScene()
 	}
 
 	D3DX11_TECHNIQUE_DESC techDesc;
+	XMMATRIX world;
+	XMMATRIX worldInvTranspose;
+	XMMATRIX worldViewProj;
+
 	activeTech->GetDesc( &techDesc );
 	for(UINT p = 0; p < techDesc.Passes; ++p)
 	{		
 		// Draw the grid.
-		XMMATRIX world = XMLoadFloat4x4(&mGridWorld);
-		XMMATRIX worldInvTranspose = DX11Math::InverseTranspose(world);
-		XMMATRIX worldViewProj = world*view*proj;
+		world             = XMLoadFloat4x4(&mGridWorld);
+		worldInvTranspose = DX11Math::InverseTranspose(world);
+		worldViewProj     = world*view*proj;
 
 		Effects::BasicFX->SetWorld(world);
 		Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
 		Effects::BasicFX->SetWorldViewProj(worldViewProj);
+		Effects::BasicFX->SetTexTransform(XMLoadFloat4x4(&mGridTexTransform));
 		Effects::BasicFX->SetMaterial(mGridMat);
+		Effects::BasicFX->SetDiffuseMap(mGridMap);
 
 		activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
 		mDX11Device->md3dImmediateContext->DrawIndexed(mGridIndexCount, mGridIndexOffset, mGridVertexOffset);
 
-		world = XMLoadFloat4x4(&mBoxWorld);
+		world             = XMLoadFloat4x4(&mBoxWorld);
 		worldInvTranspose = DX11Math::InverseTranspose(world);
-		worldViewProj = world*view*proj;
+		worldViewProj     = world*view*proj;
 
 		Effects::BasicFX->SetWorld(world);
 		Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
 		Effects::BasicFX->SetWorldViewProj(worldViewProj);
+		Effects::BasicFX->SetTexTransform(XMLoadFloat4x4(&mBoxTexTransform));
 		Effects::BasicFX->SetMaterial(mBoxMat);
+		Effects::BasicFX->SetDiffuseMap(mBoxMap);
 
 		activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
 		mDX11Device->md3dImmediateContext->DrawIndexed(mBoxIndexCount, mBoxIndexOffset, mBoxVertexOffset);
@@ -551,14 +597,16 @@ void DX11Wrapper::DrawScene()
 		// Draw the cylinders.
 		for(int i = 0; i < 10; ++i)
 		{
-			world = XMLoadFloat4x4(&mCylWorld[i]);
+			world             = XMLoadFloat4x4(&mCylWorld[i]);
 			worldInvTranspose = DX11Math::InverseTranspose(world);
-			worldViewProj = world*view*proj;
+			worldViewProj     = world*view*proj;
 
 			Effects::BasicFX->SetWorld(world);
 			Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
 			Effects::BasicFX->SetWorldViewProj(worldViewProj);
+			Effects::BasicFX->SetTexTransform(XMLoadFloat4x4(&mCylinderTexTransform));
 			Effects::BasicFX->SetMaterial(mCylinderMat);
+			Effects::BasicFX->SetDiffuseMap(mCylinderMap);
 
 			activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
 			mDX11Device->md3dImmediateContext->DrawIndexed(mCylinderIndexCount, mCylinderIndexOffset, mCylinderVertexOffset);
@@ -567,30 +615,36 @@ void DX11Wrapper::DrawScene()
 		// Draw the spheres.
 		for(int i = 0; i < 10; ++i)
 		{
-			world = XMLoadFloat4x4(&mSphereWorld[i]);
+			world             = XMLoadFloat4x4(&mSphereWorld[i]);
 			worldInvTranspose = DX11Math::InverseTranspose(world);
-			worldViewProj = world*view*proj;
+			worldViewProj     = world*view*proj;
 
 			Effects::BasicFX->SetWorld(world);
 			Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
 			Effects::BasicFX->SetWorldViewProj(worldViewProj);
+			Effects::BasicFX->SetTexTransform(XMLoadFloat4x4(&mSphereTexTransform));
 			Effects::BasicFX->SetMaterial(mSphereMat);
+			Effects::BasicFX->SetDiffuseMap(mSphereMap);
 
 			activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
 			mDX11Device->md3dImmediateContext->DrawIndexed(mSphereIndexCount, mSphereIndexOffset, mSphereVertexOffset);
 		}
+	}
 
-		// Draw the dragon.
-		world = XMLoadFloat4x4(&mModelWorld);
+	activeTechModel->GetDesc( &techDesc );
+	for(UINT p = 0; p < techDesc.Passes; ++p)
+	{
+		// Draw the model.
+		world             = XMLoadFloat4x4(&mModelWorld);
 		worldInvTranspose = DX11Math::InverseTranspose(world);
-		worldViewProj = world*view*proj;
+		worldViewProj     = world*view*proj;
 
 		Effects::BasicFX->SetWorld(world);
 		Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
 		Effects::BasicFX->SetWorldViewProj(worldViewProj);
 		Effects::BasicFX->SetMaterial(mModelMat);
 
-		activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
+		activeTechModel->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
 		mDX11Device->md3dImmediateContext->DrawIndexed(mModelIndexCount, mModelIndexOffset, mModelVertexOffset);
 	}
 
@@ -609,6 +663,12 @@ void DX11Wrapper::Shutdown()
 {
 	RJE_SAFE_RELEASE(mVertexBuffer);
 	RJE_SAFE_RELEASE(mIndexBuffer);
+
+	RJE_SAFE_RELEASE(mBoxMap);
+	RJE_SAFE_RELEASE(mGridMap);
+	RJE_SAFE_RELEASE(mSphereMap);
+	RJE_SAFE_RELEASE(mCylinderMap);
+	
 	RJE_SAFE_RELEASE(mRasterizerState_Solid);
 	RJE_SAFE_RELEASE(mRasterizerState_Wireframe);
 
@@ -620,6 +680,7 @@ void DX11Wrapper::Shutdown()
 	RJE_SAFE_RELEASE(mSwapChain);
 	mDX11Device->Release();
 
+	RJE_SAFE_DELETE(mDX11CommonStates);
 	RJE_SAFE_DELETE(mDX11DepthBuffer);
 	RJE_SAFE_DELETE(mDX11Device);
 }

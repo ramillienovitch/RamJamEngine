@@ -41,6 +41,7 @@
 // Core
 #include "Platform.h"
 #include "Globals.h"
+#include "IniFile.h"
 #include "Types.h"
 #include "Singleton.h"
 #include "Debug.h"

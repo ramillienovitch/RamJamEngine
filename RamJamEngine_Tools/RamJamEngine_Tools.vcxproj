@@ -278,6 +278,7 @@
   <ItemGroup>
     <ClInclude Include="include\Debug.h" />
     <ClInclude Include="include\Globals.h" />
+    <ClInclude Include="include\IniFile.h" />
     <ClInclude Include="include\Platform.h" />
     <ClInclude Include="include\Profiler.h" />
     <ClInclude Include="include\Singleton.h" />
@@ -286,6 +287,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Debug.cpp" />
+    <ClCompile Include="src\IniFile.cpp" />
     <ClCompile Include="src\Profiler.cpp" />
     <ClCompile Include="src\Timer.cpp" />
   </ItemGroup>

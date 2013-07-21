@@ -37,6 +37,9 @@ BOOL System::Initialize(int nCmdShow)
 
 	RegisterMyClass(mHInst);
 	RJE_ASSERT(InitializeWindows(nCmdShow));
+
+	// Initialize all the globals defined in the config.ini file
+	LoadConfigFile();
 	
 	// We launch DirectX or OpenGL
 	mGraphicAPI->Initialize(mHWnd, RJE_GLOBALS::gScreenWidth, RJE_GLOBALS::gScreenHeight);
@@ -461,6 +464,16 @@ void System::CalculateFrameStats()
 		// Reset for next average.
 		frameCnt = 0;
 		timeElapsed += 1.0f;
+	}
+}
+
+//////////////////////////////////////////////////////////////////////////
+void System::LoadConfigFile()
+{
+	std::ifstream iFile("../data/Config.ini");
+	if (!iFile)
+	{
+		CIniFile::Create("../data/Config.ini");
 	}
 }
 

@@ -50,6 +50,9 @@ private:
 	BOOL InitializeWindows(int);
 	ATOM RegisterMyClass(HINSTANCE);
 	void ShutdownWindows();
+
+	void LoadConfigFile();
+
 };
 
 static System* sInstance;
