@@ -229,6 +229,58 @@ string CIniFile::GetValue(string KeyName, string SectionName, string FileName)
 	return "";																// No value was found
 }
 
+const wchar_t* CIniFile::GetValueWchar(string KeyName, string SectionName, string FileName)
+{
+	vector<Record> content = GetRecord(KeyName,SectionName, FileName);		// Get the Record
+
+	if(!content.empty())													// Make sure there is a value to return
+	{
+		string key = content[0].Value;
+		wchar_t *p=new wchar_t[key.size()+1];
+
+
+		for(string::size_type i=0; i<key.size()+1; ++i)
+			p[i]=key[i];
+
+		return p;
+	}
+
+	return L"";																// No value was found
+}
+
+int CIniFile::GetValueInt(string KeyName, string SectionName, string FileName)
+{
+	vector<Record> content = GetRecord(KeyName,SectionName, FileName);		// Get the Record
+
+	if(!content.empty())													// Make sure there is a value to return
+		return atoi(content[0].Value.c_str());								// And return the value
+
+	return -9999;															// No value was found
+}
+
+float CIniFile::GetValueFloat(string KeyName, string SectionName, string FileName)
+{
+	vector<Record> content = GetRecord(KeyName,SectionName, FileName);		// Get the Record
+
+	if(!content.empty())													// Make sure there is a value to return
+		return (float)atof(content[0].Value.c_str());								// And return the value
+
+	return -9999.0f;														// No value was found
+}
+
+bool CIniFile::GetValueBool(string KeyName, string SectionName, string FileName)
+{
+	vector<Record> content = GetRecord(KeyName,SectionName, FileName);		// Get the Record
+
+	if(!content.empty())													// Make sure there is a value to return
+	{
+		std::string temp = content[0].Value;
+		return (temp == "true" || temp == "TRUE" || temp == "1");			// And return the value
+	}
+
+	return false;															// No value was found
+}
+
 bool CIniFile::SetValue(string KeyName, string Value, string SectionName, string FileName)
 {
 	vector<Record> content;													// Holds the current record													// Holds the current record

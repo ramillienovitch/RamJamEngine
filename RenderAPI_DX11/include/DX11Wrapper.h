@@ -2,6 +2,8 @@
 
 #include "DX11Helper.h"
 #include "../../RamJamEngine/include/GraphicAPI.h"
+#include "IniFile.h"
+
 
 struct DX11Wrapper : GraphicAPI
 {

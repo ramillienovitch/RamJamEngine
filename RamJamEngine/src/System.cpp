@@ -30,6 +30,9 @@ BOOL System::Initialize(int nCmdShow)
 
 	sInstance = this;
 
+	// Initialize all the globals defined in the config.ini file
+	LoadConfigFile();
+
 	// Initialize global strings
 	LoadString(mHInst, IDS_APP_TITLE, mSzTitle, 100);
 	LoadString(mHInst, IDC_RAMJAMENGINE, mSzWindowClass, 100);
@@ -38,9 +41,6 @@ BOOL System::Initialize(int nCmdShow)
 	RegisterMyClass(mHInst);
 	RJE_ASSERT(InitializeWindows(nCmdShow));
 
-	// Initialize all the globals defined in the config.ini file
-	LoadConfigFile();
-	
 	// We launch DirectX or OpenGL
 	mGraphicAPI->Initialize(mHWnd, RJE_GLOBALS::gScreenWidth, RJE_GLOBALS::gScreenHeight);
 
@@ -470,11 +470,37 @@ void System::CalculateFrameStats()
 //////////////////////////////////////////////////////////////////////////
 void System::LoadConfigFile()
 {
-	std::ifstream iFile("../data/Config.ini");
+	const char* filename = "../data/Config.ini";
+	std::ifstream iFile(filename);
 	if (!iFile)
 	{
-		CIniFile::Create("../data/Config.ini");
+		CIniFile::Create(filename);
+
+		CIniFile::SetValue("fullscreen",           "false", "rendering", filename);
+		CIniFile::SetValue("screenwidth",          "1280",  "rendering", filename);
+		CIniFile::SetValue("screenheight",         "720",   "rendering", filename);
+		CIniFile::SetValue("vsync",                "false", "rendering", filename);
+		CIniFile::SetValue("multisampling",        "true",  "rendering", filename);
+		CIniFile::SetValue("multisamplingcount",   "1",     "rendering", filename);
+		CIniFile::SetValue("multisamplingquality", "0",     "rendering", filename);
+		CIniFile::SetValue("use4xmsaa",            "true",  "rendering", filename);
+		CIniFile::SetValue("msaaquality",          "4",     "rendering", filename);
+
+		CIniFile::SetValue("debugverbosity", "0",    "debug", filename);
+		CIniFile::SetValue("showcursor",     "true", "debug", filename);
 	}
+	RJE_GLOBALS::gFullScreen			= CIniFile::GetValueBool("fullscreen",          "rendering", filename);
+	RJE_GLOBALS::gScreenWidth			= CIniFile::GetValueInt("screenwidth",          "rendering", filename);
+	RJE_GLOBALS::gScreenHeight			= CIniFile::GetValueInt("screenheight",         "rendering", filename);
+	RJE_GLOBALS::gVsyncEnabled			= CIniFile::GetValueBool("vsync",               "rendering", filename);
+	RJE_GLOBALS::gEnableMultiSampling	= CIniFile::GetValueBool("multisampling",       "rendering", filename);
+	RJE_GLOBALS::gMultiSamplingCount	= CIniFile::GetValueInt("multisamplingcount",   "rendering", filename);
+	RJE_GLOBALS::gMultisamplingQuality	= CIniFile::GetValueInt("multisamplingquality", "rendering", filename);
+	RJE_GLOBALS::gUse4xMsaa				= CIniFile::GetValueBool("use4xmsaa",           "rendering", filename);
+	RJE_GLOBALS::g4xMsaaQuality			= CIniFile::GetValueInt("msaaquality",          "rendering", filename);
+
+	RJE_GLOBALS::gDebugVerbosity		= CIniFile::GetValueInt("debugverbosity",  "debug", filename);
+	RJE_GLOBALS::gShowCursor			= CIniFile::GetValueBool("showcursor",     "debug", filename);
 }
 
 //////////////////////////////////////////////////////////////////////////

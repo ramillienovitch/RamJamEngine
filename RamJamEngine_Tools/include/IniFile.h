@@ -40,6 +40,10 @@ public:
 	static vector<Record> GetSection(string SectionName, string FileName);
 	static vector<string> GetSectionNames(string FileName);
 	static string GetValue(string KeyName, string SectionName, string FileName);
+	static const wchar_t* GetValueWchar(string KeyName, string SectionName, string FileName);
+	static int GetValueInt(string KeyName, string SectionName, string FileName);
+	static float GetValueFloat(string KeyName, string SectionName, string FileName);
+	static bool GetValueBool(string KeyName, string SectionName, string FileName);
 	static bool RecordExists(string KeyName, string SectionName, string FileName);
 	static bool RenameSection(string OldSectionName, string NewSectionName, string FileName);
 	static bool SectionExists(string SectionName, string FileName);

@@ -206,19 +206,19 @@ void DX11Wrapper::Initialize(HWND hMainWnd, int windowWidth, int windowHeight)
 
 	// Load textures
 	RJE_CHECK_FOR_SUCCESS(CreateDDSTextureFromFile(	mDX11Device->md3dDevice,
-													L"..\\..\\RamJamEngine\\data\\textures\\WoodCrate02.dds",
+													CIniFile::GetValueWchar("box", "textures", "..\\..\\RamJamEngine\\data\\Resources.ini"),
 													nullptr,
 													&mBoxMap));
 	RJE_CHECK_FOR_SUCCESS(CreateDDSTextureFromFile(	mDX11Device->md3dDevice,
-													L"..\\..\\RamJamEngine\\data\\textures\\floor.dds",
+													CIniFile::GetValueWchar("grid", "textures", "..\\..\\RamJamEngine\\data\\Resources.ini"),
 													nullptr,
 													&mGridMap));
 	RJE_CHECK_FOR_SUCCESS(CreateDDSTextureFromFile(	mDX11Device->md3dDevice,
-													L"..\\..\\RamJamEngine\\data\\textures\\stone.dds",
+													CIniFile::GetValueWchar("sphere", "textures", "..\\..\\RamJamEngine\\data\\Resources.ini"),
 													nullptr,
 													&mSphereMap));
 	RJE_CHECK_FOR_SUCCESS(CreateDDSTextureFromFile(	mDX11Device->md3dDevice,
-													L"..\\..\\RamJamEngine\\data\\textures\\bricks.dds",
+													CIniFile::GetValueWchar("cylinder", "textures", "..\\..\\RamJamEngine\\data\\Resources.ini"),
 													nullptr,
 													&mCylinderMap));
 
@@ -238,7 +238,7 @@ void DX11Wrapper::Initialize(HWND hMainWnd, int windowWidth, int windowHeight)
 //////////////////////////////////////////////////////////////////////////
 void DX11Wrapper::BuildGeometryBuffers()
 {
-	std::ifstream fin("..\\..\\RamJamEngine\\data\\models\\dragon.mesh");
+	std::ifstream fin(CIniFile::GetValue("modelpath", "meshes", "..\\..\\RamJamEngine\\data\\Resources.ini"));
 
 	if(!fin)
 	{
@@ -669,6 +669,9 @@ void DX11Wrapper::Shutdown()
 	RJE_SAFE_RELEASE(mSphereMap);
 	RJE_SAFE_RELEASE(mCylinderMap);
 	
+	RJE_SAFE_RELEASE(mSamplerState_Anisotropic);
+	RJE_SAFE_RELEASE(mSamplerState_Linear);
+
 	RJE_SAFE_RELEASE(mRasterizerState_Solid);
 	RJE_SAFE_RELEASE(mRasterizerState_Wireframe);
 

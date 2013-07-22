@@ -352,8 +352,10 @@
     <Image Include="small.ico" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\data\Config.ini" />
     <None Include="..\data\models\dragon.mesh" />
     <None Include="..\data\models\sphere.mesh" />
+    <None Include="..\data\Resources.ini" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\include\RamJamEngine.rc" />

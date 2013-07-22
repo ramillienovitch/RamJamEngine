@@ -22,6 +22,9 @@
     <Filter Include="Header Files\RJE_Graphic">
       <UniqueIdentifier>{6af15578-1565-4af3-a659-1600bb6f85ba}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource Files\Config Files">
+      <UniqueIdentifier>{e318fc04-a816-474f-9c72-a471a2f9c99a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -70,6 +73,15 @@
     <Image Include="..\data\textures\seafloor.dds">
       <Filter>Resource Files\Textures</Filter>
     </Image>
+    <Image Include="..\data\textures\bricks.dds">
+      <Filter>Resource Files\Textures</Filter>
+    </Image>
+    <Image Include="..\data\textures\floor.dds">
+      <Filter>Resource Files\Textures</Filter>
+    </Image>
+    <Image Include="..\data\textures\stone.dds">
+      <Filter>Resource Files\Textures</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\data\models\dragon.mesh">
@@ -77,6 +89,12 @@
     </None>
     <None Include="..\data\models\sphere.mesh">
       <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\data\Config.ini">
+      <Filter>Resource Files\Config Files</Filter>
+    </None>
+    <None Include="..\data\Resources.ini">
+      <Filter>Resource Files\Config Files</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
