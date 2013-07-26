@@ -57,6 +57,7 @@ BasicEffect::BasicEffect(ID3D11Device* device, const std::wstring& filename)
 	PointLights       = mFX->GetVariableByName("gPointLights");
 	Mat               = mFX->GetVariableByName("gMaterial");
 	DiffuseMap        = mFX->GetVariableByName("gDiffuseMap")->AsShaderResource();
+	MaskMap           = mFX->GetVariableByName("gMaskMap")->AsShaderResource();
 	TextureSampler    = (ID3DX11EffectSamplerVariable*) mFX->GetVariableByName("gTextureSampler");
 }
 

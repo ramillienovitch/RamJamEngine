@@ -28,6 +28,8 @@ struct DX11Wrapper : GraphicAPI
 	ID3D11ShaderResourceView* mGridMap;
 	ID3D11ShaderResourceView* mSphereMap;
 	ID3D11ShaderResourceView* mCylinderMap;
+	ID3D11ShaderResourceView* mMaskMap;
+	ID3D11ShaderResourceView* mWhiteMaskMap;
 
 	ID3D11RasterizerState*	mRasterizerState_Solid;
 	ID3D11RasterizerState*	mRasterizerState_Wireframe;

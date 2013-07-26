@@ -36,6 +36,7 @@ public:
 	HRESULT SetPointLights(const PointLight* lights)       { return PointLights->SetRawValue(lights, 0, 3*sizeof(PointLight)); }
 	HRESULT SetMaterial(const Material& mat)               { return Mat->SetRawValue(&mat, 0, sizeof(Material)); }
 	HRESULT SetDiffuseMap(ID3D11ShaderResourceView* tex)   { return DiffuseMap->SetResource(tex); }
+	HRESULT SetMaskMap(ID3D11ShaderResourceView* tex)      { return MaskMap->SetResource(tex); }
 	HRESULT SetSamplerState(ID3D11SamplerState* pSampler)  { return TextureSampler->SetSampler(0, pSampler); }
 
 	ID3DX11EffectTechnique* Light0_0Tech;
@@ -68,6 +69,7 @@ public:
 	ID3DX11EffectSamplerVariable* TextureSampler;
 
 	ID3DX11EffectShaderResourceVariable* DiffuseMap;
+	ID3DX11EffectShaderResourceVariable* MaskMap;
 };
 #pragma endregion
 

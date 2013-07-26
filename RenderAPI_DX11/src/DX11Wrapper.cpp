@@ -11,10 +11,12 @@ DX11Wrapper::DX11Wrapper()
 	mVertexBuffer = nullptr;
 	mIndexBuffer  = nullptr;
 	
-	mBoxMap      = nullptr;
-	mGridMap     = nullptr;
-	mSphereMap   = nullptr;
-	mCylinderMap = nullptr;
+	mBoxMap       = nullptr;
+	mGridMap      = nullptr;
+	mSphereMap    = nullptr;
+	mCylinderMap  = nullptr;
+	mMaskMap      = nullptr;
+	mWhiteMaskMap = nullptr;
 	
 	mRasterizerState_Solid     = nullptr;
 	mRasterizerState_Wireframe = nullptr;
@@ -221,6 +223,14 @@ void DX11Wrapper::Initialize(HWND hMainWnd, int windowWidth, int windowHeight)
 													CIniFile::GetValueWchar("cylinder", "textures", "..\\..\\RamJamEngine\\data\\Resources.ini"),
 													nullptr,
 													&mCylinderMap));
+	RJE_CHECK_FOR_SUCCESS(CreateDDSTextureFromFile(	mDX11Device->md3dDevice,
+													CIniFile::GetValueWchar("mask", "textures", "..\\..\\RamJamEngine\\data\\Resources.ini"),
+													nullptr,
+													&mMaskMap));
+	RJE_CHECK_FOR_SUCCESS(CreateDDSTextureFromFile(	mDX11Device->md3dDevice,
+													CIniFile::GetValueWchar("whitemask", "textures", "..\\..\\RamJamEngine\\data\\Resources.ini"),
+													nullptr,
+													&mWhiteMaskMap));
 
 	BuildGeometryBuffers();
 
@@ -576,6 +586,7 @@ void DX11Wrapper::DrawScene()
 		Effects::BasicFX->SetTexTransform(XMLoadFloat4x4(&mGridTexTransform));
 		Effects::BasicFX->SetMaterial(mGridMat);
 		Effects::BasicFX->SetDiffuseMap(mGridMap);
+		Effects::BasicFX->SetMaskMap(mMaskMap);
 
 		activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
 		mDX11Device->md3dImmediateContext->DrawIndexed(mGridIndexCount, mGridIndexOffset, mGridVertexOffset);
@@ -590,6 +601,7 @@ void DX11Wrapper::DrawScene()
 		Effects::BasicFX->SetTexTransform(XMLoadFloat4x4(&mBoxTexTransform));
 		Effects::BasicFX->SetMaterial(mBoxMat);
 		Effects::BasicFX->SetDiffuseMap(mBoxMap);
+		Effects::BasicFX->SetMaskMap(mWhiteMaskMap);
 
 		activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
 		mDX11Device->md3dImmediateContext->DrawIndexed(mBoxIndexCount, mBoxIndexOffset, mBoxVertexOffset);
@@ -607,6 +619,7 @@ void DX11Wrapper::DrawScene()
 			Effects::BasicFX->SetTexTransform(XMLoadFloat4x4(&mCylinderTexTransform));
 			Effects::BasicFX->SetMaterial(mCylinderMat);
 			Effects::BasicFX->SetDiffuseMap(mCylinderMap);
+			Effects::BasicFX->SetMaskMap(mWhiteMaskMap);
 
 			activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
 			mDX11Device->md3dImmediateContext->DrawIndexed(mCylinderIndexCount, mCylinderIndexOffset, mCylinderVertexOffset);
@@ -625,6 +638,7 @@ void DX11Wrapper::DrawScene()
 			Effects::BasicFX->SetTexTransform(XMLoadFloat4x4(&mSphereTexTransform));
 			Effects::BasicFX->SetMaterial(mSphereMat);
 			Effects::BasicFX->SetDiffuseMap(mSphereMap);
+			Effects::BasicFX->SetMaskMap(mWhiteMaskMap);
 
 			activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
 			mDX11Device->md3dImmediateContext->DrawIndexed(mSphereIndexCount, mSphereIndexOffset, mSphereVertexOffset);
@@ -668,6 +682,8 @@ void DX11Wrapper::Shutdown()
 	RJE_SAFE_RELEASE(mGridMap);
 	RJE_SAFE_RELEASE(mSphereMap);
 	RJE_SAFE_RELEASE(mCylinderMap);
+	RJE_SAFE_RELEASE(mMaskMap);
+	RJE_SAFE_RELEASE(mWhiteMaskMap);
 	
 	RJE_SAFE_RELEASE(mSamplerState_Anisotropic);
 	RJE_SAFE_RELEASE(mSamplerState_Linear);

@@ -28,6 +28,7 @@ cbuffer cbPerObject
 
 // Nonnumeric values cannot be added to a cbuffer.
 Texture2D gDiffuseMap;
+Texture2D gMaskMap;
 
 SamplerState gTextureSampler;
 
@@ -91,7 +92,7 @@ float4 PS(VertexOut pin, uniform int gDirLightCount, uniform int gPointLightCoun
 	if(gUseTexure)
 	{
 		// Sample texture.
-		texColor = gDiffuseMap.Sample( gTextureSampler, pin.Tex );
+		texColor = gDiffuseMap.Sample( gTextureSampler, pin.Tex ) * gMaskMap.Sample( gTextureSampler, pin.Tex );
 	}
 	
 	//
