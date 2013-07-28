@@ -47,6 +47,7 @@
 #include "Debug.h"
 #include "Profiler.h"
 #include "Timer.h"
+#include "Input.h"
 //////////////////////////////////////////////////////////////////////////
 // Math
 #include "Vector2.h"

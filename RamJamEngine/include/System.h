@@ -5,8 +5,6 @@
 struct System
 {
 public:
-	System();
-	~System();
 
 	HWND		mHWnd;
 	HINSTANCE	mHInst;					// current instance
@@ -24,20 +22,34 @@ public:
 	float		mCameraPhi;
 	float		mCameraRadius;
 
+	bool		mCameraAnimated;
+	float		mAnimationSpeed;
+
 	GraphicAPI* mGraphicAPI;
-
-	Timer mTimer;
-
+	
 	BOOL				Initialize(int);
 	void				Shutdown();
 	void				Run();
 	void				OnResize();
 	float				AspectRatio()const;
 	LRESULT CALLBACK	MessageHandler(HWND, UINT, WPARAM, LPARAM);
+	
+	static System* Instance()
+	{
+		if(!sInstance)
+			sInstance = new System();
 
-	void OnMouseDown(WPARAM, int, int);
-	void OnMouseUp(WPARAM, int, int);
-	void OnMouseMove(WPARAM, int, int);
+		return sInstance;
+	}
+
+	static void DeleteInstance()
+	{
+		if(sInstance)
+		{
+			delete sInstance;
+			sInstance = nullptr;
+		}
+	}
 
 protected:
 	BOOL InitMainWindow();
@@ -45,17 +57,20 @@ protected:
 	void CalculateFrameStats();
 
 private:
+	System();
+	~System();
+
+	static System* sInstance;
+
 	BOOL UpdateScene(float dt, float theta, float phi, float radius);
 	BOOL DrawScene();
 	BOOL InitializeWindows(int);
 	ATOM RegisterMyClass(HINSTANCE);
 	void ShutdownWindows();
 
+	void HandleInputs();
 	void LoadConfigFile();
-
 };
-
-static System* sInstance;
 
 static LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 static INT_PTR CALLBACK About(HWND, UINT, WPARAM, LPARAM);

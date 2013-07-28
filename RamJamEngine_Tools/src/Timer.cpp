@@ -1,7 +1,11 @@
 #include "Timer.h"
 
+Timer* Timer::sInstance = nullptr;
+
+//////////////////////////////////////////////////////////////////////////
 Timer::Timer():mActive(false)
 {
+
 	u64 frequency;
 	QueryPerformanceFrequency((LARGE_INTEGER*)&frequency);
 	mSecondsPerCount = 1.0f / frequency;

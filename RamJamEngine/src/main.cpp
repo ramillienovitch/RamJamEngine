@@ -42,16 +42,14 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstanc
 #if defined(DEBUG) | defined(_DEBUG)
 	_CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
 #endif
+	
+	System::Instance()->mHInst = hInstance;
+	RJE_ASSERT(System::Instance()->Initialize(nCmdShow));
 
-	System*	system	= new System;
+	System::Instance()->Run();
 
-	RJE_ASSERT(system != nullptr);
-	system->mHInst = hInstance;
-	RJE_ASSERT(system->Initialize(nCmdShow));
-
-	system->Run();
-
-	RJE_SHUTDOWN(system);
+	System::Instance()->Shutdown();
+	System::DeleteInstance();
 
 	return 0;
 }

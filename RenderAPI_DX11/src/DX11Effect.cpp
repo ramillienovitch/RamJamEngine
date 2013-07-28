@@ -74,7 +74,10 @@ BasicEffect* Effects::BasicFX = 0;
 
 void Effects::InitAll(ID3D11Device* device)
 {
-	BasicFX = new BasicEffect(device, L"..\\..\\RamJamEngine\\data\\shaders\\HLSL\\basic.cso");
+	wchar_t* texturePath = nullptr;
+	CIniFile::GetValueWchar("basic", "shaders", "..\\..\\RamJamEngine\\data\\Resources.ini", &texturePath);
+	BasicFX = new BasicEffect(device, texturePath);
+	RJE_SAFE_DELETE(texturePath);
 }
 
 void Effects::DestroyAll()

@@ -203,34 +203,14 @@ void DX11Wrapper::Initialize(HWND hMainWnd, int windowWidth, int windowHeight)
 	ResizeWindow(windowWidth, windowHeight);	// we call the ResizeWindow method here to avoid code duplication.
 
 	// We init the effect first and then the input layouts
-	Effects::InitAll(mDX11Device->md3dDevice);
+	Effects::     InitAll(mDX11Device->md3dDevice);
 	InputLayouts::InitAll(mDX11Device->md3dDevice);
 
-	// Load textures
-	RJE_CHECK_FOR_SUCCESS(CreateDDSTextureFromFile(	mDX11Device->md3dDevice,
-													CIniFile::GetValueWchar("box", "textures", "..\\..\\RamJamEngine\\data\\Resources.ini"),
-													nullptr,
-													&mBoxMap));
-	RJE_CHECK_FOR_SUCCESS(CreateDDSTextureFromFile(	mDX11Device->md3dDevice,
-													CIniFile::GetValueWchar("grid", "textures", "..\\..\\RamJamEngine\\data\\Resources.ini"),
-													nullptr,
-													&mGridMap));
-	RJE_CHECK_FOR_SUCCESS(CreateDDSTextureFromFile(	mDX11Device->md3dDevice,
-													CIniFile::GetValueWchar("sphere", "textures", "..\\..\\RamJamEngine\\data\\Resources.ini"),
-													nullptr,
-													&mSphereMap));
-	RJE_CHECK_FOR_SUCCESS(CreateDDSTextureFromFile(	mDX11Device->md3dDevice,
-													CIniFile::GetValueWchar("cylinder", "textures", "..\\..\\RamJamEngine\\data\\Resources.ini"),
-													nullptr,
-													&mCylinderMap));
-	RJE_CHECK_FOR_SUCCESS(CreateDDSTextureFromFile(	mDX11Device->md3dDevice,
-													CIniFile::GetValueWchar("mask", "textures", "..\\..\\RamJamEngine\\data\\Resources.ini"),
-													nullptr,
-													&mMaskMap));
-	RJE_CHECK_FOR_SUCCESS(CreateDDSTextureFromFile(	mDX11Device->md3dDevice,
-													CIniFile::GetValueWchar("whitemask", "textures", "..\\..\\RamJamEngine\\data\\Resources.ini"),
-													nullptr,
-													&mWhiteMaskMap));
+	LoadTexture("box",      "textures", "..\\..\\RamJamEngine\\data\\Resources.ini", &mBoxMap);
+	LoadTexture("grid",     "textures", "..\\..\\RamJamEngine\\data\\Resources.ini", &mGridMap);
+	LoadTexture("sphere",   "textures", "..\\..\\RamJamEngine\\data\\Resources.ini", &mSphereMap);
+	LoadTexture("cylinder", "textures", "..\\..\\RamJamEngine\\data\\Resources.ini", &mCylinderMap);
+	LoadTexture("mask",     "textures", "..\\..\\RamJamEngine\\data\\Resources.ini", &mMaskMap);
 
 	BuildGeometryBuffers();
 
@@ -243,6 +223,15 @@ void DX11Wrapper::Initialize(HWND hMainWnd, int windowWidth, int windowHeight)
 	RJE_CHECK_FOR_SUCCESS(mDX11CommonStates->AnisotropicWrap(mDX11Device->md3dDevice, &mSamplerState_Anisotropic));
 	RJE_CHECK_FOR_SUCCESS(mDX11CommonStates->LinearWrap(mDX11Device->md3dDevice, &mSamplerState_Linear));
 	mCurrentSamplerState = mSamplerState_Anisotropic;
+}
+
+//////////////////////////////////////////////////////////////////////////
+void DX11Wrapper::LoadTexture(string keyName, string sectionName, string fileName, ID3D11ShaderResourceView** shaderResourceView)
+{
+	wchar_t* texturePath = nullptr;
+	CIniFile::GetValueWchar(keyName, sectionName, fileName, &texturePath);
+	RJE_CHECK_FOR_SUCCESS(CreateDDSTextureFromFile( mDX11Device->md3dDevice, texturePath, nullptr, shaderResourceView));
+	RJE_SAFE_DELETE(texturePath);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -404,45 +393,19 @@ void DX11Wrapper::UpdateScene( float dt, float theta, float phi, float radius )
 	DirectX::XMMATRIX V = DirectX::XMMatrixLookAtLH(pos, target, up);
 	XMStoreFloat4x4(&mView, V);
 
-	// TODO : No Hard Coding Key Events !!!
-	//
-	// Switch the number of lights based on key presses.
-	//
-	if( GetAsyncKeyState('0') & 0x8000 )
-		mDirLightCount = 0; 
-
-	if( GetAsyncKeyState('1') & 0x8000 )
-		mDirLightCount = 1; 
-
-	if( GetAsyncKeyState('2') & 0x8000 )
-		mDirLightCount = 2; 
-
-	if( GetAsyncKeyState('3') & 0x8000 )
-		mDirLightCount = 3;
-
-	if( GetAsyncKeyState('4') & 0x8000 )
-		mPointLightCount = 0; 
-
-	if( GetAsyncKeyState('5') & 0x8000 )
-		mPointLightCount = 1; 
-
-	if( GetAsyncKeyState('6') & 0x8000 )
-		mPointLightCount = 2; 
-
-	if( GetAsyncKeyState('7') & 0x8000 )
-		mPointLightCount = 3;
-
-	if ( GetAsyncKeyState(VK_RETURN) & 0x8000 )
-		mCurrentRasterizerState = mRasterizerState_Solid;
-
-	if ( GetAsyncKeyState(VK_BACK) & 0x8000 )
-		mCurrentRasterizerState = mRasterizerState_Wireframe;
-
-	if ( GetAsyncKeyState(0x41) & 0x8000 )	// A key
-		mCurrentSamplerState = mSamplerState_Anisotropic;
-
-	if ( GetAsyncKeyState(0x5A) & 0x8000 )	// Z key
-		mCurrentSamplerState = mSamplerState_Linear;
+	// Inputs modifiers
+	if (Input::Instance()->GetKeyboardDown(Numpad0))	mDirLightCount = 0; 
+	if (Input::Instance()->GetKeyboardDown(Numpad1))	mDirLightCount = 1; 
+	if (Input::Instance()->GetKeyboardDown(Numpad2))	mDirLightCount = 2; 
+	if (Input::Instance()->GetKeyboardDown(Numpad3))	mDirLightCount = 3;
+	if (Input::Instance()->GetKeyboardDown(Keyboard0))	mPointLightCount = 0; 
+	if (Input::Instance()->GetKeyboardDown(Keyboard1))	mPointLightCount = 1; 
+	if (Input::Instance()->GetKeyboardDown(Keyboard2))	mPointLightCount = 2; 
+	if (Input::Instance()->GetKeyboardDown(Keyboard3))	mPointLightCount = 3;
+	if (Input::Instance()->GetKeyboardDown(Return))		mCurrentRasterizerState = mRasterizerState_Solid;
+	if (Input::Instance()->GetKeyboardDown(Backspace))	mCurrentRasterizerState = mRasterizerState_Wireframe;
+	if (Input::Instance()->GetKeyboardDown(A))			mCurrentSamplerState = mSamplerState_Anisotropic;
+	if (Input::Instance()->GetKeyboardDown(Z))			mCurrentSamplerState = mSamplerState_Linear;
 
 	static float timer = 0.0f;
 	timer += dt*0.5f;

@@ -1,4 +1,5 @@
 #include "IniFile.h"
+#include "Debug.h"
 
 CIniFile::CIniFile(void)	// Default constructor
 {
@@ -229,23 +230,22 @@ string CIniFile::GetValue(string KeyName, string SectionName, string FileName)
 	return "";																// No value was found
 }
 
-const wchar_t* CIniFile::GetValueWchar(string KeyName, string SectionName, string FileName)
+const void /*wchar_t**/ CIniFile::GetValueWchar(string KeyName, string SectionName, string FileName, wchar_t** value)
 {
 	vector<Record> content = GetRecord(KeyName,SectionName, FileName);		// Get the Record
 
 	if(!content.empty())													// Make sure there is a value to return
 	{
 		string key = content[0].Value;
-		wchar_t *p=new wchar_t[key.size()+1];
-
+		*value = new wchar_t[key.size()+1];
 
 		for(string::size_type i=0; i<key.size()+1; ++i)
-			p[i]=key[i];
+			(*value)[i]=key[i];
 
-		return p;
+		//return value;														// And return the value
 	}
 
-	return L"";																// No value was found
+	//return nullptr;															// No value was found
 }
 
 int CIniFile::GetValueInt(string KeyName, string SectionName, string FileName)

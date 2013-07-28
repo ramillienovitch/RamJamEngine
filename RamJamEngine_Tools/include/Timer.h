@@ -11,7 +11,7 @@
 
 struct Timer
 {
-	Timer();
+	
 
 	float	Time() const;		// Return the Elapsed time the Game has been active in seconds since Reset
 	void	Time(float time);	// Set the Elapsed playing time -- used for restarting in the middle of a game
@@ -23,7 +23,27 @@ struct Timer
 	void Update();
 	bool IsActive() { return mActive; };
 
+	static Timer* Instance()
+	{
+		if(!sInstance)
+			sInstance = new Timer();
+		
+		return sInstance;
+	}
+
+	static void DeleteInstance()
+	{
+		if(sInstance)
+		{
+			delete sInstance;
+			sInstance = nullptr;
+		}
+	}
+
 private:
+	Timer();
+	static Timer* sInstance;
+
 	float mSecondsPerCount;  // 1.0 / Frequency
 	float mDeltaTime;
 

@@ -344,10 +344,20 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\data\textures\bricks.dds" />
+    <Image Include="..\data\textures\flarealpha.dds" />
     <Image Include="..\data\textures\floor.dds" />
+    <Image Include="..\data\textures\grass.dds" />
+    <Image Include="..\data\textures\gray.dds" />
     <Image Include="..\data\textures\metal_texture.dds" />
+    <Image Include="..\data\textures\mipmaps.dds" />
+    <Image Include="..\data\textures\sand.dds" />
     <Image Include="..\data\textures\seafloor.dds" />
     <Image Include="..\data\textures\stone.dds" />
+    <Image Include="..\data\textures\terrainHeightmap.dds" />
+    <Image Include="..\data\textures\water1.dds" />
+    <Image Include="..\data\textures\water2.dds" />
+    <Image Include="..\data\textures\WoodCrate01.dds" />
+    <Image Include="..\data\textures\WoodCrate02.dds" />
     <Image Include="RamJamEngine.ico" />
     <Image Include="small.ico" />
   </ItemGroup>

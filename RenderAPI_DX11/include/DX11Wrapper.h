@@ -2,7 +2,6 @@
 
 #include "DX11Helper.h"
 #include "../../RamJamEngine/include/GraphicAPI.h"
-#include "IniFile.h"
 
 
 struct DX11Wrapper : GraphicAPI
@@ -94,5 +93,6 @@ struct DX11Wrapper : GraphicAPI
 
 	//////////////////////////////////////////////////////////////////////////
 
+	void LoadTexture(string keyName, string sectionName, string fileName, ID3D11ShaderResourceView** shaderResourceView);
 	void BuildGeometryBuffers();
 };

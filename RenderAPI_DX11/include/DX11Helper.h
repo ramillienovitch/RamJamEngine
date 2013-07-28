@@ -3,7 +3,9 @@
 #include "Globals.h"
 #include "Types.h"
 #include "Debug.h"
+#include "Input.h"
 #include "MathHelper.h"
+#include "IniFile.h"
 
 #include <dxgi.h>
 #include <d3d11.h>
