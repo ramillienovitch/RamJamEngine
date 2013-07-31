@@ -18,12 +18,13 @@ DX11Wrapper::DX11Wrapper()
 	mMaskMap      = nullptr;
 	mWhiteMaskMap = nullptr;
 	
-	mRasterizerState_Solid     = nullptr;
-	mRasterizerState_Wireframe = nullptr;
+	mEyePosW = XMFLOAT3(0.0f, 0.0f, 0.0f);
 
 	mDirLightCount   = 1;
 	mPointLightCount = 0;
-	mEyePosW = XMFLOAT3(0.0f, 0.0f, 0.0f);
+	mbUseFog        = false;
+	mbUseTexture     = true;
+	mbUseBlending    = true;
 
 	DirectX::XMMATRIX Id = DirectX::XMMatrixIdentity();
 	XMStoreFloat4x4(&mGridWorld, Id);
@@ -203,26 +204,18 @@ void DX11Wrapper::Initialize(HWND hMainWnd, int windowWidth, int windowHeight)
 	ResizeWindow(windowWidth, windowHeight);	// we call the ResizeWindow method here to avoid code duplication.
 
 	// We init the effect first and then the input layouts
-	Effects::     InitAll(mDX11Device->md3dDevice);
-	InputLayouts::InitAll(mDX11Device->md3dDevice);
+	DX11Effects     ::InitAll(mDX11Device->md3dDevice);
+	DX11InputLayouts::InitAll(mDX11Device->md3dDevice);
+	DX11CommonStates::InitAll(mDX11Device->md3dDevice);
 
-	LoadTexture("box",      "textures", "..\\..\\RamJamEngine\\data\\Resources.ini", &mBoxMap);
-	LoadTexture("grid",     "textures", "..\\..\\RamJamEngine\\data\\Resources.ini", &mGridMap);
-	LoadTexture("sphere",   "textures", "..\\..\\RamJamEngine\\data\\Resources.ini", &mSphereMap);
-	LoadTexture("cylinder", "textures", "..\\..\\RamJamEngine\\data\\Resources.ini", &mCylinderMap);
-	LoadTexture("mask",     "textures", "..\\..\\RamJamEngine\\data\\Resources.ini", &mMaskMap);
+	LoadTexture("box",       "textures", "..\\..\\RamJamEngine\\data\\Resources.ini", &mBoxMap);
+	LoadTexture("grid",      "textures", "..\\..\\RamJamEngine\\data\\Resources.ini", &mGridMap);
+	LoadTexture("sphere",    "textures", "..\\..\\RamJamEngine\\data\\Resources.ini", &mSphereMap);
+	LoadTexture("cylinder",  "textures", "..\\..\\RamJamEngine\\data\\Resources.ini", &mCylinderMap);
+	LoadTexture("mask",      "textures", "..\\..\\RamJamEngine\\data\\Resources.ini", &mMaskMap);
+	LoadTexture("whitemask", "textures", "..\\..\\RamJamEngine\\data\\Resources.ini", &mWhiteMaskMap);
 
 	BuildGeometryBuffers();
-
-	//////////////////////////////////////////////////////////////////////////
-	// Create the common states
-	RJE_CHECK_FOR_SUCCESS(mDX11CommonStates->Wireframe(           mDX11Device->md3dDevice, &mRasterizerState_Wireframe));
-	RJE_CHECK_FOR_SUCCESS(mDX11CommonStates->CullCounterClockwise(mDX11Device->md3dDevice, &mRasterizerState_Solid));
-	mCurrentRasterizerState = mRasterizerState_Solid;
-
-	RJE_CHECK_FOR_SUCCESS(mDX11CommonStates->AnisotropicWrap(mDX11Device->md3dDevice, &mSamplerState_Anisotropic));
-	RJE_CHECK_FOR_SUCCESS(mDX11CommonStates->LinearWrap(mDX11Device->md3dDevice, &mSamplerState_Linear));
-	mCurrentSamplerState = mSamplerState_Anisotropic;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -245,15 +238,15 @@ void DX11Wrapper::BuildGeometryBuffers()
 		return;
 	}
 
-	UINT dragonVertexCount = 0;
-	UINT dragonTriangleCount = 0;
+	UINT modelVertexCount = 0;
+	UINT modelTriangleCount = 0;
 	std::string ignore;
 
-	fin >> ignore >> ignore >> dragonVertexCount;
-	fin >> ignore >> ignore >> dragonTriangleCount;
+	fin >> ignore >> ignore >> modelVertexCount;
+	fin >> ignore >> ignore >> modelTriangleCount;
 	fin >> ignore;
 
-	mModelIndexCount = 3*dragonTriangleCount;
+	mModelIndexCount = 3*modelTriangleCount;
 
 	GeometryGenerator::MeshData box;
 	GeometryGenerator::MeshData grid;
@@ -291,7 +284,7 @@ void DX11Wrapper::BuildGeometryBuffers()
 							(UINT) grid.Vertices.size() +
 							(UINT) sphere.Vertices.size() +
 							(UINT) cylinder.Vertices.size() +
-							dragonVertexCount;
+							modelVertexCount;
 
 	UINT totalIndexCount =  mBoxIndexCount +
 							mGridIndexCount + 
@@ -328,7 +321,7 @@ void DX11Wrapper::BuildGeometryBuffers()
 		vertices[k].Normal = cylinder.Vertices[i].Normal;
 		vertices[k].Tex    = cylinder.Vertices[i].TexC;
 	}
-	for(size_t i = 0; i < dragonVertexCount; ++i, ++k)
+	for(size_t i = 0; i < modelVertexCount; ++i, ++k)
 	{
 		fin >> vertices[k].Pos.x >> vertices[k].Pos.y >> vertices[k].Pos.z;
 
@@ -339,7 +332,7 @@ void DX11Wrapper::BuildGeometryBuffers()
 		fin >> vertices[k].Normal.x >> vertices[k].Normal.y >> vertices[k].Normal.z;
 	}
 	std::vector<UINT> dragonIndices(mModelIndexCount);
-	for(UINT i = 0; i < dragonTriangleCount; ++i)
+	for(UINT i = 0; i < modelTriangleCount; ++i)
 	{
 		fin >> dragonIndices[i*3+0] >> dragonIndices[i*3+1] >> dragonIndices[i*3+2];
 	}
@@ -355,7 +348,6 @@ void DX11Wrapper::BuildGeometryBuffers()
 	D3D11_SUBRESOURCE_DATA vinitData;
 	vinitData.pSysMem = &vertices[0];
 	RJE_CHECK_FOR_SUCCESS(mDX11Device->md3dDevice->CreateBuffer(&vbd, &vinitData, &mVertexBuffer));
-
 
 	std::vector<UINT> indices;
 	indices.insert(indices.end(), box.Indices.begin(), box.Indices.end());
@@ -393,19 +385,25 @@ void DX11Wrapper::UpdateScene( float dt, float theta, float phi, float radius )
 	DirectX::XMMATRIX V = DirectX::XMMatrixLookAtLH(pos, target, up);
 	XMStoreFloat4x4(&mView, V);
 
-	// Inputs modifiers
-	if (Input::Instance()->GetKeyboardDown(Numpad0))	mDirLightCount = 0; 
-	if (Input::Instance()->GetKeyboardDown(Numpad1))	mDirLightCount = 1; 
-	if (Input::Instance()->GetKeyboardDown(Numpad2))	mDirLightCount = 2; 
-	if (Input::Instance()->GetKeyboardDown(Numpad3))	mDirLightCount = 3;
-	if (Input::Instance()->GetKeyboardDown(Keyboard0))	mPointLightCount = 0; 
-	if (Input::Instance()->GetKeyboardDown(Keyboard1))	mPointLightCount = 1; 
-	if (Input::Instance()->GetKeyboardDown(Keyboard2))	mPointLightCount = 2; 
-	if (Input::Instance()->GetKeyboardDown(Keyboard3))	mPointLightCount = 3;
-	if (Input::Instance()->GetKeyboardDown(Return))		mCurrentRasterizerState = mRasterizerState_Solid;
-	if (Input::Instance()->GetKeyboardDown(Backspace))	mCurrentRasterizerState = mRasterizerState_Wireframe;
-	if (Input::Instance()->GetKeyboardDown(A))			mCurrentSamplerState = mSamplerState_Anisotropic;
-	if (Input::Instance()->GetKeyboardDown(Z))			mCurrentSamplerState = mSamplerState_Linear;
+	// Inputs modifiers : TODO : Get these out of DX11Wrapper !
+	if (Input::Instance()->GetKeyboardDown(Keyboard0))	mDirLightCount = 0;
+	if (Input::Instance()->GetKeyboardDown(Keyboard1))	mDirLightCount = 1;
+	if (Input::Instance()->GetKeyboardDown(Keyboard2))	mDirLightCount = 2;
+	if (Input::Instance()->GetKeyboardDown(Keyboard3))	mDirLightCount = 3;
+	if (Input::Instance()->GetKeyboardDown(Numpad0))	mPointLightCount = 0;
+	if (Input::Instance()->GetKeyboardDown(Numpad1))	mPointLightCount = 1;
+	if (Input::Instance()->GetKeyboardDown(Numpad2))	mPointLightCount = 2;
+	if (Input::Instance()->GetKeyboardDown(Numpad3))	mPointLightCount = 3;
+	if (Input::Instance()->GetKeyboardDown(T))			mbUseTexture  = !mbUseTexture;
+	if (Input::Instance()->GetKeyboardDown(B))			mbUseBlending = !mbUseBlending;
+	if (Input::Instance()->GetKeyboardDown(F))			mbUseFog      = !mbUseFog;
+	if (Input::Instance()->GetKeyboardDown(S))			DX11CommonStates::sCurrentRasterizerState = DX11CommonStates::sRasterizerState_Solid;
+	if (Input::Instance()->GetKeyboardDown(W))			DX11CommonStates::sCurrentRasterizerState = DX11CommonStates::sRasterizerState_Wireframe;
+	if (Input::Instance()->GetKeyboardDown(A))			DX11CommonStates::sCurrentSamplerState    = DX11CommonStates::sSamplerState_Anisotropic;
+	if (Input::Instance()->GetKeyboardDown(L))			DX11CommonStates::sCurrentSamplerState    = DX11CommonStates::sSamplerState_Linear;
+	if (Input::Instance()->GetKeyboardDown(I))			DX11CommonStates::sCurrentBlendState      = DX11CommonStates::sBlendState_AlphaToCoverage;
+	if (Input::Instance()->GetKeyboardDown(O))			DX11CommonStates::sCurrentBlendState      = DX11CommonStates::sBlendState_Transparent;
+	if (Input::Instance()->GetKeyboardDown(P))			DX11CommonStates::sCurrentBlendState      = DX11CommonStates::sBlendState_Opaque;
 
 	static float timer = 0.0f;
 	timer += dt*0.5f;
@@ -432,10 +430,12 @@ void DX11Wrapper::DrawScene()
 	mDX11Device->md3dImmediateContext->ClearRenderTargetView(mRenderTargetView, DirectX::Colors::LightSteelBlue);
 	mDX11Device->md3dImmediateContext->ClearDepthStencilView(mDX11DepthBuffer->mDepthStencilView, D3D11_CLEAR_DEPTH|D3D11_CLEAR_STENCIL, 1.0f, 0);
 
-	mDX11Device->md3dImmediateContext->IASetInputLayout(InputLayouts::PosNormalTex);
+	mDX11Device->md3dImmediateContext->IASetInputLayout(DX11InputLayouts::PosNormalTex);
 	mDX11Device->md3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-	mDX11Device->md3dImmediateContext->RSSetState(mCurrentRasterizerState);
+	mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sCurrentRasterizerState);
+
+	float blendFactor[] = {0.0f, 0.0f, 0.0f, 0.0f};
 
 	UINT stride = sizeof(Vertex::PosNormalTex);
 	UINT offset = 0;
@@ -448,32 +448,44 @@ void DX11Wrapper::DrawScene()
 	DirectX::XMMATRIX viewProj = view*proj;
 
 	// Set per frame constants.
-	Effects::BasicFX->SetDirLights(mDirLights);
-	Effects::BasicFX->SetPointLights(mPointLights);
-	Effects::BasicFX->SetEyePosW(mEyePosW);
-	Effects::BasicFX->SetSamplerState(mCurrentSamplerState);
+	DX11Effects::BasicFX->SetDirLights(mDirLights);
+	DX11Effects::BasicFX->SetPointLights(mPointLights);
+	DX11Effects::BasicFX->SetEyePosW(mEyePosW);
+	DX11Effects::BasicFX->SetFogColor(Colors::Silver);
+	DX11Effects::BasicFX->SetFogStart(15.0f);
+	DX11Effects::BasicFX->SetFogRange(175.0f);
+	DX11Effects::BasicFX->SetSamplerState(DX11CommonStates::sCurrentSamplerState);
 
-	// Figure out which technique to use. The model doesn't have any text coordinates so we use another technique
-	ID3DX11EffectTechnique* activeTech = Effects::BasicFX->Light0_0Tech;
-	ID3DX11EffectTechnique* activeTechModel = Effects::BasicFX->Light1_3NoTexTech;
+	// Figure out which technique to use.
+	// WARNING : The model doesn't have any text coordinates so we use another technique
+	ID3DX11EffectTechnique* activeTech      = DX11Effects::BasicFX->Light1_3TexTech;
+	ID3DX11EffectTechnique* activeTechModel = DX11Effects::BasicFX->Light1_3NoTexTech;
 	
-	// WARNING : Dir & Point Light < 3
+	// WARNING : Max 1 Dir and 3 Point Lights
 	switch(mDirLightCount)
 	{
 	case 0:
 		switch (mPointLightCount)
 		{
 		case 0:
-			activeTech = Effects::BasicFX->Light0_0Tech;
+			if (mbUseTexture)	activeTech = DX11Effects::BasicFX->Light0_0TexTech;
+			else				activeTech = DX11Effects::BasicFX->Light0_0NoTexTech;
+			activeTechModel = DX11Effects::BasicFX->Light0_0NoTexTech;
 			break;
 		case 1:
-			activeTech = Effects::BasicFX->Light0_1Tech;
+			if (mbUseTexture)	activeTech = DX11Effects::BasicFX->Light0_1TexTech;
+			else				activeTech = DX11Effects::BasicFX->Light0_1NoTexTech;
+			activeTechModel = DX11Effects::BasicFX->Light0_1NoTexTech;
 			break;
 		case 2:
-			activeTech = Effects::BasicFX->Light0_2Tech;
+			if (mbUseTexture)	activeTech = DX11Effects::BasicFX->Light0_2TexTech;
+			else				activeTech = DX11Effects::BasicFX->Light0_2NoTexTech;
+			activeTechModel = DX11Effects::BasicFX->Light0_2NoTexTech;
 			break;
 		case 3:
-			activeTech = Effects::BasicFX->Light0_3Tech;
+			if (mbUseTexture)	activeTech = DX11Effects::BasicFX->Light0_3TexTech;
+			else				activeTech = DX11Effects::BasicFX->Light0_3NoTexTech;
+			activeTechModel = DX11Effects::BasicFX->Light0_3NoTexTech;
 			break;
 		}
 		break;
@@ -481,52 +493,83 @@ void DX11Wrapper::DrawScene()
 		switch (mPointLightCount)
 		{
 		case 0:
-			activeTech = Effects::BasicFX->Light1_0Tech;
+			if (mbUseTexture)	activeTech = DX11Effects::BasicFX->Light1_0TexTech;
+			else				activeTech = DX11Effects::BasicFX->Light1_0NoTexTech;
+			activeTechModel = DX11Effects::BasicFX->Light1_0NoTexTech;
 			break;
 		case 1:
-			activeTech = Effects::BasicFX->Light1_1Tech;
+			if (mbUseTexture)	activeTech = DX11Effects::BasicFX->Light1_1TexTech;
+			else				activeTech = DX11Effects::BasicFX->Light1_1NoTexTech;
+			activeTechModel = DX11Effects::BasicFX->Light1_1NoTexTech;
 			break;
 		case 2:
-			activeTech = Effects::BasicFX->Light1_2Tech;
+			if (mbUseTexture)	activeTech = DX11Effects::BasicFX->Light1_2TexTech;
+			else				activeTech = DX11Effects::BasicFX->Light1_2NoTexTech;
+			activeTechModel = DX11Effects::BasicFX->Light1_2NoTexTech;
 			break;
-		case 3:
-			activeTech = Effects::BasicFX->Light1_3Tech;
+		case 3:	// this is the basic lighting we're gonna use most of the time (one directionnal and three point lights)
+			if (mbUseTexture)
+			{
+				if (mbUseBlending)
+				{
+					if (mbUseFog)
+					{
+						activeTech      = DX11Effects::BasicFX->Light1_3FogAlphaClipTexTech;
+						activeTechModel = DX11Effects::BasicFX->Light1_3FogAlphaClipNoTexTech;
+					}
+					else
+					{
+						activeTech      = DX11Effects::BasicFX->Light1_3AlphaClipTexTech;
+						activeTechModel = DX11Effects::BasicFX->Light1_3AlphaClipNoTexTech;
+					}
+				}
+				else
+				{
+					if (mbUseFog)
+					{
+						activeTech      = DX11Effects::BasicFX->Light1_3FogTexTech;
+						activeTechModel = DX11Effects::BasicFX->Light1_3FogNoTexTech;
+					}
+					else
+					{
+						activeTech      = DX11Effects::BasicFX->Light1_3TexTech;
+						activeTechModel = DX11Effects::BasicFX->Light1_3NoTexTech;
+					}
+				}
+			}
+			else
+			{
+				if (mbUseBlending)
+				{
+					if (mbUseFog)
+					{
+						activeTech      = DX11Effects::BasicFX->Light1_3FogAlphaClipNoTexTech;
+						activeTechModel = DX11Effects::BasicFX->Light1_3FogAlphaClipNoTexTech;
+					}
+					else
+					{
+						activeTech      = DX11Effects::BasicFX->Light1_3AlphaClipNoTexTech;
+						activeTechModel = DX11Effects::BasicFX->Light1_3AlphaClipNoTexTech;
+					}
+				}
+				else
+				{
+					if (mbUseFog)
+					{
+						activeTech      = DX11Effects::BasicFX->Light1_3FogNoTexTech;
+						activeTechModel = DX11Effects::BasicFX->Light1_3FogNoTexTech;
+					}
+					else
+					{
+						activeTech      = DX11Effects::BasicFX->Light1_3NoTexTech;
+						activeTechModel = DX11Effects::BasicFX->Light1_3NoTexTech;
+					}
+				}
+			}
 			break;
 		}
 		break;
-	case 2:
-		switch (mPointLightCount)
-		{
-		case 0:
-			activeTech = Effects::BasicFX->Light2_0Tech;
-			break;
-		case 1:
-			activeTech = Effects::BasicFX->Light2_1Tech;
-			break;
-		case 2:
-			activeTech = Effects::BasicFX->Light2_2Tech;
-			break;
-		case 3:
-			activeTech = Effects::BasicFX->Light2_3Tech;
-			break;
-		}
-		break;
-	case 3:
-		switch (mPointLightCount)
-		{
-		case 0:
-			activeTech = Effects::BasicFX->Light3_0Tech;
-			break;
-		case 1:
-			activeTech = Effects::BasicFX->Light3_1Tech;
-			break;
-		case 2:
-			activeTech = Effects::BasicFX->Light3_2Tech;
-			break;
-		case 3:
-			activeTech = Effects::BasicFX->Light3_3Tech;
-			break;
-		}
+	default:
 		break;
 	}
 
@@ -543,13 +586,13 @@ void DX11Wrapper::DrawScene()
 		worldInvTranspose = DX11Math::InverseTranspose(world);
 		worldViewProj     = world*view*proj;
 
-		Effects::BasicFX->SetWorld(world);
-		Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
-		Effects::BasicFX->SetWorldViewProj(worldViewProj);
-		Effects::BasicFX->SetTexTransform(XMLoadFloat4x4(&mGridTexTransform));
-		Effects::BasicFX->SetMaterial(mGridMat);
-		Effects::BasicFX->SetDiffuseMap(mGridMap);
-		Effects::BasicFX->SetMaskMap(mMaskMap);
+		DX11Effects::BasicFX->SetWorld(world);
+		DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
+		DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
+		DX11Effects::BasicFX->SetTexTransform(XMLoadFloat4x4(&mGridTexTransform));
+		DX11Effects::BasicFX->SetMaterial(mGridMat);
+		DX11Effects::BasicFX->SetDiffuseMap(mGridMap);
+		DX11Effects::BasicFX->SetMaskMap(mMaskMap);
 
 		activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
 		mDX11Device->md3dImmediateContext->DrawIndexed(mGridIndexCount, mGridIndexOffset, mGridVertexOffset);
@@ -558,13 +601,13 @@ void DX11Wrapper::DrawScene()
 		worldInvTranspose = DX11Math::InverseTranspose(world);
 		worldViewProj     = world*view*proj;
 
-		Effects::BasicFX->SetWorld(world);
-		Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
-		Effects::BasicFX->SetWorldViewProj(worldViewProj);
-		Effects::BasicFX->SetTexTransform(XMLoadFloat4x4(&mBoxTexTransform));
-		Effects::BasicFX->SetMaterial(mBoxMat);
-		Effects::BasicFX->SetDiffuseMap(mBoxMap);
-		Effects::BasicFX->SetMaskMap(mWhiteMaskMap);
+		DX11Effects::BasicFX->SetWorld(world);
+		DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
+		DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
+		DX11Effects::BasicFX->SetTexTransform(XMLoadFloat4x4(&mBoxTexTransform));
+		DX11Effects::BasicFX->SetMaterial(mBoxMat);
+		DX11Effects::BasicFX->SetDiffuseMap(mBoxMap);
+		DX11Effects::BasicFX->SetMaskMap(mWhiteMaskMap);
 
 		activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
 		mDX11Device->md3dImmediateContext->DrawIndexed(mBoxIndexCount, mBoxIndexOffset, mBoxVertexOffset);
@@ -576,13 +619,13 @@ void DX11Wrapper::DrawScene()
 			worldInvTranspose = DX11Math::InverseTranspose(world);
 			worldViewProj     = world*view*proj;
 
-			Effects::BasicFX->SetWorld(world);
-			Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
-			Effects::BasicFX->SetWorldViewProj(worldViewProj);
-			Effects::BasicFX->SetTexTransform(XMLoadFloat4x4(&mCylinderTexTransform));
-			Effects::BasicFX->SetMaterial(mCylinderMat);
-			Effects::BasicFX->SetDiffuseMap(mCylinderMap);
-			Effects::BasicFX->SetMaskMap(mWhiteMaskMap);
+			DX11Effects::BasicFX->SetWorld(world);
+			DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
+			DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
+			DX11Effects::BasicFX->SetTexTransform(XMLoadFloat4x4(&mCylinderTexTransform));
+			DX11Effects::BasicFX->SetMaterial(mCylinderMat);
+			DX11Effects::BasicFX->SetDiffuseMap(mCylinderMap);
+			DX11Effects::BasicFX->SetMaskMap(mWhiteMaskMap);
 
 			activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
 			mDX11Device->md3dImmediateContext->DrawIndexed(mCylinderIndexCount, mCylinderIndexOffset, mCylinderVertexOffset);
@@ -595,16 +638,20 @@ void DX11Wrapper::DrawScene()
 			worldInvTranspose = DX11Math::InverseTranspose(world);
 			worldViewProj     = world*view*proj;
 
-			Effects::BasicFX->SetWorld(world);
-			Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
-			Effects::BasicFX->SetWorldViewProj(worldViewProj);
-			Effects::BasicFX->SetTexTransform(XMLoadFloat4x4(&mSphereTexTransform));
-			Effects::BasicFX->SetMaterial(mSphereMat);
-			Effects::BasicFX->SetDiffuseMap(mSphereMap);
-			Effects::BasicFX->SetMaskMap(mWhiteMaskMap);
+			DX11Effects::BasicFX->SetWorld(world);
+			DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
+			DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
+			DX11Effects::BasicFX->SetTexTransform(XMLoadFloat4x4(&mSphereTexTransform));
+			DX11Effects::BasicFX->SetMaterial(mSphereMat);
+			DX11Effects::BasicFX->SetDiffuseMap(mSphereMap);
+			DX11Effects::BasicFX->SetMaskMap(mWhiteMaskMap);
 
+			mDX11Device->md3dImmediateContext->OMSetBlendState(DX11CommonStates::sCurrentBlendState, blendFactor, 0xffffffff);
 			activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
 			mDX11Device->md3dImmediateContext->DrawIndexed(mSphereIndexCount, mSphereIndexOffset, mSphereVertexOffset);
+			
+			// Restore default blend state
+			mDX11Device->md3dImmediateContext->OMSetBlendState(0, blendFactor, 0xffffffff);
 		}
 	}
 
@@ -616,10 +663,10 @@ void DX11Wrapper::DrawScene()
 		worldInvTranspose = DX11Math::InverseTranspose(world);
 		worldViewProj     = world*view*proj;
 
-		Effects::BasicFX->SetWorld(world);
-		Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
-		Effects::BasicFX->SetWorldViewProj(worldViewProj);
-		Effects::BasicFX->SetMaterial(mModelMat);
+		DX11Effects::BasicFX->SetWorld(world);
+		DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
+		DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
+		DX11Effects::BasicFX->SetMaterial(mModelMat);
 
 		activeTechModel->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
 		mDX11Device->md3dImmediateContext->DrawIndexed(mModelIndexCount, mModelIndexOffset, mModelVertexOffset);
@@ -647,15 +694,10 @@ void DX11Wrapper::Shutdown()
 	RJE_SAFE_RELEASE(mCylinderMap);
 	RJE_SAFE_RELEASE(mMaskMap);
 	RJE_SAFE_RELEASE(mWhiteMaskMap);
-	
-	RJE_SAFE_RELEASE(mSamplerState_Anisotropic);
-	RJE_SAFE_RELEASE(mSamplerState_Linear);
 
-	RJE_SAFE_RELEASE(mRasterizerState_Solid);
-	RJE_SAFE_RELEASE(mRasterizerState_Wireframe);
-
-	Effects::DestroyAll();
-	InputLayouts::DestroyAll();
+	DX11Effects     ::DestroyAll();
+	DX11InputLayouts::DestroyAll();
+	DX11CommonStates::DestroyAll();
 
 	RJE_SAFE_RELEASE(mRenderTargetView);
 	mDX11DepthBuffer->Release();

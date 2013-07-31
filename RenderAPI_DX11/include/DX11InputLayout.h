@@ -9,7 +9,7 @@ public:
 	static const D3D11_INPUT_ELEMENT_DESC PosNormalTex[3];
 };
 
-class InputLayouts
+class DX11InputLayouts
 {
 public:
 	static void InitAll(ID3D11Device* device);

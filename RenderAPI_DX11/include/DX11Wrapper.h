@@ -30,14 +30,6 @@ struct DX11Wrapper : GraphicAPI
 	ID3D11ShaderResourceView* mMaskMap;
 	ID3D11ShaderResourceView* mWhiteMaskMap;
 
-	ID3D11RasterizerState*	mRasterizerState_Solid;
-	ID3D11RasterizerState*	mRasterizerState_Wireframe;
-	ID3D11RasterizerState*	mCurrentRasterizerState;
-
-	ID3D11SamplerState* mSamplerState_Anisotropic;
-	ID3D11SamplerState* mSamplerState_Linear;
-	ID3D11SamplerState* mCurrentSamplerState;
-
 	PointLight       mPointLights[3];
 	DirectionalLight mDirLights[3];
 	Material mBoxMat;
@@ -78,11 +70,15 @@ struct DX11Wrapper : GraphicAPI
 	UINT mCylinderIndexCount;
 	UINT mModelIndexCount;
 
-	UINT mDirLightCount;
-	UINT mPointLightCount;
-
 	XMFLOAT3 mEyePosW;
 
+	// Scene Parameters : TODO : Get these out of DX11Wrapper !
+	UINT mDirLightCount;
+	UINT mPointLightCount;
+	BOOL mbUseTexture;
+	BOOL mbUseBlending;
+	BOOL mbUseFog;
+	
 	//////////////////////////////////////////////////////////////////////////
 
 	virtual void Initialize(HWND hMainWnd, int windowWidth, int windowHeight);

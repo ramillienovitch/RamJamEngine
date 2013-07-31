@@ -30,29 +30,37 @@ Effect::~Effect()
 BasicEffect::BasicEffect(ID3D11Device* device, const std::wstring& filename)
 	: Effect(device, filename)
 {
-	Light0_0Tech      = mFX->GetTechniqueByName("Light0_0");
-	Light2_0Tech      = mFX->GetTechniqueByName("Light2_0");
-	Light1_0Tech      = mFX->GetTechniqueByName("Light1_0");
-	Light3_0Tech      = mFX->GetTechniqueByName("Light3_0");
-	Light0_1Tech      = mFX->GetTechniqueByName("Light0_1");
-	Light1_1Tech      = mFX->GetTechniqueByName("Light1_1");
-	Light2_1Tech      = mFX->GetTechniqueByName("Light2_1");
-	Light3_1Tech      = mFX->GetTechniqueByName("Light3_1");
-	Light0_2Tech      = mFX->GetTechniqueByName("Light0_2");
-	Light1_2Tech      = mFX->GetTechniqueByName("Light1_2");
-	Light2_2Tech      = mFX->GetTechniqueByName("Light2_2");
-	Light3_2Tech      = mFX->GetTechniqueByName("Light3_2");
-	Light0_3Tech      = mFX->GetTechniqueByName("Light0_3");
-	Light1_3Tech      = mFX->GetTechniqueByName("Light1_3");
-	Light2_3Tech      = mFX->GetTechniqueByName("Light2_3");
-	Light3_3Tech      = mFX->GetTechniqueByName("Light3_3");
-	Light1_3NoTexTech = mFX->GetTechniqueByName("Light1_3NoTex");
+	Light0_0NoTexTech             = mFX->GetTechniqueByName("Light0_0NoTex");
+	Light0_1NoTexTech             = mFX->GetTechniqueByName("Light0_1NoTex");
+	Light0_2NoTexTech             = mFX->GetTechniqueByName("Light0_2NoTex");
+	Light0_3NoTexTech             = mFX->GetTechniqueByName("Light0_3NoTex");
+	Light1_0NoTexTech             = mFX->GetTechniqueByName("Light1_0NoTex");
+	Light1_1NoTexTech             = mFX->GetTechniqueByName("Light1_1NoTex");
+	Light1_2NoTexTech             = mFX->GetTechniqueByName("Light1_2NoTex");
+	Light1_3NoTexTech             = mFX->GetTechniqueByName("Light1_3NoTex");
+	Light0_0TexTech               = mFX->GetTechniqueByName("Light0_0Tex");
+	Light0_1TexTech               = mFX->GetTechniqueByName("Light0_1Tex");
+	Light0_2TexTech               = mFX->GetTechniqueByName("Light0_2Tex");
+	Light0_3TexTech               = mFX->GetTechniqueByName("Light0_3Tex");
+	Light1_0TexTech               = mFX->GetTechniqueByName("Light1_0Tex");
+	Light1_1TexTech               = mFX->GetTechniqueByName("Light1_1Tex");
+	Light1_2TexTech               = mFX->GetTechniqueByName("Light1_2Tex");
+	Light1_3TexTech               = mFX->GetTechniqueByName("Light1_3Tex");
+	Light1_3FogTexTech            = mFX->GetTechniqueByName("Light1_3FogTex");
+	Light1_3FogNoTexTech          = mFX->GetTechniqueByName("Light1_3FogNoTex");
+	Light1_3AlphaClipTexTech      = mFX->GetTechniqueByName("Light1_3AlphaClipTex");
+	Light1_3AlphaClipNoTexTech    = mFX->GetTechniqueByName("Light1_3AlphaClipNoTex");
+	Light1_3FogAlphaClipTexTech   = mFX->GetTechniqueByName("Light1_3FogAlphaClipTex");
+	Light1_3FogAlphaClipNoTexTech = mFX->GetTechniqueByName("Light1_3FogAlphaClipNoTex");
 
 	WorldViewProj     = mFX->GetVariableByName("gWorldViewProj")->AsMatrix();
 	World             = mFX->GetVariableByName("gWorld")->AsMatrix();
 	WorldInvTranspose = mFX->GetVariableByName("gWorldInvTranspose")->AsMatrix();
 	TexTransform      = mFX->GetVariableByName("gTexTransform")->AsMatrix();
 	EyePosW           = mFX->GetVariableByName("gEyePosW")->AsVector();
+	FogColor          = mFX->GetVariableByName("gFogColor")->AsVector();
+	FogStart          = mFX->GetVariableByName("gFogStart")->AsScalar();
+	FogRange          = mFX->GetVariableByName("gFogRange")->AsScalar();
 	DirLights         = mFX->GetVariableByName("gDirLights");
 	PointLights       = mFX->GetVariableByName("gPointLights");
 	Mat               = mFX->GetVariableByName("gMaterial");
@@ -70,9 +78,9 @@ BasicEffect::~BasicEffect()
 
 #pragma region Effects
 
-BasicEffect* Effects::BasicFX = 0;
+BasicEffect* DX11Effects::BasicFX = 0;
 
-void Effects::InitAll(ID3D11Device* device)
+void DX11Effects::InitAll(ID3D11Device* device)
 {
 	wchar_t* texturePath = nullptr;
 	CIniFile::GetValueWchar("basic", "shaders", "..\\..\\RamJamEngine\\data\\Resources.ini", &texturePath);
@@ -80,7 +88,7 @@ void Effects::InitAll(ID3D11Device* device)
 	RJE_SAFE_DELETE(texturePath);
 }
 
-void Effects::DestroyAll()
+void DX11Effects::DestroyAll()
 {
 	RJE_SAFE_DELETE(BasicFX);
 }

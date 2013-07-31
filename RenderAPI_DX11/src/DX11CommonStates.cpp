@@ -2,17 +2,34 @@
 
 
 //////////////////////////////////////////////////////////////////////////
-HRESULT DX11CommonStates::CreateBlendState(ID3D11Device* device, D3D11_BLEND srcBlend, D3D11_BLEND destBlend, _Out_ ID3D11BlendState** pResult)
+HRESULT DX11CommonStates::CreateBlendState(ID3D11Device* device,
+										   _Out_ ID3D11BlendState** pResult,
+										   BOOL alphaToCoverageEnable  = false,
+										   BOOL independentBlendEnable = false,
+										   BOOL blendEnable = true,
+										   D3D11_BLEND srcBlend        = D3D11_BLEND_ONE,
+										   D3D11_BLEND srcBlendAlpha   = D3D11_BLEND_ONE,
+										   D3D11_BLEND destBlend       = D3D11_BLEND_ZERO,
+										   D3D11_BLEND destBlendAlpha  = D3D11_BLEND_ZERO,
+										   D3D11_BLEND_OP blendOp      = D3D11_BLEND_OP_ADD,
+										   D3D11_BLEND_OP blendOpAlpha = D3D11_BLEND_OP_ADD)
 {
 	D3D11_BLEND_DESC desc;
-	ZeroMemory(&desc, sizeof(desc));
+	//ZeroMemory(&desc, sizeof(desc));
 
-	desc.RenderTarget[0].BlendEnable = (srcBlend  != D3D11_BLEND_ONE) || (destBlend != D3D11_BLEND_ZERO);
+	desc.AlphaToCoverageEnable  = alphaToCoverageEnable;
+	desc.IndependentBlendEnable = independentBlendEnable;
 
-	desc.RenderTarget[0].SrcBlend  = desc.RenderTarget[0].SrcBlendAlpha  = srcBlend;
-	desc.RenderTarget[0].DestBlend = desc.RenderTarget[0].DestBlendAlpha = destBlend;
-	desc.RenderTarget[0].BlendOp   = desc.RenderTarget[0].BlendOpAlpha   = D3D11_BLEND_OP_ADD;
-
+	desc.RenderTarget[0].BlendEnable    = blendEnable;
+	if (blendEnable)
+	{
+		desc.RenderTarget[0].SrcBlend       = srcBlend;
+		desc.RenderTarget[0].SrcBlendAlpha  = srcBlendAlpha;
+		desc.RenderTarget[0].DestBlend      = destBlend;
+		desc.RenderTarget[0].DestBlendAlpha = destBlendAlpha;
+		desc.RenderTarget[0].BlendOp        = blendOp;
+		desc.RenderTarget[0].BlendOpAlpha   = blendOpAlpha;
+	}
 	desc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
 
 	HRESULT hr = device->CreateBlendState(&desc, pResult);
@@ -94,22 +111,32 @@ HRESULT DX11CommonStates::CreateSamplerState(ID3D11Device* device, D3D11_FILTER 
 //--------------------------------------------------------------------------------------
 HRESULT DX11CommonStates::Opaque(ID3D11Device* pDevice, ID3D11BlendState** pResult)
 {
-	return CreateBlendState(pDevice, D3D11_BLEND_ONE, D3D11_BLEND_ZERO, pResult);
+	return CreateBlendState(pDevice, pResult);
+}
+
+HRESULT DX11CommonStates::Tranparent(ID3D11Device* pDevice, ID3D11BlendState** pResult)
+{
+	return CreateBlendState(pDevice, pResult, false, false, true, D3D11_BLEND_SRC_ALPHA, D3D11_BLEND_ONE);
+}
+
+HRESULT DX11CommonStates::AlphaToCoverage(ID3D11Device* pDevice, ID3D11BlendState** pResult)
+{
+	return CreateBlendState(pDevice, pResult, true, false, false);
 }
 
 HRESULT DX11CommonStates::AlphaBlend(ID3D11Device* pDevice, ID3D11BlendState** pResult)
 {
-	return CreateBlendState(pDevice, D3D11_BLEND_ONE, D3D11_BLEND_INV_SRC_ALPHA, pResult);
+	return CreateBlendState(pDevice, pResult, false, false, true, D3D11_BLEND_ONE, D3D11_BLEND_ONE, D3D11_BLEND_INV_SRC_ALPHA, D3D11_BLEND_INV_SRC_ALPHA);
 }
 
 HRESULT DX11CommonStates::Additive(ID3D11Device* pDevice, ID3D11BlendState** pResult)
 {
-	return CreateBlendState(pDevice, D3D11_BLEND_SRC_ALPHA, D3D11_BLEND_ONE, pResult);
+	return CreateBlendState(pDevice, pResult, false, false, true, D3D11_BLEND_SRC_ALPHA, D3D11_BLEND_SRC_ALPHA, D3D11_BLEND_ONE, D3D11_BLEND_ONE);
 }
 
 HRESULT DX11CommonStates::NonPremultiplied(ID3D11Device* pDevice, ID3D11BlendState** pResult)
 {
-	return CreateBlendState(pDevice, D3D11_BLEND_SRC_ALPHA, D3D11_BLEND_INV_SRC_ALPHA, pResult);
+	return CreateBlendState(pDevice, pResult, false, false, false, D3D11_BLEND_SRC_ALPHA, D3D11_BLEND_SRC_ALPHA, D3D11_BLEND_INV_SRC_ALPHA, D3D11_BLEND_INV_SRC_ALPHA);
 }
 
 
@@ -188,3 +215,49 @@ HRESULT DX11CommonStates::AnisotropicClamp(ID3D11Device* pDevice, ID3D11SamplerS
 {
 	return CreateSamplerState(pDevice, D3D11_FILTER_ANISOTROPIC, D3D11_TEXTURE_ADDRESS_CLAMP, pResult);
 }
+
+//////////////////////////////////////////////////////////////////////////
+
+void DX11CommonStates::InitAll(ID3D11Device* device)
+{
+	RJE_CHECK_FOR_SUCCESS(Wireframe(           device, &sRasterizerState_Wireframe));
+	RJE_CHECK_FOR_SUCCESS(CullCounterClockwise(device, &sRasterizerState_Solid));
+	sCurrentRasterizerState = sRasterizerState_Solid;
+
+	RJE_CHECK_FOR_SUCCESS(AnisotropicWrap(device, &sSamplerState_Anisotropic));
+	RJE_CHECK_FOR_SUCCESS(LinearWrap(     device, &sSamplerState_Linear));
+	sCurrentSamplerState = sSamplerState_Anisotropic;
+
+	RJE_CHECK_FOR_SUCCESS(Opaque(         device, &sBlendState_Opaque));
+	RJE_CHECK_FOR_SUCCESS(Tranparent(     device, &sBlendState_Transparent));
+	RJE_CHECK_FOR_SUCCESS(AlphaToCoverage(device, &sBlendState_AlphaToCoverage));
+	sCurrentBlendState = sBlendState_Transparent;
+}
+
+void DX11CommonStates::DestroyAll()
+{
+	RJE_SAFE_RELEASE(sBlendState_Opaque);
+	RJE_SAFE_RELEASE(sBlendState_Transparent);
+	RJE_SAFE_RELEASE(sBlendState_AlphaToCoverage);
+
+	RJE_SAFE_RELEASE(sSamplerState_Anisotropic);
+	RJE_SAFE_RELEASE(sSamplerState_Linear);
+
+	RJE_SAFE_RELEASE(sRasterizerState_Solid);
+	RJE_SAFE_RELEASE(sRasterizerState_Wireframe);
+}
+
+//////////////////////////////////////////////////////////////////////////
+
+ID3D11RasterizerState*	DX11CommonStates::sRasterizerState_Solid     = nullptr;
+ID3D11RasterizerState*	DX11CommonStates::sRasterizerState_Wireframe = nullptr;
+ID3D11RasterizerState*	DX11CommonStates::sCurrentRasterizerState    = nullptr;
+
+ID3D11SamplerState*	DX11CommonStates::sSamplerState_Anisotropic = nullptr;
+ID3D11SamplerState*	DX11CommonStates::sSamplerState_Linear      = nullptr;
+ID3D11SamplerState*	DX11CommonStates::sCurrentSamplerState      = nullptr;
+
+ID3D11BlendState*	DX11CommonStates::sBlendState_Opaque          = nullptr;
+ID3D11BlendState*	DX11CommonStates::sBlendState_Transparent     = nullptr;
+ID3D11BlendState*	DX11CommonStates::sBlendState_AlphaToCoverage = nullptr;
+ID3D11BlendState*	DX11CommonStates::sCurrentBlendState          = nullptr;

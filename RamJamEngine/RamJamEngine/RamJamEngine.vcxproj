@@ -356,6 +356,7 @@
     <Image Include="..\data\textures\terrainHeightmap.dds" />
     <Image Include="..\data\textures\water1.dds" />
     <Image Include="..\data\textures\water2.dds" />
+    <Image Include="..\data\textures\WireFence.dds" />
     <Image Include="..\data\textures\WoodCrate01.dds" />
     <Image Include="..\data\textures\WoodCrate02.dds" />
     <Image Include="RamJamEngine.ico" />

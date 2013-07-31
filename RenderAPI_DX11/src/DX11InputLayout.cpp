@@ -15,16 +15,16 @@ const D3D11_INPUT_ELEMENT_DESC InputLayoutDesc::PosNormalTex[3] =
 
 #pragma region InputLayouts
 
-ID3D11InputLayout* InputLayouts::PosNormalTex = nullptr;
+ID3D11InputLayout* DX11InputLayouts::PosNormalTex = nullptr;
 
-void InputLayouts::InitAll(ID3D11Device* device)
+void DX11InputLayouts::InitAll(ID3D11Device* device)
 {
 	//
 	// PosNormal
 	//
 
 	D3DX11_PASS_DESC passDesc;
-	Effects::BasicFX->Light1_1Tech->GetPassByIndex(0)->GetDesc(&passDesc);
+	DX11Effects::BasicFX->Light1_3FogAlphaClipTexTech->GetPassByIndex(0)->GetDesc(&passDesc);
 	RJE_CHECK_FOR_SUCCESS(device->CreateInputLayout(	InputLayoutDesc::PosNormalTex,
 														3,
 														passDesc.pIAInputSignature,
@@ -32,7 +32,7 @@ void InputLayouts::InitAll(ID3D11Device* device)
 														&PosNormalTex));
 }
 
-void InputLayouts::DestroyAll()
+void DX11InputLayouts::DestroyAll()
 {
 	RJE_SAFE_RELEASE(PosNormalTex);
 }

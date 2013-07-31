@@ -112,6 +112,9 @@
     <Image Include="..\data\textures\WoodCrate02.dds">
       <Filter>Resource Files\Textures</Filter>
     </Image>
+    <Image Include="..\data\textures\WireFence.dds">
+      <Filter>Resource Files\Textures</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\data\models\dragon.mesh">
