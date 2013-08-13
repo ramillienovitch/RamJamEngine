@@ -1,15 +1,10 @@
 #pragma once
 
-// #include <minwindef.h>
-//#include <winuser.h>
-// #include <afxwin.h>
-
 #include "Types.h"
 #include "Globals.h"
 
 #define KEYBOARD_INPUTS		96
 #define MOUSE_INPUTS		5
-
 
 enum Keycode		// Taken from the Virtual-Key codes from Microsoft
 {
@@ -138,10 +133,10 @@ private:
 	int  mMousePosY;
 	bool bMouseMoving;
 	
-	bool mKeyboardState[KEYBOARD_INPUTS];
+	bool mKeyboardState    [KEYBOARD_INPUTS];
 	bool mKeyboardStateDown[KEYBOARD_INPUTS];
-	bool mKeyboardStateUp[KEYBOARD_INPUTS];
-	bool mMouseState[MOUSE_INPUTS];
+	bool mKeyboardStateUp  [KEYBOARD_INPUTS];
+	bool mMouseState    [MOUSE_INPUTS];
 	bool mMouseStateDown[MOUSE_INPUTS];
-	bool mMouseStateUp[MOUSE_INPUTS];
+	bool mMouseStateUp  [MOUSE_INPUTS];
 };

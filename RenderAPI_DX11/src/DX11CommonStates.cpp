@@ -15,7 +15,7 @@ HRESULT DX11CommonStates::CreateBlendState(ID3D11Device* device,
 										   D3D11_BLEND_OP blendOpAlpha = D3D11_BLEND_OP_ADD)
 {
 	D3D11_BLEND_DESC desc;
-	//ZeroMemory(&desc, sizeof(desc));
+	ZeroMemory(&desc, sizeof(desc));
 
 	desc.AlphaToCoverageEnable  = alphaToCoverageEnable;
 	desc.IndependentBlendEnable = independentBlendEnable;
@@ -38,23 +38,26 @@ HRESULT DX11CommonStates::CreateBlendState(ID3D11Device* device,
 }
 
 //////////////////////////////////////////////////////////////////////////
-HRESULT DX11CommonStates::CreateDepthStencilState(ID3D11Device* device, bool enable, bool writeEnable, _Out_ ID3D11DepthStencilState** pResult)
+HRESULT DX11CommonStates::CreateDepthStencilState(ID3D11Device* device,
+												  bool depthEnable, bool depthWriteEnable, D3D11_COMPARISON_FUNC depthFunc,
+												  bool stencilEnable, D3D11_COMPARISON_FUNC stencilFunc, D3D11_STENCIL_OP stencilPassOp, D3D11_STENCIL_OP stencilFailOp,
+												  _Out_ ID3D11DepthStencilState** pResult)
 {
 	D3D11_DEPTH_STENCIL_DESC desc;
 	ZeroMemory(&desc, sizeof(desc));
 
-	desc.DepthEnable    = enable;
-	desc.DepthWriteMask = writeEnable ? D3D11_DEPTH_WRITE_MASK_ALL : D3D11_DEPTH_WRITE_MASK_ZERO;
+	desc.DepthEnable    = depthEnable;
+	desc.DepthWriteMask = depthWriteEnable ? D3D11_DEPTH_WRITE_MASK_ALL : D3D11_DEPTH_WRITE_MASK_ZERO;
 	desc.DepthFunc      = D3D11_COMPARISON_LESS_EQUAL;
 
-	desc.StencilEnable    = false;
+	desc.StencilEnable    = stencilEnable;
 	desc.StencilReadMask  = D3D11_DEFAULT_STENCIL_READ_MASK;
 	desc.StencilWriteMask = D3D11_DEFAULT_STENCIL_WRITE_MASK;
 
-	desc.FrontFace.StencilFunc        = D3D11_COMPARISON_ALWAYS;
-	desc.FrontFace.StencilPassOp      = D3D11_STENCIL_OP_KEEP;
-	desc.FrontFace.StencilFailOp      = D3D11_STENCIL_OP_KEEP;
-	desc.FrontFace.StencilDepthFailOp = D3D11_STENCIL_OP_KEEP;
+	desc.FrontFace.StencilFunc        = stencilFunc;
+	desc.FrontFace.StencilPassOp      = stencilPassOp;
+	desc.FrontFace.StencilFailOp      = stencilFailOp;
+	desc.FrontFace.StencilDepthFailOp = stencilFailOp;
 
 	desc.BackFace = desc.FrontFace;
 
@@ -105,159 +108,164 @@ HRESULT DX11CommonStates::CreateSamplerState(ID3D11Device* device, D3D11_FILTER 
 
 //////////////////////////////////////////////////////////////////////////
 
-
 //--------------------------------------------------------------------------------------
 // Blend states
 //--------------------------------------------------------------------------------------
 HRESULT DX11CommonStates::Opaque(ID3D11Device* pDevice, ID3D11BlendState** pResult)
-{
-	return CreateBlendState(pDevice, pResult);
-}
+{ return CreateBlendState(pDevice, pResult); }
 
 HRESULT DX11CommonStates::Tranparent(ID3D11Device* pDevice, ID3D11BlendState** pResult)
-{
-	return CreateBlendState(pDevice, pResult, false, false, true, D3D11_BLEND_SRC_ALPHA, D3D11_BLEND_ONE);
-}
+{ return CreateBlendState(pDevice, pResult, false, false, true, D3D11_BLEND_SRC_ALPHA, D3D11_BLEND_SRC_ALPHA, D3D11_BLEND_ONE, D3D11_BLEND_ONE); }
 
 HRESULT DX11CommonStates::AlphaToCoverage(ID3D11Device* pDevice, ID3D11BlendState** pResult)
-{
-	return CreateBlendState(pDevice, pResult, true, false, false);
-}
+{ return CreateBlendState(pDevice, pResult, true, false, false); }
 
 HRESULT DX11CommonStates::AlphaBlend(ID3D11Device* pDevice, ID3D11BlendState** pResult)
-{
-	return CreateBlendState(pDevice, pResult, false, false, true, D3D11_BLEND_ONE, D3D11_BLEND_ONE, D3D11_BLEND_INV_SRC_ALPHA, D3D11_BLEND_INV_SRC_ALPHA);
-}
+{ return CreateBlendState(pDevice, pResult, false, false, true, D3D11_BLEND_ONE, D3D11_BLEND_ONE, D3D11_BLEND_INV_SRC_ALPHA, D3D11_BLEND_INV_SRC_ALPHA); }
+
+HRESULT DX11CommonStates::BlendFactor(ID3D11Device* pDevice, ID3D11BlendState** pResult)
+{ return CreateBlendState(pDevice, pResult, false, false, true, D3D11_BLEND_BLEND_FACTOR, D3D11_BLEND_BLEND_FACTOR, D3D11_BLEND_INV_BLEND_FACTOR, D3D11_BLEND_INV_BLEND_FACTOR); }
 
 HRESULT DX11CommonStates::Additive(ID3D11Device* pDevice, ID3D11BlendState** pResult)
-{
-	return CreateBlendState(pDevice, pResult, false, false, true, D3D11_BLEND_SRC_ALPHA, D3D11_BLEND_SRC_ALPHA, D3D11_BLEND_ONE, D3D11_BLEND_ONE);
-}
+{ return CreateBlendState(pDevice, pResult, false, false, true, D3D11_BLEND_SRC_ALPHA, D3D11_BLEND_SRC_ALPHA, D3D11_BLEND_ONE, D3D11_BLEND_ONE); }
 
 HRESULT DX11CommonStates::NonPremultiplied(ID3D11Device* pDevice, ID3D11BlendState** pResult)
-{
-	return CreateBlendState(pDevice, pResult, false, false, false, D3D11_BLEND_SRC_ALPHA, D3D11_BLEND_SRC_ALPHA, D3D11_BLEND_INV_SRC_ALPHA, D3D11_BLEND_INV_SRC_ALPHA);
-}
+{ return CreateBlendState(pDevice, pResult, false, false, false, D3D11_BLEND_SRC_ALPHA, D3D11_BLEND_SRC_ALPHA, D3D11_BLEND_INV_SRC_ALPHA, D3D11_BLEND_INV_SRC_ALPHA); }
+
+HRESULT DX11CommonStates::NoRenderTargetWrites(ID3D11Device* pDevice, ID3D11BlendState** pResult)
+{ return CreateBlendState(pDevice, pResult, false, false, false, D3D11_BLEND_ONE, D3D11_BLEND_ONE, D3D11_BLEND_ZERO, D3D11_BLEND_ZERO, D3D11_BLEND_OP_ADD, D3D11_BLEND_OP_ADD); }
 
 
 //--------------------------------------------------------------------------------------
 // Depth stencil states
 //--------------------------------------------------------------------------------------
 HRESULT DX11CommonStates::DepthNone(ID3D11Device* pDevice, ID3D11DepthStencilState** pResult)
-{
-	return CreateDepthStencilState(pDevice, false, false, pResult);
-}
+{ return CreateDepthStencilState(pDevice, false, false, D3D11_COMPARISON_LESS_EQUAL, false, D3D11_COMPARISON_ALWAYS, D3D11_STENCIL_OP_KEEP, D3D11_STENCIL_OP_KEEP, pResult); }
 
 HRESULT DX11CommonStates::DepthDefault(ID3D11Device* pDevice, ID3D11DepthStencilState** pResult)
-{
-	return CreateDepthStencilState(pDevice, true, true, pResult);
-}
+{ return CreateDepthStencilState(pDevice, true, true, D3D11_COMPARISON_LESS_EQUAL, false, D3D11_COMPARISON_ALWAYS, D3D11_STENCIL_OP_KEEP, D3D11_STENCIL_OP_KEEP, pResult); }
 
 HRESULT DX11CommonStates::DepthRead(ID3D11Device* pDevice, ID3D11DepthStencilState** pResult)
-{
-	return CreateDepthStencilState(pDevice, true, false, pResult);
-}
+{ return CreateDepthStencilState(pDevice, true, false, D3D11_COMPARISON_LESS_EQUAL, false, D3D11_COMPARISON_ALWAYS, D3D11_STENCIL_OP_KEEP, D3D11_STENCIL_OP_KEEP, pResult); }
+
+HRESULT DX11CommonStates::MarkReflection(ID3D11Device* pDevice, ID3D11DepthStencilState** pResult)
+{ return CreateDepthStencilState(pDevice, true, false, D3D11_COMPARISON_LESS_EQUAL, true, D3D11_COMPARISON_ALWAYS, D3D11_STENCIL_OP_REPLACE, D3D11_STENCIL_OP_KEEP, pResult); }
+
+HRESULT DX11CommonStates::DrawReflection(ID3D11Device* pDevice, ID3D11DepthStencilState** pResult)
+{ return CreateDepthStencilState(pDevice, true, true, D3D11_COMPARISON_LESS_EQUAL, true, D3D11_COMPARISON_EQUAL, D3D11_STENCIL_OP_KEEP, D3D11_STENCIL_OP_KEEP, pResult); }
+
+HRESULT DX11CommonStates::NoDoubleBlend(ID3D11Device* pDevice, ID3D11DepthStencilState** pResult)
+{ return CreateDepthStencilState(pDevice, true, true, D3D11_COMPARISON_LESS_EQUAL, true, D3D11_COMPARISON_EQUAL, D3D11_STENCIL_OP_INCR, D3D11_STENCIL_OP_KEEP, pResult ); }
 
 
 //--------------------------------------------------------------------------------------
 // Rasterizer states
 //--------------------------------------------------------------------------------------
 HRESULT DX11CommonStates::CullNone(ID3D11Device* pDevice, ID3D11RasterizerState** pResult)
-{
-	return CreateRasterizerState(pDevice, D3D11_CULL_NONE, D3D11_FILL_SOLID, pResult);
-}
+{ return CreateRasterizerState(pDevice, D3D11_CULL_NONE, D3D11_FILL_SOLID, pResult); }
 
 HRESULT DX11CommonStates::CullClockwise(ID3D11Device* pDevice, ID3D11RasterizerState** pResult)
-{
-	return CreateRasterizerState(pDevice, D3D11_CULL_FRONT, D3D11_FILL_SOLID, pResult);
-}
+{ return CreateRasterizerState(pDevice, D3D11_CULL_FRONT, D3D11_FILL_SOLID, pResult); }
 
 HRESULT DX11CommonStates::CullCounterClockwise(ID3D11Device* pDevice, ID3D11RasterizerState** pResult)
-{
-	return CreateRasterizerState(pDevice, D3D11_CULL_BACK, D3D11_FILL_SOLID, pResult);
-}
+{ return CreateRasterizerState(pDevice, D3D11_CULL_BACK, D3D11_FILL_SOLID, pResult); }
 
 HRESULT DX11CommonStates::Wireframe(ID3D11Device* pDevice, ID3D11RasterizerState** pResult)
-{
-	return CreateRasterizerState(pDevice, D3D11_CULL_BACK, D3D11_FILL_WIREFRAME, pResult);
-}
+{ return CreateRasterizerState(pDevice, D3D11_CULL_BACK, D3D11_FILL_WIREFRAME, pResult); }
 
 
 //--------------------------------------------------------------------------------------
 // Sampler states
 //--------------------------------------------------------------------------------------
 HRESULT DX11CommonStates::PointWrap(ID3D11Device* pDevice, ID3D11SamplerState** pResult)
-{
-	return CreateSamplerState(pDevice, D3D11_FILTER_MIN_MAG_MIP_POINT, D3D11_TEXTURE_ADDRESS_WRAP, pResult);
-}
+{ return CreateSamplerState(pDevice, D3D11_FILTER_MIN_MAG_MIP_POINT, D3D11_TEXTURE_ADDRESS_WRAP, pResult); }
 
 HRESULT DX11CommonStates::PointClamp(ID3D11Device* pDevice, ID3D11SamplerState** pResult)
-{
-	return CreateSamplerState(pDevice, D3D11_FILTER_MIN_MAG_MIP_POINT, D3D11_TEXTURE_ADDRESS_CLAMP, pResult);
-}
+{ return CreateSamplerState(pDevice, D3D11_FILTER_MIN_MAG_MIP_POINT, D3D11_TEXTURE_ADDRESS_CLAMP, pResult); }
 
 HRESULT DX11CommonStates::LinearWrap(ID3D11Device* pDevice, ID3D11SamplerState** pResult)
-{
-	return CreateSamplerState(pDevice, D3D11_FILTER_MIN_MAG_MIP_LINEAR, D3D11_TEXTURE_ADDRESS_WRAP, pResult);
-}
+{ return CreateSamplerState(pDevice, D3D11_FILTER_MIN_MAG_MIP_LINEAR, D3D11_TEXTURE_ADDRESS_WRAP, pResult); }
 
 HRESULT DX11CommonStates::LinearClamp(ID3D11Device* pDevice, ID3D11SamplerState** pResult)
-{
-	return CreateSamplerState(pDevice, D3D11_FILTER_MIN_MAG_MIP_LINEAR, D3D11_TEXTURE_ADDRESS_CLAMP, pResult);
-}
+{ return CreateSamplerState(pDevice, D3D11_FILTER_MIN_MAG_MIP_LINEAR, D3D11_TEXTURE_ADDRESS_CLAMP, pResult); }
 
 HRESULT DX11CommonStates::AnisotropicWrap(ID3D11Device* pDevice, ID3D11SamplerState** pResult)
-{
-	return CreateSamplerState(pDevice, D3D11_FILTER_ANISOTROPIC, D3D11_TEXTURE_ADDRESS_WRAP, pResult);
-}
+{ return CreateSamplerState(pDevice, D3D11_FILTER_ANISOTROPIC, D3D11_TEXTURE_ADDRESS_WRAP, pResult); }
 
 HRESULT DX11CommonStates::AnisotropicClamp(ID3D11Device* pDevice, ID3D11SamplerState** pResult)
-{
-	return CreateSamplerState(pDevice, D3D11_FILTER_ANISOTROPIC, D3D11_TEXTURE_ADDRESS_CLAMP, pResult);
-}
+{ return CreateSamplerState(pDevice, D3D11_FILTER_ANISOTROPIC, D3D11_TEXTURE_ADDRESS_CLAMP, pResult); }
 
 //////////////////////////////////////////////////////////////////////////
 
 void DX11CommonStates::InitAll(ID3D11Device* device)
 {
 	RJE_CHECK_FOR_SUCCESS(Wireframe(           device, &sRasterizerState_Wireframe));
+	RJE_CHECK_FOR_SUCCESS(CullClockwise(       device, &sRasterizerState_CullClockwise));
 	RJE_CHECK_FOR_SUCCESS(CullCounterClockwise(device, &sRasterizerState_Solid));
+	RJE_CHECK_FOR_SUCCESS(CullNone(            device, &sRasterizerState_CullNone));
 	sCurrentRasterizerState = sRasterizerState_Solid;
 
 	RJE_CHECK_FOR_SUCCESS(AnisotropicWrap(device, &sSamplerState_Anisotropic));
 	RJE_CHECK_FOR_SUCCESS(LinearWrap(     device, &sSamplerState_Linear));
 	sCurrentSamplerState = sSamplerState_Anisotropic;
 
-	RJE_CHECK_FOR_SUCCESS(Opaque(         device, &sBlendState_Opaque));
-	RJE_CHECK_FOR_SUCCESS(Tranparent(     device, &sBlendState_Transparent));
-	RJE_CHECK_FOR_SUCCESS(AlphaToCoverage(device, &sBlendState_AlphaToCoverage));
+	RJE_CHECK_FOR_SUCCESS(Opaque(              device, &sBlendState_Opaque));
+	RJE_CHECK_FOR_SUCCESS(Tranparent(          device, &sBlendState_Transparent));
+	RJE_CHECK_FOR_SUCCESS(AlphaToCoverage(     device, &sBlendState_AlphaToCoverage));
+	RJE_CHECK_FOR_SUCCESS(BlendFactor(         device, &sBlendState_BlendFactor));
+	RJE_CHECK_FOR_SUCCESS(NoRenderTargetWrites(device, &sBlendState_NoRenderTargetWrites));
 	sCurrentBlendState = sBlendState_Transparent;
+
+	RJE_CHECK_FOR_SUCCESS(DepthDefault(  device, &sDepthStencilState_Default));
+	RJE_CHECK_FOR_SUCCESS(MarkReflection(device, &sDepthStencilState_MarkReflection));
+	RJE_CHECK_FOR_SUCCESS(DrawReflection(device, &sDepthStencilState_DrawReflection));
+	RJE_CHECK_FOR_SUCCESS(NoDoubleBlend( device, &sDepthStencilState_NoDoubleBlend));
+	sCurrentDepthStencilState = sDepthStencilState_Default;
 }
 
 void DX11CommonStates::DestroyAll()
 {
+	RJE_SAFE_RELEASE(sDepthStencilState_Default);
+	RJE_SAFE_RELEASE(sDepthStencilState_MarkReflection);
+	RJE_SAFE_RELEASE(sDepthStencilState_DrawReflection);
+	RJE_SAFE_RELEASE(sDepthStencilState_NoDoubleBlend);
+
 	RJE_SAFE_RELEASE(sBlendState_Opaque);
 	RJE_SAFE_RELEASE(sBlendState_Transparent);
 	RJE_SAFE_RELEASE(sBlendState_AlphaToCoverage);
+	RJE_SAFE_RELEASE(sBlendState_BlendFactor);
+	RJE_SAFE_RELEASE(sBlendState_NoRenderTargetWrites);
 
 	RJE_SAFE_RELEASE(sSamplerState_Anisotropic);
 	RJE_SAFE_RELEASE(sSamplerState_Linear);
 
 	RJE_SAFE_RELEASE(sRasterizerState_Solid);
+	RJE_SAFE_RELEASE(sRasterizerState_CullNone);
+	RJE_SAFE_RELEASE(sRasterizerState_CullClockwise);
 	RJE_SAFE_RELEASE(sRasterizerState_Wireframe);
 }
 
 //////////////////////////////////////////////////////////////////////////
 
-ID3D11RasterizerState*	DX11CommonStates::sRasterizerState_Solid     = nullptr;
-ID3D11RasterizerState*	DX11CommonStates::sRasterizerState_Wireframe = nullptr;
-ID3D11RasterizerState*	DX11CommonStates::sCurrentRasterizerState    = nullptr;
+ID3D11RasterizerState*	DX11CommonStates::sRasterizerState_Solid         = nullptr;
+ID3D11RasterizerState*	DX11CommonStates::sRasterizerState_Wireframe     = nullptr;
+ID3D11RasterizerState*	DX11CommonStates::sRasterizerState_CullNone      = nullptr;
+ID3D11RasterizerState*	DX11CommonStates::sRasterizerState_CullClockwise = nullptr;
+ID3D11RasterizerState*	DX11CommonStates::sCurrentRasterizerState        = nullptr;
 
 ID3D11SamplerState*	DX11CommonStates::sSamplerState_Anisotropic = nullptr;
 ID3D11SamplerState*	DX11CommonStates::sSamplerState_Linear      = nullptr;
 ID3D11SamplerState*	DX11CommonStates::sCurrentSamplerState      = nullptr;
 
-ID3D11BlendState*	DX11CommonStates::sBlendState_Opaque          = nullptr;
-ID3D11BlendState*	DX11CommonStates::sBlendState_Transparent     = nullptr;
-ID3D11BlendState*	DX11CommonStates::sBlendState_AlphaToCoverage = nullptr;
-ID3D11BlendState*	DX11CommonStates::sCurrentBlendState          = nullptr;
+ID3D11BlendState*	DX11CommonStates::sBlendState_Opaque               = nullptr;
+ID3D11BlendState*	DX11CommonStates::sBlendState_Transparent          = nullptr;
+ID3D11BlendState*	DX11CommonStates::sBlendState_AlphaToCoverage      = nullptr;
+ID3D11BlendState*	DX11CommonStates::sBlendState_BlendFactor          = nullptr;
+ID3D11BlendState*	DX11CommonStates::sBlendState_NoRenderTargetWrites = nullptr;
+ID3D11BlendState*	DX11CommonStates::sCurrentBlendState               = nullptr;
+
+ID3D11DepthStencilState* DX11CommonStates::sDepthStencilState_MarkReflection = nullptr;
+ID3D11DepthStencilState* DX11CommonStates::sDepthStencilState_DrawReflection = nullptr;
+ID3D11DepthStencilState* DX11CommonStates::sDepthStencilState_NoDoubleBlend  = nullptr;
+ID3D11DepthStencilState* DX11CommonStates::sDepthStencilState_Default        = nullptr;
+ID3D11DepthStencilState* DX11CommonStates::sCurrentDepthStencilState         = nullptr;
