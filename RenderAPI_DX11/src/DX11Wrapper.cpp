@@ -642,7 +642,9 @@ void DX11Wrapper::DrawScene()
 			mDX11Device->md3dImmediateContext->OMSetBlendState(0, blendFactor, 0xffffffff);
 		}
 
-		// Draw the grid.
+		//////////////////////////////////////////////////////////////////////////
+
+		// Draw the grid (mirror)
 		world             = XMLoadFloat4x4(&mGridWorld);
 		worldInvTranspose = DX11Math::InverseTranspose(world);
 		worldViewProj     = world*view*proj;
@@ -669,19 +671,11 @@ void DX11Wrapper::DrawScene()
 		mDX11Device->md3dImmediateContext->OMSetDepthStencilState(0, 0);
 		mDX11Device->md3dImmediateContext->OMSetBlendState(0, blendFactor, 0xffffffff);
 
-		// Draw the model reflection
+		//////////////////////////////////////////////////////////////////////////
+
+		// Draw the reflected meshes
 		XMVECTOR mirrorPlane = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);		// xz plane
 		XMMATRIX R           = XMMatrixReflect(mirrorPlane);
-		world                = XMLoadFloat4x4(&mModelWorld) * R;
-		worldInvTranspose    = DX11Math::InverseTranspose(world);
-		worldViewProj        = world*view*proj;
-
-		DX11Effects::BasicFX->SetWorld(world);
-		DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
-		DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
-		DX11Effects::BasicFX->SetMaterial(mModelMat);
-		DX11Effects::BasicFX->SetDiffuseMap(mWhiteMaskMap);
-		DX11Effects::BasicFX->SetMaskMap(mWhiteMaskMap);
 
 		// Cache the old light directions, and reflect the light directions and position.
 		XMFLOAT3 oldDirLightDirections[3];
@@ -703,8 +697,83 @@ void DX11Wrapper::DrawScene()
 		DX11Effects::BasicFX->SetPointLights(mPointLights);
 		DX11Effects::BasicFX->SetDirLights(mDirLights);
 
+		// Draw the box.
+		world             = XMLoadFloat4x4(&mBoxWorld) * R;
+		worldInvTranspose = DX11Math::InverseTranspose(world);
+		worldViewProj     = world*view*proj;
+
+		DX11Effects::BasicFX->SetWorld(world);
+		DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
+		DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
+		DX11Effects::BasicFX->SetTexTransform(XMLoadFloat4x4(&mBoxTexTransform));
+		DX11Effects::BasicFX->SetMaterial(mBoxMat);
+		DX11Effects::BasicFX->SetDiffuseMap(mBoxMap);
+		DX11Effects::BasicFX->SetMaskMap(mWhiteMaskMap);
+
 		// Cull clockwise triangles for reflection.
 		mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_CullClockwise);
+
+		// Only draw reflection into visible mirror pixels as marked by the stencil buffer. 
+		mDX11Device->md3dImmediateContext->OMSetDepthStencilState(DX11CommonStates::sDepthStencilState_DrawReflection, 1);
+		activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
+		mDX11Device->md3dImmediateContext->DrawIndexed(mBoxIndexCount, mBoxIndexOffset, mBoxVertexOffset);
+		
+		// Draw the cylinders.
+		for(int i = 0; i < 10; ++i)
+		{
+			world             = XMLoadFloat4x4(&mCylWorld[i]) * R;
+			worldInvTranspose = DX11Math::InverseTranspose(world);
+			worldViewProj     = world*view*proj;
+
+			DX11Effects::BasicFX->SetWorld(world);
+			DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
+			DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
+			DX11Effects::BasicFX->SetTexTransform(XMLoadFloat4x4(&mCylinderTexTransform));
+			DX11Effects::BasicFX->SetMaterial(mCylinderMat);
+			DX11Effects::BasicFX->SetDiffuseMap(mCylinderMap);
+			DX11Effects::BasicFX->SetMaskMap(mWhiteMaskMap);
+
+
+			// Only draw reflection into visible mirror pixels as marked by the stencil buffer. 
+			mDX11Device->md3dImmediateContext->OMSetDepthStencilState(DX11CommonStates::sDepthStencilState_DrawReflection, 1);
+			activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
+			mDX11Device->md3dImmediateContext->DrawIndexed(mCylinderIndexCount, mCylinderIndexOffset, mCylinderVertexOffset);
+		}
+
+		// Draw the spheres.
+		for(int i = 0; i < 10; ++i)
+		{
+			world             = XMLoadFloat4x4(&mSphereWorld[i]) * R;
+			worldInvTranspose = DX11Math::InverseTranspose(world);
+			worldViewProj     = world*view*proj;
+
+			DX11Effects::BasicFX->SetWorld(world);
+			DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
+			DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
+			DX11Effects::BasicFX->SetTexTransform(XMLoadFloat4x4(&mSphereTexTransform));
+			DX11Effects::BasicFX->SetMaterial(mSphereMat);
+			DX11Effects::BasicFX->SetDiffuseMap(mSphereMap);
+			DX11Effects::BasicFX->SetMaskMap(mWhiteMaskMap);
+
+			mDX11Device->md3dImmediateContext->OMSetBlendState(DX11CommonStates::sCurrentBlendState, blendFactor, 0xffffffff);
+			activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
+			mDX11Device->md3dImmediateContext->DrawIndexed(mSphereIndexCount, mSphereIndexOffset, mSphereVertexOffset);
+
+			// Restore default render states
+			mDX11Device->md3dImmediateContext->OMSetBlendState(0, blendFactor, 0xffffffff);
+		}
+
+		// Draw the model reflection
+		world                = XMLoadFloat4x4(&mModelWorld) * R;
+		worldInvTranspose    = DX11Math::InverseTranspose(world);
+		worldViewProj        = world*view*proj;
+
+		DX11Effects::BasicFX->SetWorld(world);
+		DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
+		DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
+		DX11Effects::BasicFX->SetMaterial(mModelMat);
+		DX11Effects::BasicFX->SetDiffuseMap(mWhiteMaskMap);
+		DX11Effects::BasicFX->SetMaskMap(mWhiteMaskMap);
 
 		// Only draw reflection into visible mirror pixels as marked by the stencil buffer. 
 		mDX11Device->md3dImmediateContext->OMSetDepthStencilState(DX11CommonStates::sDepthStencilState_DrawReflection, 1);
@@ -712,7 +781,7 @@ void DX11Wrapper::DrawScene()
 		mDX11Device->md3dImmediateContext->DrawIndexed(mModelIndexCount, mModelIndexOffset, mModelVertexOffset);
 
 		// Restore default states.
-		mDX11Device->md3dImmediateContext->RSSetState(0);	
+		mDX11Device->md3dImmediateContext->RSSetState(0);
 		mDX11Device->md3dImmediateContext->OMSetDepthStencilState(0, 0);
 
 		// Restore light settings.
@@ -849,5 +918,7 @@ void DX11Wrapper::ResizeWindow(int newSizeWidth, int newSizeHeight)
 
 	// The window resized, so update the aspect ratio and recompute the projection matrix.
 	DirectX::XMMATRIX P = DirectX::XMMatrixPerspectiveFovLH(0.25f*RJE::Math::Pi, static_cast<float>(newSizeWidth) / newSizeHeight, 1.0f, 1000.0f);
+	// TODO : add an ortho camera
+	//DirectX::XMMATRIX P = DirectX::XMMatrixOrthographicLH(newSizeWidth, newSizeHeight, 1.0f, 1000.0f);
 	XMStoreFloat4x4(&mProj, P);
 }
