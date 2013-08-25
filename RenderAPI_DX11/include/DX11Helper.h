@@ -39,6 +39,7 @@
 #include "DX11DepthBuffer.h"
 #include "DX11CommonStates.h"
 #include "DX11Light.h"
+#include "DX11Camera.h"
 #include "DX11Effect.h"
 #include "DX11Vertex.h"
 #include "DX11InputLayout.h"

@@ -1,4 +1,5 @@
 #include "DX11Wrapper.h"
+#include "../../RamJamEngine/include/System.h"
 
 DX11Wrapper::DX11Wrapper()
 {
@@ -28,8 +29,6 @@ DX11Wrapper::DX11Wrapper()
 
 	DirectX::XMMATRIX Id = DirectX::XMMatrixIdentity();
 	XMStoreFloat4x4(&mGridWorld, Id);
-	XMStoreFloat4x4(&mView, Id);
-	XMStoreFloat4x4(&mProj, Id);
 
 	// Texture transforms
 	XMMATRIX gridTexScale   = XMMatrixScaling(5.0f, 5.0f, 0.0f);
@@ -43,7 +42,7 @@ DX11Wrapper::DX11Wrapper()
 
 	// Meshes transforms
 	XMMATRIX boxScale  = XMMatrixScaling(2.0f, 1.0f, 2.0f);
-	XMMATRIX boxOffset = XMMatrixTranslation(0.0f, 0.51f, 0.0f);		//0.51 to avoid z-fight occuring with 0.5
+	XMMATRIX boxOffset = XMMatrixTranslation(0.0f, 0.51f, 0.0f);		//0.51 to avoid z-fight occurring with 0.5
 	XMStoreFloat4x4(&mBoxWorld, XMMatrixMultiply(boxScale, boxOffset));
 
 	XMMATRIX dragonScale    = XMMatrixScaling(0.2f, 0.2f, 0.2f);
@@ -149,7 +148,7 @@ void DX11Wrapper::Initialize(HWND hMainWnd, int windowWidth, int windowHeight)
 	// Check 4X MSAA quality support for our back buffer format.
 	// All Direct3D 11 capable devices support 4X MSAA for all render 
 	// target formats, so we only need to check quality support.
-	RJE_CHECK_FOR_SUCCESS(mDX11Device->md3dDevice->CheckMultisampleQualityLevels( DXGI_FORMAT_R8G8B8A8_UNORM, 4, &RJE_GLOBALS::g4xMsaaQuality));
+	RJE_CHECK_FOR_SUCCESS(mDX11Device->md3dDevice->CheckMultisampleQualityLevels( DXGI_FORMAT_R8G8B8A8_UNORM, CIniFile::GetValueInt("multisamplingcount", "rendering", "../data/Config.ini"), &RJE_GLOBALS::g4xMsaaQuality));
 	RJE_ASSERT( RJE_GLOBALS::g4xMsaaQuality > 0 );
 
 	// Fill out a DXGI_SWAP_CHAIN_DESC to describe our swap chain.
@@ -164,10 +163,12 @@ void DX11Wrapper::Initialize(HWND hMainWnd, int windowWidth, int windowHeight)
 	sd.BufferDesc.Scaling					= DXGI_MODE_SCALING_UNSPECIFIED;
 
 	// Use 4X MSAA? 
-	if( RJE_GLOBALS::gUse4xMsaa )
+	// TODO : fix the static variables
+	//if( RJE_GLOBALS::gUse4xMsaa )
+	if (CIniFile::GetValueBool("use4xmsaa", "rendering", "../data/Config.ini"))
 	{
-		sd.SampleDesc.Count   = 4;
-		sd.SampleDesc.Quality = (RJE_GLOBALS::g4xMsaaQuality)-1;
+		sd.SampleDesc.Count   = CIniFile::GetValueInt("multisamplingcount", "rendering", "../data/Config.ini");
+		sd.SampleDesc.Quality = RJE_GLOBALS::g4xMsaaQuality-1;
 	}
 	else // No MSAA
 	{
@@ -368,23 +369,21 @@ void DX11Wrapper::BuildGeometryBuffers()
 }
 
 //////////////////////////////////////////////////////////////////////////
-void DX11Wrapper::UpdateScene( float dt, float theta, float phi, float radius )
+void DX11Wrapper::UpdateScene( float dt )
 {
 	// Convert Spherical to Cartesian coordinates.
-	float x = radius*sinf(phi)*cosf(theta);
-	float z = radius*sinf(phi)*sinf(theta);
-	float y = radius*cosf(phi);
+	float x = System::Instance()->mCameraRadius*sinf(System::Instance()->mCameraPhi)*cosf(System::Instance()->mCameraTheta);
+	float z = System::Instance()->mCameraRadius*sinf(System::Instance()->mCameraPhi)*sinf(System::Instance()->mCameraTheta);
+	float y = System::Instance()->mCameraRadius*cosf(System::Instance()->mCameraPhi);
 
 	mEyePosW = XMFLOAT3(x, y, z);
 
 	// Build the view matrix.
-	DirectX::XMVECTOR pos    = DirectX::XMVectorSet(x, y, z, 1.0f);
-	DirectX::XMVECTOR target = DirectX::XMVectorZero();
-	DirectX::XMVECTOR up     = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-
-	DirectX::XMMATRIX V = DirectX::XMMatrixLookAtLH(pos, target, up);
-	XMStoreFloat4x4(&mView, V);
-
+	mCamera->mPosition = Vector3(x, y, z);
+	mCamera->mLookAt   = Vector3::zero;
+	mCamera->mUp       = Vector3(0.0f, 1.0f, 0.0f);
+	mCamera->UpdateViewMatrix();
+	
 	// Inputs modifiers : TODO : Get these out of DX11Wrapper !
 	if (Input::Instance()->GetKeyboardDown(Keyboard0))	mDirLightCount = 0;
 	if (Input::Instance()->GetKeyboardDown(Keyboard1))	mDirLightCount = 1;
@@ -397,7 +396,7 @@ void DX11Wrapper::UpdateScene( float dt, float theta, float phi, float radius )
 	if (Input::Instance()->GetKeyboardDown(T))			mbUseTexture  = !mbUseTexture;
 	if (Input::Instance()->GetKeyboardDown(B))			mbUseBlending = !mbUseBlending;
 	if (Input::Instance()->GetKeyboardDown(F))			mbUseFog      = !mbUseFog;
-	if (Input::Instance()->GetKeyboardDown(S))			 DX11CommonStates::sCurrentRasterizerState = DX11CommonStates::sRasterizerState_Solid;
+	if (Input::Instance()->GetKeyboardDown(S))			{DX11CommonStates::sCurrentRasterizerState = DX11CommonStates::sRasterizerState_Solid;}
 	if (Input::Instance()->GetKeyboardDown(W))			{DX11CommonStates::sCurrentRasterizerState = DX11CommonStates::sRasterizerState_Wireframe; mbUseBlending = false;}
 	if (Input::Instance()->GetKeyboardDown(A))			DX11CommonStates::sCurrentSamplerState    = DX11CommonStates::sSamplerState_Anisotropic;
 	if (Input::Instance()->GetKeyboardDown(L))			DX11CommonStates::sCurrentSamplerState    = DX11CommonStates::sSamplerState_Linear;
@@ -446,8 +445,8 @@ void DX11Wrapper::DrawScene()
 	mDX11Device->md3dImmediateContext->IASetIndexBuffer(mIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
 	// Set constants
-	DirectX::XMMATRIX view     = XMLoadFloat4x4(&mView);
-	DirectX::XMMATRIX proj     = XMLoadFloat4x4(&mProj);
+	DirectX::XMMATRIX view     = mCamera->mView.TO_XMMATRIX();
+	DirectX::XMMATRIX proj     = mCamera->mCurrentProjectionMatrix->TO_XMMATRIX();
 	DirectX::XMMATRIX viewProj = view*proj;
 
 	// Set per frame constants.
@@ -816,7 +815,8 @@ void DX11Wrapper::DrawScene()
 		mDX11Device->md3dImmediateContext->OMSetDepthStencilState(0, 0);
 	}
 
-	if (RJE_GLOBALS::gVsyncEnabled)
+	//if (RJE_GLOBALS::gVsyncEnabled)
+	if (CIniFile::GetValueBool("vsync", "rendering", "../data/Config.ini"))
 	{
 		RJE_CHECK_FOR_SUCCESS(mSwapChain->Present(1, 0));
 	}
@@ -883,10 +883,11 @@ void DX11Wrapper::ResizeWindow(int newSizeWidth, int newSizeHeight)
 	depthStencilDesc.Format    = DXGI_FORMAT_D24_UNORM_S8_UINT;
 
 	// Use 4X MSAA? --must match swap chain MSAA values.
-	if( RJE_GLOBALS::gUse4xMsaa )
+	//if( RJE_GLOBALS::gUse4xMsaa )
+	if (CIniFile::GetValueBool("use4xmsaa", "rendering", "../data/Config.ini"))
 	{
-		depthStencilDesc.SampleDesc.Count   = 4;
-		depthStencilDesc.SampleDesc.Quality = (RJE_GLOBALS::g4xMsaaQuality)-1;
+		depthStencilDesc.SampleDesc.Count   = CIniFile::GetValueInt("multisamplingcount", "rendering", "../data/Config.ini");
+		depthStencilDesc.SampleDesc.Quality = RJE_GLOBALS::g4xMsaaQuality-1;
 	}
 	else // No MSAA
 	{
@@ -917,8 +918,11 @@ void DX11Wrapper::ResizeWindow(int newSizeWidth, int newSizeHeight)
 	mDX11Device->md3dImmediateContext->RSSetViewports(1, &mScreenViewport);
 
 	// The window resized, so update the aspect ratio and recompute the projection matrix.
-	DirectX::XMMATRIX P = DirectX::XMMatrixPerspectiveFovLH(0.25f*RJE::Math::Pi, static_cast<float>(newSizeWidth) / newSizeHeight, 1.0f, 1000.0f);
-	// TODO : add an ortho camera
-	//DirectX::XMMATRIX P = DirectX::XMMatrixOrthographicLH(newSizeWidth, newSizeHeight, 1.0f, 1000.0f);
-	XMStoreFloat4x4(&mProj, P);
+	mCamera->SetCameraSettings(	System::Instance()->mCameraFOV,
+								System::Instance()->mCameraOrthoZoom,
+								(float)newSizeWidth,
+								(float)newSizeWidth,
+								System::Instance()->mCameraNearZ,
+								System::Instance()->mCameraFarZ);
+	mCamera->UpdateProjMatrix((float)newSizeWidth, (float)newSizeHeight);
 }

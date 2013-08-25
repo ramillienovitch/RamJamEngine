@@ -237,6 +237,7 @@
   <ItemGroup>
     <ClInclude Include="include\D3DX11Effect.h" />
     <ClInclude Include="include\DDSTextureLoader.h" />
+    <ClInclude Include="include\DX11Camera.h" />
     <ClInclude Include="include\DX11CommonStates.h" />
     <ClInclude Include="include\DX11DepthBuffer.h" />
     <ClInclude Include="include\DX11Device.h" />
@@ -252,6 +253,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\DDSTextureLoader.cpp" />
+    <ClCompile Include="src\DX11Camera.cpp" />
     <ClCompile Include="src\DX11CommonStates.cpp" />
     <ClCompile Include="src\DX11DepthBuffer.cpp" />
     <ClCompile Include="src\DX11Device.cpp" />

@@ -1,7 +1,5 @@
 #pragma once
 
-#include "Platform.h"
-
 #include <cstdarg>
 #include <cstdio>
 #include <fstream>

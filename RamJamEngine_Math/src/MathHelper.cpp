@@ -7,7 +7,7 @@
 namespace RJE
 {
 	const float Math::Infinity = FLT_MAX;
-	const float Math::Pi       = RJE_PI;
+	const float Math::Pi       = RJE_PI_F;
 
 	float Math::AngleFromXY(float x, float y)
 	{

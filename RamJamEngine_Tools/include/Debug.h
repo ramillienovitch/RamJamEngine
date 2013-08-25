@@ -5,10 +5,15 @@
 namespace RJE
 {
 #	if defined(DEBUG) | defined(_DEBUG)
+#	define RJE_DEBUG
+#	endif
+
+#	ifdef RJE_DEBUG
 #		define RJE_ASSERT(x) _ASSERTE(x)
 #	else
 #		define RJE_ASSERT(x) (x)
 #	endif
+#	define RJE_C_ASSERT(x, y)	static_assert(x, y)
 
 #	define RJE_ALIGNOF( X )		__declspec( align( X ) )
 

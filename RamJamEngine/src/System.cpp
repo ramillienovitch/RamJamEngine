@@ -12,11 +12,15 @@ System::System()
 	mMaximized = false;
 	mResizing  = false;
 
-	mLastMousePos.x = 0;
-	mLastMousePos.y = 0;
-	mCameraTheta	= 1.5f*RJE::Math::Pi;
-	mCameraPhi		= 0.25f*RJE::Math::Pi;
-	mCameraRadius	= 10.0f;
+	mLastMousePos.x  = 0;
+	mLastMousePos.y  = 0;
+	mCameraTheta	 = 1.5f*RJE::Math::Pi;
+	mCameraPhi		 = 0.25f*RJE::Math::Pi;
+	mCameraRadius	 = 10.0f;
+	mCameraFOV		 = 80;
+	mCameraOrthoZoom = 0.01f;
+	mCameraNearZ     = 0.01f;
+	mCameraFarZ      = 1000.0f;
 
 	mCameraAnimated = false;
 	mAnimationSpeed = 10.0f;
@@ -24,8 +28,10 @@ System::System()
 
 #if (RJE_GRAPHIC_API == DIRECTX_11)
 	mGraphicAPI = new DX11Wrapper();
+	mGraphicAPI->mCamera = new DX11Camera();
 #else
 	mGraphicAPI = new OglWrapper();
+	mGraphicAPI->mCamera = new OglCamera();
 #endif
 }
 System::~System(){}
@@ -35,8 +41,9 @@ BOOL System::Initialize(int nCmdShow)
 {
 	HACCEL hAccelTable;
 
-	// Initialize all the globals defined in the config.ini file
+	// Initialize all the globals defined in the .ini files
 	LoadConfigFile();
+	LoadCameraSettings();
 
 	// Initialize global strings
 	LoadString(mHInst, IDS_APP_TITLE, mSzTitle, 100);
@@ -57,8 +64,8 @@ void System::Shutdown()
 {
 	ShutdownWindows();
 
+	RJE_SAFE_DELETE(mGraphicAPI->mCamera);
 	mGraphicAPI->Shutdown();
-
 	RJE_SAFE_DELETE(mGraphicAPI);
 
 	Timer::DeleteInstance();
@@ -87,7 +94,7 @@ void System::Run()
 		else	// Otherwise, do animation/game stuff.
 		{
 			Timer::Instance()->Update();
-			
+
 			HandleInputs();
 
 			if(mAppPaused)
@@ -95,7 +102,7 @@ void System::Run()
 			else
 			{
 				CalculateFrameStats();
-				UpdateScene(Timer::Instance()->DeltaTime(), mCameraTheta, mCameraPhi, mCameraRadius);
+				UpdateScene(Timer::Instance()->DeltaTime());
 				DrawScene();
 				
 				Input::Instance()->ResetInputStates();
@@ -108,6 +115,8 @@ void System::Run()
 void System::OnResize()
 {
 	mGraphicAPI->ResizeWindow(mScreenWidth, mScreenHeight);
+	mGraphicAPI->mCamera->SetCameraSettings(mCameraFOV, mCameraOrthoZoom, (float)mScreenWidth, (float)mScreenHeight, mCameraNearZ, mCameraFarZ);
+	mGraphicAPI->mCamera->UpdateProjMatrix((float)mScreenWidth, (float)mScreenHeight);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -119,18 +128,39 @@ LRESULT CALLBACK System::MessageHandler(HWND hwnd, UINT umsg, WPARAM wparam, LPA
 	{	
 	// WM_ACTIVATE is sent when the window is activated or deactivated.
 	// We pause the game when the window is deactivated and unpause it
-	// when it becomes active.  
+	// when it becomes active.
 	case WM_ACTIVATE:
-		if( LOWORD(wparam) == WA_INACTIVE )
-		{
-			mAppPaused = true;
-			Timer::Instance()->Stop();
-		}
+		if (RJE_GLOBALS::gRunInBackground)
+			return 0;
 		else
 		{
-			mAppPaused = false;
-			Timer::Instance()->Start();
+			if( LOWORD(wparam) == WA_INACTIVE )
+			{
+				mAppPaused = true;
+				Timer::Instance()->Stop();
+			}
+			else
+			{
+				mAppPaused = false;
+				Timer::Instance()->Start();
+			}
+			return 0;
 		}
+
+	// WM_EXITSIZEMOVE is sent when the user grabs the resize bars.
+	case WM_ENTERSIZEMOVE:
+		mAppPaused = true;
+		mResizing  = true;
+		Timer::Instance()->Stop();
+		return 0;
+
+	// WM_EXITSIZEMOVE is sent when the user releases the resize bars.
+	// Here we reset everything based on the new window dimensions.
+	case WM_EXITSIZEMOVE:
+		mAppPaused = false;
+		mResizing  = false;
+		Timer::Instance()->Start();
+		OnResize();
 		return 0;
 
 	// WM_SIZE is sent when the user resizes the window.  
@@ -189,23 +219,6 @@ LRESULT CALLBACK System::MessageHandler(HWND hwnd, UINT umsg, WPARAM wparam, LPA
 				}
 			}
 		}
-		
-		return 0;
-
-	// WM_EXITSIZEMOVE is sent when the user grabs the resize bars.
-	case WM_ENTERSIZEMOVE:
-		mAppPaused = true;
-		mResizing  = true;
-		Timer::Instance()->Stop();
-		return 0;
-
-	// WM_EXITSIZEMOVE is sent when the user releases the resize bars.
-	// Here we reset everything based on the new window dimensions.
-	case WM_EXITSIZEMOVE:
-		mAppPaused = false;
-		mResizing  = false;
-		Timer::Instance()->Start();
-		OnResize();
 		return 0;
 
 	// WM_DESTROY is sent when the window is being destroyed.
@@ -231,9 +244,9 @@ LRESULT CALLBACK System::MessageHandler(HWND hwnd, UINT umsg, WPARAM wparam, LPA
 }
 
 //////////////////////////////////////////////////////////////////////////
-BOOL System::UpdateScene(float dt, float theta, float phi, float radius)
+BOOL System::UpdateScene(float dt)
 {
-	mGraphicAPI->UpdateScene(dt, theta, phi, radius);
+	mGraphicAPI->UpdateScene(dt);
 	return true;
 }
 
@@ -248,7 +261,7 @@ BOOL System::DrawScene()
 BOOL System::InitializeWindows(int nCmdShow)
 {
 	int posX, posY;
-	DWORD dwStyle = WS_OVERLAPPEDWINDOW;
+	DWORD dwStyle = 0;
 
 	if (RJE_GLOBALS::gFullScreen)
 	{
@@ -262,13 +275,13 @@ BOOL System::InitializeWindows(int nCmdShow)
 		dmScreenSettings.dmSize       = sizeof(dmScreenSettings);
 		dmScreenSettings.dmPelsWidth  = (unsigned long)mScreenWidth;
 		dmScreenSettings.dmPelsHeight = (unsigned long)mScreenHeight;
-		dmScreenSettings.dmBitsPerPel = 32;			
+		dmScreenSettings.dmBitsPerPel = 32;
 		dmScreenSettings.dmFields     = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
 
 		// Change the display settings to full screen.
 		ChangeDisplaySettings(&dmScreenSettings, CDS_FULLSCREEN);
 
-		DWORD dwStyle = WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_POPUP;
+		dwStyle = WS_EX_TOPMOST | WS_POPUP;
 	}
 	else
 	{
@@ -277,7 +290,7 @@ BOOL System::InitializeWindows(int nCmdShow)
 		posX = (GetSystemMetrics(SM_CXSCREEN) - RJE_GLOBALS::gScreenWidth)  / 2;
 		posY = (GetSystemMetrics(SM_CYSCREEN) - RJE_GLOBALS::gScreenHeight) / 2;
 
-		DWORD dwStyle = WS_OVERLAPPEDWINDOW;
+		dwStyle = WS_OVERLAPPEDWINDOW;
 	}
 
 	// Create the window with the screen settings and get the handle to it.
@@ -321,11 +334,11 @@ ATOM System::RegisterMyClass( HINSTANCE hInstance )
 	wcex.cbClsExtra		= 0;
 	wcex.cbWndExtra		= 0;
 	wcex.hInstance		= hInstance;
-	wcex.hIcon			= LoadIcon(hInstance, MAKEINTRESOURCE(IDI_RAMJAMENGINE));
-	wcex.hCursor		= LoadCursor(NULL, IDC_ARROW);
+	wcex.hIcon			= nullptr;//LoadIcon(hInstance, MAKEINTRESOURCE(IDI_RAMJAMENGINE));
+	wcex.hCursor		= nullptr;//LoadCursor(NULL, IDC_ARROW);
 	wcex.hbrBackground	= (HBRUSH)(COLOR_WINDOW+1);
 	wcex.lpszClassName	= mSzWindowClass;
-	wcex.hIconSm		= LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
+	wcex.hIconSm		= nullptr;//LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
 	wcex.cbSize			= sizeof(WNDCLASSEX);
 
 	if (RJE_GLOBALS::gFullScreen)
@@ -393,11 +406,21 @@ void System::HandleInputs()
 	int x = Input::Instance()->GetMousePosX();
 	int y = Input::Instance()->GetMousePosY();
 
+	if  (Input::Instance()->GetKeyboardDown(F5))
+		LoadCameraSettings();
+
 	if (Input::Instance()->GetKeyboardDown(Spacebar))
 		mCameraAnimated = !mCameraAnimated;
 
+	if (Input::Instance()->GetKeyboardDown(Return))
+	{
+		mGraphicAPI->mCamera->SetCameraOrtho(!mGraphicAPI->mCamera->IsOrtho());
+		mGraphicAPI->mCamera->SetCameraSettings(mCameraFOV, mCameraOrthoZoom, (float)mScreenWidth, (float)mScreenHeight, mCameraNearZ, mCameraFarZ);
+		mGraphicAPI->mCamera->UpdateProjMatrix((float)mScreenWidth, (float)mScreenHeight);
+	}
+
 	if (mCameraAnimated)
-		mCameraTheta = DegreesToRadian(mAnimationSpeed*Timer::Instance()->Time());
+		mCameraTheta = DegreesToRadian_F(mAnimationSpeed*Timer::Instance()->Time());
 
 	// Wheel Scroll
 	if (Input::Instance()->GetMouseButtonDown(WheelUp))
@@ -422,35 +445,81 @@ void System::HandleInputs()
 
 	if (Input::Instance()->IsMouseMoving())
 	{
-		if( Input::Instance()->GetMouseButton(LButton) )
+		if (Input::Instance()->GetKeyboard(LeftCtrl))
 		{
-			// Make each pixel correspond to a quarter of a degree.
-			float dx = DegreesToRadian(0.25f*static_cast<float>(x - mLastMousePos.x));
-			float dy = DegreesToRadian(0.25f*static_cast<float>(y - mLastMousePos.y));
+			if( Input::Instance()->GetMouseButton(RButton) )
+			{
+				// Make each pixel correspond to 0.05 unit in the scene.
+				float dx = 0.005f*static_cast<float>(x - mLastMousePos.x);
 
-			// Update angles based on input to orbit camera around box.
-			if (!mCameraAnimated)
-				mCameraTheta -= dx;
-			mCameraPhi   -= dy;
+				if (mGraphicAPI->mCamera->IsOrtho())
+				{
+					// Make each pixel correspond to 0.001 unit in the scene.
+					float dx = 0.001f*static_cast<float>(x - mLastMousePos.x);
 
-			// Restrict the angle mPhi.
-			mCameraPhi = RJE::Math::Clamp(mCameraPhi, 0.1f, RJE::Math::Pi-0.1f);
+					// Update the camera radius based on input.
+					mCameraOrthoZoom += dx;
+					mCameraOrthoZoom = RJE::Math::Clamp(mCameraOrthoZoom, 0.0001f, 10000.0f);
+
+					mGraphicAPI->mCamera->SetCameraSettings(mCameraFOV, mCameraOrthoZoom, (float)mScreenWidth, (float)mScreenHeight, mCameraNearZ, mCameraFarZ);
+					mGraphicAPI->mCamera->UpdateProjMatrix((float)mScreenWidth, (float)mScreenHeight);
+				}
+				else
+				{
+					// Make each pixel correspond to 0.05 unit in the scene.
+					float dx = 0.05f*static_cast<float>(x - mLastMousePos.x);
+
+					// Update the camera radius based on input.
+					mCameraFOV += dx;
+					mCameraFOV = RJE::Math::Clamp(mCameraFOV, 1.0f, 179.0f);
+
+					mGraphicAPI->mCamera->SetCameraSettings(mCameraFOV, mCameraOrthoZoom, (float)mScreenWidth, (float)mScreenHeight, mCameraNearZ, mCameraFarZ);
+					mGraphicAPI->mCamera->UpdateProjMatrix((float)mScreenWidth, (float)mScreenHeight);
+				}
+			}
 		}
-		else if( Input::Instance()->GetMouseButton(RButton) )
+		else
 		{
-			// Make each pixel correspond to 0.005 unit in the scene.
-			float dx = 0.05f*static_cast<float>(x - mLastMousePos.x);
-			float dy = 0.05f*static_cast<float>(y - mLastMousePos.y);
+			if( Input::Instance()->GetMouseButton(LButton) )
+			{
+				// Make each pixel correspond to a quarter of a degree.
+				float dx = DegreesToRadian_F(0.25f*static_cast<float>(x - mLastMousePos.x));
+				float dy = DegreesToRadian_F(0.25f*static_cast<float>(y - mLastMousePos.y));
 
-			// Update the camera radius based on input.
-			mCameraRadius += dx - dy;
+				// Update angles based on input to orbit camera around box.
+				if (!mCameraAnimated)
+					mCameraTheta -= dx;
 
-			// Restrict the radius.
-			mCameraRadius = RJE::Math::Clamp(mCameraRadius, 2.0f, 500.0f);
+				mCameraPhi -= dy;
+				mCameraPhi = RJE::Math::Clamp(mCameraPhi, 0.1f, RJE::Math::Pi-0.1f);
+			}
+			else if( Input::Instance()->GetMouseButton(RButton) )
+			{
+				// Make each pixel correspond to 0.05 unit in the scene.
+				float dx = 0.05f*static_cast<float>(x - mLastMousePos.x);
+
+				// Update the camera radius based on input.
+				mCameraRadius += dx;
+				mCameraRadius = RJE::Math::Clamp(mCameraRadius, 0.5f, 100.0f);
+			}
 		}
+
 		mLastMousePos.x = x;
 		mLastMousePos.y = y;
 	}
+}
+
+//////////////////////////////////////////////////////////////////////////
+void System::LoadCameraSettings()
+{
+	mCameraFOV       = CIniFile::GetValueFloat("fov",       "camera", "..\\..\\RamJamEngine\\data\\Scene.ini");
+	mCameraOrthoZoom = CIniFile::GetValueFloat("orthozoom", "camera", "..\\..\\RamJamEngine\\data\\Scene.ini");
+	mCameraNearZ     = CIniFile::GetValueFloat("nearz",     "camera", "..\\..\\RamJamEngine\\data\\Scene.ini");
+	mCameraFarZ      = CIniFile::GetValueFloat("farz",      "camera", "..\\..\\RamJamEngine\\data\\Scene.ini");
+
+	RJE_ASSERT(mCameraFOV >= 1.0f && mCameraFOV < 180.0f);
+	RJE_ASSERT(mCameraOrthoZoom >= 0.0001f);
+	RJE_ASSERT(mCameraNearZ < mCameraFarZ);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -472,6 +541,8 @@ void System::LoadConfigFile()
 		CIniFile::SetValue("use4xmsaa",            "true",  "rendering", filename);
 		CIniFile::SetValue("msaaquality",          "4",     "rendering", filename);
 
+		CIniFile::SetValue("runinbackground", "true", "misc", filename);
+
 		CIniFile::SetValue("debugverbosity", "0",    "debug", filename);
 		CIniFile::SetValue("showcursor",     "true", "debug", filename);
 	}
@@ -485,6 +556,8 @@ void System::LoadConfigFile()
 	RJE_GLOBALS::gUse4xMsaa				= CIniFile::GetValueBool("use4xmsaa",           "rendering", filename);
 	RJE_GLOBALS::g4xMsaaQuality			= CIniFile::GetValueInt("msaaquality",          "rendering", filename);
 
+	RJE_GLOBALS::gRunInBackground		= CIniFile::GetValueBool("runinbackground", "misc", filename);
+
 	RJE_GLOBALS::gDebugVerbosity		= CIniFile::GetValueInt("debugverbosity",  "debug", filename);
 	RJE_GLOBALS::gShowCursor			= CIniFile::GetValueBool("showcursor",     "debug", filename);
 }
@@ -496,6 +569,7 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 	PAINTSTRUCT ps;
 	HDC hdc;
 
+	
 	switch (message)
 	{
 	case WM_COMMAND:

@@ -42,11 +42,14 @@
     <ClInclude Include="..\include\Resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\RjeConfig.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\GraphicAPI.h">
       <Filter>Header Files\RJE_Graphic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Camera.h">
+      <Filter>Header Files\RJE_Graphic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\RjeConfig.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

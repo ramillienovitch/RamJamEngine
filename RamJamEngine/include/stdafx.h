@@ -39,7 +39,6 @@
 
 //////////////////////////////////////////////////////////////////////////
 // Core
-#include "Platform.h"
 #include "Globals.h"
 #include "IniFile.h"
 #include "Types.h"
@@ -50,10 +49,7 @@
 #include "Input.h"
 //////////////////////////////////////////////////////////////////////////
 // Math
-#include "Vector2.h"
-#include "Vector3.h"
-#include "Vector4.h"
-#include "Quaternion.h"
+#include "MathHelper.h"
 //////////////////////////////////////////////////////////////////////////
 // Application Programming Interface
 #include "GraphicAPI.h"

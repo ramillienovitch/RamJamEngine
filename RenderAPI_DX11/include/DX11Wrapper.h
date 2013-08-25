@@ -82,7 +82,7 @@ struct DX11Wrapper : GraphicAPI
 	//////////////////////////////////////////////////////////////////////////
 
 	virtual void Initialize(HWND hMainWnd, int windowWidth, int windowHeight);
-	virtual void UpdateScene( float dt, float theta, float phi, float radius );
+	virtual void UpdateScene( float dt );
 	virtual void DrawScene();
 	virtual void Shutdown();
 	virtual void ResizeWindow(int newSizeWidth, int newSizeHeight);

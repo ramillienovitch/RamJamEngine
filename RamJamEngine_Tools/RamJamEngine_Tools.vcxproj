@@ -280,7 +280,6 @@
     <ClInclude Include="include\Globals.h" />
     <ClInclude Include="include\IniFile.h" />
     <ClInclude Include="include\Input.h" />
-    <ClInclude Include="include\Platform.h" />
     <ClInclude Include="include\Profiler.h" />
     <ClInclude Include="include\Singleton.h" />
     <ClInclude Include="include\Timer.h" />

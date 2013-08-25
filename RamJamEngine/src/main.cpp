@@ -45,6 +45,7 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstanc
 	
 	System::Instance()->mHInst = hInstance;
 	RJE_ASSERT(System::Instance()->Initialize(nCmdShow));
+	System::Instance()->OnResize();
 
 	System::Instance()->Run();
 

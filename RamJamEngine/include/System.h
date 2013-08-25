@@ -21,8 +21,12 @@ public:
 	float		mCameraTheta;
 	float		mCameraPhi;
 	float		mCameraRadius;
+	float		mCameraFOV;
+	float		mCameraOrthoZoom;
+	float		mCameraNearZ;
+	float		mCameraFarZ;
 
-	bool		mCameraAnimated;
+	BOOL		mCameraAnimated;
 	float		mAnimationSpeed;
 
 	GraphicAPI* mGraphicAPI;
@@ -62,13 +66,14 @@ private:
 
 	static System* sInstance;
 
-	BOOL UpdateScene(float dt, float theta, float phi, float radius);
+	BOOL UpdateScene(float dt);
 	BOOL DrawScene();
 	BOOL InitializeWindows(int);
 	ATOM RegisterMyClass(HINSTANCE);
 	void ShutdownWindows();
 
 	void HandleInputs();
+	void LoadCameraSettings();
 	void LoadConfigFile();
 };
 
