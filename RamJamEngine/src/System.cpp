@@ -97,10 +97,12 @@ void System::Run()
 
 			HandleInputs();
 
-			// Enables the runtime edition of the camera
-// 			LoadCameraSettings();
-// 			mGraphicAPI->mCamera->SetCameraSettings(mCameraFOV, mCameraOrthoZoom, (float)mScreenWidth, (float)mScreenHeight, mCameraNearZ, mCameraFarZ);
-// 			mGraphicAPI->mCamera->UpdateProjMatrix((float)mScreenWidth, (float)mScreenHeight);
+			if (RJE_GLOBALS::gUpdateSceneRuntime)
+			{
+				LoadCameraSettings();
+				mGraphicAPI->mCamera->SetCameraSettings(mCameraFOV, mCameraOrthoZoom, (float)mScreenWidth, (float)mScreenHeight, mCameraNearZ, mCameraFarZ);
+				mGraphicAPI->mCamera->UpdateProjMatrix((float)mScreenWidth, (float)mScreenHeight);
+			}
 
 			if(mAppPaused)
 				Sleep(50);
@@ -550,7 +552,8 @@ void System::LoadConfigFile()
 		CIniFile::SetValue("use4xmsaa",            "true",  "rendering", filename);
 		CIniFile::SetValue("msaaquality",          "4",     "rendering", filename);
 
-		CIniFile::SetValue("runinbackground", "true", "misc", filename);
+		CIniFile::SetValue("runinbackground",     "true", "misc", filename);
+		CIniFile::SetValue("updatesceneruntime", "true", "misc", filename);
 
 		CIniFile::SetValue("debugverbosity", "0",    "debug", filename);
 		CIniFile::SetValue("showcursor",     "true", "debug", filename);
@@ -565,7 +568,8 @@ void System::LoadConfigFile()
 	RJE_GLOBALS::gUse4xMsaa				= CIniFile::GetValueBool("use4xmsaa",           "rendering", filename);
 	RJE_GLOBALS::g4xMsaaQuality			= CIniFile::GetValueInt("msaaquality",          "rendering", filename);
 
-	RJE_GLOBALS::gRunInBackground		= CIniFile::GetValueBool("runinbackground", "misc", filename);
+	RJE_GLOBALS::gRunInBackground		= CIniFile::GetValueBool("runinbackground",    "misc", filename);
+	RJE_GLOBALS::gUpdateSceneRuntime	= CIniFile::GetValueBool("updatesceneruntime", "misc", filename);
 
 	RJE_GLOBALS::gDebugVerbosity		= CIniFile::GetValueInt("debugverbosity",  "debug", filename);
 	RJE_GLOBALS::gShowCursor			= CIniFile::GetValueBool("showcursor",     "debug", filename);

@@ -827,8 +827,7 @@ void DX11Wrapper::DrawScene()
 		mDX11Device->md3dImmediateContext->OMSetDepthStencilState(0, 0);
 	}
 
-	//if (RJE_GLOBALS::gVsyncEnabled)
-	if (CIniFile::GetValueBool("vsync", "rendering", "../data/Config.ini"))
+	if (RJE_GLOBALS::gVsyncEnabled)
 	{
 		RJE_CHECK_FOR_SUCCESS(mSwapChain->Present(1, 0));
 	}
@@ -895,8 +894,7 @@ void DX11Wrapper::ResizeWindow(int newSizeWidth, int newSizeHeight)
 	depthStencilDesc.Format    = DXGI_FORMAT_D24_UNORM_S8_UINT;
 
 	// Use 4X MSAA? --must match swap chain MSAA values.
-	//if( RJE_GLOBALS::gUse4xMsaa )
-	if (CIniFile::GetValueBool("use4xmsaa", "rendering", "../data/Config.ini"))
+	if( RJE_GLOBALS::gUse4xMsaa )
 	{
 		depthStencilDesc.SampleDesc.Count   = CIniFile::GetValueInt("multisamplingcount", "rendering", "../data/Config.ini");
 		depthStencilDesc.SampleDesc.Quality = RJE_GLOBALS::g4xMsaaQuality-1;

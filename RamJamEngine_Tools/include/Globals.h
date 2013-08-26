@@ -16,26 +16,27 @@ namespace RJE_GLOBALS
 	//************************************************************************
 	//	Rendering
 	//************************************************************************
-	static BOOL		gFullScreen;
-	static BOOL		gVsyncEnabled;
-	static int		gScreenWidth;
-	static int		gScreenHeight;
-	static BOOL		gEnableMultiSampling;
-	static int		gMultiSamplingCount;
-	static int		gMultisamplingQuality;
-	static BOOL		gUse4xMsaa;
-	static u32		g4xMsaaQuality;
+	extern BOOL		gFullScreen;
+	extern BOOL		gVsyncEnabled;
+	extern int		gScreenWidth;
+	extern int		gScreenHeight;
+	extern BOOL		gEnableMultiSampling;
+	extern int		gMultiSamplingCount;
+	extern int		gMultisamplingQuality;
+	extern BOOL		gUse4xMsaa;
+	extern u32		g4xMsaaQuality;
 
 	//************************************************************************
 	//	Debug
 	//************************************************************************
-	static int		gDebugVerbosity;
-	static BOOL		gShowCursor;
+	extern int		gDebugVerbosity;
+	extern BOOL		gShowCursor;
 
 	//************************************************************************
 	//	Misc
 	//************************************************************************
-	static BOOL		gRunInBackground;
+	extern BOOL		gRunInBackground;
+	extern BOOL		gUpdateSceneRuntime;
 	namespace Colors
 	{
 		const float White[]				= {1.0f, 1.0f, 1.0f, 1.0f};
