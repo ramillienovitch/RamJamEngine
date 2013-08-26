@@ -710,13 +710,18 @@ void DX11Wrapper::DrawScene()
 		DX11Effects::BasicFX->SetMaskMap(mWhiteMaskMap);
 
 		// Cull clockwise triangles for reflection.
-		mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_CullClockwise);
+		if (mbUseBlending)
+			mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_CullNone);
+		else
+			mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_CullClockwise);
 
 		// Only draw reflection into visible mirror pixels as marked by the stencil buffer. 
 		mDX11Device->md3dImmediateContext->OMSetDepthStencilState(DX11CommonStates::sDepthStencilState_DrawReflection, 1);
 		activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
 		mDX11Device->md3dImmediateContext->DrawIndexed(mBoxIndexCount, mBoxIndexOffset, mBoxVertexOffset);
 		
+		mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_CullClockwise);
+
 		// Draw the cylinders.
 		for(int i = 0; i < 10; ++i)
 		{
@@ -738,6 +743,11 @@ void DX11Wrapper::DrawScene()
 			activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
 			mDX11Device->md3dImmediateContext->DrawIndexed(mCylinderIndexCount, mCylinderIndexOffset, mCylinderVertexOffset);
 		}
+
+		if (mbUseBlending)
+			mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_CullNone);
+		else
+			mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_CullClockwise);
 
 		// Draw the spheres.
 		for(int i = 0; i < 10; ++i)
@@ -761,6 +771,8 @@ void DX11Wrapper::DrawScene()
 			// Restore default render states
 			mDX11Device->md3dImmediateContext->OMSetBlendState(0, blendFactor, 0xffffffff);
 		}
+
+		mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_CullClockwise);
 
 		// Draw the model reflection
 		world                = XMLoadFloat4x4(&mModelWorld) * R;

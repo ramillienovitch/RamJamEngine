@@ -97,6 +97,11 @@ void System::Run()
 
 			HandleInputs();
 
+			// Enables the runtime edition of the camera
+// 			LoadCameraSettings();
+// 			mGraphicAPI->mCamera->SetCameraSettings(mCameraFOV, mCameraOrthoZoom, (float)mScreenWidth, (float)mScreenHeight, mCameraNearZ, mCameraFarZ);
+// 			mGraphicAPI->mCamera->UpdateProjMatrix((float)mScreenWidth, (float)mScreenHeight);
+
 			if(mAppPaused)
 				Sleep(50);
 			else
@@ -334,11 +339,11 @@ ATOM System::RegisterMyClass( HINSTANCE hInstance )
 	wcex.cbClsExtra		= 0;
 	wcex.cbWndExtra		= 0;
 	wcex.hInstance		= hInstance;
-	wcex.hIcon			= nullptr;//LoadIcon(hInstance, MAKEINTRESOURCE(IDI_RAMJAMENGINE));
-	wcex.hCursor		= nullptr;//LoadCursor(NULL, IDC_ARROW);
+	wcex.hIcon			= LoadIcon(hInstance, MAKEINTRESOURCE(IDI_RAMJAMENGINE));
+	wcex.hCursor		= LoadCursor(NULL, IDC_ARROW);
 	wcex.hbrBackground	= (HBRUSH)(COLOR_WINDOW+1);
 	wcex.lpszClassName	= mSzWindowClass;
-	wcex.hIconSm		= nullptr;//LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
+	wcex.hIconSm		= LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
 	wcex.cbSize			= sizeof(WNDCLASSEX);
 
 	if (RJE_GLOBALS::gFullScreen)
@@ -407,7 +412,11 @@ void System::HandleInputs()
 	int y = Input::Instance()->GetMousePosY();
 
 	if  (Input::Instance()->GetKeyboardDown(F5))
+	{
 		LoadCameraSettings();
+		mGraphicAPI->mCamera->SetCameraSettings(mCameraFOV, mCameraOrthoZoom, (float)mScreenWidth, (float)mScreenHeight, mCameraNearZ, mCameraFarZ);
+		mGraphicAPI->mCamera->UpdateProjMatrix((float)mScreenWidth, (float)mScreenHeight);
+	}
 
 	if (Input::Instance()->GetKeyboardDown(Spacebar))
 		mCameraAnimated = !mCameraAnimated;
