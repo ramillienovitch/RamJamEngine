@@ -49,6 +49,7 @@
       <BrowseInformation>true</BrowseInformation>
       <AdditionalIncludeDirectories>include;../RamJamEngine_Tools/include/;../RamJamEngine_Math/include/</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <MinimalRebuild>false</MinimalRebuild>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>

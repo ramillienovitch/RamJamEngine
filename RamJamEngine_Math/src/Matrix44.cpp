@@ -136,6 +136,15 @@ Matrix44& Matrix44::operator=( const Matrix44& matIn )
 	return *this;
 }
 
+Matrix44::operator DirectX::XMMATRIX ()
+{
+	DirectX::XMMATRIX M(	m11, m12, m13, m14,
+		m21, m22, m23, m24,
+		m31, m32, m33, m34,
+		m41, m42, m43, m44);
+	return M;
+}
+
 Matrix44& Matrix44::operator=( const DirectX::XMMATRIX& matIn)
 {
 	m11 = matIn.r[0].m128_f32[0];
@@ -155,13 +164,4 @@ Matrix44& Matrix44::operator=( const DirectX::XMMATRIX& matIn)
 	m43 = matIn.r[3].m128_f32[2];
 	m44 = matIn.r[3].m128_f32[3];
 	return *this;
-}
-
-DirectX::XMMATRIX Matrix44::TO_XMMATRIX ()
-{
-	DirectX::XMMATRIX M(	m11, m12, m13, m14,
-							m21, m22, m23, m24,
-							m31, m32, m33, m34,
-							m41, m42, m43, m44);
-	return M;
 }

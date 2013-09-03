@@ -435,8 +435,10 @@ void DX11Wrapper::DrawScene()
 
 	mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sCurrentRasterizerState);
 
-	float rbg   = CIniFile::GetValueFloat("blend_rgb",   "blendfactor", "..\\..\\RamJamEngine\\data\\Scene.ini");
-	float alpha = CIniFile::GetValueFloat("blend_alpha", "blendfactor", "..\\..\\RamJamEngine\\data\\Scene.ini");
+	float rbg      = CIniFile::GetValueFloat("blend_rgb",   "blendfactor", "..\\..\\RamJamEngine\\data\\Scene.ini");
+	float alpha    = CIniFile::GetValueFloat("blend_alpha", "blendfactor", "..\\..\\RamJamEngine\\data\\Scene.ini");
+	float fogStart = CIniFile::GetValueFloat("fog_start",   "camera",      "..\\..\\RamJamEngine\\data\\Scene.ini");
+	float fogRange = CIniFile::GetValueFloat("fog_range",   "camera",      "..\\..\\RamJamEngine\\data\\Scene.ini");
 	float blendFactor[] = {rbg, rbg, rbg, alpha};
 
 	UINT stride = sizeof(Vertex::PosNormalTex);
@@ -445,8 +447,8 @@ void DX11Wrapper::DrawScene()
 	mDX11Device->md3dImmediateContext->IASetIndexBuffer(mIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
 	// Set constants
-	DirectX::XMMATRIX view     = mCamera->mView.TO_XMMATRIX();
-	DirectX::XMMATRIX proj     = mCamera->mCurrentProjectionMatrix->TO_XMMATRIX();
+	DirectX::XMMATRIX view     = mCamera->mView;
+	DirectX::XMMATRIX proj     = *(mCamera->mCurrentProjectionMatrix);
 	DirectX::XMMATRIX viewProj = view*proj;
 
 	// Set per frame constants.
@@ -454,8 +456,8 @@ void DX11Wrapper::DrawScene()
 	DX11Effects::BasicFX->SetPointLights(mPointLights);
 	DX11Effects::BasicFX->SetEyePosW(mEyePosW);
 	DX11Effects::BasicFX->SetFogColor(Colors::Silver);
-	DX11Effects::BasicFX->SetFogStart(15.0f);
-	DX11Effects::BasicFX->SetFogRange(175.0f);
+	DX11Effects::BasicFX->SetFogStart(fogStart);
+	DX11Effects::BasicFX->SetFogRange(fogRange);
 	DX11Effects::BasicFX->SetSamplerState(DX11CommonStates::sCurrentSamplerState);
 
 	// Figure out which technique to use.

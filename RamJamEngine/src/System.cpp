@@ -523,10 +523,10 @@ void System::HandleInputs()
 //////////////////////////////////////////////////////////////////////////
 void System::LoadCameraSettings()
 {
-	mCameraFOV       = CIniFile::GetValueFloat("fov",       "camera", "..\\..\\RamJamEngine\\data\\Scene.ini");
-	mCameraOrthoZoom = CIniFile::GetValueFloat("orthozoom", "camera", "..\\..\\RamJamEngine\\data\\Scene.ini");
-	mCameraNearZ     = CIniFile::GetValueFloat("nearz",     "camera", "..\\..\\RamJamEngine\\data\\Scene.ini");
-	mCameraFarZ      = CIniFile::GetValueFloat("farz",      "camera", "..\\..\\RamJamEngine\\data\\Scene.ini");
+	mCameraFOV       = CIniFile::GetValueFloat("fov",        "camera", "..\\..\\RamJamEngine\\data\\Scene.ini");
+	mCameraOrthoZoom = CIniFile::GetValueFloat("ortho_zoom", "camera", "..\\..\\RamJamEngine\\data\\Scene.ini");
+	mCameraNearZ     = CIniFile::GetValueFloat("nearz",      "camera", "..\\..\\RamJamEngine\\data\\Scene.ini");
+	mCameraFarZ      = CIniFile::GetValueFloat("farz",       "camera", "..\\..\\RamJamEngine\\data\\Scene.ini");
 
 	RJE_ASSERT(mCameraFOV >= 1.0f && mCameraFOV < 180.0f);
 	RJE_ASSERT(mCameraOrthoZoom >= 0.0001f);

@@ -25,9 +25,10 @@ struct Matrix44
 	Matrix44  operator * (const Matrix44&);
 	Matrix44& operator = (const Matrix44&);
 	Matrix44& operator = (const DirectX::XMMATRIX&);
-	friend Matrix44 operator == (const Matrix44&, const Matrix44&);
 
-	DirectX::XMMATRIX TO_XMMATRIX();
+	operator DirectX::XMMATRIX();
+
+	friend Matrix44 operator == (const Matrix44&, const Matrix44&);
 
 	// TODO : add matrix "everything" !
 };

@@ -14,7 +14,7 @@ DX11Camera::DX11Camera()
 
 	bIsOrtho = false;
 
-	mFOV         = 80;		// around 0.8
+	mFOV         = 80;
 	mOrthoZoom   = 0.01f;
 	mNearZ       = 0.01f;
 	mFarZ        = 1000.0f;
