@@ -7,9 +7,16 @@ struct DX11CommonStates
 	static HRESULT CreateRasterizerState(ID3D11Device* device, D3D11_CULL_MODE cullMode, D3D11_FILL_MODE fillMode, _Out_ ID3D11RasterizerState** pResult);
 	static HRESULT CreateSamplerState(ID3D11Device* device, D3D11_FILTER filter, D3D11_TEXTURE_ADDRESS_MODE addressMode, _Out_ ID3D11SamplerState** pResult);
 	static HRESULT CreateDepthStencilState(	ID3D11Device* device,
-											bool depthEnable, bool depthWriteEnable, D3D11_COMPARISON_FUNC depthFunc,
-											bool stencilEnable, D3D11_COMPARISON_FUNC stencilFunc, D3D11_STENCIL_OP stencilPassOp, D3D11_STENCIL_OP stencilFailOp,
-											_Out_ ID3D11DepthStencilState** pResult);
+											_Out_ ID3D11DepthStencilState** pResult,
+											bool depthEnable, bool depthWriteEnable, bool stencilEnable,
+											D3D11_COMPARISON_FUNC depthFunc,
+											D3D11_COMPARISON_FUNC stencilFunc,
+											D3D11_STENCIL_OP backFaceStencilPassOp,
+											D3D11_STENCIL_OP backFaceStencilFailOp,
+											D3D11_STENCIL_OP backFaceStencilDepthFailOp,
+											D3D11_STENCIL_OP frontFaceStencilPassOp,
+											D3D11_STENCIL_OP frontFaceStencilFailOp,
+											D3D11_STENCIL_OP frontFaceStencilDepthFailOp );
 	static HRESULT CreateBlendState(ID3D11Device* device,
 									_Out_ ID3D11BlendState** pResult,
 									BOOL alphaToCoverageEnable,
@@ -35,6 +42,7 @@ struct DX11CommonStates
 	// Depth stencil states.
 	static HRESULT DepthNone(     ID3D11Device*, ID3D11DepthStencilState**);
 	static HRESULT DepthDefault(  ID3D11Device*, ID3D11DepthStencilState**);
+	static HRESULT DepthDisable(  ID3D11Device*, ID3D11DepthStencilState**);
 	static HRESULT DepthRead(     ID3D11Device*, ID3D11DepthStencilState**);
 	static HRESULT MarkReflection(ID3D11Device*, ID3D11DepthStencilState**);
 	static HRESULT DrawReflection(ID3D11Device*, ID3D11DepthStencilState**);
@@ -79,6 +87,7 @@ struct DX11CommonStates
 	static ID3D11DepthStencilState* sDepthStencilState_MarkReflection;
 	static ID3D11DepthStencilState* sDepthStencilState_DrawReflection;
 	static ID3D11DepthStencilState* sDepthStencilState_NoDoubleBlend;
+	static ID3D11DepthStencilState* sDepthStencilState_DepthDisable;
 	static ID3D11DepthStencilState* sDepthStencilState_Default;
 	static ID3D11DepthStencilState* sCurrentDepthStencilState;
 };

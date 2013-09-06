@@ -163,9 +163,7 @@ void DX11Wrapper::Initialize(HWND hMainWnd, int windowWidth, int windowHeight)
 	sd.BufferDesc.Scaling					= DXGI_MODE_SCALING_UNSPECIFIED;
 
 	// Use 4X MSAA? 
-	// TODO : fix the static variables
-	//if( RJE_GLOBALS::gUse4xMsaa )
-	if (CIniFile::GetValueBool("use4xmsaa", "rendering", "../data/Config.ini"))
+	if( RJE_GLOBALS::gUse4xMsaa )
 	{
 		sd.SampleDesc.Count   = CIniFile::GetValueInt("multisamplingcount", "rendering", "../data/Config.ini");
 		sd.SampleDesc.Quality = RJE_GLOBALS::g4xMsaaQuality-1;

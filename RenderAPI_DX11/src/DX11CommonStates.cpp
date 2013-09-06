@@ -6,7 +6,7 @@ HRESULT DX11CommonStates::CreateBlendState(ID3D11Device* device,
 										   _Out_ ID3D11BlendState** pResult,
 										   BOOL alphaToCoverageEnable  = false,
 										   BOOL independentBlendEnable = false,
-										   BOOL blendEnable = true,
+										   BOOL blendEnable            = true,
 										   D3D11_BLEND srcBlend        = D3D11_BLEND_ONE,
 										   D3D11_BLEND srcBlendAlpha   = D3D11_BLEND_ONE,
 										   D3D11_BLEND destBlend       = D3D11_BLEND_ZERO,
@@ -39,27 +39,44 @@ HRESULT DX11CommonStates::CreateBlendState(ID3D11Device* device,
 
 //////////////////////////////////////////////////////////////////////////
 HRESULT DX11CommonStates::CreateDepthStencilState(ID3D11Device* device,
-												  bool depthEnable, bool depthWriteEnable, D3D11_COMPARISON_FUNC depthFunc,
-												  bool stencilEnable, D3D11_COMPARISON_FUNC stencilFunc, D3D11_STENCIL_OP stencilPassOp, D3D11_STENCIL_OP stencilFailOp,
-												  _Out_ ID3D11DepthStencilState** pResult)
+												  _Out_ ID3D11DepthStencilState** pResult,
+												  bool depthEnable      = true,
+												  bool depthWriteEnable = true,
+												  bool stencilEnable    = false,
+												  D3D11_COMPARISON_FUNC depthFunc     = D3D11_COMPARISON_LESS_EQUAL,
+												  D3D11_COMPARISON_FUNC stencilFunc   = D3D11_COMPARISON_ALWAYS,
+												  D3D11_STENCIL_OP backFaceStencilPassOp      = D3D11_STENCIL_OP_KEEP,
+												  D3D11_STENCIL_OP backFaceStencilFailOp      = D3D11_STENCIL_OP_KEEP,
+												  D3D11_STENCIL_OP backFaceStencilDepthFailOp = D3D11_STENCIL_OP_KEEP,
+												  D3D11_STENCIL_OP frontFaceStencilPassOp      = (D3D11_STENCIL_OP)-1,
+												  D3D11_STENCIL_OP frontFaceStencilFailOp      = (D3D11_STENCIL_OP)-1,
+												  D3D11_STENCIL_OP frontFaceStencilDepthFailOp = (D3D11_STENCIL_OP)-1)
 {
 	D3D11_DEPTH_STENCIL_DESC desc;
 	ZeroMemory(&desc, sizeof(desc));
 
 	desc.DepthEnable    = depthEnable;
 	desc.DepthWriteMask = depthWriteEnable ? D3D11_DEPTH_WRITE_MASK_ALL : D3D11_DEPTH_WRITE_MASK_ZERO;
-	desc.DepthFunc      = D3D11_COMPARISON_LESS_EQUAL;
+	desc.DepthFunc      = depthFunc;
 
 	desc.StencilEnable    = stencilEnable;
 	desc.StencilReadMask  = D3D11_DEFAULT_STENCIL_READ_MASK;
 	desc.StencilWriteMask = D3D11_DEFAULT_STENCIL_WRITE_MASK;
 
-	desc.FrontFace.StencilFunc        = stencilFunc;
-	desc.FrontFace.StencilPassOp      = stencilPassOp;
-	desc.FrontFace.StencilFailOp      = stencilFailOp;
-	desc.FrontFace.StencilDepthFailOp = stencilFailOp;
+	desc.BackFace.StencilFunc        = stencilFunc;
+	desc.BackFace.StencilPassOp      = backFaceStencilPassOp;
+	desc.BackFace.StencilFailOp      = backFaceStencilFailOp;
+	desc.BackFace.StencilDepthFailOp = backFaceStencilDepthFailOp;
 
-	desc.BackFace = desc.FrontFace;
+	if (frontFaceStencilPassOp == -1)
+		desc.FrontFace = desc.BackFace;
+	else
+	{
+		desc.FrontFace.StencilFunc        = stencilFunc;
+		desc.FrontFace.StencilPassOp      = frontFaceStencilPassOp;
+		desc.FrontFace.StencilFailOp      = frontFaceStencilFailOp;
+		desc.FrontFace.StencilDepthFailOp = frontFaceStencilDepthFailOp;
+	}
 
 	HRESULT hr = device->CreateDepthStencilState(&desc, pResult);
 
@@ -140,22 +157,25 @@ HRESULT DX11CommonStates::NoRenderTargetWrites(ID3D11Device* pDevice, ID3D11Blen
 // Depth stencil states
 //--------------------------------------------------------------------------------------
 HRESULT DX11CommonStates::DepthNone(ID3D11Device* pDevice, ID3D11DepthStencilState** pResult)
-{ return CreateDepthStencilState(pDevice, false, false, D3D11_COMPARISON_LESS_EQUAL, false, D3D11_COMPARISON_ALWAYS, D3D11_STENCIL_OP_KEEP, D3D11_STENCIL_OP_KEEP, pResult); }
+{ return CreateDepthStencilState(pDevice, pResult, false, false); }
 
 HRESULT DX11CommonStates::DepthDefault(ID3D11Device* pDevice, ID3D11DepthStencilState** pResult)
-{ return CreateDepthStencilState(pDevice, true, true, D3D11_COMPARISON_LESS_EQUAL, false, D3D11_COMPARISON_ALWAYS, D3D11_STENCIL_OP_KEEP, D3D11_STENCIL_OP_KEEP, pResult); }
+{ return CreateDepthStencilState(pDevice, pResult); }
+
+HRESULT DX11CommonStates::DepthDisable(ID3D11Device* pDevice, ID3D11DepthStencilState** pResult)
+{ return CreateDepthStencilState(pDevice, pResult, false, true, true, D3D11_COMPARISON_LESS, D3D11_COMPARISON_ALWAYS, D3D11_STENCIL_OP_KEEP, D3D11_STENCIL_OP_KEEP, D3D11_STENCIL_OP_DECR, D3D11_STENCIL_OP_KEEP, D3D11_STENCIL_OP_KEEP, D3D11_STENCIL_OP_INCR); }
 
 HRESULT DX11CommonStates::DepthRead(ID3D11Device* pDevice, ID3D11DepthStencilState** pResult)
-{ return CreateDepthStencilState(pDevice, true, false, D3D11_COMPARISON_LESS_EQUAL, false, D3D11_COMPARISON_ALWAYS, D3D11_STENCIL_OP_KEEP, D3D11_STENCIL_OP_KEEP, pResult); }
+{ return CreateDepthStencilState(pDevice, pResult, true, false); }
 
 HRESULT DX11CommonStates::MarkReflection(ID3D11Device* pDevice, ID3D11DepthStencilState** pResult)
-{ return CreateDepthStencilState(pDevice, true, false, D3D11_COMPARISON_LESS_EQUAL, true, D3D11_COMPARISON_ALWAYS, D3D11_STENCIL_OP_REPLACE, D3D11_STENCIL_OP_KEEP, pResult); }
+{ return CreateDepthStencilState(pDevice, pResult, true, false, true, D3D11_COMPARISON_LESS_EQUAL, D3D11_COMPARISON_ALWAYS, D3D11_STENCIL_OP_REPLACE); }
 
 HRESULT DX11CommonStates::DrawReflection(ID3D11Device* pDevice, ID3D11DepthStencilState** pResult)
-{ return CreateDepthStencilState(pDevice, true, true, D3D11_COMPARISON_LESS_EQUAL, true, D3D11_COMPARISON_EQUAL, D3D11_STENCIL_OP_KEEP, D3D11_STENCIL_OP_KEEP, pResult); }
+{ return CreateDepthStencilState(pDevice, pResult, true, true, true); }
 
 HRESULT DX11CommonStates::NoDoubleBlend(ID3D11Device* pDevice, ID3D11DepthStencilState** pResult)
-{ return CreateDepthStencilState(pDevice, true, true, D3D11_COMPARISON_LESS_EQUAL, true, D3D11_COMPARISON_EQUAL, D3D11_STENCIL_OP_INCR, D3D11_STENCIL_OP_KEEP, pResult ); }
+{ return CreateDepthStencilState(pDevice, pResult, true, true, true, D3D11_COMPARISON_LESS_EQUAL, D3D11_COMPARISON_EQUAL, D3D11_STENCIL_OP_INCR); }
 
 
 //--------------------------------------------------------------------------------------
@@ -217,6 +237,7 @@ void DX11CommonStates::InitAll(ID3D11Device* device)
 	sCurrentBlendState = sBlendState_Transparent;
 
 	RJE_CHECK_FOR_SUCCESS(DepthDefault(  device, &sDepthStencilState_Default));
+	RJE_CHECK_FOR_SUCCESS(DepthDisable(  device, &sDepthStencilState_DepthDisable));
 	RJE_CHECK_FOR_SUCCESS(MarkReflection(device, &sDepthStencilState_MarkReflection));
 	RJE_CHECK_FOR_SUCCESS(DrawReflection(device, &sDepthStencilState_DrawReflection));
 	RJE_CHECK_FOR_SUCCESS(NoDoubleBlend( device, &sDepthStencilState_NoDoubleBlend));
@@ -226,6 +247,7 @@ void DX11CommonStates::InitAll(ID3D11Device* device)
 void DX11CommonStates::DestroyAll()
 {
 	RJE_SAFE_RELEASE(sDepthStencilState_Default);
+	RJE_SAFE_RELEASE(sDepthStencilState_DepthDisable);
 	RJE_SAFE_RELEASE(sDepthStencilState_MarkReflection);
 	RJE_SAFE_RELEASE(sDepthStencilState_DrawReflection);
 	RJE_SAFE_RELEASE(sDepthStencilState_NoDoubleBlend);
@@ -268,4 +290,5 @@ ID3D11DepthStencilState* DX11CommonStates::sDepthStencilState_MarkReflection = n
 ID3D11DepthStencilState* DX11CommonStates::sDepthStencilState_DrawReflection = nullptr;
 ID3D11DepthStencilState* DX11CommonStates::sDepthStencilState_NoDoubleBlend  = nullptr;
 ID3D11DepthStencilState* DX11CommonStates::sDepthStencilState_Default        = nullptr;
+ID3D11DepthStencilState* DX11CommonStates::sDepthStencilState_DepthDisable   = nullptr;
 ID3D11DepthStencilState* DX11CommonStates::sCurrentDepthStencilState         = nullptr;
