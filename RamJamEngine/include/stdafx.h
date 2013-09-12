@@ -43,6 +43,7 @@
 #include "IniFile.h"
 #include "Types.h"
 #include "Singleton.h"
+#include "Memory.h"
 #include "Debug.h"
 #include "Profiler.h"
 #include "Timer.h"

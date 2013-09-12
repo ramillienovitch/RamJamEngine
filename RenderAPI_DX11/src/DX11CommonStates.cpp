@@ -143,9 +143,6 @@ HRESULT DX11CommonStates::AlphaBlend(ID3D11Device* pDevice, ID3D11BlendState** p
 HRESULT DX11CommonStates::BlendFactor(ID3D11Device* pDevice, ID3D11BlendState** pResult)
 { return CreateBlendState(pDevice, pResult, false, false, true, D3D11_BLEND_BLEND_FACTOR, D3D11_BLEND_BLEND_FACTOR, D3D11_BLEND_INV_BLEND_FACTOR, D3D11_BLEND_INV_BLEND_FACTOR); }
 
-HRESULT DX11CommonStates::Additive(ID3D11Device* pDevice, ID3D11BlendState** pResult)
-{ return CreateBlendState(pDevice, pResult, false, false, true, D3D11_BLEND_SRC_ALPHA, D3D11_BLEND_SRC_ALPHA, D3D11_BLEND_ONE, D3D11_BLEND_ONE); }
-
 HRESULT DX11CommonStates::NonPremultiplied(ID3D11Device* pDevice, ID3D11BlendState** pResult)
 { return CreateBlendState(pDevice, pResult, false, false, false, D3D11_BLEND_SRC_ALPHA, D3D11_BLEND_SRC_ALPHA, D3D11_BLEND_INV_SRC_ALPHA, D3D11_BLEND_INV_SRC_ALPHA); }
 

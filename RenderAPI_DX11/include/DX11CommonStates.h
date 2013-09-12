@@ -35,7 +35,6 @@ struct DX11CommonStates
 	static HRESULT AlphaToCoverage(     ID3D11Device*, ID3D11BlendState**);
 	static HRESULT AlphaBlend(          ID3D11Device*, ID3D11BlendState**);
 	static HRESULT BlendFactor(         ID3D11Device*, ID3D11BlendState**);
-	static HRESULT Additive(            ID3D11Device*, ID3D11BlendState**);
 	static HRESULT NonPremultiplied(    ID3D11Device*, ID3D11BlendState**);
 	static HRESULT NoRenderTargetWrites(ID3D11Device*, ID3D11BlendState**);
 

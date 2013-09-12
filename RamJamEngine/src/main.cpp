@@ -38,11 +38,24 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstanc
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(lpCmdLine);
 
+#ifdef RJE_DEBUG
 	// Enable run-time memory check for debug builds.
-#if defined(DEBUG) | defined(_DEBUG)
-	_CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
+	//_CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
+
+	//try to create a console
+	if ( AllocConsole() == 0 )
+	{
+		MessageBoxA( 0, "Can't allocate console!\n","Error\n", MB_OK | MB_ICONSTOP );
+		return FALSE;
+	}
+	FILE *stream;
+	freopen_s( &stream, "CON", "w", stdout);
+	freopen_s( &stream, "CON", "w", stderr);
+	freopen_s( &stream, "CON", "r", stdin);
+
+	SetConsoleTitle(L"RamJam Engine Debug Console");
 #endif
-	
+
 	System::Instance()->mHInst = hInstance;
 	RJE_ASSERT(System::Instance()->Initialize(nCmdShow));
 	System::Instance()->OnResize();
@@ -51,6 +64,12 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstanc
 
 	System::Instance()->Shutdown();
 	System::DeleteInstance();
+
+
+#ifdef RJE_DEBUG
+	MemoryReport();
+	//_CrtDumpMemoryLeaks();
+#endif
 
 	return 0;
 }

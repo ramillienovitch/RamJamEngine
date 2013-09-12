@@ -63,6 +63,7 @@
       <BrowseInformation>true</BrowseInformation>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <MinimalRebuild>false</MinimalRebuild>
+      <ExceptionHandling>Sync</ExceptionHandling>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -139,6 +140,8 @@
     <Image Include="..\data\textures\WireFence.dds" />
     <Image Include="..\data\textures\WoodCrate01.dds" />
     <Image Include="..\data\textures\WoodCrate02.dds" />
+    <Image Include="..\RJE_icon.ico" />
+    <Image Include="..\RJE_Logo.bmp" />
     <Image Include="RamJamEngine.ico" />
     <Image Include="small.ico" />
   </ItemGroup>

@@ -54,6 +54,9 @@
       <AdditionalIncludeDirectories>include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BrowseInformation>true</BrowseInformation>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <MinimalRebuild>false</MinimalRebuild>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -83,6 +86,7 @@
     <ClInclude Include="include\Globals.h" />
     <ClInclude Include="include\IniFile.h" />
     <ClInclude Include="include\Input.h" />
+    <ClInclude Include="include\Memory.h" />
     <ClInclude Include="include\Profiler.h" />
     <ClInclude Include="include\Singleton.h" />
     <ClInclude Include="include\Timer.h" />
@@ -93,6 +97,7 @@
     <ClCompile Include="src\Globals.cpp" />
     <ClCompile Include="src\IniFile.cpp" />
     <ClCompile Include="src\Input.cpp" />
+    <ClCompile Include="src\Memory.cpp" />
     <ClCompile Include="src\Profiler.cpp" />
     <ClCompile Include="src\Timer.cpp" />
   </ItemGroup>

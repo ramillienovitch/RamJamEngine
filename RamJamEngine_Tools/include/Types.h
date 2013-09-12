@@ -2,9 +2,11 @@
 
 #include <cstdarg>
 #include <cstdio>
+#include <iostream>
 #include <fstream>
 #include <string>
 #include <vector>
+#include <list>
 
 #if PLATFORM == PLATFORM_WIN32
 #	include <Windows.h>
