@@ -26,6 +26,7 @@ DX11Wrapper::DX11Wrapper()
 	mbUseFog         = false;
 	mbUseTexture     = true;
 	mbUseBlending    = true;
+	mbWireframe      = false;
 
 	DirectX::XMMATRIX Id = DirectX::XMMatrixIdentity();
 	XMStoreFloat4x4(&mGridWorld, Id);
@@ -395,13 +396,27 @@ void DX11Wrapper::UpdateScene( float dt )
 	if (Input::Instance()->GetKeyboardDown(B))			mbUseBlending = !mbUseBlending;
 	if (Input::Instance()->GetKeyboardDown(F))			mbUseFog      = !mbUseFog;
 	if (Input::Instance()->GetKeyboardDown(S))			{DX11CommonStates::sCurrentRasterizerState = DX11CommonStates::sRasterizerState_Solid;}
-	if (Input::Instance()->GetKeyboardDown(W))			{DX11CommonStates::sCurrentRasterizerState = DX11CommonStates::sRasterizerState_Wireframe; mbUseBlending = false;}
 	if (Input::Instance()->GetKeyboardDown(A))			DX11CommonStates::sCurrentSamplerState    = DX11CommonStates::sSamplerState_Anisotropic;
 	if (Input::Instance()->GetKeyboardDown(L))			DX11CommonStates::sCurrentSamplerState    = DX11CommonStates::sSamplerState_Linear;
 	if (Input::Instance()->GetKeyboardDown(U))			DX11CommonStates::sCurrentBlendState      = DX11CommonStates::sBlendState_BlendFactor;
 	if (Input::Instance()->GetKeyboardDown(I))			DX11CommonStates::sCurrentBlendState      = DX11CommonStates::sBlendState_AlphaToCoverage;
 	if (Input::Instance()->GetKeyboardDown(O))			DX11CommonStates::sCurrentBlendState      = DX11CommonStates::sBlendState_Transparent;
 	if (Input::Instance()->GetKeyboardDown(P))			DX11CommonStates::sCurrentBlendState      = DX11CommonStates::sBlendState_Opaque;
+	if (Input::Instance()->GetKeyboardDown(W))
+	{
+		if (mbWireframe)
+		{
+			mbWireframe = false;
+			DX11CommonStates::sCurrentRasterizerState = DX11CommonStates::sRasterizerState_Solid;
+		}
+		else
+		{
+			mbUseBlending = false;
+			mbWireframe   = true;
+			DX11CommonStates::sCurrentRasterizerState = DX11CommonStates::sRasterizerState_Wireframe;
+			DX11CommonStates::sCurrentBlendState      = DX11CommonStates::sBlendState_Opaque;
+		}
+	}
 
 	static float timer = 0.0f;
 	timer += dt*0.5f;
@@ -542,24 +557,6 @@ void DX11Wrapper::DrawScene()
 	activeTech->GetDesc( &techDesc );
 	for(UINT p = 0; p < techDesc.Passes; ++p)
 	{
-		/*
-		// Draw the grid.
-		world             = XMLoadFloat4x4(&mGridWorld);
-		worldInvTranspose = DX11Math::InverseTranspose(world);
-		worldViewProj     = world*view*proj;
-
-		DX11Effects::BasicFX->SetWorld(world);
-		DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
-		DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
-		DX11Effects::BasicFX->SetTexTransform(XMLoadFloat4x4(&mGridTexTransform));
-		DX11Effects::BasicFX->SetMaterial(mGridMat);
-		DX11Effects::BasicFX->SetDiffuseMap(mGridMap);
-		DX11Effects::BasicFX->SetMaskMap(mMaskMap);
-
-		activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
-		mDX11Device->md3dImmediateContext->DrawIndexed(mGridIndexCount, mGridIndexOffset, mGridVertexOffset);
-		*/
-
 		// Draw the box.
 		world             = XMLoadFloat4x4(&mBoxWorld);
 		worldInvTranspose = DX11Math::InverseTranspose(world);
@@ -643,188 +640,210 @@ void DX11Wrapper::DrawScene()
 
 		//////////////////////////////////////////////////////////////////////////
 
-		// Draw the grid (mirror)
-		world             = XMLoadFloat4x4(&mGridWorld);
-		worldInvTranspose = DX11Math::InverseTranspose(world);
-		worldViewProj     = world*view*proj;
-
-		DX11Effects::BasicFX->SetWorld(world);
-		DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
-		DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
-		DX11Effects::BasicFX->SetTexTransform(XMLoadFloat4x4(&mGridTexTransform));
-		DX11Effects::BasicFX->SetMaterial(mGridMat);
-		DX11Effects::BasicFX->SetDiffuseMap(mGridMap);
-		DX11Effects::BasicFX->SetMaskMap(mMaskMap);
-
-		// Do not write to render target.
-		mDX11Device->md3dImmediateContext->OMSetBlendState(DX11CommonStates::sBlendState_NoRenderTargetWrites, blendFactor, 0xffffffff);
-
-		// Render visible mirror pixels to stencil buffer.
-		// Do not write mirror depth to depth buffer at this point, otherwise it will occlude the reflection.
-		mDX11Device->md3dImmediateContext->OMSetDepthStencilState(DX11CommonStates::sDepthStencilState_MarkReflection, 1);
-
-		activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
-		mDX11Device->md3dImmediateContext->DrawIndexed(mGridIndexCount, mGridIndexOffset, mGridVertexOffset);
-
-		// Restore states.
-		mDX11Device->md3dImmediateContext->OMSetDepthStencilState(0, 0);
-		mDX11Device->md3dImmediateContext->OMSetBlendState(0, blendFactor, 0xffffffff);
-
-		//////////////////////////////////////////////////////////////////////////
-
-		// Draw the reflected meshes
-		XMVECTOR mirrorPlane = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);		// xz plane
-		XMMATRIX R           = XMMatrixReflect(mirrorPlane);
-
-		// Cache the old light directions, and reflect the light directions and position.
-		XMFLOAT3 oldDirLightDirections[3];
-		XMFLOAT3 oldPointLightPositions[3];
-		for(int i = 0; i < 3; ++i)
+		// if we're in wireframe then we don't need to render the reflections
+		if (mbWireframe)
 		{
-			oldDirLightDirections[i]  = mDirLights[i].Direction;
-			oldPointLightPositions[i] = mPointLights[i].Position;
-
-			XMVECTOR lightDir = XMLoadFloat3(&mDirLights[i].Direction);
-			XMVECTOR reflectedLightDir = XMVector3TransformNormal(lightDir, R);
-			XMStoreFloat3(&mDirLights[i].Direction, reflectedLightDir);
-
-			XMVECTOR lightPos = XMLoadFloat3(&mPointLights[i].Position);
-			XMVECTOR reflectedLightPos =XMVector3Reflect(lightPos, mirrorPlane);
-			XMStoreFloat3(&mPointLights[i].Position, reflectedLightPos);
-		}
-
-		DX11Effects::BasicFX->SetPointLights(mPointLights);
-		DX11Effects::BasicFX->SetDirLights(mDirLights);
-
-		// Draw the box.
-		world             = XMLoadFloat4x4(&mBoxWorld) * R;
-		worldInvTranspose = DX11Math::InverseTranspose(world);
-		worldViewProj     = world*view*proj;
-
-		DX11Effects::BasicFX->SetWorld(world);
-		DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
-		DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
-		DX11Effects::BasicFX->SetTexTransform(XMLoadFloat4x4(&mBoxTexTransform));
-		DX11Effects::BasicFX->SetMaterial(mBoxMat);
-		DX11Effects::BasicFX->SetDiffuseMap(mBoxMap);
-		DX11Effects::BasicFX->SetMaskMap(mWhiteMaskMap);
-
-		// Cull clockwise triangles for reflection.
-		if (mbUseBlending)
-			mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_CullNone);
-		else
-			mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_CullClockwise);
-
-		// Only draw reflection into visible mirror pixels as marked by the stencil buffer. 
-		mDX11Device->md3dImmediateContext->OMSetDepthStencilState(DX11CommonStates::sDepthStencilState_DrawReflection, 1);
-		activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
-		mDX11Device->md3dImmediateContext->DrawIndexed(mBoxIndexCount, mBoxIndexOffset, mBoxVertexOffset);
-		
-		mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_CullClockwise);
-
-		// Draw the cylinders.
-		for(int i = 0; i < 10; ++i)
-		{
-			world             = XMLoadFloat4x4(&mCylWorld[i]) * R;
+			// Draw the grid.
+			world             = XMLoadFloat4x4(&mGridWorld);
 			worldInvTranspose = DX11Math::InverseTranspose(world);
 			worldViewProj     = world*view*proj;
 
 			DX11Effects::BasicFX->SetWorld(world);
 			DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
 			DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
-			DX11Effects::BasicFX->SetTexTransform(XMLoadFloat4x4(&mCylinderTexTransform));
-			DX11Effects::BasicFX->SetMaterial(mCylinderMat);
-			DX11Effects::BasicFX->SetDiffuseMap(mCylinderMap);
+			DX11Effects::BasicFX->SetTexTransform(XMLoadFloat4x4(&mGridTexTransform));
+			DX11Effects::BasicFX->SetMaterial(mGridMat);
+			DX11Effects::BasicFX->SetDiffuseMap(mGridMap);
+			DX11Effects::BasicFX->SetMaskMap(mMaskMap);
+
+			activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
+			mDX11Device->md3dImmediateContext->DrawIndexed(mGridIndexCount, mGridIndexOffset, mGridVertexOffset);
+		}
+		else
+		{
+			// Draw the grid (mirror)
+			world             = XMLoadFloat4x4(&mGridWorld);
+			worldInvTranspose = DX11Math::InverseTranspose(world);
+			worldViewProj     = world*view*proj;
+
+			DX11Effects::BasicFX->SetWorld(world);
+			DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
+			DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
+			DX11Effects::BasicFX->SetTexTransform(XMLoadFloat4x4(&mGridTexTransform));
+			DX11Effects::BasicFX->SetMaterial(mGridMat);
+			DX11Effects::BasicFX->SetDiffuseMap(mGridMap);
+			DX11Effects::BasicFX->SetMaskMap(mMaskMap);
+
+			// Do not write to render target.
+			mDX11Device->md3dImmediateContext->OMSetBlendState(DX11CommonStates::sBlendState_NoRenderTargetWrites, blendFactor, 0xffffffff);
+
+			// Render visible mirror pixels to stencil buffer.
+			// Do not write mirror depth to depth buffer at this point, otherwise it will occlude the reflection.
+			mDX11Device->md3dImmediateContext->OMSetDepthStencilState(DX11CommonStates::sDepthStencilState_MarkStencil, 1);
+
+			activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
+			mDX11Device->md3dImmediateContext->DrawIndexed(mGridIndexCount, mGridIndexOffset, mGridVertexOffset);
+
+			// Restore states.
+			mDX11Device->md3dImmediateContext->OMSetDepthStencilState(0, 0);
+			mDX11Device->md3dImmediateContext->OMSetBlendState(0, blendFactor, 0xffffffff);
+
+			//////////////////////////////////////////////////////////////////////////
+
+			// Draw the reflected meshes
+			XMVECTOR mirrorPlane = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);		// xz plane
+			XMMATRIX R           = XMMatrixReflect(mirrorPlane);
+
+			// Cache the old light directions, and reflect the light directions and position.
+			XMFLOAT3 oldDirLightDirections[3];
+			XMFLOAT3 oldPointLightPositions[3];
+			for(int i = 0; i < 3; ++i)
+			{
+				oldDirLightDirections[i]  = mDirLights[i].Direction;
+				oldPointLightPositions[i] = mPointLights[i].Position;
+
+				XMVECTOR lightDir = XMLoadFloat3(&mDirLights[i].Direction);
+				XMVECTOR reflectedLightDir = XMVector3TransformNormal(lightDir, R);
+				XMStoreFloat3(&mDirLights[i].Direction, reflectedLightDir);
+
+				XMVECTOR lightPos = XMLoadFloat3(&mPointLights[i].Position);
+				XMVECTOR reflectedLightPos =XMVector3Reflect(lightPos, mirrorPlane);
+				XMStoreFloat3(&mPointLights[i].Position, reflectedLightPos);
+			}
+
+			DX11Effects::BasicFX->SetPointLights(mPointLights);
+			DX11Effects::BasicFX->SetDirLights(mDirLights);
+
+			// Draw the box.
+			world             = XMLoadFloat4x4(&mBoxWorld) * R;
+			worldInvTranspose = DX11Math::InverseTranspose(world);
+			worldViewProj     = world*view*proj;
+
+			DX11Effects::BasicFX->SetWorld(world);
+			DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
+			DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
+			DX11Effects::BasicFX->SetTexTransform(XMLoadFloat4x4(&mBoxTexTransform));
+			DX11Effects::BasicFX->SetMaterial(mBoxMat);
+			DX11Effects::BasicFX->SetDiffuseMap(mBoxMap);
 			DX11Effects::BasicFX->SetMaskMap(mWhiteMaskMap);
 
+			// Cull clockwise triangles for reflection.
+			if (mbUseBlending)
+				mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_CullNone);
+			else
+				mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_CullClockwise);
 
 			// Only draw reflection into visible mirror pixels as marked by the stencil buffer. 
-			mDX11Device->md3dImmediateContext->OMSetDepthStencilState(DX11CommonStates::sDepthStencilState_DrawReflection, 1);
+			mDX11Device->md3dImmediateContext->OMSetDepthStencilState(DX11CommonStates::sDepthStencilState_DrawStenciled, 1);
 			activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
-			mDX11Device->md3dImmediateContext->DrawIndexed(mCylinderIndexCount, mCylinderIndexOffset, mCylinderVertexOffset);
-		}
+			mDX11Device->md3dImmediateContext->DrawIndexed(mBoxIndexCount, mBoxIndexOffset, mBoxVertexOffset);
 
-		if (mbUseBlending)
-			mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_CullNone);
-		else
 			mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_CullClockwise);
 
-		// Draw the spheres.
-		for(int i = 0; i < 10; ++i)
-		{
-			world             = XMLoadFloat4x4(&mSphereWorld[i]) * R;
+			// Draw the cylinders.
+			for(int i = 0; i < 10; ++i)
+			{
+				world             = XMLoadFloat4x4(&mCylWorld[i]) * R;
+				worldInvTranspose = DX11Math::InverseTranspose(world);
+				worldViewProj     = world*view*proj;
+
+				DX11Effects::BasicFX->SetWorld(world);
+				DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
+				DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
+				DX11Effects::BasicFX->SetTexTransform(XMLoadFloat4x4(&mCylinderTexTransform));
+				DX11Effects::BasicFX->SetMaterial(mCylinderMat);
+				DX11Effects::BasicFX->SetDiffuseMap(mCylinderMap);
+				DX11Effects::BasicFX->SetMaskMap(mWhiteMaskMap);
+
+
+				// Only draw reflection into visible mirror pixels as marked by the stencil buffer. 
+				mDX11Device->md3dImmediateContext->OMSetDepthStencilState(DX11CommonStates::sDepthStencilState_DrawStenciled, 1);
+				activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
+				mDX11Device->md3dImmediateContext->DrawIndexed(mCylinderIndexCount, mCylinderIndexOffset, mCylinderVertexOffset);
+			}
+
+			if (mbUseBlending)
+				mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_CullNone);
+			else
+				mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_CullClockwise);
+
+			// Draw the spheres.
+			for(int i = 0; i < 10; ++i)
+			{
+				world             = XMLoadFloat4x4(&mSphereWorld[i]) * R;
+				worldInvTranspose = DX11Math::InverseTranspose(world);
+				worldViewProj     = world*view*proj;
+
+				DX11Effects::BasicFX->SetWorld(world);
+				DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
+				DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
+				DX11Effects::BasicFX->SetTexTransform(XMLoadFloat4x4(&mSphereTexTransform));
+				DX11Effects::BasicFX->SetMaterial(mSphereMat);
+				DX11Effects::BasicFX->SetDiffuseMap(mSphereMap);
+				DX11Effects::BasicFX->SetMaskMap(mWhiteMaskMap);
+
+				mDX11Device->md3dImmediateContext->OMSetBlendState(DX11CommonStates::sCurrentBlendState, blendFactor, 0xffffffff);
+				activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
+				mDX11Device->md3dImmediateContext->DrawIndexed(mSphereIndexCount, mSphereIndexOffset, mSphereVertexOffset);
+
+				// Restore default render states
+				mDX11Device->md3dImmediateContext->OMSetBlendState(0, blendFactor, 0xffffffff);
+			}
+
+			mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_CullClockwise);
+
+			// Draw the model reflection
+			world                = XMLoadFloat4x4(&mModelWorld) * R;
+			worldInvTranspose    = DX11Math::InverseTranspose(world);
+			worldViewProj        = world*view*proj;
+
+			DX11Effects::BasicFX->SetWorld(world);
+			DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
+			DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
+			DX11Effects::BasicFX->SetMaterial(mModelMat);
+			DX11Effects::BasicFX->SetDiffuseMap(mWhiteMaskMap);
+			DX11Effects::BasicFX->SetMaskMap(mWhiteMaskMap);
+
+			// Only draw reflection into visible mirror pixels as marked by the stencil buffer. 
+			mDX11Device->md3dImmediateContext->OMSetDepthStencilState(DX11CommonStates::sDepthStencilState_DrawStenciled, 1);
+			activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
+			mDX11Device->md3dImmediateContext->DrawIndexed(mModelIndexCount, mModelIndexOffset, mModelVertexOffset);
+
+			// Restore default states.
+			mDX11Device->md3dImmediateContext->RSSetState(0);
+			mDX11Device->md3dImmediateContext->OMSetDepthStencilState(0, 0);
+
+			// Restore light settings.
+			for(int i = 0; i < 3; ++i)
+			{
+				mDirLights[i].Direction  = oldDirLightDirections[i];
+				mPointLights[i].Position = oldPointLightPositions[i];
+			}
+			DX11Effects::BasicFX->SetPointLights(mPointLights);
+			DX11Effects::BasicFX->SetDirLights(mDirLights);
+
+			// Draw the mirror to the back buffer as usual but with transparency
+			// blending so the reflection shows through.
+			world             = XMLoadFloat4x4(&mGridWorld);
 			worldInvTranspose = DX11Math::InverseTranspose(world);
 			worldViewProj     = world*view*proj;
 
 			DX11Effects::BasicFX->SetWorld(world);
 			DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
 			DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
-			DX11Effects::BasicFX->SetTexTransform(XMLoadFloat4x4(&mSphereTexTransform));
-			DX11Effects::BasicFX->SetMaterial(mSphereMat);
-			DX11Effects::BasicFX->SetDiffuseMap(mSphereMap);
-			DX11Effects::BasicFX->SetMaskMap(mWhiteMaskMap);
+			DX11Effects::BasicFX->SetTexTransform(XMLoadFloat4x4(&mGridTexTransform));
+			DX11Effects::BasicFX->SetMaterial(mGridMat);
+			DX11Effects::BasicFX->SetDiffuseMap(mGridMap);
+			DX11Effects::BasicFX->SetMaskMap(mMaskMap);
 
-			mDX11Device->md3dImmediateContext->OMSetBlendState(DX11CommonStates::sCurrentBlendState, blendFactor, 0xffffffff);
+			mDX11Device->md3dImmediateContext->OMSetBlendState(DX11CommonStates::sBlendState_Transparent, blendFactor, 0xffffffff);
 			activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
-			mDX11Device->md3dImmediateContext->DrawIndexed(mSphereIndexCount, mSphereIndexOffset, mSphereVertexOffset);
+			mDX11Device->md3dImmediateContext->DrawIndexed(mGridIndexCount, mGridIndexOffset, mGridVertexOffset);
 
-			// Restore default render states
+			// Restore default states.
 			mDX11Device->md3dImmediateContext->OMSetBlendState(0, blendFactor, 0xffffffff);
+			mDX11Device->md3dImmediateContext->OMSetDepthStencilState(0, 0);
 		}
-
-		mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_CullClockwise);
-
-		// Draw the model reflection
-		world                = XMLoadFloat4x4(&mModelWorld) * R;
-		worldInvTranspose    = DX11Math::InverseTranspose(world);
-		worldViewProj        = world*view*proj;
-
-		DX11Effects::BasicFX->SetWorld(world);
-		DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
-		DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
-		DX11Effects::BasicFX->SetMaterial(mModelMat);
-		DX11Effects::BasicFX->SetDiffuseMap(mWhiteMaskMap);
-		DX11Effects::BasicFX->SetMaskMap(mWhiteMaskMap);
-
-		// Only draw reflection into visible mirror pixels as marked by the stencil buffer. 
-		mDX11Device->md3dImmediateContext->OMSetDepthStencilState(DX11CommonStates::sDepthStencilState_DrawReflection, 1);
-		activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
-		mDX11Device->md3dImmediateContext->DrawIndexed(mModelIndexCount, mModelIndexOffset, mModelVertexOffset);
-
-		// Restore default states.
-		mDX11Device->md3dImmediateContext->RSSetState(0);
-		mDX11Device->md3dImmediateContext->OMSetDepthStencilState(0, 0);
-
-		// Restore light settings.
-		for(int i = 0; i < 3; ++i)
-		{
-			mDirLights[i].Direction  = oldDirLightDirections[i];
-			mPointLights[i].Position = oldPointLightPositions[i];
-		}
-		DX11Effects::BasicFX->SetPointLights(mPointLights);
-		DX11Effects::BasicFX->SetDirLights(mDirLights);
-
-		// Draw the mirror to the back buffer as usual but with transparency
-		// blending so the reflection shows through.
-		world             = XMLoadFloat4x4(&mGridWorld);
-		worldInvTranspose = DX11Math::InverseTranspose(world);
-		worldViewProj     = world*view*proj;
-
-		DX11Effects::BasicFX->SetWorld(world);
-		DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
-		DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
-		DX11Effects::BasicFX->SetTexTransform(XMLoadFloat4x4(&mGridTexTransform));
-		DX11Effects::BasicFX->SetMaterial(mGridMat);
-		DX11Effects::BasicFX->SetDiffuseMap(mGridMap);
-		DX11Effects::BasicFX->SetMaskMap(mMaskMap);
-
-		mDX11Device->md3dImmediateContext->OMSetBlendState(DX11CommonStates::sBlendState_Transparent, blendFactor, 0xffffffff);
-		activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
-		mDX11Device->md3dImmediateContext->DrawIndexed(mGridIndexCount, mGridIndexOffset, mGridVertexOffset);
-
-		// Restore default states.
-		mDX11Device->md3dImmediateContext->OMSetBlendState(0, blendFactor, 0xffffffff);
-		mDX11Device->md3dImmediateContext->OMSetDepthStencilState(0, 0);
 	}
 
 	if (RJE_GLOBALS::gVsyncEnabled)

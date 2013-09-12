@@ -78,6 +78,7 @@ struct DX11Wrapper : GraphicAPI
 	BOOL mbUseTexture;
 	BOOL mbUseBlending;
 	BOOL mbUseFog;
+	BOOL mbWireframe;
 	
 	//////////////////////////////////////////////////////////////////////////
 
