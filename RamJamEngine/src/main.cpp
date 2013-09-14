@@ -40,12 +40,14 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstanc
 
 #ifdef RJE_DEBUG
 	// Enable run-time memory check for debug builds.
-	//_CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
+#	ifdef STD_MEMORY_PROFILE
+	_CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
+#	endif
 
 	//try to create a console
 	if ( AllocConsole() == 0 )
 	{
-		MessageBoxA( 0, "Can't allocate console!\n","Error\n", MB_OK | MB_ICONSTOP );
+		RJE_MESSAGE_BOX( 0, L"Can't allocate console!\n", L"Error\n", MB_OK | MB_ICONSTOP );
 		return FALSE;
 	}
 	FILE *stream;
@@ -66,9 +68,8 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstanc
 	System::DeleteInstance();
 
 
-#ifdef RJE_DEBUG
+#ifdef RJE_MEMORY_PROFILE
 	MemoryReport();
-	//_CrtDumpMemoryLeaks();
 #endif
 
 	return 0;

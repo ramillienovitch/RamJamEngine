@@ -4,24 +4,29 @@
 typedef struct {
 	DWORD	address;
 	DWORD	size;
-	char	file[64];
+	char	file[128];
 	DWORD	line;
 } ALLOC_INFO;
 
-typedef std::list<ALLOC_INFO*> AllocList;
+struct free_delete
+{
+	void operator()(void* x) { free(x); }
+};
 
-AllocList allocList;
+typedef std::list<std::shared_ptr<ALLOC_INFO>> AllocList;
+
+AllocList	allocList;
 
 //////////////////////////////////////////////////////////////////////////
 void AddTrack(DWORD addr, DWORD asize, const char *fname, DWORD lnum)
 {
-	ALLOC_INFO* info = (ALLOC_INFO*) malloc(sizeof(ALLOC_INFO));
+	std::shared_ptr<ALLOC_INFO> pInfo((ALLOC_INFO*) malloc(sizeof(ALLOC_INFO)), free_delete());
 
-	info->address = addr;
-	strncpy_s(info->file, fname, 63);
-	info->line = lnum;
-	info->size = asize;
-	allocList.push_front(info);
+	pInfo->address = addr;
+	strncpy_s(pInfo->file, fname, 127);
+	pInfo->line = lnum;
+	pInfo->size = asize;
+	allocList.push_front(pInfo);
 };
 
 //////////////////////////////////////////////////////////////////////////
@@ -47,7 +52,7 @@ void MemoryReport()
 	AllocList::iterator i;
 	DWORD totalSize = 0;
 
-	if(allocList.size() == 0)
+	if(allocList.empty())
 	{
 		std::cout << " No Memory Leaks !" << std::endl;
 		return;

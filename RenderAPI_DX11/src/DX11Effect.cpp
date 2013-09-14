@@ -76,6 +76,21 @@ BasicEffect::~BasicEffect()
 
 //////////////////////////////////////////////////////////////////////////
 
+#pragma region SpriteEffect
+SpriteEffect::SpriteEffect(ID3D11Device* device, const std::wstring& filename)
+	: Effect(device, filename)
+{
+	SpriteTech = mFX->GetTechniqueByName("SpriteTech");
+	SpriteMap  = mFX->GetVariableByName("gSpriteTex")->AsShaderResource();
+}
+
+SpriteEffect::~SpriteEffect()
+{
+}
+#pragma endregion
+
+//////////////////////////////////////////////////////////////////////////
+
 #pragma region Effects
 
 BasicEffect* DX11Effects::BasicFX = 0;

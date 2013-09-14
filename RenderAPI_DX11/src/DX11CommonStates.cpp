@@ -232,7 +232,7 @@ void DX11CommonStates::InitAll(ID3D11Device* device)
 	RJE_CHECK_FOR_SUCCESS(AlphaToCoverage(     device, &sBlendState_AlphaToCoverage));
 	RJE_CHECK_FOR_SUCCESS(BlendFactor(         device, &sBlendState_BlendFactor));
 	RJE_CHECK_FOR_SUCCESS(NoRenderTargetWrites(device, &sBlendState_NoRenderTargetWrites));
-	sCurrentBlendState = sBlendState_Transparent;
+	sCurrentBlendState = sBlendState_AlphaToCoverage;
 
 	RJE_CHECK_FOR_SUCCESS(DepthDefault(  device, &sDepthStencilState_Default));
 	RJE_CHECK_FOR_SUCCESS(DepthDisable(  device, &sDepthStencilState_DepthDisable));

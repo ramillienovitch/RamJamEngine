@@ -3,7 +3,12 @@
 #include "Types.h"
 #include "Debug.h"
 
-#define RJE_MEMORY_PROFILE
+#include <memory>
+
+#ifdef RJE_DEBUG
+#	define RJE_MEMORY_PROFILE
+#	define STD_MEMORY_PROFILE
+#endif
 
 #pragma warning(disable: 4291)
 //	warning C4291: 'void *operator new(size_t,const char *,int)' :
@@ -53,7 +58,5 @@ inline void operator delete[](void* pMem)
 
 #ifdef RJE_MEMORY_PROFILE
 #	define DEBUG_NEW new(__FILE__, __LINE__)
-#else
-#	define DEBUG_NEW new
+#	define new DEBUG_NEW
 #endif
-#define new DEBUG_NEW

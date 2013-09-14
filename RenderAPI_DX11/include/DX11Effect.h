@@ -69,7 +69,6 @@ public:
 	ID3DX11EffectTechnique* Light1_3FogAlphaClipTexTech;
 	ID3DX11EffectTechnique* Light1_3FogAlphaClipNoTexTech;
 
-
 	ID3DX11EffectMatrixVariable* WorldViewProj;
 	ID3DX11EffectMatrixVariable* World;
 	ID3DX11EffectMatrixVariable* WorldInvTranspose;
@@ -88,6 +87,24 @@ public:
 	ID3DX11EffectShaderResourceVariable* MaskMap;
 };
 #pragma endregion
+
+//////////////////////////////////////////////////////////////////////////
+
+#pragma region SpriteEffect
+class SpriteEffect : public Effect
+{
+public:
+	SpriteEffect(ID3D11Device* device, const std::wstring& filename);
+	~SpriteEffect();
+
+	void SetSpriteMap(ID3D11ShaderResourceView* tex) { SpriteMap->SetResource(tex); }
+
+	ID3DX11EffectTechnique* SpriteTech;
+	ID3DX11EffectShaderResourceVariable* SpriteMap;
+};
+#pragma endregion
+
+//////////////////////////////////////////////////////////////////////////
 
 #pragma region Effects
 class DX11Effects
