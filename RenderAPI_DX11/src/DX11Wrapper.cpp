@@ -413,7 +413,7 @@ void DX11Wrapper::UpdateScene( float dt )
 	if (Input::Instance()->GetKeyboardDown(I))			DX11CommonStates::sCurrentBlendState      = DX11CommonStates::sBlendState_AlphaToCoverage;
 	if (Input::Instance()->GetKeyboardDown(O))			DX11CommonStates::sCurrentBlendState      = DX11CommonStates::sBlendState_Transparent;
 	if (Input::Instance()->GetKeyboardDown(P))			DX11CommonStates::sCurrentBlendState      = DX11CommonStates::sBlendState_Opaque;
-	if (Input::Instance()->GetKeyboardDown(W))
+	if (Input::Instance()->GetKeyboardUp(W))
 	{
 		if (mbWireframe)
 		{
@@ -861,7 +861,8 @@ void DX11Wrapper::DrawScene()
 
 	//////////////////////////////////////////////////////////////////////////
 	
-	Draw2dElements(blendFactor);
+	if (!mbWireframe)
+		Draw2dElements(blendFactor);
 	
 	//////////////////////////////////////////////////////////////////////////
 
@@ -884,9 +885,12 @@ void DX11Wrapper::Draw2dElements(float blendFactor[4])
 	mDX11Device->md3dImmediateContext->OMSetBlendState(DX11CommonStates::sBlendState_AlphaToCoverage, blendFactor, 0xffffffff);
 
 	mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mFont, Text, textPos, XMCOLOR(0xffffffff));
-	mSpriteBatch->BeginBatch(mRjeLogo);
-	mSpriteBatch->Draw(r, XMCOLOR(0xffffffff));
-	mSpriteBatch->EndBatch(mDX11Device->md3dImmediateContext);
+	//if (CIniFile::GetValueBool("display_logo", "logo", "../data/Scene.ini"))
+	{
+		mSpriteBatch->BeginBatch(mRjeLogo);
+		mSpriteBatch->Draw(r, XMCOLOR(0xffffffff));
+		mSpriteBatch->EndBatch(mDX11Device->md3dImmediateContext);
+	}
 
 	mDX11Device->md3dImmediateContext->OMSetBlendState(0, blendFactor, 0xffffffff);
 }

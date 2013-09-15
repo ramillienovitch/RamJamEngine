@@ -178,6 +178,16 @@ void DX11SpriteBatch::Draw(const POINT& position, const CD3D11_RECT& sourceRect,
 	mSpriteList.push_back(sprite);
 }
 
+void DX11SpriteBatch::Draw(const POINT& center, float width, float height, XMCOLOR color)
+{
+	Sprite sprite;
+	sprite.SrcRect  = CD3D11_RECT(0, 0, mTexWidth, mTexHeight);;
+	sprite.DestRect = CD3D11_RECT(center.x - (LONG)(0.5*width), center.y - (LONG)(0.5*width), center.x + (LONG)(0.5*width), center.y + (LONG)(0.5*height));
+	sprite.Color    = color;
+
+	mSpriteList.push_back(sprite);
+}
+
 void DX11SpriteBatch::Draw(const POINT& position, const CD3D11_RECT& sourceRect, XMCOLOR color, float z, float angle, float scale)
 {
 	int srcWidth  = sourceRect.right - sourceRect.left;

@@ -281,6 +281,43 @@ bool CIniFile::GetValueBool(string KeyName, string SectionName, string FileName)
 	return false;															// No value was found
 }
 
+// The vector is written in this format : x|y
+Vector2 CIniFile::GetValueVector2(string KeyName, string SectionName, string FileName)
+{
+	vector<Record> content = GetRecord(KeyName,SectionName, FileName);		// Get the Record
+
+	if(!content.empty())													// Make sure there is a value to return
+	{
+		std::string temp = content[0].Value;
+		int pipePos = (int)temp.find('|');
+		std::string CoordX = temp.substr(0, pipePos);	// retrieve [x]|y
+		std::string CoordY = temp.substr(pipePos+1);	// retrieve x|[y]
+		return Vector2((float)atof(CoordX.c_str()), (float)atof(CoordY.c_str()));
+	}
+
+	return Vector2::zero;																// No value was found
+}
+
+// The vector is written in this format : x|y|z
+Vector3 CIniFile::GetValueVector3(string KeyName, string SectionName, string FileName)
+{
+	vector<Record> content = GetRecord(KeyName,SectionName, FileName);		// Get the Record
+
+	if(!content.empty())													// Make sure there is a value to return
+	{
+		std::string temp = content[0].Value;
+		int pipePos = (int)temp.find('|');
+		std::string CoordYZ = temp.substr(pipePos+1);
+		int pipePos2 = (int)CoordYZ.find('|');
+		std::string CoordX = temp.substr(0, pipePos);	// retrieve [x]|y|z
+		std::string CoordY = CoordYZ.substr(0, pipePos2);	// retrieve x|[y]|z
+		std::string CoordZ = CoordYZ.substr(pipePos2+1);	// retrieve x|y|[z]
+		return Vector3((float)atof(CoordX.c_str()), (float)atof(CoordY.c_str()), (float)atof(CoordZ.c_str()));
+	}
+
+	return Vector3::zero;																// No value was found
+}
+
 bool CIniFile::SetValue(string KeyName, string Value, string SectionName, string FileName)
 {
 	vector<Record> content;													// Holds the current record													// Holds the current record

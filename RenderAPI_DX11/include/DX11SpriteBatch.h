@@ -25,6 +25,7 @@ public:
 	//  This call is undefined if not called within a BeginBatch()/EndBatch().
 	void Draw(const POINT& position, XMCOLOR color);
 	void Draw(const POINT& position, const CD3D11_RECT& sourceRect,	XMCOLOR color);
+	void Draw(const POINT& center, float width, float height, XMCOLOR color);
 	void Draw(const POINT& position, const CD3D11_RECT& sourceRect, XMCOLOR color, float z, float angle, float scale);
 	void Draw(const CD3D11_RECT& destinationRect, XMCOLOR color);
 	void Draw(const CD3D11_RECT& destinationRect, const CD3D11_RECT& sourceRect, XMCOLOR color);
