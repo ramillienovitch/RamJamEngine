@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 #include <list>
+#include <memory>
 
 #if PLATFORM == PLATFORM_WIN32
 #	include <Windows.h>

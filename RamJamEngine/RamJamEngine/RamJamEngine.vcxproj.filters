@@ -25,6 +25,9 @@
     <Filter Include="Resource Files\Config Files">
       <UniqueIdentifier>{e318fc04-a816-474f-9c72-a471a2f9c99a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\RJE_Graphic">
+      <UniqueIdentifier>{2cba0184-916b-44e7-a671-b1e71522e4b1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -51,6 +54,9 @@
     <ClInclude Include="..\include\RjeConfig.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\FontSheet.h">
+      <Filter>Header Files\RJE_Graphic</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\System.cpp">
@@ -61,6 +67,9 @@
     </ClCompile>
     <ClCompile Include="..\src\stdafx.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\FontSheet.cpp">
+      <Filter>Source Files\RJE_Graphic</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

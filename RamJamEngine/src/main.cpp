@@ -42,6 +42,7 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstanc
 	// Enable run-time memory check for debug builds.
 #	ifdef STD_MEMORY_PROFILE
 	_CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
+	//_CrtSetBreakAlloc(X);
 #	endif
 
 	//try to create a console

@@ -1,0 +1,89 @@
+#pragma once
+
+#include "DX11Helper.h"
+
+using namespace DirectX::PackedVector;
+
+class DX11FontSheet;
+
+class DX11SpriteBatch
+{
+public:
+	DX11SpriteBatch();
+	~DX11SpriteBatch();
+
+	HRESULT Initialize(ID3D11Device* device);
+
+	/// Begins a new sprite batch.  All sprites in the batch will use the given texture.
+	//  All Draw() calls add a sprite to the batch.
+	void BeginBatch(ID3D11ShaderResourceView* texSRV);
+
+	/// Draw the current sprite batch and empties the internal sprite batch list.
+	void EndBatch(ID3D11DeviceContext* dc);
+
+	/// Adds a sprite to the sprite batch.
+	//  This call is undefined if not called within a BeginBatch()/EndBatch().
+	void Draw(const POINT& position, XMCOLOR color);
+	void Draw(const POINT& position, const CD3D11_RECT& sourceRect,	XMCOLOR color);
+	void Draw(const POINT& position, const CD3D11_RECT& sourceRect, XMCOLOR color, float z, float angle, float scale);
+	void Draw(const CD3D11_RECT& destinationRect, XMCOLOR color);
+	void Draw(const CD3D11_RECT& destinationRect, const CD3D11_RECT& sourceRect, XMCOLOR color);
+	void Draw(const CD3D11_RECT& destinationRect, const CD3D11_RECT& sourceRect, XMCOLOR color,
+		float z, float angle, float scale);
+
+	/// Draws a string to the screen.
+	//  DrawString should not be called inside BeginBatch()/EndBatch().
+	//  Internally, DrawString calls BeginBatch()/EndBatch() to draw the string characters as a single batch.
+	void DrawString(ID3D11DeviceContext* dc, DX11FontSheet& fs, const std::wstring& text, const POINT& pos, XMCOLOR color);
+
+private:
+
+	struct Sprite
+	{
+		Sprite()
+		{
+			Color = XMCOLOR(1.0f, 1.0f, 1.0f, 1.0f),
+			Z     = 0.0f;
+			Angle = 0.0f;
+			Scale = 1.0f;
+		}
+
+		CD3D11_RECT SrcRect;
+		CD3D11_RECT DestRect;
+		XMCOLOR Color;
+		float Z;
+		float Angle;
+		float Scale;
+	};
+
+	/// Helper method for drawing a subset of sprites in the batch.
+	void DrawBatch(ID3D11DeviceContext* dc, UINT startSpriteIndex, UINT spriteCount);
+
+	/// Convert screen space point to NDC space.
+	XMFLOAT3 PointToNdc(int x, int y, float z);
+
+	/// Generates quad for the given sprite. 
+	void BuildSpriteQuad(const Sprite& sprite, Vertex::SpriteVertex v[4]);
+
+private:
+	static const int BatchSize = 512;
+
+	bool mInitialized;
+
+	ID3D11Buffer* mVertexBuffer;
+	ID3D11Buffer* mIndexBuffer;
+
+	ID3D11InputLayout* mInputLayout;
+
+	float mScreenWidth;
+	float mScreenHeight;
+
+	// Texture to use for current batch.
+	ID3D11ShaderResourceView* mBatchTexSRV;
+
+	UINT mTexWidth;
+	UINT mTexHeight;
+
+	// List of sprites to draw using the current batch texture.
+	std::vector<Sprite> mSpriteList;
+};

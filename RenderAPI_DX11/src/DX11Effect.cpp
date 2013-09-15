@@ -93,18 +93,27 @@ SpriteEffect::~SpriteEffect()
 
 #pragma region Effects
 
-BasicEffect* DX11Effects::BasicFX = 0;
+BasicEffect*  DX11Effects::BasicFX  = nullptr;
+SpriteEffect* DX11Effects::SpriteFX = nullptr;
 
 void DX11Effects::InitAll(ID3D11Device* device)
 {
-	wchar_t* texturePath = nullptr;
-	CIniFile::GetValueWchar("basic", "shaders", "..\\..\\RamJamEngine\\data\\Resources.ini", &texturePath);
-	BasicFX = new BasicEffect(device, texturePath);
-	RJE_SAFE_DELETE(texturePath);
+	wchar_t* texturePathBasic  = nullptr;
+	wchar_t* texturePathSprite = nullptr;
+
+	CIniFile::GetValueWchar("basic",  "shaders", "..\\..\\RamJamEngine\\data\\Resources.ini", &texturePathBasic);
+	CIniFile::GetValueWchar("sprite", "shaders", "..\\..\\RamJamEngine\\data\\Resources.ini", &texturePathSprite);
+
+	BasicFX  = new BasicEffect( device, texturePathBasic);
+	SpriteFX = new SpriteEffect(device, texturePathSprite);
+
+	RJE_SAFE_DELETE(texturePathBasic);
+	RJE_SAFE_DELETE(texturePathSprite);
 }
 
 void DX11Effects::DestroyAll()
 {
 	RJE_SAFE_DELETE(BasicFX);
+	RJE_SAFE_DELETE(SpriteFX);
 }
 #pragma endregion

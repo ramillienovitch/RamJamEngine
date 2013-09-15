@@ -18,6 +18,9 @@ struct DX11Wrapper : GraphicAPI
 	D3D11_VIEWPORT			mScreenViewport;
 	D3D_DRIVER_TYPE			md3dDriverType;
 
+	DX11FontSheet*		mFont;
+	DX11SpriteBatch*	mSpriteBatch;
+
 	//////////////////////////////////////////////////////////////////////////
 
 	ID3D11Buffer*	mVertexBuffer;
@@ -29,6 +32,7 @@ struct DX11Wrapper : GraphicAPI
 	ID3D11ShaderResourceView* mCylinderMap;
 	ID3D11ShaderResourceView* mMaskMap;
 	ID3D11ShaderResourceView* mWhiteMaskMap;
+	ID3D11ShaderResourceView* mRjeLogo;
 
 	PointLight       mPointLights[3];
 	DirectionalLight mDirLights[3];
@@ -92,4 +96,5 @@ struct DX11Wrapper : GraphicAPI
 
 	void LoadTexture(string keyName, string sectionName, string fileName, ID3D11ShaderResourceView** shaderResourceView);
 	void BuildGeometryBuffers();
+	void Draw2dElements(float blendFactor[4]);
 };

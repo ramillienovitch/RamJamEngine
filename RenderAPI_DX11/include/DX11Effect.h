@@ -113,6 +113,7 @@ public:
 	static void InitAll(ID3D11Device* device);
 	static void DestroyAll();
 
-	static BasicEffect* BasicFX;
+	static BasicEffect*  BasicFX;
+	static SpriteEffect* SpriteFX;
 };
 #pragma endregion

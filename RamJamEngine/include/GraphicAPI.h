@@ -9,8 +9,6 @@
 
 struct GraphicAPI
 {
-	//virtual ~GraphicAPI();
-
 	Camera* mCamera;
 
 	virtual void Initialize(HWND hMainWnd, int windowWidth, int windowHeight) = 0;

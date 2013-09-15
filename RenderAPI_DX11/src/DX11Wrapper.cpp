@@ -9,6 +9,9 @@ DX11Wrapper::DX11Wrapper()
 	md3dDriverType		= D3D_DRIVER_TYPE_HARDWARE;
 	ZeroMemory(&mScreenViewport, sizeof(D3D11_VIEWPORT));
 
+	mFont        = nullptr;
+	mSpriteBatch = nullptr;
+
 	mVertexBuffer = nullptr;
 	mIndexBuffer  = nullptr;
 	
@@ -18,6 +21,7 @@ DX11Wrapper::DX11Wrapper()
 	mCylinderMap  = nullptr;
 	mMaskMap      = nullptr;
 	mWhiteMaskMap = nullptr;
+	mRjeLogo      = nullptr;
 	
 	mEyePosW = XMFLOAT3(0.0f, 0.0f, 0.0f);
 
@@ -208,12 +212,19 @@ void DX11Wrapper::Initialize(HWND hMainWnd, int windowWidth, int windowHeight)
 	DX11InputLayouts::InitAll(mDX11Device->md3dDevice);
 	DX11CommonStates::InitAll(mDX11Device->md3dDevice);
 
+	// Init the 2d elements
+	mFont        = new DX11FontSheet();
+	mSpriteBatch = new DX11SpriteBatch();
+	RJE_CHECK_FOR_SUCCESS(mFont->Initialize(mDX11Device->md3dDevice, L"Times New Roman", 96.0f, FontSheet::FontStyleItalic, true));
+	RJE_CHECK_FOR_SUCCESS(mSpriteBatch->Initialize(mDX11Device->md3dDevice));
+
 	LoadTexture("box",       "textures", "..\\..\\RamJamEngine\\data\\Resources.ini", &mBoxMap);
 	LoadTexture("grid",      "textures", "..\\..\\RamJamEngine\\data\\Resources.ini", &mGridMap);
 	LoadTexture("sphere",    "textures", "..\\..\\RamJamEngine\\data\\Resources.ini", &mSphereMap);
 	LoadTexture("cylinder",  "textures", "..\\..\\RamJamEngine\\data\\Resources.ini", &mCylinderMap);
 	LoadTexture("mask",      "textures", "..\\..\\RamJamEngine\\data\\Resources.ini", &mMaskMap);
 	LoadTexture("whitemask", "textures", "..\\..\\RamJamEngine\\data\\Resources.ini", &mWhiteMaskMap);
+	LoadTexture("rje_logo",  "textures", "..\\..\\RamJamEngine\\data\\Resources.ini", &mRjeLogo);
 
 	BuildGeometryBuffers();
 }
@@ -340,11 +351,11 @@ void DX11Wrapper::BuildGeometryBuffers()
 	fin.close();
 
 	D3D11_BUFFER_DESC vbd;
-	vbd.Usage = D3D11_USAGE_IMMUTABLE;
-	vbd.ByteWidth = (UINT) (sizeof(Vertex::PosNormalTex) * totalVertexCount);
-	vbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	vbd.Usage          = D3D11_USAGE_IMMUTABLE;
+	vbd.ByteWidth      = (UINT) (sizeof(Vertex::PosNormalTex) * totalVertexCount);
+	vbd.BindFlags      = D3D11_BIND_VERTEX_BUFFER;
 	vbd.CPUAccessFlags = 0;
-	vbd.MiscFlags = 0;
+	vbd.MiscFlags      = 0;
 	D3D11_SUBRESOURCE_DATA vinitData;
 	vinitData.pSysMem = &vertices[0];
 	RJE_CHECK_FOR_SUCCESS(mDX11Device->md3dDevice->CreateBuffer(&vbd, &vinitData, &mVertexBuffer));
@@ -357,11 +368,11 @@ void DX11Wrapper::BuildGeometryBuffers()
 	indices.insert(indices.end(), dragonIndices.begin(), dragonIndices.end());
 
 	D3D11_BUFFER_DESC ibd;
-	ibd.Usage = D3D11_USAGE_IMMUTABLE;
-	ibd.ByteWidth = sizeof(UINT) * totalIndexCount;
-	ibd.BindFlags = D3D11_BIND_INDEX_BUFFER;
+	ibd.Usage          = D3D11_USAGE_IMMUTABLE;
+	ibd.ByteWidth      = sizeof(UINT) * totalIndexCount;
+	ibd.BindFlags      = D3D11_BIND_INDEX_BUFFER;
 	ibd.CPUAccessFlags = 0;
-	ibd.MiscFlags = 0;
+	ibd.MiscFlags      = 0;
 	D3D11_SUBRESOURCE_DATA iinitData;
 	iinitData.pSysMem = &indices[0];
 	RJE_CHECK_FOR_SUCCESS(mDX11Device->md3dDevice->CreateBuffer(&ibd, &iinitData, &mIndexBuffer));
@@ -452,7 +463,7 @@ void DX11Wrapper::DrawScene()
 	float alpha    = CIniFile::GetValueFloat("blend_alpha", "blendfactor", "..\\..\\RamJamEngine\\data\\Scene.ini");
 	float fogStart = CIniFile::GetValueFloat("fog_start",   "camera",      "..\\..\\RamJamEngine\\data\\Scene.ini");
 	float fogRange = CIniFile::GetValueFloat("fog_range",   "camera",      "..\\..\\RamJamEngine\\data\\Scene.ini");
-	float blendFactor[] = {rbg, rbg, rbg, alpha};
+	float blendFactor[4] = {rbg, rbg, rbg, alpha};
 
 	UINT stride = sizeof(Vertex::PosNormalTex);
 	UINT offset = 0;
@@ -848,6 +859,12 @@ void DX11Wrapper::DrawScene()
 		}
 	}
 
+	//////////////////////////////////////////////////////////////////////////
+	
+	Draw2dElements(blendFactor);
+	
+	//////////////////////////////////////////////////////////////////////////
+
 	if (RJE_GLOBALS::gVsyncEnabled)
 	{
 		RJE_CHECK_FOR_SUCCESS(mSwapChain->Present(1, 0));
@@ -856,6 +873,22 @@ void DX11Wrapper::DrawScene()
 	{
 		RJE_CHECK_FOR_SUCCESS(mSwapChain->Present(0, 0));
 	}
+}
+
+void DX11Wrapper::Draw2dElements(float blendFactor[4])
+{
+	std::wstring Text = L"RamJam Engine";
+	POINT textPos = {10, 10};
+
+	CD3D11_RECT r( System::Instance()->mScreenWidth - 275, System::Instance()->mScreenHeight - 180, System::Instance()->mScreenWidth - 30, System::Instance()->mScreenHeight - 30);
+	mDX11Device->md3dImmediateContext->OMSetBlendState(DX11CommonStates::sBlendState_AlphaToCoverage, blendFactor, 0xffffffff);
+
+	mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mFont, Text, textPos, XMCOLOR(0xffffffff));
+	mSpriteBatch->BeginBatch(mRjeLogo);
+	mSpriteBatch->Draw(r, XMCOLOR(0xffffffff));
+	mSpriteBatch->EndBatch(mDX11Device->md3dImmediateContext);
+
+	mDX11Device->md3dImmediateContext->OMSetBlendState(0, blendFactor, 0xffffffff);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -870,10 +903,14 @@ void DX11Wrapper::Shutdown()
 	RJE_SAFE_RELEASE(mCylinderMap);
 	RJE_SAFE_RELEASE(mMaskMap);
 	RJE_SAFE_RELEASE(mWhiteMaskMap);
+	RJE_SAFE_RELEASE(mRjeLogo);
 
 	DX11Effects     ::DestroyAll();
 	DX11InputLayouts::DestroyAll();
 	DX11CommonStates::DestroyAll();
+
+	RJE_SAFE_DELETE(mSpriteBatch);
+	RJE_SAFE_DELETE(mFont);
 
 	RJE_SAFE_RELEASE(mRenderTargetView);
 	mDX11DepthBuffer->Release();

@@ -17,6 +17,7 @@
 #include <dxerr.h>
 #include <DirectXMath.h>
 #include <DirectXCollision.h>
+#include <DirectXPackedVector.h>
 #include <DirectXColors.h>
 #include "..\..\Effects11\inc\d3dx11effect.h"
 //#include "D3DX11Effect.h"		// from RenderAPI_DX11\include ==> in conflict with Effects11
@@ -42,6 +43,8 @@
 #include "DX11Camera.h"
 #include "DX11Effect.h"
 #include "DX11Vertex.h"
+#include "DX11FontSheet.h"
+#include "DX11SpriteBatch.h"
 #include "DX11InputLayout.h"
 #include "DDSTextureLoader.h"
 #include "GeometryGenerator.h"
