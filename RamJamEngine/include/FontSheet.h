@@ -47,6 +47,11 @@ public:
 	/// newline characters when rendering text.
 	int GetCharHeight();
 
+	// ASCII characters from 33='!' to 127.  
+	static const WCHAR StartChar = 33;
+	static const WCHAR EndChar   = 127;
+	static const UINT  NumChars  = EndChar - StartChar;
+
 protected:
 
 	/// Determines mCharHeight, mSpaceWidth, and mTexHeight.
@@ -57,11 +62,6 @@ protected:
 
 	/// For saving the GDI Bitmap to file (for internal debugging).
 	int GetEncoderClsid(const WCHAR* format, CLSID* pClsid);
-
-	// ASCII characters from 33='!' to 127.  
-	static const WCHAR StartChar = 33;
-	static const WCHAR EndChar   = 127;
-	static const UINT  NumChars  = EndChar - StartChar;
 
 	bool mInitialized;
 

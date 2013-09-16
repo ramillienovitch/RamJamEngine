@@ -10,18 +10,20 @@ DX11Wrapper::DX11Wrapper()
 	ZeroMemory(&mScreenViewport, sizeof(D3D11_VIEWPORT));
 
 	mFont        = nullptr;
+	mConsoleFont = nullptr;
 	mSpriteBatch = nullptr;
 
 	mVertexBuffer = nullptr;
 	mIndexBuffer  = nullptr;
 	
-	mBoxMap       = nullptr;
-	mGridMap      = nullptr;
-	mSphereMap    = nullptr;
-	mCylinderMap  = nullptr;
-	mMaskMap      = nullptr;
-	mWhiteMaskMap = nullptr;
-	mRjeLogo      = nullptr;
+	mBoxMap            = nullptr;
+	mGridMap           = nullptr;
+	mSphereMap         = nullptr;
+	mCylinderMap       = nullptr;
+	mMaskMap           = nullptr;
+	mWhiteMaskMap      = nullptr;
+	mConsoleBackground = nullptr;
+	mRjeLogo           = nullptr;
 	
 	mEyePosW = XMFLOAT3(0.0f, 0.0f, 0.0f);
 
@@ -214,17 +216,20 @@ void DX11Wrapper::Initialize(HWND hMainWnd, int windowWidth, int windowHeight)
 
 	// Init the 2d elements
 	mFont        = new DX11FontSheet();
+	mConsoleFont = new DX11FontSheet();
 	mSpriteBatch = new DX11SpriteBatch();
 	RJE_CHECK_FOR_SUCCESS(mFont->Initialize(mDX11Device->md3dDevice, L"Times New Roman", 96.0f, FontSheet::FontStyleItalic, true));
+	RJE_CHECK_FOR_SUCCESS(mConsoleFont->Initialize(mDX11Device->md3dDevice, L"Consolas", 16.0f, FontSheet::FontStyleRegular, true));
 	RJE_CHECK_FOR_SUCCESS(mSpriteBatch->Initialize(mDX11Device->md3dDevice));
 
-	LoadTexture("box",       "textures", "..\\..\\RamJamEngine\\data\\Resources.ini", &mBoxMap);
-	LoadTexture("grid",      "textures", "..\\..\\RamJamEngine\\data\\Resources.ini", &mGridMap);
-	LoadTexture("sphere",    "textures", "..\\..\\RamJamEngine\\data\\Resources.ini", &mSphereMap);
-	LoadTexture("cylinder",  "textures", "..\\..\\RamJamEngine\\data\\Resources.ini", &mCylinderMap);
-	LoadTexture("mask",      "textures", "..\\..\\RamJamEngine\\data\\Resources.ini", &mMaskMap);
-	LoadTexture("whitemask", "textures", "..\\..\\RamJamEngine\\data\\Resources.ini", &mWhiteMaskMap);
-	LoadTexture("rje_logo",  "textures", "..\\..\\RamJamEngine\\data\\Resources.ini", &mRjeLogo);
+	LoadTexture("box",                "textures", "..\\..\\RamJamEngine\\data\\Resources.ini", &mBoxMap);
+	LoadTexture("grid",               "textures", "..\\..\\RamJamEngine\\data\\Resources.ini", &mGridMap);
+	LoadTexture("sphere",             "textures", "..\\..\\RamJamEngine\\data\\Resources.ini", &mSphereMap);
+	LoadTexture("cylinder",           "textures", "..\\..\\RamJamEngine\\data\\Resources.ini", &mCylinderMap);
+	LoadTexture("mask",               "textures", "..\\..\\RamJamEngine\\data\\Resources.ini", &mMaskMap);
+	LoadTexture("whitemask",          "textures", "..\\..\\RamJamEngine\\data\\Resources.ini", &mWhiteMaskMap);
+	LoadTexture("console_background", "textures", "..\\..\\RamJamEngine\\data\\Resources.ini", &mConsoleBackground);
+	LoadTexture("rje_logo",           "textures", "..\\..\\RamJamEngine\\data\\Resources.ini", &mRjeLogo);
 
 	BuildGeometryBuffers();
 }
@@ -395,37 +400,40 @@ void DX11Wrapper::UpdateScene( float dt )
 	mCamera->UpdateViewMatrix();
 	
 	// Inputs modifiers : TODO : Get these out of DX11Wrapper !
-	if (Input::Instance()->GetKeyboardDown(Keyboard0))	mDirLightCount = 0;
-	if (Input::Instance()->GetKeyboardDown(Keyboard1))	mDirLightCount = 1;
-	//if (Input::Instance()->GetKeyboardDown(Keyboard2))	mDirLightCount = 2;
-	//if (Input::Instance()->GetKeyboardDown(Keyboard3))	mDirLightCount = 3;
-	if (Input::Instance()->GetKeyboardDown(Numpad0))	mPointLightCount = 0;
-	if (Input::Instance()->GetKeyboardDown(Numpad1))	mPointLightCount = 1;
-	if (Input::Instance()->GetKeyboardDown(Numpad2))	mPointLightCount = 2;
-	if (Input::Instance()->GetKeyboardDown(Numpad3))	mPointLightCount = 3;
-	if (Input::Instance()->GetKeyboardDown(T))			mbUseTexture  = !mbUseTexture;
-	if (Input::Instance()->GetKeyboardDown(B))			mbUseBlending = !mbUseBlending;
-	if (Input::Instance()->GetKeyboardDown(F))			mbUseFog      = !mbUseFog;
-	if (Input::Instance()->GetKeyboardDown(S))			{DX11CommonStates::sCurrentRasterizerState = DX11CommonStates::sRasterizerState_Solid;}
-	if (Input::Instance()->GetKeyboardDown(A))			DX11CommonStates::sCurrentSamplerState    = DX11CommonStates::sSamplerState_Anisotropic;
-	if (Input::Instance()->GetKeyboardDown(L))			DX11CommonStates::sCurrentSamplerState    = DX11CommonStates::sSamplerState_Linear;
-	if (Input::Instance()->GetKeyboardDown(U))			DX11CommonStates::sCurrentBlendState      = DX11CommonStates::sBlendState_BlendFactor;
-	if (Input::Instance()->GetKeyboardDown(I))			DX11CommonStates::sCurrentBlendState      = DX11CommonStates::sBlendState_AlphaToCoverage;
-	if (Input::Instance()->GetKeyboardDown(O))			DX11CommonStates::sCurrentBlendState      = DX11CommonStates::sBlendState_Transparent;
-	if (Input::Instance()->GetKeyboardDown(P))			DX11CommonStates::sCurrentBlendState      = DX11CommonStates::sBlendState_Opaque;
-	if (Input::Instance()->GetKeyboardUp(W))
+	if (!Console::Instance()->IsActive())
 	{
-		if (mbWireframe)
+		if (Input::Instance()->GetKeyboardDown(Keyboard0))	mDirLightCount = 0;
+		if (Input::Instance()->GetKeyboardDown(Keyboard1))	mDirLightCount = 1;
+		//if (Input::Instance()->GetKeyboardDown(Keyboard2))	mDirLightCount = 2;
+		//if (Input::Instance()->GetKeyboardDown(Keyboard3))	mDirLightCount = 3;
+		if (Input::Instance()->GetKeyboardDown(Numpad0))	mPointLightCount = 0;
+		if (Input::Instance()->GetKeyboardDown(Numpad1))	mPointLightCount = 1;
+		if (Input::Instance()->GetKeyboardDown(Numpad2))	mPointLightCount = 2;
+		if (Input::Instance()->GetKeyboardDown(Numpad3))	mPointLightCount = 3;
+		if (Input::Instance()->GetKeyboardDown(T))			mbUseTexture  = !mbUseTexture;
+		if (Input::Instance()->GetKeyboardDown(B))			mbUseBlending = !mbUseBlending;
+		if (Input::Instance()->GetKeyboardDown(F))			mbUseFog      = !mbUseFog;
+		if (Input::Instance()->GetKeyboardDown(S))			{DX11CommonStates::sCurrentRasterizerState = DX11CommonStates::sRasterizerState_Solid;}
+		if (Input::Instance()->GetKeyboardDown(A))			DX11CommonStates::sCurrentSamplerState    = DX11CommonStates::sSamplerState_Anisotropic;
+		if (Input::Instance()->GetKeyboardDown(L))			DX11CommonStates::sCurrentSamplerState    = DX11CommonStates::sSamplerState_Linear;
+		if (Input::Instance()->GetKeyboardDown(U))			DX11CommonStates::sCurrentBlendState      = DX11CommonStates::sBlendState_BlendFactor;
+		if (Input::Instance()->GetKeyboardDown(I))			DX11CommonStates::sCurrentBlendState      = DX11CommonStates::sBlendState_AlphaToCoverage;
+		if (Input::Instance()->GetKeyboardDown(O))			DX11CommonStates::sCurrentBlendState      = DX11CommonStates::sBlendState_Transparent;
+		if (Input::Instance()->GetKeyboardDown(P))			DX11CommonStates::sCurrentBlendState      = DX11CommonStates::sBlendState_Opaque;
+		if (Input::Instance()->GetKeyboardUp(W))
 		{
-			mbWireframe = false;
-			DX11CommonStates::sCurrentRasterizerState = DX11CommonStates::sRasterizerState_Solid;
-		}
-		else
-		{
-			mbUseBlending = false;
-			mbWireframe   = true;
-			DX11CommonStates::sCurrentRasterizerState = DX11CommonStates::sRasterizerState_Wireframe;
-			DX11CommonStates::sCurrentBlendState      = DX11CommonStates::sBlendState_Opaque;
+			if (mbWireframe)
+			{
+				mbWireframe = false;
+				DX11CommonStates::sCurrentRasterizerState = DX11CommonStates::sRasterizerState_Solid;
+			}
+			else
+			{
+				mbUseBlending = false;
+				mbWireframe   = true;
+				DX11CommonStates::sCurrentRasterizerState = DX11CommonStates::sRasterizerState_Wireframe;
+				DX11CommonStates::sCurrentBlendState      = DX11CommonStates::sBlendState_Opaque;
+			}
 		}
 	}
 
@@ -861,7 +869,9 @@ void DX11Wrapper::DrawScene()
 
 	//////////////////////////////////////////////////////////////////////////
 	
-	if (!mbWireframe)
+	if (Console::Instance()->IsActive())
+		DrawConsole();
+	else if (!mbWireframe)
 		Draw2dElements(blendFactor);
 	
 	//////////////////////////////////////////////////////////////////////////
@@ -876,22 +886,40 @@ void DX11Wrapper::DrawScene()
 	}
 }
 
+//////////////////////////////////////////////////////////////////////////
+void DX11Wrapper::DrawConsole()
+{
+	float blendFactor[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+
+	char cmd[COMMAND_MAX_LENGTH];
+	Console::Instance()->GetCommand(cmd);
+
+	POINT textPos = {10, 50};
+	POINT cmdPos = {10, 170};
+
+	CD3D11_RECT rect( 0, 0, System::Instance()->mScreenWidth, 200);
+	CD3D11_RECT rectLogo( System::Instance()->mScreenWidth - 200, 40, System::Instance()->mScreenWidth - 30, 160);
+	mDX11Device->md3dImmediateContext->OMSetBlendState(DX11CommonStates::sBlendState_AlphaToCoverage, blendFactor, 0xffffffff);
+	{
+		mSpriteBatch->DrawConsoleText(mDX11Device->md3dImmediateContext, *mConsoleFont, Console::Instance()->mConsoleBuffer, textPos, XMCOLOR(0xffffffff));
+		mSpriteBatch->DrawConsoleCommand(mDX11Device->md3dImmediateContext, *mConsoleFont, cmd, cmdPos, XMCOLOR(0xffffffff));
+
+		mSpriteBatch->DrawTexture2D(mRjeLogo,           mDX11Device->md3dImmediateContext, rectLogo, 0xffffffff);
+		mSpriteBatch->DrawTexture2D(mConsoleBackground, mDX11Device->md3dImmediateContext, rect,     0xffffffff);
+	}
+	mDX11Device->md3dImmediateContext->OMSetBlendState(0, blendFactor, 0xffffffff);
+}
+
+//////////////////////////////////////////////////////////////////////////
 void DX11Wrapper::Draw2dElements(float blendFactor[4])
 {
-	std::wstring Text = L"RamJam Engine";
 	POINT textPos = {10, 10};
 
-	CD3D11_RECT r( System::Instance()->mScreenWidth - 275, System::Instance()->mScreenHeight - 180, System::Instance()->mScreenWidth - 30, System::Instance()->mScreenHeight - 30);
 	mDX11Device->md3dImmediateContext->OMSetBlendState(DX11CommonStates::sBlendState_AlphaToCoverage, blendFactor, 0xffffffff);
-
-	mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mFont, Text, textPos, XMCOLOR(0xffffffff));
-	//if (CIniFile::GetValueBool("display_logo", "logo", "../data/Scene.ini"))
 	{
-		mSpriteBatch->BeginBatch(mRjeLogo);
-		mSpriteBatch->Draw(r, XMCOLOR(0xffffffff));
-		mSpriteBatch->EndBatch(mDX11Device->md3dImmediateContext);
+		// Draw 2D elements -------------
+		mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mFont, L"RamJam Engine", textPos, XMCOLOR(0xffffffff));
 	}
-
 	mDX11Device->md3dImmediateContext->OMSetBlendState(0, blendFactor, 0xffffffff);
 }
 
@@ -907,6 +935,7 @@ void DX11Wrapper::Shutdown()
 	RJE_SAFE_RELEASE(mCylinderMap);
 	RJE_SAFE_RELEASE(mMaskMap);
 	RJE_SAFE_RELEASE(mWhiteMaskMap);
+	RJE_SAFE_RELEASE(mConsoleBackground);
 	RJE_SAFE_RELEASE(mRjeLogo);
 
 	DX11Effects     ::DestroyAll();
@@ -915,6 +944,7 @@ void DX11Wrapper::Shutdown()
 
 	RJE_SAFE_DELETE(mSpriteBatch);
 	RJE_SAFE_DELETE(mFont);
+	RJE_SAFE_DELETE(mConsoleFont);
 
 	RJE_SAFE_RELEASE(mRenderTargetView);
 	mDX11DepthBuffer->Release();

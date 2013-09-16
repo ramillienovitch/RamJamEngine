@@ -133,6 +133,9 @@
     <Image Include="..\RJE_Logo.bmp">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="..\data\textures\TransparentGray.dds">
+      <Filter>Resource Files\Textures</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\data\models\dragon.mesh">

@@ -1,4 +1,5 @@
 #include "Input.h"
+#include "Console.h"
 
 Input* Input::sInstance = nullptr;
 
@@ -20,6 +21,17 @@ void Input::HandleInputEvent(UINT umsg, WPARAM wparam, LPARAM lparam)
 
 	switch (umsg)
 	{
+	case WM_CHAR:
+		{
+			if (Console::Instance()->IsActive())
+			{
+				if (wparam == VK_ESCAPE || wparam == VK_BACK || wparam == VK_RETURN)
+					return;
+
+				Console::Instance()->AddCharacter((const char) wparam);
+			}
+			return;
+		}
 	case WM_KEYDOWN:
 		{
 			if (wparam >= 0x30 && wparam <= 0x39)		// Keyboard 0 -> 9
@@ -57,7 +69,6 @@ void Input::HandleInputEvent(UINT umsg, WPARAM wparam, LPARAM lparam)
 				switch (wparam) 
 				{
 				case VK_ADD :		mKeyboardState[Keycode::Add]          = true;	mKeyboardStateDown[Keycode::Add]          = true;		return;
-				case VK_BACK :		mKeyboardState[Keycode::Backspace]    = true;	mKeyboardStateDown[Keycode::Backspace]    = true;		return;
 				case VK_CAPITAL :	mKeyboardState[Keycode::CapsLock]     = true;	mKeyboardStateDown[Keycode::CapsLock]     = true;		return;
 				case VK_CLEAR :		mKeyboardState[Keycode::Clear]        = true;	mKeyboardStateDown[Keycode::Clear]        = true;		return;
 				case VK_DECIMAL :	mKeyboardState[Keycode::Decimal]      = true;	mKeyboardStateDown[Keycode::Decimal]      = true;		return;
@@ -65,7 +76,6 @@ void Input::HandleInputEvent(UINT umsg, WPARAM wparam, LPARAM lparam)
 				case VK_DOWN :		mKeyboardState[Keycode::DownArrow]    = true;	mKeyboardStateDown[Keycode::DownArrow]    = true;		return;
 				case VK_DIVIDE :	mKeyboardState[Keycode::Divide]       = true;	mKeyboardStateDown[Keycode::Divide]       = true;		return;
 				case VK_END :		mKeyboardState[Keycode::End]          = true;	mKeyboardStateDown[Keycode::End]          = true;		return;
-				case VK_ESCAPE :	mKeyboardState[Keycode::Esc]          = true;	mKeyboardStateDown[Keycode::Esc]          = true;		return;
 				case VK_EXECUTE :	mKeyboardState[Keycode::Execute]      = true;	mKeyboardStateDown[Keycode::Execute]      = true;		return;
 				case VK_HELP :		mKeyboardState[Keycode::Help]         = true;	mKeyboardStateDown[Keycode::Help]         = true;		return;
 				case VK_HOME :		mKeyboardState[Keycode::Home]         = true;	mKeyboardStateDown[Keycode::Home]         = true;		return;
@@ -77,7 +87,6 @@ void Input::HandleInputEvent(UINT umsg, WPARAM wparam, LPARAM lparam)
 				case VK_PRIOR :		mKeyboardState[Keycode::PageUp]       = true;	mKeyboardStateDown[Keycode::PageUp]       = true;		return;
 				case VK_PAUSE :		mKeyboardState[Keycode::Pause]        = true;	mKeyboardStateDown[Keycode::Pause]        = true;		return;
 				case VK_PRINT :		mKeyboardState[Keycode::Print]        = true;	mKeyboardStateDown[Keycode::Print]        = true;		return;
-				case VK_RETURN :	mKeyboardState[Keycode::Return]       = true;	mKeyboardStateDown[Keycode::Return]       = true;		return;
 				case VK_RIGHT :		mKeyboardState[Keycode::RightArrow]   = true;	mKeyboardStateDown[Keycode::RightArrow]   = true;		return;
 				case VK_SCROLL :	mKeyboardState[Keycode::Scroll]       = true;	mKeyboardStateDown[Keycode::Scroll]       = true;		return;
 				case VK_SELECT :	mKeyboardState[Keycode::Select]       = true;	mKeyboardStateDown[Keycode::Select]       = true;		return;
@@ -97,6 +106,28 @@ void Input::HandleInputEvent(UINT umsg, WPARAM wparam, LPARAM lparam)
 				case VK_SHIFT : 
 					if (extended)	{mKeyboardState[Keycode::RightShift]  = true;	mKeyboardStateDown[Keycode::RightShift]   = true;		return;}
 					else			{mKeyboardState[Keycode::LeftShift]   = true;	mKeyboardStateDown[Keycode::LeftShift]    = true;		return;}
+				case VK_BACK :
+					{
+						mKeyboardState    [Keycode::Backspace] = true;
+						mKeyboardStateDown[Keycode::Backspace] = true;
+						if (Console::Instance()->IsActive())
+							Console::Instance()->RemoveCharacter();
+						return;
+					}
+				case VK_ESCAPE :
+					{
+						mKeyboardState    [Keycode::Esc] = true;
+						mKeyboardStateDown[Keycode::Esc] = true;
+						Console::Instance()->ToggleConsoleState();
+						return;
+					}
+				case VK_RETURN :
+					{
+						mKeyboardState    [Keycode::Return] = true;
+						mKeyboardStateDown[Keycode::Return] = true;
+						Console::Instance()->RegisterAndClearCommand();
+						return;
+					}
 				}
 			}
 			return;

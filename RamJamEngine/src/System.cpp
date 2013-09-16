@@ -70,6 +70,7 @@ void System::Shutdown()
 
 	Timer::DeleteInstance();
 	Input::DeleteInstance();
+	Console::DeleteInstance();
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -95,7 +96,8 @@ void System::Run()
 		{
 			Timer::Instance()->Update();
 
-			HandleInputs();
+			if (!Console::Instance()->IsActive())
+				HandleInputs();
 
 			if (RJE_GLOBALS::gUpdateSceneRuntime)
 			{

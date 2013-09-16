@@ -1,5 +1,6 @@
 #include "DX11SpriteBatch.h"
 
+//////////////////////////////////////////////////////////////////////////
 DX11SpriteBatch::DX11SpriteBatch()
 {
 	mVertexBuffer = nullptr;
@@ -14,6 +15,7 @@ DX11SpriteBatch::DX11SpriteBatch()
 	mTexHeight = 0;
 }
 
+//////////////////////////////////////////////////////////////////////////
 DX11SpriteBatch::~DX11SpriteBatch()
 {
 	RJE_SAFE_RELEASE(mVertexBuffer);
@@ -21,6 +23,7 @@ DX11SpriteBatch::~DX11SpriteBatch()
 	RJE_SAFE_RELEASE(mInputLayout);
 }
 
+//////////////////////////////////////////////////////////////////////////
 HRESULT DX11SpriteBatch::Initialize(ID3D11Device* device)
 {
 	// Prevent double Init.
@@ -88,6 +91,7 @@ HRESULT DX11SpriteBatch::Initialize(ID3D11Device* device)
 	return hr;
 }
 
+//////////////////////////////////////////////////////////////////////////
 void DX11SpriteBatch::BeginBatch(ID3D11ShaderResourceView* texSRV)
 {
 	RJE_ASSERT(mInitialized);
@@ -111,6 +115,7 @@ void DX11SpriteBatch::BeginBatch(ID3D11ShaderResourceView* texSRV)
 	mSpriteList.clear();
 }
 
+//////////////////////////////////////////////////////////////////////////
 void DX11SpriteBatch::EndBatch(ID3D11DeviceContext* dc)
 {
 	assert(mInitialized);
@@ -155,6 +160,8 @@ void DX11SpriteBatch::EndBatch(ID3D11DeviceContext* dc)
 	RJE_SAFE_RELEASE(mBatchTexSRV);
 }
 
+#pragma region Draw Functions
+//////////////////////////////////////////////////////////////////////////
 void DX11SpriteBatch::Draw(const POINT& position, XMCOLOR color)
 {
 	Sprite sprite;
@@ -165,6 +172,7 @@ void DX11SpriteBatch::Draw(const POINT& position, XMCOLOR color)
 	mSpriteList.push_back(sprite);
 }
 
+//////////////////////////////////////////////////////////////////////////
 void DX11SpriteBatch::Draw(const POINT& position, const CD3D11_RECT& sourceRect, XMCOLOR color)
 {
 	int srcWidth  = sourceRect.right - sourceRect.left;
@@ -178,6 +186,7 @@ void DX11SpriteBatch::Draw(const POINT& position, const CD3D11_RECT& sourceRect,
 	mSpriteList.push_back(sprite);
 }
 
+//////////////////////////////////////////////////////////////////////////
 void DX11SpriteBatch::Draw(const POINT& center, float width, float height, XMCOLOR color)
 {
 	Sprite sprite;
@@ -188,6 +197,7 @@ void DX11SpriteBatch::Draw(const POINT& center, float width, float height, XMCOL
 	mSpriteList.push_back(sprite);
 }
 
+//////////////////////////////////////////////////////////////////////////
 void DX11SpriteBatch::Draw(const POINT& position, const CD3D11_RECT& sourceRect, XMCOLOR color, float z, float angle, float scale)
 {
 	int srcWidth  = sourceRect.right - sourceRect.left;
@@ -204,6 +214,7 @@ void DX11SpriteBatch::Draw(const POINT& position, const CD3D11_RECT& sourceRect,
 	mSpriteList.push_back(sprite);
 }
 
+//////////////////////////////////////////////////////////////////////////
 void DX11SpriteBatch::Draw(const CD3D11_RECT& destinationRect, XMCOLOR color)
 {
 	Sprite sprite;
@@ -214,6 +225,7 @@ void DX11SpriteBatch::Draw(const CD3D11_RECT& destinationRect, XMCOLOR color)
 	mSpriteList.push_back(sprite);
 }
 
+//////////////////////////////////////////////////////////////////////////
 void DX11SpriteBatch::Draw(const CD3D11_RECT& destinationRect, const CD3D11_RECT& sourceRect, XMCOLOR color)
 {
 	Sprite sprite;
@@ -224,6 +236,7 @@ void DX11SpriteBatch::Draw(const CD3D11_RECT& destinationRect, const CD3D11_RECT
 	mSpriteList.push_back(sprite);
 }
 
+//////////////////////////////////////////////////////////////////////////
 void DX11SpriteBatch::Draw(const CD3D11_RECT& destinationRect, const CD3D11_RECT& sourceRect, XMCOLOR color, float z, float angle, float scale)
 {
 	Sprite sprite;
@@ -236,7 +249,17 @@ void DX11SpriteBatch::Draw(const CD3D11_RECT& destinationRect, const CD3D11_RECT
 
 	mSpriteList.push_back(sprite);
 }
+#pragma endregion
 
+//////////////////////////////////////////////////////////////////////////
+void DX11SpriteBatch::DrawTexture2D(ID3D11ShaderResourceView* texSRV, ID3D11DeviceContext* dc, CD3D11_RECT rect, XMCOLOR color)
+{
+	BeginBatch(texSRV);
+	Draw(rect, color);
+	EndBatch(dc);
+}
+
+//////////////////////////////////////////////////////////////////////////
 void DX11SpriteBatch::DrawString(ID3D11DeviceContext* dc, DX11FontSheet& fs, const std::wstring& text, const POINT& pos, XMCOLOR color)
 {
 	BeginBatch(fs.GetFontSheetSRV());
@@ -264,10 +287,13 @@ void DX11SpriteBatch::DrawString(ID3D11DeviceContext* dc, DX11FontSheet& fs, con
 		}
 		else
 		{
+			if ( character < DX11FontSheet::StartChar || character > DX11FontSheet::EndChar )
+				character = '?';
+
 			// Get the bounding rect of the character on the fontsheet.
 			const CD3D11_RECT& charRect = fs.GetCharBoundingRect(character);
 
-			int width = charRect.right - charRect.left;
+			int width  = charRect.right - charRect.left;
 			int height = charRect.bottom - charRect.top;
 
 			// Draw the character sprite.
@@ -281,6 +307,103 @@ void DX11SpriteBatch::DrawString(ID3D11DeviceContext* dc, DX11FontSheet& fs, con
 	EndBatch(dc);
 }
 
+//////////////////////////////////////////////////////////////////////////
+void DX11SpriteBatch::DrawConsoleText(ID3D11DeviceContext* dc, DX11FontSheet& fs, const char* text, const POINT& pos, XMCOLOR color)
+{
+	BeginBatch(fs.GetFontSheetSRV());
+
+	int posX = pos.x;
+	int posY = pos.y;
+
+	// For each character in the string...
+	for(UINT i = 0; i < COMMAND_MAX_LENGTH*LINE_MAX; ++i)
+	{
+		WCHAR character = text[i];
+
+		// Is the character a space char?
+		if(character == ' ') 
+		{
+			posX += fs.GetSpaceWidth();
+		}
+		// Is the character a newline char?
+		else if(character == '\n')
+		{
+			posX  = pos.x;
+			posY += fs.GetCharHeight();
+		}
+		else if(character == nullchar)
+		{
+			break;
+		}
+		else
+		{
+			if ( character < DX11FontSheet::StartChar || character > DX11FontSheet::EndChar )
+				character = '?';
+
+			// Get the bounding rect of the character on the fontsheet.
+			const CD3D11_RECT& charRect = fs.GetCharBoundingRect(character);
+
+			int width  = charRect.right - charRect.left;
+			int height = charRect.bottom - charRect.top;
+
+			// Draw the character sprite.
+			Draw(CD3D11_RECT(posX, posY, posX + width, posY + height), charRect, color);
+
+			// Move to the next character position.
+			posX += width + 1;
+		}
+	}
+
+	EndBatch(dc);
+}
+
+//////////////////////////////////////////////////////////////////////////
+void DX11SpriteBatch::DrawConsoleCommand(ID3D11DeviceContext* dc, DX11FontSheet& fs, char (&text)[COMMAND_MAX_LENGTH], const POINT& pos, XMCOLOR color)
+{
+	BeginBatch(fs.GetFontSheetSRV());
+
+	int posX = pos.x;
+	int posY = pos.y;
+	
+	// For each character in the string...
+	for(UINT i = 0; i < COMMAND_MAX_LENGTH; ++i)
+	{
+		WCHAR character = text[i];
+
+		if(character == ' ')
+		{
+			posX += fs.GetSpaceWidth();
+		}
+		else if(character == '\n')
+		{
+			posX  = pos.x;
+			posY += fs.GetCharHeight();
+		}
+		else if(character == nullchar)
+		{
+			break;
+		}
+		else
+		{
+			if ( character < DX11FontSheet::StartChar || character > DX11FontSheet::EndChar )
+				character = '?';
+
+			const CD3D11_RECT& charRect = fs.GetCharBoundingRect(character);
+
+			int width  = charRect.right - charRect.left;
+			int height = charRect.bottom - charRect.top;
+
+			Draw(CD3D11_RECT(posX, posY, posX + width, posY + height), charRect, color);
+
+			// Move to the next character position.
+			posX += width + 1;
+		}
+	}
+
+	EndBatch(dc);
+}
+
+//////////////////////////////////////////////////////////////////////////
 void DX11SpriteBatch::DrawBatch(ID3D11DeviceContext* dc, UINT startSpriteIndex, UINT spriteCount)
 {
 	// Write the quads to the vertex buffer.
@@ -306,6 +429,7 @@ void DX11SpriteBatch::DrawBatch(ID3D11DeviceContext* dc, UINT startSpriteIndex, 
 	dc->DrawIndexed(spriteCount*6, 0, 0);
 }
 
+//////////////////////////////////////////////////////////////////////////
 XMFLOAT3 DX11SpriteBatch::PointToNdc(int x, int y, float z)
 {
 	XMFLOAT3 p;
@@ -317,6 +441,7 @@ XMFLOAT3 DX11SpriteBatch::PointToNdc(int x, int y, float z)
 	return p;
 }
 
+//////////////////////////////////////////////////////////////////////////
 void DX11SpriteBatch::BuildSpriteQuad(const Sprite& sprite, Vertex::SpriteVertex v[4])
 {
 	const CD3D11_RECT& dest = sprite.DestRect;
@@ -343,10 +468,10 @@ void DX11SpriteBatch::BuildSpriteQuad(const Sprite& sprite, Vertex::SpriteVertex
 	float tx = 0.5f*(v[0].Pos.x + v[3].Pos.x);
 	float ty = 0.5f*(v[0].Pos.y + v[1].Pos.y);
 
-	XMVECTOR scaling = XMVectorSet(sprite.Scale, sprite.Scale, 1.0f, 0.0f);
-	XMVECTOR origin = XMVectorSet(tx, ty, 0.0f, 0.0f);
+	XMVECTOR scaling     = XMVectorSet(sprite.Scale, sprite.Scale, 1.0f, 0.0f);
+	XMVECTOR origin      = XMVectorSet(tx, ty, 0.0f, 0.0f);
 	XMVECTOR translation = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-	XMMATRIX T = XMMatrixAffineTransformation2D(scaling, origin, sprite.Angle, translation);
+	XMMATRIX T           = XMMatrixAffineTransformation2D(scaling, origin, sprite.Angle, translation);
 
 	// Rotate and scale the quad in NDC space.
 	for(int i = 0; i < 4; ++i)

@@ -31,6 +31,7 @@ namespace RJE
 #	define RJE_PRINT_VERBOSE				DebugPrintVerbose
 #	define RJE_PRINT_RAW( X )				OutputDebugStringA( X )
 #	define RJE_MESSAGE_BOX( X, Y, Z, W )	MessageBox( X, Y, Z, W )
+#	define RJE_MESSAGE_BEEP( X )			MessageBeep( X )
 
 #	define RJE_QUOTE_INPLACE(x)		# x
 #	define RJE_QUOTE(x)				RJE_QUOTE_INPLACE(x)

@@ -140,6 +140,7 @@
     <Image Include="..\data\textures\seafloor.dds" />
     <Image Include="..\data\textures\stone.dds" />
     <Image Include="..\data\textures\terrainHeightmap.dds" />
+    <Image Include="..\data\textures\TransparentGray.dds" />
     <Image Include="..\data\textures\water1.dds" />
     <Image Include="..\data\textures\water2.dds" />
     <Image Include="..\data\textures\WireFence.dds" />

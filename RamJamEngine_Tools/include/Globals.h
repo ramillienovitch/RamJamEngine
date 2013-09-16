@@ -4,12 +4,20 @@
 
 namespace RJE_GLOBALS
 {
-	#define MAX_STRING_DBG			4096
-	#define VERBOSE_CRITICAL		0
-	#define VERBOSE_ERROR			1
-	#define VERBOSE_WARNING			2
-	#define VERBOSE_MESSAGE			3
-	#define VERBOSE_ALL				4
+#	define MAX_STRING_DBG			4096
+#	define VERBOSE_CRITICAL			0
+#	define VERBOSE_ERROR			1
+#	define VERBOSE_WARNING			2
+#	define VERBOSE_MESSAGE			3
+#	define VERBOSE_ALL				4
+
+	// Console
+#	define COMMAND_MAX_LENGTH		128
+#	define HISTORIC_LENGTH			64
+#	define LINE_MAX					5
+
+#	define nullchar		'\0'
+#	define newline		'\n'
 	
 	// -----------------------------------------------------------------------
 
