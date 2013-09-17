@@ -1,5 +1,5 @@
 #include "Input.h"
-#include "Console.h"
+#include "../../RamJamEngine/include/Console.h"
 
 Input* Input::sInstance = nullptr;
 
@@ -125,7 +125,8 @@ void Input::HandleInputEvent(UINT umsg, WPARAM wparam, LPARAM lparam)
 					{
 						mKeyboardState    [Keycode::Return] = true;
 						mKeyboardStateDown[Keycode::Return] = true;
-						Console::Instance()->RegisterAndClearCommand();
+						if (Console::Instance()->IsActive())
+							Console::Instance()->RegisterAndClearCommand();
 						return;
 					}
 				}

@@ -57,6 +57,9 @@
     <ClInclude Include="..\include\FontSheet.h">
       <Filter>Header Files\RJE_Graphic</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\Console.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\System.cpp">
@@ -70,6 +73,9 @@
     </ClCompile>
     <ClCompile Include="..\src\FontSheet.cpp">
       <Filter>Source Files\RJE_Graphic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Console.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

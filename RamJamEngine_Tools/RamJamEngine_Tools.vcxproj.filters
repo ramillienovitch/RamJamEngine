@@ -42,9 +42,6 @@
     <ClInclude Include="include\Memory.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\Console.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Debug.cpp">
@@ -66,9 +63,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\Memory.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Console.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

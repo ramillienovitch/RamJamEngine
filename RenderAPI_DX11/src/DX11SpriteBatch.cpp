@@ -269,17 +269,14 @@ void DX11SpriteBatch::DrawString(ID3D11DeviceContext* dc, DX11FontSheet& fs, con
 	int posX = pos.x;
 	int posY = pos.y;
 
-	// For each character in the string...
 	for(UINT i = 0; i < length; ++i)
 	{
 		WCHAR character = text[i];
 
-		// Is the character a space char?
 		if(character == ' ') 
 		{
 			posX += fs.GetSpaceWidth();
 		}
-		// Is the character a newline char?
 		else if(character == '\n')
 		{
 			posX  = pos.x;
@@ -308,28 +305,39 @@ void DX11SpriteBatch::DrawString(ID3D11DeviceContext* dc, DX11FontSheet& fs, con
 }
 
 //////////////////////////////////////////////////////////////////////////
-void DX11SpriteBatch::DrawConsoleText(ID3D11DeviceContext* dc, DX11FontSheet& fs, const char* text, const POINT& pos, XMCOLOR color)
+void DX11SpriteBatch::DrawConsoleText(ID3D11DeviceContext* dc, DX11FontSheet& fs, const char* text, const POINT& pos)
 {
 	BeginBatch(fs.GetFontSheetSRV());
 
 	int posX = pos.x;
 	int posY = pos.y;
 
-	// For each character in the string...
+	XMCOLOR color = 0xffffffff;
+
 	for(UINT i = 0; i < COMMAND_MAX_LENGTH*LINE_MAX; ++i)
 	{
 		WCHAR character = text[i];
 
-		// Is the character a space char?
 		if(character == ' ') 
 		{
 			posX += fs.GetSpaceWidth();
 		}
-		// Is the character a newline char?
 		else if(character == '\n')
 		{
 			posX  = pos.x;
 			posY += fs.GetCharHeight();
+		}
+		else if(character == 1)
+		{
+			color = 0xffffffff;		// Write in white
+		}
+		else if(character == 2)
+		{
+			color = 0xffff0000;		// Write in red
+		}
+		else if(character == 3)
+		{
+			color = 0xff00ff00;		// Write in green
 		}
 		else if(character == nullchar)
 		{
@@ -358,14 +366,15 @@ void DX11SpriteBatch::DrawConsoleText(ID3D11DeviceContext* dc, DX11FontSheet& fs
 }
 
 //////////////////////////////////////////////////////////////////////////
-void DX11SpriteBatch::DrawConsoleCommand(ID3D11DeviceContext* dc, DX11FontSheet& fs, char (&text)[COMMAND_MAX_LENGTH], const POINT& pos, XMCOLOR color)
+void DX11SpriteBatch::DrawConsoleCommand(ID3D11DeviceContext* dc, DX11FontSheet& fs, char (&text)[COMMAND_MAX_LENGTH], const POINT& pos)
 {
 	BeginBatch(fs.GetFontSheetSRV());
 
 	int posX = pos.x;
 	int posY = pos.y;
+
+	XMCOLOR color = 0xffffffff;
 	
-	// For each character in the string...
 	for(UINT i = 0; i < COMMAND_MAX_LENGTH; ++i)
 	{
 		WCHAR character = text[i];

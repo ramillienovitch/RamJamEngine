@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 #include <list>
+#include <map>
 #include <memory>
 
 #if PLATFORM == PLATFORM_WIN32

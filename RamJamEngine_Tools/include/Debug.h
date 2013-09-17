@@ -11,7 +11,7 @@ namespace RJE
 #	ifdef RJE_DEBUG
 #		define RJE_ASSERT(x) _ASSERTE(x)
 #	else
-#		define RJE_ASSERT(x) (x)
+#		define RJE_ASSERT(x)
 #	endif
 #	define RJE_C_ASSERT(x, y)	static_assert(x, y)
 

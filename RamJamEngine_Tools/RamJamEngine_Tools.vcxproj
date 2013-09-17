@@ -82,7 +82,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="include\Console.h" />
     <ClInclude Include="include\Debug.h" />
     <ClInclude Include="include\Globals.h" />
     <ClInclude Include="include\IniFile.h" />
@@ -94,7 +93,6 @@
     <ClInclude Include="include\Types.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\Console.cpp" />
     <ClCompile Include="src\Debug.cpp" />
     <ClCompile Include="src\Globals.cpp" />
     <ClCompile Include="src\IniFile.cpp" />

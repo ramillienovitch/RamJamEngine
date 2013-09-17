@@ -1,7 +1,6 @@
 #pragma once
 
 #include "DX11Helper.h"
-#include "../../RamJamEngine_Tools/include/Console.h"
 
 using namespace DirectX::PackedVector;
 
@@ -39,8 +38,8 @@ public:
 	//  DrawString should not be called inside BeginBatch()/EndBatch().
 	//  Internally, DrawString calls BeginBatch()/EndBatch() to draw the string characters as a single batch.
 	void DrawString(ID3D11DeviceContext* dc, DX11FontSheet& fs, const std::wstring& text, const POINT& pos, XMCOLOR color);
-	void DrawConsoleText(ID3D11DeviceContext* dc, DX11FontSheet& fs, const char* text, const POINT& pos, XMCOLOR color);
-	void DrawConsoleCommand(ID3D11DeviceContext* dc, DX11FontSheet& fs, char (&text)[COMMAND_MAX_LENGTH], const POINT& pos, XMCOLOR color);
+	void DrawConsoleText(ID3D11DeviceContext* dc, DX11FontSheet& fs, const char* text, const POINT& pos);
+	void DrawConsoleCommand(ID3D11DeviceContext* dc, DX11FontSheet& fs, char (&text)[COMMAND_MAX_LENGTH], const POINT& pos);
 
 private:
 

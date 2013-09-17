@@ -894,15 +894,15 @@ void DX11Wrapper::DrawConsole()
 	char cmd[COMMAND_MAX_LENGTH];
 	Console::Instance()->GetCommand(cmd);
 
-	POINT textPos = {10, 50};
-	POINT cmdPos = {10, 170};
+	POINT textPos = {10, 10};
+	POINT cmdPos = {10, 175};
 
 	CD3D11_RECT rect( 0, 0, System::Instance()->mScreenWidth, 200);
 	CD3D11_RECT rectLogo( System::Instance()->mScreenWidth - 200, 40, System::Instance()->mScreenWidth - 30, 160);
 	mDX11Device->md3dImmediateContext->OMSetBlendState(DX11CommonStates::sBlendState_AlphaToCoverage, blendFactor, 0xffffffff);
 	{
-		mSpriteBatch->DrawConsoleText(mDX11Device->md3dImmediateContext, *mConsoleFont, Console::Instance()->mConsoleBuffer, textPos, XMCOLOR(0xffffffff));
-		mSpriteBatch->DrawConsoleCommand(mDX11Device->md3dImmediateContext, *mConsoleFont, cmd, cmdPos, XMCOLOR(0xffffffff));
+		mSpriteBatch->DrawConsoleText(mDX11Device->md3dImmediateContext, *mConsoleFont, Console::Instance()->mConsoleBuffer, textPos);
+		mSpriteBatch->DrawConsoleCommand(mDX11Device->md3dImmediateContext, *mConsoleFont, cmd, cmdPos);
 
 		mSpriteBatch->DrawTexture2D(mRjeLogo,           mDX11Device->md3dImmediateContext, rectLogo, 0xffffffff);
 		mSpriteBatch->DrawTexture2D(mConsoleBackground, mDX11Device->md3dImmediateContext, rect,     0xffffffff);

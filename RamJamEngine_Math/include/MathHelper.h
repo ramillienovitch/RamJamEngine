@@ -26,12 +26,22 @@ namespace RJE
 	class Math
 	{
 	public:
+		// Returns random int in [0, 1[.
+		static int Rand()
+		{
+			return (rand()) / RAND_MAX;
+		}
+		// Returns random int in [a, b[.
+		static int Rand(int a, int b)
+		{
+			return a + Rand()*(b-a);
+		}
+
 		// Returns random float in [0, 1[.
 		static float RandF()
 		{
 			return (float)(rand()) / (float)RAND_MAX;
 		}
-
 		// Returns random float in [a, b[.
 		static float RandF(float a, float b)
 		{
