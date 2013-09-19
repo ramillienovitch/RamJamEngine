@@ -32,7 +32,7 @@ struct DX11Wrapper : GraphicAPI
 	ID3D11ShaderResourceView* mSphereMap;
 	ID3D11ShaderResourceView* mCylinderMap;
 	ID3D11ShaderResourceView* mMaskMap;
-	ID3D11ShaderResourceView* mWhiteMaskMap;
+	ID3D11ShaderResourceView* mWhiteSRV;
 	ID3D11ShaderResourceView* mConsoleBackground;
 	ID3D11ShaderResourceView* mRjeLogo;
 
@@ -93,6 +93,10 @@ struct DX11Wrapper : GraphicAPI
 	virtual void DrawScene();
 	virtual void Shutdown();
 	virtual void ResizeWindow(int newSizeWidth, int newSizeHeight);
+
+	//------------
+
+	virtual void SetWireframe(BOOL state);
 
 	//////////////////////////////////////////////////////////////////////////
 

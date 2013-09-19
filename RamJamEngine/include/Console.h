@@ -10,14 +10,6 @@ typedef void (*f_ptr)(char*);
 struct Command
 { 
 	char Cmd[COMMAND_MAX_LENGTH];
-
-	inline u16 Size()
-	{ 
-		u16 length = 0;
-		while (Cmd[length++] != nullchar);
-
-		return length-1;
-	}
 };
 
 /// The command prompt is formatted as such : >: [command]
@@ -49,7 +41,9 @@ struct Console
 
 	void	GetCommand(OUT char (&p)[COMMAND_MAX_LENGTH]);
 	u16		GetCommandLength();
-	void	GetParams(const char* params);
+	void	GetCommandHistoric(BOOL upwards);
+	void	GetParams(char*& params);
+	u16		GetLineCount();
 	//----------
 	void	RegisterAndClearCommand();
 	void	RegisterCommand();
@@ -57,14 +51,16 @@ struct Console
 	void	ClearCommand();
 	void	ClearConsole();
 	//----------
-	void	ConcatText(const char* text, u16 size);
+	void	ConcatText(const char* text, u8 color);
 	void	ConcatCommand();
 	//----------
 	BOOL	IsActive();
 	void	ToggleConsoleState();
 	//----------
 	void	AddCharacter(const char c);
+	void	AddLine();
 	void	RemoveCharacter();
+	void	RemoveFirstLine();
 
 	char*	mConsoleBuffer;
 
@@ -82,6 +78,8 @@ private:
 	Command		mCurrentCmd;
 	Command		mConsoleHistoric[HISTORIC_LENGTH];
 
+	u8		mHistoricCount;
+	i8		mCurrentHistoric;
 	u16		mLineCount;				// how many lines we have to display in the console
 	u16		mConsoleBufferSize;		// how many characters in the total buffer
 
@@ -94,5 +92,12 @@ private:
 /// COMMANDS
 //////////////////////////////////////////////////////////////////////////
 
+// ------ Console ------
+void CleanConsole(char* command = nullptr);
+// ------- Core -------
 void Exit        (char* command = nullptr);
+// ----- Rendering -----
 void SetWireframe(char* command = nullptr);
+// ------- Time -------
+void SetTimeScale(char* command = nullptr);
+void GetTime     (char* command = nullptr);

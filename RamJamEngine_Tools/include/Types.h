@@ -46,6 +46,10 @@ typedef				double				f64;
 typedef				long double			f80;
 
 
+//////////////////////////////////////////////////////////////////////////
+//---------------------- Convertion Utilities -------------------------//
+#define dtoa _gcvt_s
+
 //
 // The INT_PTR is guaranteed to be the same size as a pointer.  Its
 // size with change with pointer size (32/64).  It should be used

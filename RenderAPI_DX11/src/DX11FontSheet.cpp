@@ -2,6 +2,8 @@
 
 #include <Gdiplus.h>
 
+#include "Memory.h"
+
 //////////////////////////////////////////////////////////////////////////
 DX11FontSheet::DX11FontSheet()
 {
@@ -70,7 +72,17 @@ HRESULT DX11FontSheet::Initialize( ID3D11Device* device, const std::wstring& fon
 #ifdef RJE_DEBUG_FONT_SHEET
 		CLSID clsid;
 		GetEncoderClsid(L"image/bmp", &clsid);
-		fontSheetBitmap.Save(L"font.bmp", &clsid, NULL);
+		int szSize = (int)fontName.size();
+		WCHAR* filename = new WCHAR[szSize+5];
+		for (int i = 0 ; i<szSize ; ++i)
+			filename[i] = fontName[i];
+		filename[szSize]   = '.';
+		filename[szSize+1] = 'b';
+		filename[szSize+2] = 'm';
+		filename[szSize+3] = 'p';
+		filename[szSize+4] = nullchar;
+		fontSheetBitmap.Save(filename, &clsid, NULL);
+		delete filename;
 #endif
 
 		if(FAILED(BuildFontSheetTexture(device, fontSheetBitmap)))

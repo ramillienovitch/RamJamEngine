@@ -21,7 +21,7 @@ DX11Wrapper::DX11Wrapper()
 	mSphereMap         = nullptr;
 	mCylinderMap       = nullptr;
 	mMaskMap           = nullptr;
-	mWhiteMaskMap      = nullptr;
+	mWhiteSRV          = nullptr;
 	mConsoleBackground = nullptr;
 	mRjeLogo           = nullptr;
 	
@@ -227,7 +227,7 @@ void DX11Wrapper::Initialize(HWND hMainWnd, int windowWidth, int windowHeight)
 	LoadTexture("sphere",             "textures", "..\\..\\RamJamEngine\\data\\Resources.ini", &mSphereMap);
 	LoadTexture("cylinder",           "textures", "..\\..\\RamJamEngine\\data\\Resources.ini", &mCylinderMap);
 	LoadTexture("mask",               "textures", "..\\..\\RamJamEngine\\data\\Resources.ini", &mMaskMap);
-	LoadTexture("whitemask",          "textures", "..\\..\\RamJamEngine\\data\\Resources.ini", &mWhiteMaskMap);
+	LoadTexture("white",              "textures", "..\\..\\RamJamEngine\\data\\Resources.ini", &mWhiteSRV);
 	LoadTexture("console_background", "textures", "..\\..\\RamJamEngine\\data\\Resources.ini", &mConsoleBackground);
 	LoadTexture("rje_logo",           "textures", "..\\..\\RamJamEngine\\data\\Resources.ini", &mRjeLogo);
 
@@ -420,21 +420,7 @@ void DX11Wrapper::UpdateScene( float dt )
 		if (Input::Instance()->GetKeyboardDown(I))			DX11CommonStates::sCurrentBlendState      = DX11CommonStates::sBlendState_AlphaToCoverage;
 		if (Input::Instance()->GetKeyboardDown(O))			DX11CommonStates::sCurrentBlendState      = DX11CommonStates::sBlendState_Transparent;
 		if (Input::Instance()->GetKeyboardDown(P))			DX11CommonStates::sCurrentBlendState      = DX11CommonStates::sBlendState_Opaque;
-		if (Input::Instance()->GetKeyboardUp(W))
-		{
-			if (mbWireframe)
-			{
-				mbWireframe = false;
-				DX11CommonStates::sCurrentRasterizerState = DX11CommonStates::sRasterizerState_Solid;
-			}
-			else
-			{
-				mbUseBlending = false;
-				mbWireframe   = true;
-				DX11CommonStates::sCurrentRasterizerState = DX11CommonStates::sRasterizerState_Wireframe;
-				DX11CommonStates::sCurrentBlendState      = DX11CommonStates::sBlendState_Opaque;
-			}
-		}
+		if (Input::Instance()->GetKeyboardUp(W))			SetWireframe(!mbWireframe);
 	}
 
 	static float timer = 0.0f;
@@ -587,7 +573,7 @@ void DX11Wrapper::DrawScene()
 		DX11Effects::BasicFX->SetTexTransform(XMLoadFloat4x4(&mBoxTexTransform));
 		DX11Effects::BasicFX->SetMaterial(mBoxMat);
 		DX11Effects::BasicFX->SetDiffuseMap(mBoxMap);
-		DX11Effects::BasicFX->SetMaskMap(mWhiteMaskMap);
+		DX11Effects::BasicFX->SetMaskMap(mWhiteSRV);
 
 		if (mbUseBlending)
 			mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_CullNone);
@@ -612,7 +598,7 @@ void DX11Wrapper::DrawScene()
 			DX11Effects::BasicFX->SetTexTransform(XMLoadFloat4x4(&mCylinderTexTransform));
 			DX11Effects::BasicFX->SetMaterial(mCylinderMat);
 			DX11Effects::BasicFX->SetDiffuseMap(mCylinderMap);
-			DX11Effects::BasicFX->SetMaskMap(mWhiteMaskMap);
+			DX11Effects::BasicFX->SetMaskMap(mWhiteSRV);
 
 			activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
 			mDX11Device->md3dImmediateContext->DrawIndexed(mCylinderIndexCount, mCylinderIndexOffset, mCylinderVertexOffset);
@@ -627,8 +613,8 @@ void DX11Wrapper::DrawScene()
 		DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
 		DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
 		DX11Effects::BasicFX->SetMaterial(mModelMat);
-		DX11Effects::BasicFX->SetDiffuseMap(mWhiteMaskMap);
-		DX11Effects::BasicFX->SetMaskMap(mWhiteMaskMap);
+		DX11Effects::BasicFX->SetDiffuseMap(mWhiteSRV);
+		DX11Effects::BasicFX->SetMaskMap(mWhiteSRV);
 
 		activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
 		mDX11Device->md3dImmediateContext->DrawIndexed(mModelIndexCount, mModelIndexOffset, mModelVertexOffset);
@@ -646,7 +632,7 @@ void DX11Wrapper::DrawScene()
 			DX11Effects::BasicFX->SetTexTransform(XMLoadFloat4x4(&mSphereTexTransform));
 			DX11Effects::BasicFX->SetMaterial(mSphereMat);
 			DX11Effects::BasicFX->SetDiffuseMap(mSphereMap);
-			DX11Effects::BasicFX->SetMaskMap(mWhiteMaskMap);
+			DX11Effects::BasicFX->SetMaskMap(mWhiteSRV);
 
 			if (mbUseBlending)
 				mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_CullNone);
@@ -746,7 +732,7 @@ void DX11Wrapper::DrawScene()
 			DX11Effects::BasicFX->SetTexTransform(XMLoadFloat4x4(&mBoxTexTransform));
 			DX11Effects::BasicFX->SetMaterial(mBoxMat);
 			DX11Effects::BasicFX->SetDiffuseMap(mBoxMap);
-			DX11Effects::BasicFX->SetMaskMap(mWhiteMaskMap);
+			DX11Effects::BasicFX->SetMaskMap(mWhiteSRV);
 
 			// Cull clockwise triangles for reflection.
 			if (mbUseBlending)
@@ -774,7 +760,7 @@ void DX11Wrapper::DrawScene()
 				DX11Effects::BasicFX->SetTexTransform(XMLoadFloat4x4(&mCylinderTexTransform));
 				DX11Effects::BasicFX->SetMaterial(mCylinderMat);
 				DX11Effects::BasicFX->SetDiffuseMap(mCylinderMap);
-				DX11Effects::BasicFX->SetMaskMap(mWhiteMaskMap);
+				DX11Effects::BasicFX->SetMaskMap(mWhiteSRV);
 
 
 				// Only draw reflection into visible mirror pixels as marked by the stencil buffer. 
@@ -801,7 +787,7 @@ void DX11Wrapper::DrawScene()
 				DX11Effects::BasicFX->SetTexTransform(XMLoadFloat4x4(&mSphereTexTransform));
 				DX11Effects::BasicFX->SetMaterial(mSphereMat);
 				DX11Effects::BasicFX->SetDiffuseMap(mSphereMap);
-				DX11Effects::BasicFX->SetMaskMap(mWhiteMaskMap);
+				DX11Effects::BasicFX->SetMaskMap(mWhiteSRV);
 
 				mDX11Device->md3dImmediateContext->OMSetBlendState(DX11CommonStates::sCurrentBlendState, blendFactor, 0xffffffff);
 				activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
@@ -822,9 +808,9 @@ void DX11Wrapper::DrawScene()
 			DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
 			DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
 			DX11Effects::BasicFX->SetMaterial(mModelMat);
-			DX11Effects::BasicFX->SetDiffuseMap(mWhiteMaskMap);
-			DX11Effects::BasicFX->SetMaskMap(mWhiteMaskMap);
-
+			DX11Effects::BasicFX->SetDiffuseMap(mWhiteSRV);
+			DX11Effects::BasicFX->SetMaskMap(mWhiteSRV);
+			
 			// Only draw reflection into visible mirror pixels as marked by the stencil buffer. 
 			mDX11Device->md3dImmediateContext->OMSetDepthStencilState(DX11CommonStates::sDepthStencilState_DrawStenciled, 1);
 			activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
@@ -894,11 +880,12 @@ void DX11Wrapper::DrawConsole()
 	char cmd[COMMAND_MAX_LENGTH];
 	Console::Instance()->GetCommand(cmd);
 
-	POINT textPos = {10, 10};
-	POINT cmdPos = {10, 175};
+	POINT textPos = {10, 5 + (LINE_MAX-Console::Instance()->GetLineCount()) * mConsoleFont->GetCharHeight() };
+	POINT cmdPos  = {10, CONSOLE_HEIGHT-25};
 
-	CD3D11_RECT rect( 0, 0, System::Instance()->mScreenWidth, 200);
+	CD3D11_RECT rect( 0, 0, System::Instance()->mScreenWidth, CONSOLE_HEIGHT);
 	CD3D11_RECT rectLogo( System::Instance()->mScreenWidth - 200, 40, System::Instance()->mScreenWidth - 30, 160);
+	mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_Solid);
 	mDX11Device->md3dImmediateContext->OMSetBlendState(DX11CommonStates::sBlendState_AlphaToCoverage, blendFactor, 0xffffffff);
 	{
 		mSpriteBatch->DrawConsoleText(mDX11Device->md3dImmediateContext, *mConsoleFont, Console::Instance()->mConsoleBuffer, textPos);
@@ -934,7 +921,7 @@ void DX11Wrapper::Shutdown()
 	RJE_SAFE_RELEASE(mSphereMap);
 	RJE_SAFE_RELEASE(mCylinderMap);
 	RJE_SAFE_RELEASE(mMaskMap);
-	RJE_SAFE_RELEASE(mWhiteMaskMap);
+	RJE_SAFE_RELEASE(mWhiteSRV);
 	RJE_SAFE_RELEASE(mConsoleBackground);
 	RJE_SAFE_RELEASE(mRjeLogo);
 
@@ -1027,4 +1014,21 @@ void DX11Wrapper::ResizeWindow(int newSizeWidth, int newSizeHeight)
 								System::Instance()->mCameraNearZ,
 								System::Instance()->mCameraFarZ);
 	mCamera->UpdateProjMatrix((float)newSizeWidth, (float)newSizeHeight);
+}
+
+//////////////////////////////////////////////////////////////////////////
+void DX11Wrapper::SetWireframe(BOOL state)
+{
+	if (state)
+	{
+		mbUseBlending = false;
+		mbWireframe   = true;
+		DX11CommonStates::sCurrentRasterizerState = DX11CommonStates::sRasterizerState_Wireframe;
+		DX11CommonStates::sCurrentBlendState      = DX11CommonStates::sBlendState_Opaque;
+	}
+	else
+	{
+		mbWireframe = false;
+		DX11CommonStates::sCurrentRasterizerState = DX11CommonStates::sRasterizerState_Solid;
+	}
 }

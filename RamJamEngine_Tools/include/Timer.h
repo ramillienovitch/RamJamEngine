@@ -20,6 +20,7 @@ struct Timer
 	void Stop();
 	void Update();
 	bool IsActive() { return mActive; };
+	void SetTimeScale( float timeScale );
 
 	static Timer* Instance()
 	{
@@ -44,6 +45,8 @@ private:
 
 	float mSecondsPerCount;  // 1.0 / Frequency
 	float mDeltaTime;
+
+	float mTimeScale;
 
 	u64 mBaseTime;
 	u64 mPausedTime;

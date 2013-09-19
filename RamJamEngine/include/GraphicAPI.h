@@ -16,4 +16,8 @@ struct GraphicAPI
 	virtual void DrawScene() = 0;
 	virtual void Shutdown() = 0;
 	virtual void ResizeWindow(int newSizeWidth, int newSizeHeight) = 0;
+
+	//-----------
+
+	virtual void SetWireframe(BOOL state) = 0;
 };

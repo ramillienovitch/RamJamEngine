@@ -3,8 +3,10 @@
 Timer* Timer::sInstance = nullptr;
 
 //////////////////////////////////////////////////////////////////////////
-Timer::Timer():mActive(false)
+Timer::Timer()
 {
+	mActive    = false;
+	mTimeScale = 1.0f;
 
 	u64 frequency;
 	QueryPerformanceFrequency((LARGE_INTEGER*)&frequency);
@@ -73,6 +75,7 @@ void Timer::Reset()
 	mStopTime		= currentTime;
 	mCurrentTime	= currentTime;
 	mPausedTime		= 0;
+	mTimeScale		= 1.0f;
 	mActive			= false;
 }
 
@@ -121,7 +124,7 @@ void Timer::Update()
 	mCurrentTime = currentTime;
 
 	// Time difference between this frame and the previous.
-	mDeltaTime = (mCurrentTime - mPreviousTime)*mSecondsPerCount;
+	mDeltaTime = (mCurrentTime - mPreviousTime)*mSecondsPerCount * mTimeScale;
 	
 	// Prepare for next frame.
 	mPreviousTime = mCurrentTime;
@@ -131,4 +134,10 @@ void Timer::Update()
 	// processor, then mDeltaTime can be negative.
 	if (mDeltaTime < 0.0)
 		mDeltaTime = 0.0f;
+}
+
+//////////////////////////////////////////////////////////////////////////
+void Timer::SetTimeScale( float timeScale )
+{
+	mTimeScale = timeScale;
 }

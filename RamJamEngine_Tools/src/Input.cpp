@@ -65,7 +65,7 @@ void Input::HandleInputEvent(UINT umsg, WPARAM wparam, LPARAM lparam)
 			else
 			{
 				UINT scancode = (lparam & 0x00ff0000) >> 16;
-				int extended  = (lparam & 0x01000000) != 0;
+				BOOL extended = (lparam & 0x01000000) != 0;
 				switch (wparam) 
 				{
 				case VK_ADD :		mKeyboardState[Keycode::Add]          = true;	mKeyboardStateDown[Keycode::Add]          = true;		return;
@@ -73,7 +73,6 @@ void Input::HandleInputEvent(UINT umsg, WPARAM wparam, LPARAM lparam)
 				case VK_CLEAR :		mKeyboardState[Keycode::Clear]        = true;	mKeyboardStateDown[Keycode::Clear]        = true;		return;
 				case VK_DECIMAL :	mKeyboardState[Keycode::Decimal]      = true;	mKeyboardStateDown[Keycode::Decimal]      = true;		return;
 				case VK_DELETE :	mKeyboardState[Keycode::Delete]       = true;	mKeyboardStateDown[Keycode::Delete]       = true;		return;
-				case VK_DOWN :		mKeyboardState[Keycode::DownArrow]    = true;	mKeyboardStateDown[Keycode::DownArrow]    = true;		return;
 				case VK_DIVIDE :	mKeyboardState[Keycode::Divide]       = true;	mKeyboardStateDown[Keycode::Divide]       = true;		return;
 				case VK_END :		mKeyboardState[Keycode::End]          = true;	mKeyboardStateDown[Keycode::End]          = true;		return;
 				case VK_EXECUTE :	mKeyboardState[Keycode::Execute]      = true;	mKeyboardStateDown[Keycode::Execute]      = true;		return;
@@ -95,7 +94,6 @@ void Input::HandleInputEvent(UINT umsg, WPARAM wparam, LPARAM lparam)
 				case VK_SPACE :		mKeyboardState[Keycode::Spacebar]     = true;	mKeyboardStateDown[Keycode::Spacebar]     = true;		return;
 				case VK_SUBTRACT :	mKeyboardState[Keycode::Subtract]     = true;	mKeyboardStateDown[Keycode::Subtract]     = true;		return;
 				case VK_TAB :		mKeyboardState[Keycode::Tab]          = true;	mKeyboardStateDown[Keycode::Tab]          = true;		return;
-				case VK_UP :		mKeyboardState[Keycode::UpArrow]      = true;	mKeyboardStateDown[Keycode::UpArrow]      = true;		return;
 				case VK_LWIN :		mKeyboardState[Keycode::Windows]      = true;	mKeyboardStateDown[Keycode::Windows]      = true;		return;
 				case VK_CONTROL :
 					if (extended)	{mKeyboardState[Keycode::RightCtrl]   = true;	mKeyboardStateDown[Keycode::RightCtrl]    = true;		return;}
@@ -127,6 +125,22 @@ void Input::HandleInputEvent(UINT umsg, WPARAM wparam, LPARAM lparam)
 						mKeyboardStateDown[Keycode::Return] = true;
 						if (Console::Instance()->IsActive())
 							Console::Instance()->RegisterAndClearCommand();
+						return;
+					}
+				case VK_UP :
+					{
+						mKeyboardState    [Keycode::UpArrow] = true;
+						mKeyboardStateDown[Keycode::UpArrow] = true;
+						if (Console::Instance()->IsActive())
+							Console::Instance()->GetCommandHistoric(true);
+						return;
+					}
+				case VK_DOWN :
+					{
+						mKeyboardState    [Keycode::DownArrow] = true;
+						mKeyboardStateDown[Keycode::DownArrow] = true;
+						if (Console::Instance()->IsActive())
+							Console::Instance()->GetCommandHistoric(false);
 						return;
 					}
 				}
@@ -167,7 +181,7 @@ void Input::HandleInputEvent(UINT umsg, WPARAM wparam, LPARAM lparam)
 			else
 			{
 				UINT scancode = (lparam & 0x00ff0000) >> 16;
-				int extended  = (lparam & 0x01000000) != 0;
+				BOOL extended = (lparam & 0x01000000) != 0;
 				switch (wparam) 
 				{
 				case VK_ADD :		mKeyboardState[Keycode::Add]          = false;	mKeyboardStateUp[Keycode::Add]          = true;		return;

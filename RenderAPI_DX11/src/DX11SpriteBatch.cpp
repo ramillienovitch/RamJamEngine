@@ -327,17 +327,21 @@ void DX11SpriteBatch::DrawConsoleText(ID3D11DeviceContext* dc, DX11FontSheet& fs
 			posX  = pos.x;
 			posY += fs.GetCharHeight();
 		}
-		else if(character == 1)
+		else if(character == CONSOLE_WHITE)
 		{
 			color = 0xffffffff;		// Write in white
 		}
-		else if(character == 2)
+		else if(character == CONSOLE_RED)
 		{
 			color = 0xffff0000;		// Write in red
 		}
-		else if(character == 3)
+		else if(character == CONSOLE_GREEN)
 		{
 			color = 0xff00ff00;		// Write in green
+		}
+		else if(character == CONSOLE_BLUE)
+		{
+			color = 0xff0000ff;		// Write in blue
 		}
 		else if(character == nullchar)
 		{
@@ -408,6 +412,15 @@ void DX11SpriteBatch::DrawConsoleCommand(ID3D11DeviceContext* dc, DX11FontSheet&
 			posX += width + 1;
 		}
 	}
+
+	//EndBatch(dc);
+
+	// We Draw the cursor
+	const CD3D11_RECT& charRect = fs.GetCharBoundingRect('_');
+	int width  = charRect.right - charRect.left;
+	int height = charRect.bottom - charRect.top;
+
+	Draw(CD3D11_RECT(posX, posY, posX + width, posY + height), charRect, color);
 
 	EndBatch(dc);
 }

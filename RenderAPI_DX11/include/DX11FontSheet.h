@@ -1,6 +1,7 @@
 #pragma once
 
 #include "DX11Helper.h"
+
 #include "../../RamJamEngine/include/FontSheet.h"
 
 class DX11FontSheet : public FontSheet

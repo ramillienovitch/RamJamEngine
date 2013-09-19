@@ -62,7 +62,7 @@ void Profiler::PrintChildren(std::ofstream &fout, int parent, int depth)
 
 void Profiler::ProfileStart(const char* name)
 {
-	if(name == "Frame")
+	if(strcmp(name, "Frame") == 0)
 	{
 		totalFrames++;
 		profiles[0].parentId = currentParent;
