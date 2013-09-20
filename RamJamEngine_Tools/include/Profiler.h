@@ -27,14 +27,14 @@ public:
 	void PrintToFile();
 };
 
-static Profiler pMgr;
+static Profiler sProfiler;
 
 struct AutoProfile
 {
 	AutoProfile(const char* name)
 	{
 		name = name;
-		pMgr.ProfileStart(name);
+		sProfiler.ProfileStart(name);
 		QueryPerformanceCounter(&startTime);
 	}
 
@@ -43,7 +43,7 @@ struct AutoProfile
 		LARGE_INTEGER endTime;
 		QueryPerformanceCounter(&endTime);
 		i64 elapsedTime = endTime.QuadPart - startTime.QuadPart;
-		pMgr.ProfileEnd(elapsedTime);
+		sProfiler.ProfileEnd(elapsedTime);
 	}
 
 	const char* name;

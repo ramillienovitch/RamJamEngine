@@ -67,6 +67,7 @@ void Console::GetCommandHistoric(BOOL upwards)
 		}
 		memcpy(mCurrentCmd.Cmd, mConsoleHistoric[mHistoricCount-(--mCurrentHistoric+1)].Cmd, COMMAND_MAX_LENGTH);
 	}
+	mCurrentCmdLength = (int)strlen(mCurrentCmd.Cmd);
 }
 
 //////////////////////////////////////////////////////////////////////////

@@ -9,6 +9,7 @@
 #include <list>
 #include <map>
 #include <memory>
+#include <limits>
 
 #if PLATFORM == PLATFORM_WIN32
 #	include <Windows.h>
@@ -49,6 +50,22 @@ typedef				long double			f80;
 //////////////////////////////////////////////////////////////////////////
 //---------------------- Convertion Utilities -------------------------//
 #define dtoa _gcvt_s
+
+
+//////////////////////////////////////////////////////////////////////////
+//---------------------- Comparison Utilities -------------------------//
+template<typename T>
+BOOL IsZero(T number)
+{
+	return (number < std::numeric_limits<T>::epsilon( ));
+}
+
+template<typename T>
+BOOL IsOne(T number)
+{
+	return (number-1 < std::numeric_limits<T>::epsilon( ));
+}
+
 
 //
 // The INT_PTR is guaranteed to be the same size as a pointer.  Its
