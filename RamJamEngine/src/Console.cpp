@@ -31,8 +31,7 @@ Console::Console()
 	// ----- Rendering -----
 	CommandList["wireframe"] = SetWireframe;
 	// ------- Time -------
-	CommandList["timescale"] = SetTimeScale;
-	CommandList["time"]      = GetTime;
+	CommandList["time"] = Time;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -143,7 +142,7 @@ void Console::ClearConsole()
 }
 
 //////////////////////////////////////////////////////////////////////////
-void Console::ConcatText(const char* text, u8 color)
+void Console::ConcatText(const char* text, u8 color = CONSOLE_WHITE)
 {
 	int newSize = (int)strlen(text);
 	if (mConsoleBufferSize + newSize > COMMAND_MAX_LENGTH*LINE_MAX - 3)
@@ -332,7 +331,7 @@ void SetWireframe(char* command /* = nullptr */)
 {
 	if (command == nullptr)
 	{
-		Console::Instance()->ConcatText(" Command usage : wireframe [0|1]", CONSOLE_WHITE);
+		Console::Instance()->ConcatText(" -> Bad Parameter. Command usage : wireframe [0|1]");
 		return;
 	}
 		
@@ -341,41 +340,62 @@ void SetWireframe(char* command /* = nullptr */)
 		BOOL bState = (command[0] == '0') || (command[0] == 'n') || (command[0] == 'N');
 		System::Instance()->mGraphicAPI->SetWireframe( !bState );
 	}
-	else Console::Instance()->ConcatText(" -> Bad Parameter. Command usage : wireframe [0|1]", CONSOLE_WHITE);
+	else Console::Instance()->ConcatText(" -> Bad Parameter. Command usage : wireframe [0|1]");
 }
 
 
 // ======= Time =======
-void SetTimeScale(char* command /* = nullptr */)
+void Time(char* command /* = nullptr */)
 {
 	if (command == nullptr)
 	{
-		Console::Instance()->ConcatText(" command usage : timescale \"value\"", CONSOLE_WHITE);
+		char buf[_CVTBUFSIZE];
+		dtoa(buf, _CVTBUFSIZE, Timer::Instance()->Time(), 20);
+
+		Console::Instance()->ConcatText(" -> current time : ");
+		Console::Instance()->ConcatText(buf);
+
 		return;
 	}
-	
-	float scale = (float)atof(command);
-	if (scale < 0 || scale > 100)
+
+	if (strlen(command) > 3)
 	{
-		Console::Instance()->ConcatText(" -> Bad Parameter : timescale \"value\" [0-100]", CONSOLE_WHITE);
-		return;
+		if (command[0] == '-' && command[1] == 's' && command[2] == ' ')
+		{
+			float scale = (float)atof(command+3);
+			if (scale < 0 || scale > 100)
+			{
+				Console::Instance()->ConcatText(" -> Bad Parameter : time -s [0-100]");
+				return;
+			}
+			Timer::Instance()->SetTimeScale(scale);
+
+			return;
+		}
 	}
-
-	Timer::Instance()->SetTimeScale(scale);
-}
-
-//----------------------------------------
-void GetTime(char* command /* = nullptr */)
-{
-	if (command != nullptr)
+	else if (strlen(command) == 2)
 	{
-		Console::Instance()->ConcatText(" command usage : time", CONSOLE_WHITE);
-		return;
-	}
+		if (command[0] == '-' && command[1] == 'r')
+		{
+			Timer::Instance()->Reset(false);
+			Console::Instance()->ConcatText(" -> Reset Timer");
+			return;
+		}
+		else if (command[0] == '-' && command[1] == 'p')
+		{
+			if (Timer::Instance()->IsActive())
+			{
+				Timer::Instance()->Stop();
+				Console::Instance()->ConcatText(" -> Stop Timer");
+			}
+			else
+			{
+				Timer::Instance()->Start();
+				Console::Instance()->ConcatText(" -> Start Timer");
+			}
 
-	char buf[_CVTBUFSIZE];
-	dtoa(buf, _CVTBUFSIZE, Timer::Instance()->Time(), 20);
-	
-	Console::Instance()->ConcatText(" -> current time : ", CONSOLE_WHITE);
-	Console::Instance()->ConcatText(buf, CONSOLE_WHITE);
+			return;
+		}
+	}
+	Console::Instance()->ConcatText(" -> Bad Parameter : time [-s 0-100|-r|-p]");
 }

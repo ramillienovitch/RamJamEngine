@@ -12,7 +12,7 @@ Timer::Timer()
 	QueryPerformanceFrequency((LARGE_INTEGER*)&frequency);
 	mSecondsPerCount = 1.0f / frequency;
 
-	Reset();
+	Reset(true);
 }
 
 // Returns the total time elapsed since Reset() was called, NOT counting any
@@ -65,7 +65,7 @@ float Timer::DeltaTime() const
 	return mDeltaTime;
 }
 
-void Timer::Reset()
+void Timer::Reset( BOOL pause )
 {
 	u64 currentTime;
 	QueryPerformanceCounter((LARGE_INTEGER*)&currentTime);
@@ -76,7 +76,7 @@ void Timer::Reset()
 	mCurrentTime	= currentTime;
 	mPausedTime		= 0;
 	mTimeScale		= 1.0f;
-	mActive			= false;
+	mActive			= !pause;
 }
 
 void Timer::Start()

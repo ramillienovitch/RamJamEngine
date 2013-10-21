@@ -15,7 +15,7 @@ struct Timer
 	void	Time(float time);	// Set the Elapsed playing time -- used for restarting in the middle of a game
 	float	DeltaTime() const;	// Return the Delta time between the last two updates
 
-	void Reset();
+	void Reset(BOOL pause);
 	void Start();
 	void Stop();
 	void Update();

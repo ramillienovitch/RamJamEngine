@@ -1,5 +1,9 @@
 #include "Profiler.h"
+#include "Debug.h"
 
+Profiler* Profiler::sInstance = nullptr;
+
+//////////////////////////////////////////////////////////////////////////
 Profiler::Profiler()
 {
 	numProfiles = 1;
@@ -103,9 +107,15 @@ void Profiler::ProfileEnd(i64 elapsedTime)
 
 void Profiler::PrintToFile()
 {
-	std::remove("profiler.txt");
+#ifdef RJE_DEBUG
+	std::remove("profiler_debug.txt");
 	std::ofstream fout;
-	fout.open ("profiler.txt");
+	fout.open ("profiler_debug.txt");
+#else
+	std::remove("profiler_release.txt");
+	std::ofstream fout;
+	fout.open ("profiler_release.txt");
+#endif
 	fout << "Total Frames: ";
 	fout << totalFrames << "\n\n";
 

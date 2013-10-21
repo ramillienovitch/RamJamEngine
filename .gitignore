@@ -159,3 +159,6 @@ Models
 # Shaders Binaries
 *.cso
 *.fxo
+
+# Profiler files
+profiler*.txt

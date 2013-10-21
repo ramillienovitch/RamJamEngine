@@ -305,6 +305,51 @@ void DX11SpriteBatch::DrawString(ID3D11DeviceContext* dc, DX11FontSheet& fs, con
 }
 
 //////////////////////////////////////////////////////////////////////////
+void DX11SpriteBatch::DrawString(ID3D11DeviceContext* dc, DX11FontSheet& fs, const char text[], const POINT& pos, XMCOLOR color)
+{
+	BeginBatch(fs.GetFontSheetSRV());
+
+	UINT length = (UINT)strlen(text);
+
+	int posX = pos.x;
+	int posY = pos.y;
+
+	for(UINT i = 0; i < length; ++i)
+	{
+		WCHAR character = text[i];
+
+		if(character == ' ') 
+		{
+			posX += fs.GetSpaceWidth();
+		}
+		else if(character == '\n')
+		{
+			posX  = pos.x;
+			posY += fs.GetCharHeight();
+		}
+		else
+		{
+			if ( character < DX11FontSheet::StartChar || character > DX11FontSheet::EndChar )
+				character = '?';
+
+			// Get the bounding rect of the character on the fontsheet.
+			const CD3D11_RECT& charRect = fs.GetCharBoundingRect(character);
+
+			int width  = charRect.right - charRect.left;
+			int height = charRect.bottom - charRect.top;
+
+			// Draw the character sprite.
+			Draw(CD3D11_RECT(posX, posY, posX + width, posY + height), charRect, color);
+
+			// Move to the next character position.
+			posX += width + 1;
+		}
+	}
+
+	EndBatch(dc);
+}
+
+//////////////////////////////////////////////////////////////////////////
 void DX11SpriteBatch::DrawConsoleText(ID3D11DeviceContext* dc, DX11FontSheet& fs, const char* text, const POINT& pos)
 {
 	BeginBatch(fs.GetFontSheetSRV());

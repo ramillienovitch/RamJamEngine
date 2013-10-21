@@ -99,5 +99,4 @@ void Exit        (char* command = nullptr);
 // ----- Rendering -----
 void SetWireframe(char* command = nullptr);
 // ------- Time -------
-void SetTimeScale(char* command = nullptr);
-void GetTime     (char* command = nullptr);
+void Time        (char* command = nullptr);

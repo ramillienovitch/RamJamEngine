@@ -10,31 +10,49 @@ struct Profile
 	i64 totalTime;
 };
 
-class Profiler
+//////////////////////////////////////////////////////////////////////////
+struct Profiler
 {
+	static Profiler* Instance()
+	{
+		if(!sInstance)
+			sInstance = new Profiler();
+
+		return sInstance;
+	}
+
+	static void DeleteInstance()
+	{
+		if(sInstance)
+		{
+			delete sInstance;
+			sInstance = nullptr;
+		}
+	}
+
+	void PrintChildren(std::ofstream &fout, int parent, int depth);
+	void ProfileStart(const char* name);
+	void ProfileEnd(i64 elapsedTime);
+	void PrintToFile();
+
 private:
+	Profiler();
+	static Profiler* sInstance;
+
 	std::vector<Profile> profiles;
 	int numProfiles;
 	int currentParent;
 	int totalFrames;
 	double countsPerMs;
-
-public:
-	Profiler();
-	void PrintChildren(std::ofstream &fout, int parent, int depth);
-	void ProfileStart(const char* name);
-	void ProfileEnd(i64 elapsedTime);
-	void PrintToFile();
 };
 
-static Profiler sProfiler;
-
+//////////////////////////////////////////////////////////////////////////
 struct AutoProfile
 {
 	AutoProfile(const char* name)
 	{
 		name = name;
-		sProfiler.ProfileStart(name);
+		Profiler::Instance()->ProfileStart(name);
 		QueryPerformanceCounter(&startTime);
 	}
 
@@ -43,7 +61,7 @@ struct AutoProfile
 		LARGE_INTEGER endTime;
 		QueryPerformanceCounter(&endTime);
 		i64 elapsedTime = endTime.QuadPart - startTime.QuadPart;
-		sProfiler.ProfileEnd(elapsedTime);
+		Profiler::Instance()->ProfileEnd(elapsedTime);
 	}
 
 	const char* name;
