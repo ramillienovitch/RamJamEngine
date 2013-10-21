@@ -40,4 +40,4 @@ struct Quaternion
 	friend BOOL	operator == (const Quaternion&, const Quaternion&);
 };
 
-// TODO : FINSIH HIM !!!
+// TODO: FINSIH HIM !!!

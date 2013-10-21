@@ -22,5 +22,5 @@ struct Vector2
 	Vector2& operator = (const Vector2&);
 	friend BOOL	operator == (const Vector2&, const Vector2&);
 
-	// TODO : add vector "everything" !
+	// TODO: add vector "everything" !
 };

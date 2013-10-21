@@ -30,5 +30,5 @@ struct Matrix44
 
 	friend Matrix44 operator == (const Matrix44&, const Matrix44&);
 
-	// TODO : add matrix "everything" !
+	// TODO: add matrix "everything" !
 };

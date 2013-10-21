@@ -7,6 +7,8 @@
 #include <iostream>
 #include <fstream>
 
+#define EXPORT_BINARY	1
+#define EXPORT_TEXT		0
 
 using namespace std;
 
@@ -21,8 +23,8 @@ namespace GLOBALS
 // ASS IMP
 //////////////////////////////////////////////////////////////////////////
 bool ImportExportAssImp( const char* );
+void ExportToFile( const aiScene* );
 void LogLoadError(const char*, const char* );
-void ProcessAssImpFile( const aiScene* );
 
 //////////////////////////////////////////////////////////////////////////
 // OBJ TO RJE
@@ -115,7 +117,7 @@ bool ImportExportAssImp( const char* pFile )
 	}
 
 	// Now we can access the file's contents.
-	ProcessAssImpFile( scene );
+	ExportToFile( scene );
 
 	// We're done. Everything will be cleaned up by the importer destructor
 	return true;
@@ -139,13 +141,14 @@ void LogLoadError(const char* modelFileName, const char* errorString )
 }
 
 //////////////////////////////////////////////////////////////////////////
-void ProcessAssImpFile( const aiScene* scene )
+void ExportToFile( const aiScene* scene )
 {
-	std::ofstream fOut;
-
 	int vertexCount	= scene->mMeshes[0]->mNumVertices;
 	int indexCount	= scene->mMeshes[0]->mNumFaces;
 
+#if EXPORT_TEXT
+	std::ofstream fOut;
+	
 	fOut.open("exported_model.mesh");
 
 	fOut << "Vertex Count: " << scene->mMeshes[0]->mNumVertices << "\n";
@@ -195,8 +198,66 @@ void ProcessAssImpFile( const aiScene* scene )
 			fOut << scene->mMeshes[0]->mFaces[iFaces].mIndices[2] << "\n";
 		}
 	}
-
 	fOut.close();
+
+#elif EXPORT_BINARY
+	FILE* fOut;
+
+	fOut = fopen("exported_model.rjemesh", "wb");
+	if(fOut == NULL)
+	{
+		puts("Cannot open file exported_model.rjemesh");
+	}
+
+	std::fwrite(&scene->mMeshes[0]->mNumVertices, sizeof(unsigned int), 1, fOut);
+	std::fwrite(&scene->mMeshes[0]->mNumFaces,    sizeof(unsigned int), 1, fOut);
+	if (GLOBALS::g_hasTextCoord)
+	{
+		for (int iVert=0 ; iVert<vertexCount ; ++iVert)
+		{
+			std::fwrite(&scene->mMeshes[0]->mVertices[iVert].x, sizeof(float), 1, fOut);
+			std::fwrite(&scene->mMeshes[0]->mVertices[iVert].y, sizeof(float), 1, fOut);
+			std::fwrite(&scene->mMeshes[0]->mVertices[iVert].z, sizeof(float), 1, fOut);
+
+			std::fwrite(&scene->mMeshes[0]->mTextureCoords[0]->x, sizeof(float), 1, fOut);
+			std::fwrite(&scene->mMeshes[0]->mTextureCoords[0]->y, sizeof(float), 1, fOut);
+
+			std::fwrite(&scene->mMeshes[0]->mNormals[iVert].x, sizeof(float), 1, fOut);
+			std::fwrite(&scene->mMeshes[0]->mNormals[iVert].y, sizeof(float), 1, fOut);
+			std::fwrite(&scene->mMeshes[0]->mNormals[iVert].z, sizeof(float), 1, fOut);
+		}
+		for (int iIdx=0 ; iIdx<indexCount ; ++iIdx)
+		{
+			std::fwrite(&scene->mMeshes[0]->mFaces[iIdx].mIndices[0], sizeof(unsigned int), 1, fOut);
+			std::fwrite(&scene->mMeshes[0]->mFaces[iIdx].mIndices[1], sizeof(unsigned int), 1, fOut);
+			std::fwrite(&scene->mMeshes[0]->mFaces[iIdx].mIndices[2], sizeof(unsigned int), 1, fOut);
+		}
+	}
+	else
+	{
+		float zero = 0.0f;
+		for (int iVert=0 ; iVert<vertexCount ; ++iVert)
+		{
+			std::fwrite(&scene->mMeshes[0]->mVertices[iVert].x, sizeof(float), 1, fOut);
+			std::fwrite(&scene->mMeshes[0]->mVertices[iVert].y, sizeof(float), 1, fOut);
+			std::fwrite(&scene->mMeshes[0]->mVertices[iVert].z, sizeof(float), 1, fOut);
+
+			std::fwrite(&zero, sizeof(float), 1, fOut);
+			std::fwrite(&zero, sizeof(float), 1, fOut);
+
+			std::fwrite(&scene->mMeshes[0]->mNormals[iVert].x, sizeof(float), 1, fOut);
+			std::fwrite(&scene->mMeshes[0]->mNormals[iVert].y, sizeof(float), 1, fOut);
+			std::fwrite(&scene->mMeshes[0]->mNormals[iVert].z, sizeof(float), 1, fOut);
+		}
+		for (int iIdx=0 ; iIdx<indexCount ; ++iIdx)
+		{
+			std::fwrite(&scene->mMeshes[0]->mFaces[iIdx].mIndices[0], sizeof(unsigned int), 1, fOut);
+			std::fwrite(&scene->mMeshes[0]->mFaces[iIdx].mIndices[1], sizeof(unsigned int), 1, fOut);
+			std::fwrite(&scene->mMeshes[0]->mFaces[iIdx].mIndices[2], sizeof(unsigned int), 1, fOut);
+		}
+	}
+	fclose(fOut);
+#endif
 	return;
 }
 

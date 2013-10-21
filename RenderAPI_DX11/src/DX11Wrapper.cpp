@@ -246,9 +246,10 @@ void DX11Wrapper::LoadTexture(string keyName, string sectionName, string fileNam
 //////////////////////////////////////////////////////////////////////////
 void DX11Wrapper::BuildGeometryBuffers()
 {
-	std::ifstream fin(CIniFile::GetValue("modelpath", "meshes", "..\\..\\RamJamEngine\\data\\Resources.ini"));
+	FILE* fIn;
+	fopen_s(&fIn, CIniFile::GetValue("modelpath", "meshes", "..\\..\\RamJamEngine\\data\\Resources.ini").c_str(), "rb");
 
-	if(!fin)
+	if(!fIn)
 	{
 		RJE_MESSAGE_BOX(0, L"dragon.mesh not found.", 0, 0);
 		return;
@@ -256,11 +257,9 @@ void DX11Wrapper::BuildGeometryBuffers()
 
 	UINT modelVertexCount = 0;
 	UINT modelTriangleCount = 0;
-	std::string ignore;
 
-	fin >> ignore >> ignore >> modelVertexCount;
-	fin >> ignore >> ignore >> modelTriangleCount;
-	fin >> ignore;
+	fread(&modelVertexCount,   sizeof(UINT), 1, fIn);
+	fread(&modelTriangleCount, sizeof(UINT), 1, fIn);
 
 	mModelIndexCount = 3*modelTriangleCount;
 
@@ -339,21 +338,28 @@ void DX11Wrapper::BuildGeometryBuffers()
 	}
 	for(size_t i = 0; i < modelVertexCount; ++i, ++k)
 	{
-		fin >> vertices[k].Pos.x >> vertices[k].Pos.y >> vertices[k].Pos.z;
+		fread(&vertices[k].Pos.x, sizeof(float), 1, fIn);
+		fread(&vertices[k].Pos.y, sizeof(float), 1, fIn);
+		fread(&vertices[k].Pos.z, sizeof(float), 1, fIn);
 
 		//XMFLOAT4 rnd(RJE::Math::RandF(), RJE::Math::RandF(), RJE::Math::RandF(), 1.0f);
 		//vertices[k].Color = rnd;
 
-		fin >> vertices[k].Tex.x >> vertices[k].Tex.y;
-		fin >> vertices[k].Normal.x >> vertices[k].Normal.y >> vertices[k].Normal.z;
+		fread(&vertices[k].Tex.x, sizeof(float), 1, fIn);
+		fread(&vertices[k].Tex.y, sizeof(float), 1, fIn);
+		fread(&vertices[k].Normal.x, sizeof(float), 1, fIn);
+		fread(&vertices[k].Normal.y, sizeof(float), 1, fIn);
+		fread(&vertices[k].Normal.z, sizeof(float), 1, fIn);
 	}
 	std::vector<UINT> dragonIndices(mModelIndexCount);
 	for(UINT i = 0; i < modelTriangleCount; ++i)
 	{
-		fin >> dragonIndices[i*3+0] >> dragonIndices[i*3+1] >> dragonIndices[i*3+2];
+		fread(&dragonIndices[i*3+0], sizeof(UINT), 1, fIn);
+		fread(&dragonIndices[i*3+1], sizeof(UINT), 1, fIn);
+		fread(&dragonIndices[i*3+2], sizeof(UINT), 1, fIn);
 	}
 
-	fin.close();
+	fclose(fIn);
 
 	D3D11_BUFFER_DESC vbd;
 	vbd.Usage          = D3D11_USAGE_IMMUTABLE;
@@ -399,7 +405,7 @@ void DX11Wrapper::UpdateScene( float dt )
 	mCamera->mUp       = Vector3(0.0f, 1.0f, 0.0f);
 	mCamera->UpdateViewMatrix();
 	
-	// Inputs modifiers : TODO : Get these out of DX11Wrapper !
+	// Inputs modifiers : TODO: Get these out of DX11Wrapper !
 	if (!Console::Instance()->IsActive())
 	{
 		if (Input::Instance()->GetKeyboardDown(Keyboard0))	mDirLightCount = 0;
@@ -884,7 +890,7 @@ void DX11Wrapper::DrawConsole()
 	POINT cmdPos  = {10, CONSOLE_HEIGHT-25};
 
 	CD3D11_RECT rect( 0, 0, System::Instance()->mScreenWidth, CONSOLE_HEIGHT);
-	CD3D11_RECT rectLogo( System::Instance()->mScreenWidth - 200, 40, System::Instance()->mScreenWidth - 30, 160);
+	CD3D11_RECT rectLogo( System::Instance()->mScreenWidth - 220, 40, System::Instance()->mScreenWidth - 30, 160);
 	mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_Solid);
 	mDX11Device->md3dImmediateContext->OMSetBlendState(DX11CommonStates::sBlendState_AlphaToCoverage, blendFactor, 0xffffffff);
 	{
@@ -905,7 +911,7 @@ void DX11Wrapper::Draw2dElements(float blendFactor[4])
 	mDX11Device->md3dImmediateContext->OMSetBlendState(DX11CommonStates::sBlendState_AlphaToCoverage, blendFactor, 0xffffffff);
 	{
 		// Draw 2D elements -------------
-		mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mFont, L"RamJam Engine", textPos, XMCOLOR(0xffffffff));
+		//mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mFont, L"RamJam Engine", textPos, XMCOLOR(0xffffffff));
 	}
 	mDX11Device->md3dImmediateContext->OMSetBlendState(0, blendFactor, 0xffffffff);
 }

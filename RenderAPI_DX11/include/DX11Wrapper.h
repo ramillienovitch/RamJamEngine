@@ -78,7 +78,7 @@ struct DX11Wrapper : GraphicAPI
 
 	XMFLOAT3 mEyePosW;
 
-	// Scene Parameters : TODO : Get these out of DX11Wrapper !
+	// Scene Parameters : TODO: Get these out of DX11Wrapper !
 	UINT mDirLightCount;
 	UINT mPointLightCount;
 	BOOL mbUseTexture;
