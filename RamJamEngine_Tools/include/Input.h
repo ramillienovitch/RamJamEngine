@@ -82,6 +82,14 @@ enum MouseCode
 	WheelDown
 };
 
+enum MultipleKeyboardKeys
+{
+	FUNCTION_KEYS		= 1,
+	NUMPAD_KEYS			= 2,
+	KEYBOARD_NUM_KEYS	= 4,
+	ALPHA_KEYS			= 8
+};
+
 struct Input
 {
 	static Input* Instance()
@@ -103,23 +111,30 @@ struct Input
 
 	void HandleInputEvent(UINT umsg, WPARAM wparam, LPARAM lparam);
 
-	bool IsMouseMoving();
+	BOOL IsMouseMoving();
 	int  GetMousePosX();
 	int  GetMousePosY();
 
-	bool GetKeyboard(Keycode code);
-	bool GetKeyboardUp(Keycode code);
-	bool GetKeyboardDown(Keycode code);
-	bool GetKeyboardAny();
-	bool GetKeyboardAnyUp();
-	bool GetKeyboardAnyDown();
-	bool GetMouseButton(MouseCode code);
-	bool GetMouseButtonUp(MouseCode code);
-	bool GetMouseButtonDown(MouseCode code);
-	bool GetMouseButtonAny();
-	bool GetMouseButtonAnyUp();
-	bool GetMouseButtonAnyDown();
-
+	BOOL GetKeyboard    (Keycode code);
+	BOOL GetKeyboardUp  (Keycode code);
+	BOOL GetKeyboardDown(Keycode code);
+	//----
+	BOOL GetKeyboard    (int keys);
+	BOOL GetKeyboardUp  (int keys);
+	BOOL GetKeyboardDown(int keys);
+	//----
+	BOOL GetKeyboardAny();
+	BOOL GetKeyboardAnyUp();
+	BOOL GetKeyboardAnyDown();
+	//----
+	BOOL GetMouseButton    (MouseCode code);
+	BOOL GetMouseButtonUp  (MouseCode code);
+	BOOL GetMouseButtonDown(MouseCode code);
+	//----
+	BOOL GetMouseButtonAny();
+	BOOL GetMouseButtonAnyUp();
+	BOOL GetMouseButtonAnyDown();
+	//----
 	void ResetInputStates();
 
 private:
@@ -127,16 +142,16 @@ private:
 
 	static Input* sInstance;
 
-	bool bUpdated;
+	BOOL bUpdated;
 
 	int  mMousePosX;
 	int  mMousePosY;
-	bool bMouseMoving;
+	BOOL bMouseMoving;
 	
-	bool mKeyboardState    [KEYBOARD_INPUTS];
-	bool mKeyboardStateDown[KEYBOARD_INPUTS];
-	bool mKeyboardStateUp  [KEYBOARD_INPUTS];
-	bool mMouseState    [MOUSE_INPUTS];
-	bool mMouseStateDown[MOUSE_INPUTS];
-	bool mMouseStateUp  [MOUSE_INPUTS];
+	BOOL mKeyboardState    [KEYBOARD_INPUTS];
+	BOOL mKeyboardStateDown[KEYBOARD_INPUTS];
+	BOOL mKeyboardStateUp  [KEYBOARD_INPUTS];
+	BOOL mMouseState    [MOUSE_INPUTS];
+	BOOL mMouseStateDown[MOUSE_INPUTS];
+	BOOL mMouseStateUp  [MOUSE_INPUTS];
 };

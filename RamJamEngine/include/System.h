@@ -17,6 +17,11 @@ public:
 	int			mScreenWidth;
 	int			mScreenHeight;
 
+	float	fps;
+	float	minfps;
+	float	maxfps;
+	float	mspf;
+
 	POINT		mLastMousePos;
 	float		mCameraTheta;
 	float		mCameraPhi;

@@ -58,7 +58,7 @@ void Input::HandleInputEvent(UINT umsg, WPARAM wparam, LPARAM lparam)
 			else if (wparam >= 0x70 && wparam <= 0x7B)	// F1 -> F12
 			{
 				int key = (int)(0x7B-wparam);
-				mKeyboardState    [Keycode::F1 - key]  = true;
+				mKeyboardState    [Keycode::F12 - key] = true;
 				mKeyboardStateDown[Keycode::F12 - key] = true;
 				return;
 			}
@@ -69,12 +69,15 @@ void Input::HandleInputEvent(UINT umsg, WPARAM wparam, LPARAM lparam)
 				switch (wparam) 
 				{
 				case VK_ADD :		mKeyboardState[Keycode::Add]          = true;	mKeyboardStateDown[Keycode::Add]          = true;		return;
+				case VK_BACK :		mKeyboardState[Keycode::Backspace]    = true;	mKeyboardStateDown[Keycode::Backspace]    = true;		return;
 				case VK_CAPITAL :	mKeyboardState[Keycode::CapsLock]     = true;	mKeyboardStateDown[Keycode::CapsLock]     = true;		return;
 				case VK_CLEAR :		mKeyboardState[Keycode::Clear]        = true;	mKeyboardStateDown[Keycode::Clear]        = true;		return;
 				case VK_DECIMAL :	mKeyboardState[Keycode::Decimal]      = true;	mKeyboardStateDown[Keycode::Decimal]      = true;		return;
 				case VK_DELETE :	mKeyboardState[Keycode::Delete]       = true;	mKeyboardStateDown[Keycode::Delete]       = true;		return;
 				case VK_DIVIDE :	mKeyboardState[Keycode::Divide]       = true;	mKeyboardStateDown[Keycode::Divide]       = true;		return;
+				case VK_DOWN :		mKeyboardState[Keycode::DownArrow]    = true;	mKeyboardStateDown[Keycode::DownArrow]    = true;		return;
 				case VK_END :		mKeyboardState[Keycode::End]          = true;	mKeyboardStateDown[Keycode::End]          = true;		return;
+				case VK_ESCAPE:		mKeyboardState[Keycode::Esc]          = true;	mKeyboardStateDown[Keycode::Esc]          = true;		return;
 				case VK_EXECUTE :	mKeyboardState[Keycode::Execute]      = true;	mKeyboardStateDown[Keycode::Execute]      = true;		return;
 				case VK_HELP :		mKeyboardState[Keycode::Help]         = true;	mKeyboardStateDown[Keycode::Help]         = true;		return;
 				case VK_HOME :		mKeyboardState[Keycode::Home]         = true;	mKeyboardStateDown[Keycode::Home]         = true;		return;
@@ -86,6 +89,7 @@ void Input::HandleInputEvent(UINT umsg, WPARAM wparam, LPARAM lparam)
 				case VK_PRIOR :		mKeyboardState[Keycode::PageUp]       = true;	mKeyboardStateDown[Keycode::PageUp]       = true;		return;
 				case VK_PAUSE :		mKeyboardState[Keycode::Pause]        = true;	mKeyboardStateDown[Keycode::Pause]        = true;		return;
 				case VK_PRINT :		mKeyboardState[Keycode::Print]        = true;	mKeyboardStateDown[Keycode::Print]        = true;		return;
+				case VK_RETURN :	mKeyboardState[Keycode::Return]       = true;	mKeyboardStateDown[Keycode::Return]       = true;		return;
 				case VK_RIGHT :		mKeyboardState[Keycode::RightArrow]   = true;	mKeyboardStateDown[Keycode::RightArrow]   = true;		return;
 				case VK_SCROLL :	mKeyboardState[Keycode::Scroll]       = true;	mKeyboardStateDown[Keycode::Scroll]       = true;		return;
 				case VK_SELECT :	mKeyboardState[Keycode::Select]       = true;	mKeyboardStateDown[Keycode::Select]       = true;		return;
@@ -94,6 +98,7 @@ void Input::HandleInputEvent(UINT umsg, WPARAM wparam, LPARAM lparam)
 				case VK_SPACE :		mKeyboardState[Keycode::Spacebar]     = true;	mKeyboardStateDown[Keycode::Spacebar]     = true;		return;
 				case VK_SUBTRACT :	mKeyboardState[Keycode::Subtract]     = true;	mKeyboardStateDown[Keycode::Subtract]     = true;		return;
 				case VK_TAB :		mKeyboardState[Keycode::Tab]          = true;	mKeyboardStateDown[Keycode::Tab]          = true;		return;
+				case VK_UP :		mKeyboardState[Keycode::UpArrow]      = true;	mKeyboardStateDown[Keycode::UpArrow]      = true;		return;
 				case VK_LWIN :		mKeyboardState[Keycode::Windows]      = true;	mKeyboardStateDown[Keycode::Windows]      = true;		return;
 				case VK_CONTROL :
 					if (extended)	{mKeyboardState[Keycode::RightCtrl]   = true;	mKeyboardStateDown[Keycode::RightCtrl]    = true;		return;}
@@ -104,45 +109,6 @@ void Input::HandleInputEvent(UINT umsg, WPARAM wparam, LPARAM lparam)
 				case VK_SHIFT : 
 					if (extended)	{mKeyboardState[Keycode::RightShift]  = true;	mKeyboardStateDown[Keycode::RightShift]   = true;		return;}
 					else			{mKeyboardState[Keycode::LeftShift]   = true;	mKeyboardStateDown[Keycode::LeftShift]    = true;		return;}
-				case VK_BACK :
-					{
-						mKeyboardState    [Keycode::Backspace] = true;
-						mKeyboardStateDown[Keycode::Backspace] = true;
-						if (Console::Instance()->IsActive())
-							Console::Instance()->RemoveCharacter();
-						return;
-					}
-				case VK_ESCAPE :
-					{
-						mKeyboardState    [Keycode::Esc] = true;
-						mKeyboardStateDown[Keycode::Esc] = true;
-						Console::Instance()->ToggleConsoleState();
-						return;
-					}
-				case VK_RETURN :
-					{
-						mKeyboardState    [Keycode::Return] = true;
-						mKeyboardStateDown[Keycode::Return] = true;
-						if (Console::Instance()->IsActive())
-							Console::Instance()->RegisterAndClearCommand();
-						return;
-					}
-				case VK_UP :
-					{
-						mKeyboardState    [Keycode::UpArrow] = true;
-						mKeyboardStateDown[Keycode::UpArrow] = true;
-						if (Console::Instance()->IsActive())
-							Console::Instance()->GetCommandHistoric(true);
-						return;
-					}
-				case VK_DOWN :
-					{
-						mKeyboardState    [Keycode::DownArrow] = true;
-						mKeyboardStateDown[Keycode::DownArrow] = true;
-						if (Console::Instance()->IsActive())
-							Console::Instance()->GetCommandHistoric(false);
-						return;
-					}
 				}
 			}
 			return;
@@ -174,7 +140,7 @@ void Input::HandleInputEvent(UINT umsg, WPARAM wparam, LPARAM lparam)
 			else if (wparam >= 0x70 && wparam <= 0x7B)	// F1 -> F12
 			{
 				int key = (int)(0x7B-wparam);
-				mKeyboardState  [Keycode::F1 - key]  = false;
+				mKeyboardState  [Keycode::F12 - key]  = false;
 				mKeyboardStateUp[Keycode::F12 - key] = true;
 				return;
 			}
@@ -190,8 +156,8 @@ void Input::HandleInputEvent(UINT umsg, WPARAM wparam, LPARAM lparam)
 				case VK_CLEAR :		mKeyboardState[Keycode::Clear]        = false;	mKeyboardStateUp[Keycode::Clear]        = true;		return;
 				case VK_DECIMAL :	mKeyboardState[Keycode::Decimal]      = false;	mKeyboardStateUp[Keycode::Decimal]      = true;		return;
 				case VK_DELETE :	mKeyboardState[Keycode::Delete]       = false;	mKeyboardStateUp[Keycode::Delete]       = true;		return;
-				case VK_DOWN :		mKeyboardState[Keycode::DownArrow]    = false;	mKeyboardStateUp[Keycode::DownArrow]    = true;		return;
 				case VK_DIVIDE :	mKeyboardState[Keycode::Divide]       = false;	mKeyboardStateUp[Keycode::Divide]       = true;		return;
+				case VK_DOWN :		mKeyboardState[Keycode::DownArrow]    = false;	mKeyboardStateUp[Keycode::DownArrow]    = true;		return;
 				case VK_END :		mKeyboardState[Keycode::End]          = false;	mKeyboardStateUp[Keycode::End]          = true;		return;
 				case VK_ESCAPE :	mKeyboardState[Keycode::Esc]          = false;	mKeyboardStateUp[Keycode::Esc]          = true;		return;
 				case VK_EXECUTE :	mKeyboardState[Keycode::Execute]      = false;	mKeyboardStateUp[Keycode::Execute]      = true;		return;
@@ -268,31 +234,130 @@ void Input::HandleInputEvent(UINT umsg, WPARAM wparam, LPARAM lparam)
 }
 
 //////////////////////////////////////////////////////////////////////////
-bool Input::IsMouseMoving() {return bMouseMoving;}
+BOOL Input::IsMouseMoving() {return bMouseMoving;}
 int  Input::GetMousePosX()	{return mMousePosX;}
 int  Input::GetMousePosY()	{return mMousePosY;}
 
 //////////////////////////////////////////////////////////////////////////
-bool Input::GetKeyboard(Keycode code)     {return mKeyboardState[code];}
-bool Input::GetKeyboardUp(Keycode code)   {return mKeyboardStateUp[code];}
-bool Input::GetKeyboardDown(Keycode code) {return mKeyboardStateDown[code];}
+BOOL Input::GetKeyboard    (Keycode code) {return mKeyboardState    [code];}
+BOOL Input::GetKeyboardUp  (Keycode code) {return mKeyboardStateUp  [code];}
+BOOL Input::GetKeyboardDown(Keycode code) {return mKeyboardStateDown[code];}
 
 //////////////////////////////////////////////////////////////////////////
-bool Input::GetKeyboardAny()
+BOOL Input::GetKeyboard(int keys)
+{
+	BOOL result = false;
+	if ((keys & FUNCTION_KEYS) == FUNCTION_KEYS)
+	{
+		for (int i = (int)Keycode::F1; i<=(int)Keycode::F12; ++i) 
+			if (mKeyboardState[i])
+				result = true;
+	}
+	if ((keys & NUMPAD_KEYS) == NUMPAD_KEYS)
+	{
+		for (int i = (int)Keycode::Numpad0 ; i<=(int)Keycode::Numpad9; ++i)
+			if (mKeyboardState[i])
+				result = true;
+	}
+	if ((keys & KEYBOARD_NUM_KEYS) == KEYBOARD_NUM_KEYS)
+	{
+		for (int i = (int)Keycode::Keyboard0; i<=(int)Keycode::Keyboard9; ++i)
+			if (mKeyboardState[i])
+				result = true;
+	}
+	if ((keys & ALPHA_KEYS) == ALPHA_KEYS)
+	{
+
+		for (int i = (int)Keycode::A; i<=(int)Keycode::Z; ++i)
+			if (mKeyboardState[i])
+				result = true;
+	}
+
+	return result;
+}
+
+//////////////////////////////////////////////////////////////////////////
+BOOL Input::GetKeyboardUp(int keys)
+{
+	BOOL result = false;
+	if ((keys & FUNCTION_KEYS) == FUNCTION_KEYS)
+	{
+		for (int i = (int)Keycode::F1; i<=(int)Keycode::F12; ++i) 
+			if (mKeyboardStateUp[i])
+				result = true;
+	}
+	if ((keys & NUMPAD_KEYS) == NUMPAD_KEYS)
+	{
+		for (int i = (int)Keycode::Numpad0 ; i<=(int)Keycode::Numpad9; ++i)
+			if (mKeyboardStateUp[i])
+				result = true;
+	}
+	if ((keys & KEYBOARD_NUM_KEYS) == KEYBOARD_NUM_KEYS)
+	{
+		for (int i = (int)Keycode::Keyboard0; i<=(int)Keycode::Keyboard9; ++i)
+			if (mKeyboardStateUp[i])
+				result = true;
+	}
+	if ((keys & ALPHA_KEYS) == ALPHA_KEYS)
+	{
+
+		for (int i = (int)Keycode::A; i<=(int)Keycode::Z; ++i)
+			if (mKeyboardStateUp[i])
+				result = true;
+	}
+
+	return result;
+}
+
+//////////////////////////////////////////////////////////////////////////
+BOOL Input::GetKeyboardDown(int keys)
+{
+	BOOL result = false;
+	if ((keys & FUNCTION_KEYS) == FUNCTION_KEYS)
+	{
+		for (int i = (int)Keycode::F1; i<=(int)Keycode::F12; ++i) 
+			if (mKeyboardStateDown[i])
+				result = true;
+	}
+	if ((keys & NUMPAD_KEYS) == NUMPAD_KEYS)
+	{
+		for (int i = (int)Keycode::Numpad0 ; i<=(int)Keycode::Numpad9; ++i)
+			if (mKeyboardStateDown[i])
+				result = true;
+	}
+	if ((keys & KEYBOARD_NUM_KEYS) == KEYBOARD_NUM_KEYS)
+	{
+		for (int i = (int)Keycode::Keyboard0; i<=(int)Keycode::Keyboard9; ++i)
+			if (mKeyboardStateDown[i])
+				result = true;
+	}
+	if ((keys & ALPHA_KEYS) == ALPHA_KEYS)
+	{
+
+		for (int i = (int)Keycode::A; i<=(int)Keycode::Z; ++i)
+			if (mKeyboardStateDown[i])
+				result = true;
+	}
+
+	return result;
+}
+
+//////////////////////////////////////////////////////////////////////////
+BOOL Input::GetKeyboardAny()
 {
 	for(int iKey=0; iKey<KEYBOARD_INPUTS; ++iKey)
 		if (mKeyboardState[iKey]) return true;
 
 	return false;
 }
-bool Input::GetKeyboardAnyUp()
+BOOL Input::GetKeyboardAnyUp()
 {
 	for(int iKey=0; iKey<KEYBOARD_INPUTS; ++iKey)
 		if (mKeyboardStateUp[iKey]) return true;
 
 	return false;
 }
-bool Input::GetKeyboardAnyDown()
+BOOL Input::GetKeyboardAnyDown()
 {
 	for(int iKey=0; iKey<KEYBOARD_INPUTS; ++iKey)
 		if (mKeyboardStateDown[iKey]) return true;
@@ -301,26 +366,26 @@ bool Input::GetKeyboardAnyDown()
 }
 
 //////////////////////////////////////////////////////////////////////////
-bool Input::GetMouseButton(MouseCode code)     {return mMouseState[code];}
-bool Input::GetMouseButtonUp(MouseCode code)   {return mMouseStateUp[code];}
-bool Input::GetMouseButtonDown(MouseCode code) {return mMouseStateDown[code];}
+BOOL Input::GetMouseButton(MouseCode code)     {return mMouseState    [code];}
+BOOL Input::GetMouseButtonUp(MouseCode code)   {return mMouseStateUp  [code];}
+BOOL Input::GetMouseButtonDown(MouseCode code) {return mMouseStateDown[code];}
 
 //////////////////////////////////////////////////////////////////////////
-bool Input::GetMouseButtonAny()
+BOOL Input::GetMouseButtonAny()
 {
 	for(int iMouse=0; iMouse<MOUSE_INPUTS; ++iMouse)
 		if (mMouseState[iMouse]) return true;
 
 	return false;
 }
-bool Input::GetMouseButtonAnyUp()
+BOOL Input::GetMouseButtonAnyUp()
 {
 	for(int iMouse=0; iMouse<MOUSE_INPUTS; ++iMouse)
 		if (mMouseStateUp[iMouse]) return true;
 
 	return false;
 }
-bool Input::GetMouseButtonAnyDown()
+BOOL Input::GetMouseButtonAnyDown()
 {
 	for(int iMouse=0; iMouse<MOUSE_INPUTS; ++iMouse)
 		if (mMouseStateDown[iMouse]) return true;

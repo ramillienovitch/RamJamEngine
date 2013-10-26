@@ -2,12 +2,29 @@
 
 #include "Types.h"
 
+//////////////////////////////////////////////////////////////////////////
+typedef enum PROFILER_STATES
+{
+	E_NONE      = 0,
+	E_SIMPLE    = 1,
+	E_ADVANCED  = 2,
+	E_CPU       = 3,
+	E_GPU       = 4,
+	E_MEMORY    = 5,
+	E_PHYSICS   = 6,
+	E_ANIMATION = 7,
+	E_AI        = 8,
+	E_SCRIPT    = 9,
+	E_SOUND     = 10
+} PROFILER_STATES;
+
+//////////////////////////////////////////////////////////////////////////
 struct Profile
 {
 	const char* name;
 	int parentId;
 	int totalCalls;
-	i64 totalTime;
+	u64 totalTime;
 };
 
 //////////////////////////////////////////////////////////////////////////
@@ -25,19 +42,35 @@ struct Profiler
 	{
 		if(sInstance)
 		{
+			sInstance->PrintToFile();
 			delete sInstance;
 			sInstance = nullptr;
 		}
 	}
 
+	//-----------
 	void PrintChildren(std::ofstream &fout, int parent, int depth);
 	void ProfileStart(const char* name);
-	void ProfileEnd(i64 elapsedTime);
+	void ProfileEnd(u64 elapsedTime);
 	void PrintToFile();
+	//-----------
+	BOOL IsActive();
+	void ExitProfiler();
+	void ActivateProfiler();
+	//-----------
+	void Update();
+	//-----------
+	int GetState();
+	void ChangeState();
+
+	ProfilingInfo mInfos;
 
 private:
 	Profiler();
 	static Profiler* sInstance;
+
+	BOOL mIsActive;
+	PROFILER_STATES mCurrentState;
 
 	std::vector<Profile> profiles;
 	int numProfiles;
@@ -60,11 +93,11 @@ struct AutoProfile
 	{
 		LARGE_INTEGER endTime;
 		QueryPerformanceCounter(&endTime);
-		i64 elapsedTime = endTime.QuadPart - startTime.QuadPart;
+		u64 elapsedTime = endTime.QuadPart - startTime.QuadPart;
 		Profiler::Instance()->ProfileEnd(elapsedTime);
 	}
 
 	const char* name;
 	LARGE_INTEGER startTime;
 };
-#define PROFILE(name) AutoProfile p(name)
+#define PROFILE(name) AutoProfile profile(name)

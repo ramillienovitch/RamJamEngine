@@ -9,9 +9,9 @@ DX11Wrapper::DX11Wrapper()
 	md3dDriverType		= D3D_DRIVER_TYPE_HARDWARE;
 	ZeroMemory(&mScreenViewport, sizeof(D3D11_VIEWPORT));
 
-	mFont        = nullptr;
-	mConsoleFont = nullptr;
-	mSpriteBatch = nullptr;
+	mConsoleFont  = nullptr;
+	mProfilerFont = nullptr;
+	mSpriteBatch  = nullptr;
 
 	mVertexBuffer = nullptr;
 	mIndexBuffer  = nullptr;
@@ -131,7 +131,7 @@ void DX11Wrapper::Initialize(HWND hMainWnd, int windowWidth, int windowHeight)
 
 	// Create the device and device context.
 	UINT createDeviceFlags = 0;
-#if defined(DEBUG) || defined(_DEBUG)  
+#ifdef RJE_DEBUG
 	createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
 #endif
 
@@ -151,6 +151,32 @@ void DX11Wrapper::Initialize(HWND hMainWnd, int windowWidth, int windowHeight)
 		RJE_MESSAGE_BOX(0, L"Direct3D Feature Level 11 unsupported.", 0, 0);
 		return;
 	}
+	
+	//------- Not used for now
+// #ifdef RJE_DEBUG
+// 	if( SUCCEEDED( mDX11Device->md3dDevice->QueryInterface( __uuidof(ID3D11Debug), (void**)&md3dDebug ) ) )
+// 	{
+// 		if( SUCCEEDED( md3dDebug->QueryInterface( __uuidof(ID3D11InfoQueue), (void**)&md3dInfoQueue ) ) )
+// 		{
+// 			md3dInfoQueue->SetBreakOnSeverity( D3D11_MESSAGE_SEVERITY_CORRUPTION, true );
+// 			md3dInfoQueue->SetBreakOnSeverity( D3D11_MESSAGE_SEVERITY_ERROR, true );
+// 
+// 			D3D11_MESSAGE_ID hide [] =
+// 			{
+// 				D3D11_MESSAGE_ID_SETPRIVATEDATA_CHANGINGPARAMS,
+// 				// Add more message IDs here as needed
+// 			};
+// 
+// 			D3D11_INFO_QUEUE_FILTER filter;
+// 			memset( &filter, 0, sizeof(filter) );
+// 			filter.DenyList.NumIDs = _countof(hide);
+// 			filter.DenyList.pIDList = hide;
+// 			md3dInfoQueue->AddStorageFilterEntries( &filter );
+// 			md3dInfoQueue->Release();
+// 		}
+// 		md3dDebug->Release();
+// 	}
+// #endif
 
 	// Check 4X MSAA quality support for our back buffer format.
 	// All Direct3D 11 capable devices support 4X MSAA for all render 
@@ -215,12 +241,12 @@ void DX11Wrapper::Initialize(HWND hMainWnd, int windowWidth, int windowHeight)
 	DX11CommonStates::InitAll(mDX11Device->md3dDevice);
 
 	// Init the 2d elements
-	mFont        = new DX11FontSheet();
-	mConsoleFont = new DX11FontSheet();
-	mSpriteBatch = new DX11SpriteBatch();
-	RJE_CHECK_FOR_SUCCESS(mFont->Initialize(mDX11Device->md3dDevice, L"Times New Roman", 96.0f, FontSheet::FontStyleItalic, true));
-	RJE_CHECK_FOR_SUCCESS(mConsoleFont->Initialize(mDX11Device->md3dDevice, L"Consolas", 16.0f, FontSheet::FontStyleRegular, true));
-	RJE_CHECK_FOR_SUCCESS(mSpriteBatch->Initialize(mDX11Device->md3dDevice));
+	mProfilerFont = new DX11FontSheet();
+	mConsoleFont  = new DX11FontSheet();
+	mSpriteBatch  = new DX11SpriteBatch();
+	RJE_CHECK_FOR_SUCCESS(mConsoleFont-> Initialize(mDX11Device->md3dDevice, L"Consolas", 16.0f, FontSheet::FontStyleRegular, true));
+	RJE_CHECK_FOR_SUCCESS(mProfilerFont->Initialize(mDX11Device->md3dDevice, L"Consolas", 12.0f, FontSheet::FontStyleRegular, true));
+	RJE_CHECK_FOR_SUCCESS(mSpriteBatch-> Initialize(mDX11Device->md3dDevice));
 
 	LoadTexture("box",                "textures", "..\\..\\RamJamEngine\\data\\Resources.ini", &mBoxMap);
 	LoadTexture("grid",               "textures", "..\\..\\RamJamEngine\\data\\Resources.ini", &mGridMap);
@@ -450,6 +476,19 @@ void DX11Wrapper::DrawScene()
 {
 	RJE_ASSERT(mDX11Device->md3dImmediateContext);
 	RJE_ASSERT(mSwapChain);
+
+	//////////////////////////////////////////////////////////////////////////
+
+	// 	D3D11_QUERY_DESC pipelineStatsQueryDesc;
+	// 	pipelineStatsQueryDesc.Query     = D3D11_QUERY_PIPELINE_STATISTICS;
+	// 	pipelineStatsQueryDesc.MiscFlags = NULL;
+	// 	ID3D11Query* pPipelineStatsQuery;
+	// 	if ( S_OK != mDX11Device->md3dDevice->CreateQuery(&pipelineStatsQueryDesc, &pPipelineStatsQuery))
+	// 		RJE_BREAK();
+	// 
+	// 	mDX11Device->md3dImmediateContext->Begin(pPipelineStatsQuery);
+
+	//////////////////////////////////////////////////////////////////////////
 
 	mDX11Device->md3dImmediateContext->ClearRenderTargetView(mRenderTargetView, DirectX::Colors::LightSteelBlue);
 	mDX11Device->md3dImmediateContext->ClearDepthStencilView(mDX11DepthBuffer->mDepthStencilView, D3D11_CLEAR_DEPTH|D3D11_CLEAR_STENCIL, 1.0f, 0);
@@ -860,11 +899,38 @@ void DX11Wrapper::DrawScene()
 	}
 
 	//////////////////////////////////////////////////////////////////////////
+
+// 	{
+// 		PROFILE("Get Data");
+// 		D3D11_QUERY_DATA_PIPELINE_STATISTICS	pipelineStatsData;
+// 		mDX11Device->md3dImmediateContext->End(pPipelineStatsQuery);
+// 		while( S_OK != 	mDX11Device->md3dImmediateContext->GetData(pPipelineStatsQuery, &pipelineStatsData, sizeof(D3D11_QUERY_DATA_PIPELINE_STATISTICS), 0) )
+// 		{}
+// 		RJE_SAFE_RELEASE(pPipelineStatsQuery);
+// 		
+// 		Profiler::Instance()->mInfos.Info_Rendering.IAVertices           = pipelineStatsData.IAVertices;
+// 		Profiler::Instance()->mInfos.Info_Rendering.IAPrimitives         = pipelineStatsData.IAPrimitives;
+// 		Profiler::Instance()->mInfos.Info_Rendering.VSInvoc              = pipelineStatsData.VSInvocations;
+// 		Profiler::Instance()->mInfos.Info_Rendering.PSInvoc              = pipelineStatsData.PSInvocations;
+// 		Profiler::Instance()->mInfos.Info_Rendering.GSInvoc              = pipelineStatsData.GSInvocations;
+// 		Profiler::Instance()->mInfos.Info_Rendering.HSInvoc              = pipelineStatsData.HSInvocations;
+// 		Profiler::Instance()->mInfos.Info_Rendering.DSInvoc              = pipelineStatsData.DSInvocations;
+// 		Profiler::Instance()->mInfos.Info_Rendering.CSInvoc              = pipelineStatsData.CSInvocations;
+// 		Profiler::Instance()->mInfos.Info_Rendering.rasterizerPrimitives = pipelineStatsData.CInvocations;
+// 		Profiler::Instance()->mInfos.Info_Rendering.renderedPrimitives   = pipelineStatsData.CPrimitives;
+// 	}
+
+	//////////////////////////////////////////////////////////////////////////
 	
+	mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_Solid);
+	mDX11Device->md3dImmediateContext->OMSetBlendState(DX11CommonStates::sBlendState_AlphaToCoverage, blendFactor, 0xffffffff);
+
 	if (Console::Instance()->IsActive())
 		DrawConsole();
+	else if (Profiler::Instance()->IsActive())
+		DrawProfiler();
 	else if (!mbWireframe)
-		Draw2dElements(blendFactor);
+		Draw2dElements();
 	
 	//////////////////////////////////////////////////////////////////////////
 
@@ -881,39 +947,57 @@ void DX11Wrapper::DrawScene()
 //////////////////////////////////////////////////////////////////////////
 void DX11Wrapper::DrawConsole()
 {
-	float blendFactor[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+	PROFILE("Draw Console");
 
 	char cmd[COMMAND_MAX_LENGTH];
 	Console::Instance()->GetCommand(cmd);
 
-	POINT textPos = {10, 5 + (LINE_MAX-Console::Instance()->GetLineCount()) * mConsoleFont->GetCharHeight() };
-	POINT cmdPos  = {10, CONSOLE_HEIGHT-25};
+	POINT textPos = {10, 5 + (LINE_MAX-Console::Instance()->GetLineCount()) * mConsoleFont->GetCharHeight() - Console::Instance()->mConsoleElevation};
+	POINT cmdPos  = {10, CONSOLE_HEIGHT-25 - Console::Instance()->mConsoleElevation};
 
-	CD3D11_RECT rect( 0, 0, System::Instance()->mScreenWidth, CONSOLE_HEIGHT);
-	CD3D11_RECT rectLogo( System::Instance()->mScreenWidth - 220, 40, System::Instance()->mScreenWidth - 30, 160);
-	mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_Solid);
-	mDX11Device->md3dImmediateContext->OMSetBlendState(DX11CommonStates::sBlendState_AlphaToCoverage, blendFactor, 0xffffffff);
-	{
-		mSpriteBatch->DrawConsoleText(mDX11Device->md3dImmediateContext, *mConsoleFont, Console::Instance()->mConsoleBuffer, textPos);
-		mSpriteBatch->DrawConsoleCommand(mDX11Device->md3dImmediateContext, *mConsoleFont, cmd, cmdPos);
+	CD3D11_RECT rect( 0, -Console::Instance()->mConsoleElevation, System::Instance()->mScreenWidth, CONSOLE_HEIGHT-Console::Instance()->mConsoleElevation);
+	CD3D11_RECT rectLogo( System::Instance()->mScreenWidth - 220, 40-Console::Instance()->mConsoleElevation, System::Instance()->mScreenWidth - 30, 160-Console::Instance()->mConsoleElevation);
+	
+	mSpriteBatch->DrawConsoleText(mDX11Device->md3dImmediateContext, *mConsoleFont, Console::Instance()->mConsoleBuffer, textPos);
+	mSpriteBatch->DrawConsoleCommand(mDX11Device->md3dImmediateContext, *mConsoleFont, cmd, cmdPos);
 
-		mSpriteBatch->DrawTexture2D(mRjeLogo,           mDX11Device->md3dImmediateContext, rectLogo, 0xffffffff);
-		mSpriteBatch->DrawTexture2D(mConsoleBackground, mDX11Device->md3dImmediateContext, rect,     0xffffffff);
-	}
-	mDX11Device->md3dImmediateContext->OMSetBlendState(0, blendFactor, 0xffffffff);
+	mSpriteBatch->DrawTexture2D(mRjeLogo,           mDX11Device->md3dImmediateContext, rectLogo, 0xffffffff);
+	mSpriteBatch->DrawTexture2D(mConsoleBackground, mDX11Device->md3dImmediateContext, rect,     0xffffffff);
 }
 
 //////////////////////////////////////////////////////////////////////////
-void DX11Wrapper::Draw2dElements(float blendFactor[4])
+void DX11Wrapper::DrawProfiler()
+{
+	PROFILE ("Draw Profiler");
+
+	POINT statsPos = {10, 10};
+	POINT textPos = {10, 50};
+
+	char buf[_CVTBUFSIZE];
+	dtoa(buf, _CVTBUFSIZE, System::Instance()->fps, 20);
+	mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, buf, statsPos, XMCOLOR(0xffffffff));
+	switch (Profiler::Instance()->GetState())
+	{
+	case 0:		mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler NONE",      textPos, XMCOLOR(0xffffffff));	break;
+	case 1:		mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler SIMPLE",    textPos, XMCOLOR(0xffffffff));	break;
+	case 2:		mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler ADVANCED",  textPos, XMCOLOR(0xffffffff));	break;
+	case 3:		mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler CPU",       textPos, XMCOLOR(0xffffffff));	break;
+	case 4:		mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler GPU",       textPos, XMCOLOR(0xffffffff));	break;
+	case 5:		mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler MEMORY",    textPos, XMCOLOR(0xffffffff));	break;
+	case 6:		mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler PHYSICS",   textPos, XMCOLOR(0xffffffff));	break;
+	case 7:		mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler ANIMATION", textPos, XMCOLOR(0xffffffff));	break;
+	case 8:		mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler AI",        textPos, XMCOLOR(0xffffffff));	break;
+	case 9:		mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler SCRIPT",    textPos, XMCOLOR(0xffffffff));	break;
+	case 10:	mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler SOUND",     textPos, XMCOLOR(0xffffffff));	break;
+	default:	break;
+	}
+}
+
+//////////////////////////////////////////////////////////////////////////
+void DX11Wrapper::Draw2dElements()
 {
 	POINT textPos = {10, 10};
-
-	mDX11Device->md3dImmediateContext->OMSetBlendState(DX11CommonStates::sBlendState_AlphaToCoverage, blendFactor, 0xffffffff);
-	{
-		// Draw 2D elements -------------
-		//mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mFont, L"RamJam Engine", textPos, XMCOLOR(0xffffffff));
-	}
-	mDX11Device->md3dImmediateContext->OMSetBlendState(0, blendFactor, 0xffffffff);
+	//mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"RamJam Engine", textPos, XMCOLOR(0xffffffff));
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -936,12 +1020,21 @@ void DX11Wrapper::Shutdown()
 	DX11CommonStates::DestroyAll();
 
 	RJE_SAFE_DELETE(mSpriteBatch);
-	RJE_SAFE_DELETE(mFont);
 	RJE_SAFE_DELETE(mConsoleFont);
+	RJE_SAFE_DELETE(mProfilerFont);
 
 	RJE_SAFE_RELEASE(mRenderTargetView);
 	mDX11DepthBuffer->Release();
 	RJE_SAFE_RELEASE(mSwapChain);
+
+	//------- Not used for now
+// #ifdef RJE_DEBUG
+// 	DXGI_DEBUG_RLO_FLAGS dbg_flags = DXGI_DEBUG_RLO_ALL;
+// 	HRESULT result;
+// 	// TODO: find why this is always returning E_INVALIDARG
+// 	result = md3dDebug->ReportLiveObjects( DXGI_DEBUG_ALL, dbg_flags );
+// #endif
+
 	mDX11Device->Release();
 
 	RJE_SAFE_DELETE(mDX11CommonStates);

@@ -12,6 +12,11 @@ System::System()
 	mMaximized = false;
 	mResizing  = false;
 
+	fps    = 0.0f;
+	mspf   = 0.0f;
+	minfps = 1e9f;
+	maxfps = 0.0f;
+
 	mLastMousePos.x  = 0;
 	mLastMousePos.y  = 0;
 	mCameraTheta	 = 1.5f*RJE::Math::Pi;
@@ -68,9 +73,10 @@ void System::Shutdown()
 	mGraphicAPI->Shutdown();
 	RJE_SAFE_DELETE(mGraphicAPI);
 
-	Timer::DeleteInstance();
-	Input::DeleteInstance();
-	Console::DeleteInstance();
+	Timer::   DeleteInstance();
+	Input::   DeleteInstance();
+	Console:: DeleteInstance();
+	Profiler::DeleteInstance();
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -87,13 +93,12 @@ void System::Run()
 		// Check to see if any messages are waiting in the queue
 		if(PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 		{
-			// translate keystroke messages into the right format
-			TranslateMessage(&msg);
-			// send the message to the WindowProc function
-			DispatchMessage(&msg);
+			TranslateMessage(&msg);		// translate keystroke messages into the right format
+			DispatchMessage (&msg);		// send the message to the WindowProc function
 		}
 		else	// Otherwise, do animation/game stuff.
 		{
+			PROFILE("Frame");
 			Timer::Instance()->Update();
 
 			if (!Console::Instance()->IsActive())
@@ -113,6 +118,9 @@ void System::Run()
 				CalculateFrameStats();
 				UpdateScene(Timer::Instance()->DeltaTime());
 				DrawScene();
+
+				Console::Instance()->Update();
+				Profiler::Instance()->Update();
 				
 				Input::Instance()->ResetInputStates();
 			}
@@ -255,6 +263,7 @@ LRESULT CALLBACK System::MessageHandler(HWND hwnd, UINT umsg, WPARAM wparam, LPA
 //////////////////////////////////////////////////////////////////////////
 BOOL System::UpdateScene(float dt)
 {
+	PROFILE("Update Scene");
 	mGraphicAPI->UpdateScene(dt);
 	return true;
 }
@@ -262,6 +271,7 @@ BOOL System::UpdateScene(float dt)
 //////////////////////////////////////////////////////////////////////////
 BOOL System::DrawScene()
 {
+	PROFILE("Draw Scene");
 	mGraphicAPI->DrawScene();
 	return true;
 }
@@ -393,14 +403,18 @@ void System::CalculateFrameStats()
 	// Compute averages over one second period.
 	if( (Timer::Instance()->Time() - timeElapsed) >= 1.0f )
 	{
-		float fps = (float)frameCnt;
-		float mspf = 1000.0f / fps;
+		fps = (float)frameCnt;
+		mspf = 1000.0f / fps;
+		if (minfps > fps)	minfps = fps;
+		if (maxfps < fps)	maxfps = fps;
 
 		std::wostringstream outs;
 		outs.precision(6);
-		outs << sInstance->mSzTitle << L"    "
-			<< L"FPS: " << fps << L"    "
-			<< L"Frame Time: " << mspf << L" (ms)";
+		outs << sInstance->mSzTitle    << L"    "
+			<< L"FPS: "        << fps
+			<< L" ("           << minfps
+			<< L"-"            << maxfps
+			<< L")    Frame Time: " << mspf << L" (ms)";
 		SetWindowText(mHWnd, outs.str().c_str());
 
 		// Reset for next average.

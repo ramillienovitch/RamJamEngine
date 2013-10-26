@@ -2,6 +2,7 @@
 
 #include "Memory.h"
 #include "System.h"
+#include "Input.h"
 
 Console* Console::sInstance = nullptr;
 
@@ -13,6 +14,9 @@ Console::Console()
 {
 	mIsActive      = false;
 	mConsoleBuffer = new char[COMMAND_MAX_LENGTH*LINE_MAX];
+
+	mConsoleElevation = CONSOLE_HEIGHT;
+	mConsoleState     = E_CONSOLE_IDLE;
 	
 	mHistoricCount     = 0;
 	mCurrentHistoric = -1;
@@ -192,14 +196,16 @@ void Console::ConcatCommand()
 }
 
 //////////////////////////////////////////////////////////////////////////
-void Console::ToggleConsoleState()
+void Console::ActivateConsole()
 {
-	if (mIsActive)
-	{
-		mIsActive=false;
-		ClearCommand();
-	}
-	else mIsActive = true;
+	mIsActive     = true;
+	mConsoleState = E_CONSOLE_DOWN;
+}
+
+//////////////////////////////////////////////////////////////////////////
+void Console::ExitConsole()
+{
+	if (mIsActive)	mConsoleState = E_CONSOLE_UP;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -308,6 +314,50 @@ void Console::DisplayError()
 
 	mConsoleBuffer[mConsoleBufferSize++] = 1;
 	mConsoleBuffer[mConsoleBufferSize]   = nullchar;
+}
+
+//////////////////////////////////////////////////////////////////////////
+void Console::Update()
+{
+	PROFILE("Update Console");
+	if (mIsActive)
+	{
+		if (Input::Instance()->GetKeyboardDown(Keycode::Backspace))		RemoveCharacter();
+		if (Input::Instance()->GetKeyboardDown(Keycode::Return))		RegisterAndClearCommand();
+		if (Input::Instance()->GetKeyboardDown(Keycode::UpArrow))		GetCommandHistoric(true);
+		if (Input::Instance()->GetKeyboardDown(Keycode::DownArrow))		GetCommandHistoric(false);
+		if (Input::Instance()->GetKeyboardDown(Keycode::Esc) || Input::Instance()->GetKeyboardDown(Keycode::F2))	ExitConsole();
+
+		// Transition ---------------
+		switch (mConsoleState)
+		{
+		case E_CONSOLE_UP:
+			mConsoleElevation += (int) (Timer::Instance()->RealDeltaTime() * CONSOLE_HEIGHT * 3);	// 0.33 seconds
+			if (mConsoleElevation > CONSOLE_HEIGHT)
+			{
+				mConsoleElevation = CONSOLE_HEIGHT;
+				mConsoleState     = E_CONSOLE_IDLE;
+				mIsActive         = false;
+				ClearCommand();
+			}
+			break;
+		case E_CONSOLE_DOWN:
+			mConsoleElevation -= (int) (Timer::Instance()->RealDeltaTime() * CONSOLE_HEIGHT * 3);
+			if (mConsoleElevation < 0)
+			{
+				mConsoleElevation = 0;
+				mConsoleState     = E_CONSOLE_IDLE;
+			}
+			break;
+		case E_CONSOLE_IDLE:
+		default:
+			break;
+		}
+	}
+	else
+	{
+		if (Input::Instance()->GetKeyboardDown(Keycode::F1))	Console::Instance()->ActivateConsole();
+	}
 }
 
 

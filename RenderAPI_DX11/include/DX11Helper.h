@@ -22,6 +22,11 @@
 #include "..\..\Effects11\inc\d3dx11effect.h"
 //#include "D3DX11Effect.h"		// from RenderAPI_DX11\include ==> in conflict with Effects11
 
+#if defined(RJE_DEBUG)
+#	include "Initguid.h"
+#	include "DXGIDebug.h"
+#endif
+
 
 
 //////////////////////////////////////////////////////////////////////////

@@ -18,8 +18,13 @@ struct DX11Wrapper : GraphicAPI
 	D3D11_VIEWPORT			mScreenViewport;
 	D3D_DRIVER_TYPE			md3dDriverType;
 
+#if defined(RJE_DEBUG)  
+	IDXGIDebug*			md3dDebug;
+	ID3D11InfoQueue*	md3dInfoQueue;
+#endif
+
 	DX11FontSheet*		mConsoleFont;
-	DX11FontSheet*		mFont;
+	DX11FontSheet*		mProfilerFont;
 	DX11SpriteBatch*	mSpriteBatch;
 
 	//////////////////////////////////////////////////////////////////////////
@@ -104,5 +109,6 @@ struct DX11Wrapper : GraphicAPI
 	void BuildGeometryBuffers();
 
 	void DrawConsole();
-	void Draw2dElements(float blendFactor[4]);
+	void DrawProfiler();
+	void Draw2dElements();
 };

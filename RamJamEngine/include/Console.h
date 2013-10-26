@@ -4,6 +4,14 @@
 #include "Debug.h"
 #include "Globals.h"
 
+typedef enum CONSOLE_STATE
+{
+	E_CONSOLE_UP   = 1,
+	E_CONSOLE_DOWN = 2,
+	E_CONSOLE_IDLE = 3
+} CONSOLE_STATE;
+
+//////////////////////////////////////////////////////////////////////////
 typedef void (*f_ptr)(char*);
 
 //////////////////////////////////////////////////////////////////////////
@@ -55,22 +63,29 @@ struct Console
 	void	ConcatCommand();
 	//----------
 	BOOL	IsActive();
-	void	ToggleConsoleState();
+	void	ActivateConsole();
+	void	ExitConsole();
 	//----------
 	void	AddCharacter(const char c);
 	void	AddLine();
 	void	RemoveCharacter();
 	void	RemoveFirstLine();
+	//----------
+	void	Update();
 
 	char*	mConsoleBuffer;
 
-	// The commands that can be executed by the console 
-	std::map<char*, f_ptr> CommandList;
+	// The position (y-axis) of the console (used for transition effect)
+	int				mConsoleElevation;
+	CONSOLE_STATE	mConsoleState;
 
 private:
 	Console();
 
 	static Console* sInstance;
+
+	// The commands that can be executed by the console 
+	std::map<char*, f_ptr> CommandList;
 
 	BOOL		mIsActive;
 

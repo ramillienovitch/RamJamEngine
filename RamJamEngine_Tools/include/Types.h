@@ -48,7 +48,28 @@ typedef				long double			f80;
 
 
 //////////////////////////////////////////////////////////////////////////
-//---------------------- Convertion Utilities -------------------------//
+//----------------- Debug and Profiling Utilities ---------------------//
+struct ProfilingInfo_Rendering
+{
+	u64 IAVertices;
+	u64 IAPrimitives;
+	u64 VSInvoc;
+	u64 PSInvoc;
+	u64 GSInvoc;
+	u64 HSInvoc;
+	u64 DSInvoc;
+	u64 CSInvoc;
+	u64 rasterizerPrimitives;
+	u64 renderedPrimitives;
+};
+struct ProfilingInfo
+{
+	ProfilingInfo_Rendering Info_Rendering;
+};
+
+
+//////////////////////////////////////////////////////////////////////////
+//---------------------- Conversion Utilities -------------------------//
 #define dtoa _gcvt_s
 
 

@@ -65,6 +65,11 @@ float Timer::DeltaTime() const
 	return mDeltaTime;
 }
 
+float Timer::RealDeltaTime() const
+{
+	return mRealDeltaTime;
+}
+
 void Timer::Reset( BOOL pause )
 {
 	u64 currentTime;
@@ -115,7 +120,8 @@ void Timer::Update()
 {
 	if (!mActive)
 	{
-		mDeltaTime = 0.0f;
+		mDeltaTime     = 0.0f;
+		mRealDeltaTime = 0.0f;
 		return;
 	}
 
@@ -124,7 +130,8 @@ void Timer::Update()
 	mCurrentTime = currentTime;
 
 	// Time difference between this frame and the previous.
-	mDeltaTime = (mCurrentTime - mPreviousTime)*mSecondsPerCount * mTimeScale;
+	mRealDeltaTime = (mCurrentTime - mPreviousTime)*mSecondsPerCount;
+	mDeltaTime     = mRealDeltaTime * mTimeScale;
 	
 	// Prepare for next frame.
 	mPreviousTime = mCurrentTime;
@@ -132,8 +139,8 @@ void Timer::Update()
 	// Force nonnegative.  The DXSDK's CDXUTTimer mentions that if the 
 	// processor goes into a power save mode or we get shuffled to another
 	// processor, then mDeltaTime can be negative.
-	if (mDeltaTime < 0.0)
-		mDeltaTime = 0.0f;
+	if (mDeltaTime < 0.0)		mDeltaTime     = 0.0f;
+	if (mRealDeltaTime < 0.0)	mRealDeltaTime = 0.0f;
 }
 
 //////////////////////////////////////////////////////////////////////////

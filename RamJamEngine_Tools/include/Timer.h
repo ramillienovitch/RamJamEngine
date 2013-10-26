@@ -11,9 +11,10 @@
 
 struct Timer
 {
-	float	Time() const;		// Return the Elapsed time the Game has been active in seconds since Reset
-	void	Time(float time);	// Set the Elapsed playing time -- used for restarting in the middle of a game
-	float	DeltaTime() const;	// Return the Delta time between the last two updates
+	float	Time() const;			// Return the Elapsed time the Game has been active in seconds since Reset
+	void	Time(float time);		// Set the Elapsed playing time -- used for restarting in the middle of a game
+	float	DeltaTime() const;		// Return the Delta time between the last two updates
+	float	RealDeltaTime() const;	// Return the real delta time (without the timescale) between the last two updates
 
 	void Reset(BOOL pause);
 	void Start();
@@ -43,7 +44,8 @@ private:
 	Timer();
 	static Timer* sInstance;
 
-	float mSecondsPerCount;  // 1.0 / Frequency
+	float mSecondsPerCount;		// 1.0 / Frequency
+	float mRealDeltaTime;		// delta time without the timescale
 	float mDeltaTime;
 
 	float mTimeScale;
