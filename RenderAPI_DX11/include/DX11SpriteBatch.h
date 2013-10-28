@@ -6,6 +6,13 @@ using namespace DirectX::PackedVector;
 
 class DX11FontSheet;
 
+typedef enum TextAlignment
+{
+	LeftAligned = 0,
+	RightAligned,
+	Centered
+}TextAlignment;
+
 class DX11SpriteBatch
 {
 public:
@@ -37,8 +44,8 @@ public:
 	/// Draws a string to the screen.
 	//  DrawString should not be called inside BeginBatch()/EndBatch().
 	//  Internally, DrawString calls BeginBatch()/EndBatch() to draw the string characters as a single batch.
-	void DrawString(        ID3D11DeviceContext* dc, DX11FontSheet& fs, const std::wstring& text,         const POINT& pos, XMCOLOR color);
-	void DrawString(        ID3D11DeviceContext* dc, DX11FontSheet& fs, const char text[],                const POINT& pos, XMCOLOR color);
+	void DrawString(        ID3D11DeviceContext* dc, DX11FontSheet& fs, const std::wstring& text,         const POINT& pos, XMCOLOR color, TextAlignment alignment = LeftAligned);
+	void DrawString(        ID3D11DeviceContext* dc, DX11FontSheet& fs, const char text[],                const POINT& pos, XMCOLOR color, TextAlignment alignment = LeftAligned);
 	void DrawInfoText(      ID3D11DeviceContext* dc, DX11FontSheet& fs, const char* text,                 const POINT& pos);
 	void DrawConsoleCommand(ID3D11DeviceContext* dc, DX11FontSheet& fs, char (&text)[COMMAND_MAX_LENGTH], const POINT& pos);
 

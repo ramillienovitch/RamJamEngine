@@ -28,6 +28,7 @@ namespace RJE
 #	else
 #		define RJE_CHECK_FOR_SUCCESS( X )	if (FAILED(X)) return false;
 #	endif
+#	define RJE_CHECK_WINDOWS_CALL( X )	if (X==0) {RJE_ASSERT(false); GetLastError();}
 #	define RJE_CHECK_IF_NULL( X )		if (X==0) return false;
 #	define RJE_CHECK_IF_NULLPTR( X )	if (X==nullptr) return false;
 

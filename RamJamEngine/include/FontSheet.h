@@ -42,7 +42,7 @@ public:
 	/// Gets the width of the "space" character.  This tells the SpriteBatch
 	/// how much space to skip when rendering space characters.
 	int GetSpaceWidth();
-
+	
 	/// Returns the character height for the font.  This should be used for
 	/// newline characters when rendering text.
 	int GetCharHeight();

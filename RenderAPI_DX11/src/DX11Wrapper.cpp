@@ -218,16 +218,21 @@ void DX11Wrapper::Initialize(HWND hMainWnd, int windowWidth, int windowHeight)
 	// used to create the device.  If we tried to use a different IDXGIFactory instance
 	// (by calling CreateDXGIFactory), we get an error: "IDXGIFactory::CreateSwapChain: 
 	// This function is being called with a device from a different IDXGIFactory."
-	IDXGIDevice* dxgiDevice = nullptr;
-	RJE_CHECK_FOR_SUCCESS(mDX11Device->md3dDevice->QueryInterface(__uuidof(IDXGIDevice), (void**)&dxgiDevice));
-
+	IDXGIDevice* dxgiDevice   = nullptr;
 	IDXGIAdapter* dxgiAdapter = nullptr;
-	RJE_CHECK_FOR_SUCCESS(dxgiDevice->GetParent(__uuidof(IDXGIAdapter), (void**)&dxgiAdapter));
-
 	IDXGIFactory* dxgiFactory = nullptr;
+
+	RJE_CHECK_FOR_SUCCESS(mDX11Device->md3dDevice->QueryInterface(__uuidof(IDXGIDevice), (void**)&dxgiDevice));
+	RJE_CHECK_FOR_SUCCESS(dxgiDevice->GetParent(__uuidof(IDXGIAdapter), (void**)&dxgiAdapter));
 	RJE_CHECK_FOR_SUCCESS(dxgiAdapter->GetParent(__uuidof(IDXGIFactory), (void**)&dxgiFactory));
 	RJE_CHECK_FOR_SUCCESS(dxgiFactory->CreateSwapChain(mDX11Device->md3dDevice, &sd, &mSwapChain));
 	RJE_CHECK_FOR_SUCCESS(dxgiFactory->MakeWindowAssociation(hMainWnd, DXGI_MWA_NO_WINDOW_CHANGES));
+
+	DXGI_ADAPTER_DESC adapterDesc;
+	dxgiAdapter->GetDesc(&adapterDesc);
+	memcpy_s(System::Instance()->mGpuDescription, 128*sizeof(WCHAR), adapterDesc.Description, 128*sizeof(WCHAR));
+	System::Instance()->mGpuDedicatedVRAM = adapterDesc.DedicatedVideoMemory;
+	System::Instance()->mGpuSharedVRAM    = adapterDesc.SharedSystemMemory;
 
 	RJE_SAFE_RELEASE(dxgiDevice);
 	RJE_SAFE_RELEASE(dxgiAdapter);
@@ -1019,25 +1024,27 @@ void DX11Wrapper::DrawProfiler()
 {
 	PROFILE ("Draw Profiler");
 
-	POINT statsPos = {10, 10};
-	POINT textPos = {10, 50};
+	POINT statsPos = {500, 10};
+	POINT APos = {200, 30};
+	POINT BPos = {200, 40};
+	POINT textPos = {500, 20};
 
-	char buf[_CVTBUFSIZE];
-	dtoa(buf, _CVTBUFSIZE, System::Instance()->fps, 20);
-	mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, buf, statsPos, XMCOLOR(0xffffffff));
+	std::wstring fps;
+	fps = L"FPS : " + ToString(System::Instance()->fps);
+	mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, fps, statsPos, XMCOLOR(0xffffffff));
 	switch (Profiler::Instance()->GetState())
 	{
-	case PROFILER_STATES::E_NONE:		mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler NONE",      textPos, XMCOLOR(0xffffffff));	break;
-	case PROFILER_STATES::E_SIMPLE:		mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler SIMPLE",    textPos, XMCOLOR(0xffffffff));	break;
-	case PROFILER_STATES::E_ADVANCED:	mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler ADVANCED",  textPos, XMCOLOR(0xffffffff));	break;
-	case PROFILER_STATES::E_CPU:		mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler CPU",       textPos, XMCOLOR(0xffffffff));	break;
-	case PROFILER_STATES::E_GPU:		mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler GPU",       textPos, XMCOLOR(0xffffffff));	break;
-	case PROFILER_STATES::E_MEMORY:		mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler MEMORY",    textPos, XMCOLOR(0xffffffff));	break;
-	case PROFILER_STATES::E_PHYSICS:	mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler PHYSICS",   textPos, XMCOLOR(0xffffffff));	break;
-	case PROFILER_STATES::E_ANIMATION:	mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler ANIMATION", textPos, XMCOLOR(0xffffffff));	break;
-	case PROFILER_STATES::E_AI:			mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler AI",        textPos, XMCOLOR(0xffffffff));	break;
-	case PROFILER_STATES::E_SCRIPT:		mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler SCRIPT",    textPos, XMCOLOR(0xffffffff));	break;
-	case PROFILER_STATES::E_SOUND:		mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler SOUND",     textPos, XMCOLOR(0xffffffff));	break;
+	case PROFILER_STATES::E_NONE:		mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler NONE",      textPos, XMCOLOR(0xffffffff), RightAligned);	break;
+	case PROFILER_STATES::E_SIMPLE:		mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler SIMPLE",    textPos, XMCOLOR(0xffffffff), RightAligned);	break;
+	case PROFILER_STATES::E_ADVANCED:	mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler ADVANCED",  textPos, XMCOLOR(0xffffffff), RightAligned);	break;
+	case PROFILER_STATES::E_CPU:		mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler CPU",       textPos, XMCOLOR(0xffffffff), RightAligned);	break;
+	case PROFILER_STATES::E_GPU:		mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler GPU",       textPos, XMCOLOR(0xffffffff), RightAligned);	break;
+	case PROFILER_STATES::E_MEMORY:		mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler MEMORY",    textPos, XMCOLOR(0xffffffff), RightAligned);	break;
+	case PROFILER_STATES::E_PHYSICS:	mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler PHYSICS",   textPos, XMCOLOR(0xffffffff), RightAligned);	break;
+	case PROFILER_STATES::E_ANIMATION:	mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler ANIMATION", textPos, XMCOLOR(0xffffffff), RightAligned);	break;
+	case PROFILER_STATES::E_AI:			mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler AI",        textPos, XMCOLOR(0xffffffff), RightAligned);	break;
+	case PROFILER_STATES::E_SCRIPT:		mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler SCRIPT",    textPos, XMCOLOR(0xffffffff), RightAligned);	break;
+	case PROFILER_STATES::E_SOUND:		mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler SOUND",     textPos, XMCOLOR(0xffffffff), RightAligned);	break;
 	default:	break;
 	}
 }

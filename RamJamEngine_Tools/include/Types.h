@@ -72,17 +72,45 @@ struct ProfilingInfo
 //---------------------- Conversion Utilities -------------------------//
 #define dtoa _gcvt_s
 
+// Converts an ANSI string to a std::wstring
+inline std::wstring AnsiToWString(const char* ansiString)
+{
+	WCHAR buffer[512];
+	if (MultiByteToWideChar(CP_ACP, 0, ansiString, -1, buffer, 512))
+		return std::wstring(buffer);
+	
+	return std::wstring();
+}
+
+// Converts a number to a string
+template<typename T>
+inline std::wstring ToString(const T& val)
+{
+	std::wostringstream stream;
+	stream << val;
+	return stream.str();
+}
+
+// Converts a number to an ansi string
+template<typename T>
+inline std::string ToAnsiString(const T& val)
+{
+	std::ostringstream stream;
+	stream << val;
+	return stream.str();
+}
+
 
 //////////////////////////////////////////////////////////////////////////
 //---------------------- Comparison Utilities -------------------------//
 template<typename T>
-BOOL IsZero(T number)
+inline BOOL IsZero(T number)
 {
 	return (number < std::numeric_limits<T>::epsilon( ));
 }
 
 template<typename T>
-BOOL IsOne(T number)
+inline BOOL IsOne(T number)
 {
 	return (number-1 < std::numeric_limits<T>::epsilon( ));
 }

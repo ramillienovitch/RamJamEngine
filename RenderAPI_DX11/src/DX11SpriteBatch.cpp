@@ -260,26 +260,60 @@ void DX11SpriteBatch::DrawTexture2D(ID3D11ShaderResourceView* texSRV, ID3D11Devi
 }
 
 //////////////////////////////////////////////////////////////////////////
-void DX11SpriteBatch::DrawString(ID3D11DeviceContext* dc, DX11FontSheet& fs, const std::wstring& text, const POINT& pos, XMCOLOR color)
+void DX11SpriteBatch::DrawString(ID3D11DeviceContext* dc, DX11FontSheet& fs, const std::wstring& text, const POINT& pos, XMCOLOR color, TextAlignment alignment)
 {
 	BeginBatch(fs.GetFontSheetSRV());
 
 	UINT length = (UINT)text.length();
 
-	int posX = pos.x;
-	int posY = pos.y;
+	int posX       = 0;
+	int posY       = pos.y;
+	int totalWidth = 0;
+	
+	if (alignment == LeftAligned)
+	{
+		posX = pos.x;
+	}
+	else
+	{
+		// Calculate text total width to adjust with the alignment
+		for(UINT i = 0; i < length; ++i)
+		{
+			WCHAR character = text[i];
+		
+			if(character == ' ')
+			{
+				totalWidth += fs.GetMaxCharWidth();
+			}
+			else
+			{
+				if ( character < DX11FontSheet::StartChar || character > DX11FontSheet::EndChar )
+					character = '?';
+
+				// Get the bounding rect of the character on the fontsheet.
+				const CD3D11_RECT& charRect = fs.GetCharBoundingRect(character);
+
+				int width  = charRect.right - charRect.left;
+				totalWidth += width+1;
+			}
+		}
+
+		if (alignment == RightAligned)		posX = pos.x - totalWidth;
+		else								posX = pos.x - totalWidth/ 2;
+	}
 
 	for(UINT i = 0; i < length; ++i)
 	{
 		WCHAR character = text[i];
 
-		if(character == ' ') 
+		if(character == ' ')
 		{
-			posX += fs.GetSpaceWidth();
+			posX += fs.GetMaxCharWidth();
 		}
 		else if(character == '\n')
 		{
-			posX  = pos.x;
+			if (alignment == LeftAligned)
+				posX = pos.x;
 			posY += fs.GetCharHeight();
 		}
 		else
@@ -305,14 +339,47 @@ void DX11SpriteBatch::DrawString(ID3D11DeviceContext* dc, DX11FontSheet& fs, con
 }
 
 //////////////////////////////////////////////////////////////////////////
-void DX11SpriteBatch::DrawString(ID3D11DeviceContext* dc, DX11FontSheet& fs, const char text[], const POINT& pos, XMCOLOR color)
+void DX11SpriteBatch::DrawString(ID3D11DeviceContext* dc, DX11FontSheet& fs, const char text[], const POINT& pos, XMCOLOR color, TextAlignment alignment)
 {
 	BeginBatch(fs.GetFontSheetSRV());
 
 	UINT length = (UINT)strlen(text);
 
-	int posX = pos.x;
-	int posY = pos.y;
+	int posX       = 0;
+	int posY       = pos.y;
+	int totalWidth = 0;
+
+	if (alignment == LeftAligned)
+	{
+		posX = pos.x;
+	}
+	else
+	{
+		// Calculate text total width to adjust with the alignment
+		for(UINT i = 0; i < length; ++i)
+		{
+			WCHAR character = text[i];
+
+			if(character == ' ')
+			{
+				totalWidth += fs.GetMaxCharWidth();
+			}
+			else
+			{
+				if ( character < DX11FontSheet::StartChar || character > DX11FontSheet::EndChar )
+					character = '?';
+
+				// Get the bounding rect of the character on the fontsheet.
+				const CD3D11_RECT& charRect = fs.GetCharBoundingRect(character);
+
+				int width  = charRect.right - charRect.left;
+				totalWidth += width+1;
+			}
+		}
+
+		if (alignment == RightAligned)		posX = pos.x - totalWidth;
+		else								posX = pos.x - totalWidth/ 2;
+	}
 
 	for(UINT i = 0; i < length; ++i)
 	{
@@ -320,7 +387,7 @@ void DX11SpriteBatch::DrawString(ID3D11DeviceContext* dc, DX11FontSheet& fs, con
 
 		if(character == ' ') 
 		{
-			posX += fs.GetSpaceWidth();
+			posX += fs.GetMaxCharWidth();
 		}
 		else if(character == '\n')
 		{

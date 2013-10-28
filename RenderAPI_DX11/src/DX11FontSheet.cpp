@@ -33,6 +33,13 @@ const CD3D11_RECT& DX11FontSheet::GetCharBoundingRect( WCHAR c )
 }
 
 //////////////////////////////////////////////////////////////////////////
+const int DX11FontSheet::GetMaxCharWidth()
+{
+	RJE_ASSERT(mInitialized);
+	return mMaxCharWidth;
+}
+
+//////////////////////////////////////////////////////////////////////////
 HRESULT DX11FontSheet::Initialize( ID3D11Device* device, const std::wstring& fontName, float pixelFontSize, FontStyle fontStyle, BOOL antiAliased )
 {
 	// Prevent double Init.
@@ -105,8 +112,9 @@ HRESULT DX11FontSheet::BuildFontSheetBitmap( Gdiplus::Font& font, Gdiplus::Graph
 {
 	WCHAR charString[2] = {' ', 0};
 	Gdiplus::SolidBrush whiteBrush(Gdiplus::Color(255, 255, 255, 255));
-	UINT fontSheetX = 0;
-	UINT fontSheetY = 0;
+	UINT fontSheetX   = 0;
+	UINT fontSheetY   = 0;
+	UINT maxCharWidth = 0;
 	for(UINT i = 0; i < NumChars; ++i)
 	{
 		charString[0] = static_cast<WCHAR>(StartChar + i);
@@ -117,6 +125,8 @@ HRESULT DX11FontSheet::BuildFontSheetBitmap( Gdiplus::Font& font, Gdiplus::Graph
 		int minX = GetCharMinX(charBitmap);
 		int maxX = GetCharMaxX(charBitmap);
 		int charWidth = maxX - minX + 1;
+		if (maxCharWidth < charWidth)
+			maxCharWidth = charWidth;
 
 		// Move to next row of the font sheet?
 		if(fontSheetX + charWidth >= mTexWidth)
@@ -134,6 +144,7 @@ HRESULT DX11FontSheet::BuildFontSheetBitmap( Gdiplus::Font& font, Gdiplus::Graph
 		// next char
 		fontSheetX += charWidth + 1;
 	}
+	mMaxCharWidth = maxCharWidth;
 
 	return S_OK;
 }

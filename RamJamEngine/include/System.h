@@ -17,10 +17,20 @@ public:
 	int			mScreenWidth;
 	int			mScreenHeight;
 
-	float	fps;
+	// Application Statistics
+	float	fps;		// Frames Per Seconds
+	float	mspf;		// MilliSeconds Per Frame
 	float	minfps;
 	float	maxfps;
-	float	mspf;
+
+	// GPU Infos
+	WCHAR	mGpuDescription[128];
+	SIZE_T	mGpuDedicatedVRAM;
+	SIZE_T	mGpuSharedVRAM;
+
+	// Rendering Statistics
+	float mRenderingTime;
+
 
 	POINT		mLastMousePos;
 	float		mCameraTheta;

@@ -12,7 +12,8 @@ public:
 
 	ID3D11ShaderResourceView* GetFontSheetSRV();
 
-	const CD3D11_RECT& GetCharBoundingRect(WCHAR c);
+	const CD3D11_RECT&	GetCharBoundingRect(WCHAR c);
+	const int			GetMaxCharWidth();
 
 	HRESULT Initialize(ID3D11Device* device, const std::wstring& fontName, float pixelFontSize, FontStyle fontStyle, BOOL antiAliased);
 	HRESULT BuildFontSheetBitmap( Gdiplus::Font& font, Gdiplus::Graphics& charGraphics, Gdiplus::Bitmap& charBitmap, Gdiplus::Graphics& fontSheetGraphics);
@@ -23,4 +24,5 @@ private:
 	ID3D11ShaderResourceView* mFontSheetSRV;
 
 	CD3D11_RECT mCharRects[NumChars];
+	int mMaxCharWidth;
 };
