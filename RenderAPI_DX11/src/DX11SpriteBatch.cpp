@@ -350,7 +350,7 @@ void DX11SpriteBatch::DrawString(ID3D11DeviceContext* dc, DX11FontSheet& fs, con
 }
 
 //////////////////////////////////////////////////////////////////////////
-void DX11SpriteBatch::DrawConsoleText(ID3D11DeviceContext* dc, DX11FontSheet& fs, const char* text, const POINT& pos)
+void DX11SpriteBatch::DrawInfoText(ID3D11DeviceContext* dc, DX11FontSheet& fs, const char* text, const POINT& pos)
 {
 	BeginBatch(fs.GetFontSheetSRV());
 
@@ -359,39 +359,24 @@ void DX11SpriteBatch::DrawConsoleText(ID3D11DeviceContext* dc, DX11FontSheet& fs
 
 	XMCOLOR color = 0xffffffff;
 
-	for(UINT i = 0; i < COMMAND_MAX_LENGTH*LINE_MAX; ++i)
+	UINT i = 0;
+	while( true )
 	{
 		WCHAR character = text[i];
 
 		if(character == ' ') 
-		{
 			posX += fs.GetSpaceWidth();
-		}
 		else if(character == '\n')
 		{
 			posX  = pos.x;
 			posY += fs.GetCharHeight();
 		}
-		else if(character == CONSOLE_WHITE)
-		{
-			color = 0xffffffff;		// Write in white
-		}
-		else if(character == CONSOLE_RED)
-		{
-			color = 0xffff0000;		// Write in red
-		}
-		else if(character == CONSOLE_GREEN)
-		{
-			color = 0xff00ff00;		// Write in green
-		}
-		else if(character == CONSOLE_BLUE)
-		{
-			color = 0xff0000ff;		// Write in blue
-		}
-		else if(character == nullchar)
-		{
-			break;
-		}
+		else if(character == SCREEN_WHITE)		color = 0xffffffff;		// Write in white
+		else if(character == SCREEN_RED)		color = 0xffff0000;		// Write in red
+		else if(character == SCREEN_GREEN)		color = 0xff00ff00;		// Write in green
+		else if(character == SCREEN_BLUE)		color = 0xff0000ff;		// Write in blue
+		else if(character == SCREEN_BLACK)		color = 0x000000ff;		// Write in black
+		else if(character == nullchar)			break;
 		else
 		{
 			if ( character < DX11FontSheet::StartChar || character > DX11FontSheet::EndChar )
@@ -409,6 +394,7 @@ void DX11SpriteBatch::DrawConsoleText(ID3D11DeviceContext* dc, DX11FontSheet& fs
 			// Move to the next character position.
 			posX += width + 1;
 		}
+		++i;
 	}
 
 	EndBatch(dc);
@@ -429,18 +415,14 @@ void DX11SpriteBatch::DrawConsoleCommand(ID3D11DeviceContext* dc, DX11FontSheet&
 		WCHAR character = text[i];
 
 		if(character == ' ')
-		{
 			posX += fs.GetSpaceWidth();
-		}
 		else if(character == '\n')
 		{
 			posX  = pos.x;
 			posY += fs.GetCharHeight();
 		}
 		else if(character == nullchar)
-		{
 			break;
-		}
 		else
 		{
 			if ( character < DX11FontSheet::StartChar || character > DX11FontSheet::EndChar )
@@ -457,8 +439,6 @@ void DX11SpriteBatch::DrawConsoleCommand(ID3D11DeviceContext* dc, DX11FontSheet&
 			posX += width + 1;
 		}
 	}
-
-	//EndBatch(dc);
 
 	// We Draw the cursor
 	const CD3D11_RECT& charRect = fs.GetCharBoundingRect('_');

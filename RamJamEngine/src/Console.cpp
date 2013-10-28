@@ -142,11 +142,11 @@ void Console::ClearConsole()
 	mConsoleBufferSize = 0;
 	mLineCount         = 1;
 
-	ConcatText("RamJam Engine Runtime Console", CONSOLE_GREEN);
+	ConcatText("RamJam Engine Runtime Console", SCREEN_GREEN);
 }
 
 //////////////////////////////////////////////////////////////////////////
-void Console::ConcatText(const char* text, u8 color = CONSOLE_WHITE)
+void Console::ConcatText(const char* text, u8 color = SCREEN_WHITE)
 {
 	int newSize = (int)strlen(text);
 	if (mConsoleBufferSize + newSize > COMMAND_MAX_LENGTH*LINE_MAX - 3)
@@ -154,7 +154,7 @@ void Console::ConcatText(const char* text, u8 color = CONSOLE_WHITE)
 
 	mConsoleBuffer[mConsoleBufferSize] = (char)color;
 	memcpy(mConsoleBuffer+mConsoleBufferSize+1, text, newSize);
-	mConsoleBuffer[mConsoleBufferSize+newSize+1] = (char)CONSOLE_WHITE;
+	mConsoleBuffer[mConsoleBufferSize+newSize+1] = (char)SCREEN_WHITE;
 	mConsoleBuffer[mConsoleBufferSize+newSize+2] = nullchar;
 	mConsoleBufferSize += newSize+2;
 }
@@ -310,7 +310,7 @@ void Console::DisplayError()
 		mConsoleBuffer[mConsoleBufferSize++] = mCurrentCmd.Cmd[i];
 	}
 
-	ConcatText("\" : command not recognized. Syntax error", CONSOLE_RED);
+	ConcatText("\" : command not recognized. Syntax error", SCREEN_RED);
 
 	mConsoleBuffer[mConsoleBufferSize++] = 1;
 	mConsoleBuffer[mConsoleBufferSize]   = nullchar;
@@ -332,7 +332,7 @@ void Console::Update()
 		switch (mConsoleState)
 		{
 		case E_CONSOLE_UP:
-			mConsoleElevation += (int) (Timer::Instance()->RealDeltaTime() * CONSOLE_HEIGHT * 3);	// 0.33 seconds
+			mConsoleElevation += Timer::Instance()->RealDeltaTime() * CONSOLE_HEIGHT * 3;	// 0.33 seconds
 			if (mConsoleElevation > CONSOLE_HEIGHT)
 			{
 				mConsoleElevation = CONSOLE_HEIGHT;
@@ -342,7 +342,7 @@ void Console::Update()
 			}
 			break;
 		case E_CONSOLE_DOWN:
-			mConsoleElevation -= (int) (Timer::Instance()->RealDeltaTime() * CONSOLE_HEIGHT * 3);
+			mConsoleElevation -= Timer::Instance()->RealDeltaTime() * CONSOLE_HEIGHT * 3;
 			if (mConsoleElevation < 0)
 			{
 				mConsoleElevation = 0;

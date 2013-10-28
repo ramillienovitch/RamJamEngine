@@ -17,6 +17,12 @@ namespace RJE
 
 #	define RJE_ALIGNOF( X )		__declspec( align( X ) )
 
+#	define RJE_PROFILE_NONE			0
+#	define RJE_PROFILE_SAMPLE		1
+#	define RJE_PROFILE_INTRUSIVE	2
+#	define RJE_PROFILE RJE_PROFILE_INTRUSIVE
+#	define RJE_PROFILE_SAMPLERATE	10
+
 #	if (RJE_GRAPHIC_API == DIRECTX_11)
 #		define RJE_CHECK_FOR_SUCCESS( X )	if (FAILED(X)) {DXTrace(__FILE__, (DWORD)__LINE__, X, L#X, true);}
 #	else

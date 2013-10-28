@@ -76,7 +76,7 @@ struct Console
 	char*	mConsoleBuffer;
 
 	// The position (y-axis) of the console (used for transition effect)
-	int				mConsoleElevation;
+	float			mConsoleElevation;
 	CONSOLE_STATE	mConsoleState;
 
 private:

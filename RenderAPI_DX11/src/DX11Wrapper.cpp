@@ -248,14 +248,14 @@ void DX11Wrapper::Initialize(HWND hMainWnd, int windowWidth, int windowHeight)
 	RJE_CHECK_FOR_SUCCESS(mProfilerFont->Initialize(mDX11Device->md3dDevice, L"Consolas", 12.0f, FontSheet::FontStyleRegular, true));
 	RJE_CHECK_FOR_SUCCESS(mSpriteBatch-> Initialize(mDX11Device->md3dDevice));
 
-	LoadTexture("box",                "textures", "..\\..\\RamJamEngine\\data\\Resources.ini", &mBoxMap);
-	LoadTexture("grid",               "textures", "..\\..\\RamJamEngine\\data\\Resources.ini", &mGridMap);
-	LoadTexture("sphere",             "textures", "..\\..\\RamJamEngine\\data\\Resources.ini", &mSphereMap);
-	LoadTexture("cylinder",           "textures", "..\\..\\RamJamEngine\\data\\Resources.ini", &mCylinderMap);
-	LoadTexture("mask",               "textures", "..\\..\\RamJamEngine\\data\\Resources.ini", &mMaskMap);
-	LoadTexture("white",              "textures", "..\\..\\RamJamEngine\\data\\Resources.ini", &mWhiteSRV);
-	LoadTexture("console_background", "textures", "..\\..\\RamJamEngine\\data\\Resources.ini", &mConsoleBackground);
-	LoadTexture("rje_logo",           "textures", "..\\..\\RamJamEngine\\data\\Resources.ini", &mRjeLogo);
+	LoadTexture("box",                "textures", "../data/Resources.ini", &mBoxMap);
+	LoadTexture("grid",               "textures", "../data/Resources.ini", &mGridMap);
+	LoadTexture("sphere",             "textures", "../data/Resources.ini", &mSphereMap);
+	LoadTexture("cylinder",           "textures", "../data/Resources.ini", &mCylinderMap);
+	LoadTexture("mask",               "textures", "../data/Resources.ini", &mMaskMap);
+	LoadTexture("rje_logo",           "textures", "../data/Resources.ini", &mRjeLogo);
+	Create2DTexture(1,1, RJE_GLOBALS::Colors::TransDarkGray, &mConsoleBackground);
+	Create2DTexture(1,1, RJE_GLOBALS::Colors::White,         &mWhiteSRV);
 
 	BuildGeometryBuffers();
 }
@@ -270,10 +270,58 @@ void DX11Wrapper::LoadTexture(string keyName, string sectionName, string fileNam
 }
 
 //////////////////////////////////////////////////////////////////////////
+void DX11Wrapper::Create2DTexture(i32 height, i32 width, float r, float g, float b, float a, ID3D11ShaderResourceView** textureSRV)
+{
+	UINT textureSize = height * width;
+	u8* texArray = new u8[textureSize*4];
+
+	for (UINT i=0; i<textureSize*4; i+=4)
+	{	// Unsigned Normalized 8-bits values
+		texArray[i+0] = (u8) (r*255);
+		texArray[i+1] = (u8) (g*255);
+		texArray[i+2] = (u8) (b*255);
+		texArray[i+3] = (u8) (a*255);
+	}
+
+	D3D11_TEXTURE2D_DESC tex2dDesc;
+	ZeroMemory(&tex2dDesc, sizeof(D3D11_TEXTURE2D_DESC));
+	tex2dDesc.Height    = height;
+	tex2dDesc.Width     = width;
+	tex2dDesc.MipLevels = 1;
+	tex2dDesc.ArraySize = 1;
+	tex2dDesc.Usage     = D3D11_USAGE_DEFAULT;
+	tex2dDesc.Format    = DXGI_FORMAT_R8G8B8A8_UNORM;
+	tex2dDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+	tex2dDesc.SampleDesc.Count   = 1;
+	tex2dDesc.SampleDesc.Quality = 0;
+	tex2dDesc.CPUAccessFlags = 0;
+	tex2dDesc.MiscFlags      = 0;
+
+	D3D11_SUBRESOURCE_DATA tex2dInitData;
+	ZeroMemory(&tex2dInitData, sizeof(D3D11_SUBRESOURCE_DATA));
+	tex2dInitData.pSysMem     = (void *)texArray;
+	tex2dInitData.SysMemPitch = width * 4 * sizeof(u8);
+	//tex2dInitData.SysMemSlicePitch = width * height * 4 * sizeof(u8);	// Not used since this is a 2d texture
+
+	ID3D11Texture2D *tex2D = nullptr;
+	RJE_CHECK_FOR_SUCCESS(mDX11Device->md3dDevice->CreateTexture2D(&tex2dDesc, &tex2dInitData, &tex2D));
+	RJE_CHECK_FOR_SUCCESS(mDX11Device->md3dDevice->CreateShaderResourceView(tex2D, NULL, textureSRV));
+	RJE_SAFE_RELEASE(tex2D);
+
+	delete[] texArray;
+}
+
+//////////////////////////////////////////////////////////////////////////
+void DX11Wrapper::Create2DTexture(i32 height, i32 width, const float color[4], ID3D11ShaderResourceView** textureSRV)
+{
+	Create2DTexture(height, width, color[0], color[1], color[2], color[3], textureSRV);
+}
+
+//////////////////////////////////////////////////////////////////////////
 void DX11Wrapper::BuildGeometryBuffers()
 {
 	FILE* fIn;
-	fopen_s(&fIn, CIniFile::GetValue("modelpath", "meshes", "..\\..\\RamJamEngine\\data\\Resources.ini").c_str(), "rb");
+	fopen_s(&fIn, CIniFile::GetValue("modelpath", "meshes", "../data/Resources.ini").c_str(), "rb");
 
 	if(!fIn)
 	{
@@ -498,10 +546,10 @@ void DX11Wrapper::DrawScene()
 
 	mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sCurrentRasterizerState);
 
-	float rbg      = CIniFile::GetValueFloat("blend_rgb",   "blendfactor", "..\\..\\RamJamEngine\\data\\Scene.ini");
-	float alpha    = CIniFile::GetValueFloat("blend_alpha", "blendfactor", "..\\..\\RamJamEngine\\data\\Scene.ini");
-	float fogStart = CIniFile::GetValueFloat("fog_start",   "camera",      "..\\..\\RamJamEngine\\data\\Scene.ini");
-	float fogRange = CIniFile::GetValueFloat("fog_range",   "camera",      "..\\..\\RamJamEngine\\data\\Scene.ini");
+	float rbg      = CIniFile::GetValueFloat("blend_rgb",   "blendfactor", "../data/Scene.ini");
+	float alpha    = CIniFile::GetValueFloat("blend_alpha", "blendfactor", "../data/Scene.ini");
+	float fogStart = CIniFile::GetValueFloat("fog_start",   "camera",      "../data/Scene.ini");
+	float fogRange = CIniFile::GetValueFloat("fog_range",   "camera",      "../data/Scene.ini");
 	float blendFactor[4] = {rbg, rbg, rbg, alpha};
 
 	UINT stride = sizeof(Vertex::PosNormalTex);
@@ -952,13 +1000,14 @@ void DX11Wrapper::DrawConsole()
 	char cmd[COMMAND_MAX_LENGTH];
 	Console::Instance()->GetCommand(cmd);
 
-	POINT textPos = {10, 5 + (LINE_MAX-Console::Instance()->GetLineCount()) * mConsoleFont->GetCharHeight() - Console::Instance()->mConsoleElevation};
-	POINT cmdPos  = {10, CONSOLE_HEIGHT-25 - Console::Instance()->mConsoleElevation};
+	int consoleElevation = (int)Console::Instance()->mConsoleElevation;
+	POINT textPos = {10, 5 + (LINE_MAX-Console::Instance()->GetLineCount()) * mConsoleFont->GetCharHeight() - consoleElevation};
+	POINT cmdPos  = {10, CONSOLE_HEIGHT-25 - consoleElevation};
 
-	CD3D11_RECT rect( 0, -Console::Instance()->mConsoleElevation, System::Instance()->mScreenWidth, CONSOLE_HEIGHT-Console::Instance()->mConsoleElevation);
-	CD3D11_RECT rectLogo( System::Instance()->mScreenWidth - 220, 40-Console::Instance()->mConsoleElevation, System::Instance()->mScreenWidth - 30, 160-Console::Instance()->mConsoleElevation);
+	CD3D11_RECT rect( 0, -consoleElevation, System::Instance()->mScreenWidth, CONSOLE_HEIGHT-consoleElevation);
+	CD3D11_RECT rectLogo( System::Instance()->mScreenWidth - 220, 40-consoleElevation, System::Instance()->mScreenWidth - 30, 160-consoleElevation);
 	
-	mSpriteBatch->DrawConsoleText(mDX11Device->md3dImmediateContext, *mConsoleFont, Console::Instance()->mConsoleBuffer, textPos);
+	mSpriteBatch->DrawInfoText(      mDX11Device->md3dImmediateContext, *mConsoleFont, Console::Instance()->mConsoleBuffer, textPos);
 	mSpriteBatch->DrawConsoleCommand(mDX11Device->md3dImmediateContext, *mConsoleFont, cmd, cmdPos);
 
 	mSpriteBatch->DrawTexture2D(mRjeLogo,           mDX11Device->md3dImmediateContext, rectLogo, 0xffffffff);
@@ -978,17 +1027,17 @@ void DX11Wrapper::DrawProfiler()
 	mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, buf, statsPos, XMCOLOR(0xffffffff));
 	switch (Profiler::Instance()->GetState())
 	{
-	case 0:		mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler NONE",      textPos, XMCOLOR(0xffffffff));	break;
-	case 1:		mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler SIMPLE",    textPos, XMCOLOR(0xffffffff));	break;
-	case 2:		mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler ADVANCED",  textPos, XMCOLOR(0xffffffff));	break;
-	case 3:		mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler CPU",       textPos, XMCOLOR(0xffffffff));	break;
-	case 4:		mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler GPU",       textPos, XMCOLOR(0xffffffff));	break;
-	case 5:		mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler MEMORY",    textPos, XMCOLOR(0xffffffff));	break;
-	case 6:		mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler PHYSICS",   textPos, XMCOLOR(0xffffffff));	break;
-	case 7:		mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler ANIMATION", textPos, XMCOLOR(0xffffffff));	break;
-	case 8:		mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler AI",        textPos, XMCOLOR(0xffffffff));	break;
-	case 9:		mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler SCRIPT",    textPos, XMCOLOR(0xffffffff));	break;
-	case 10:	mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler SOUND",     textPos, XMCOLOR(0xffffffff));	break;
+	case PROFILER_STATES::E_NONE:		mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler NONE",      textPos, XMCOLOR(0xffffffff));	break;
+	case PROFILER_STATES::E_SIMPLE:		mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler SIMPLE",    textPos, XMCOLOR(0xffffffff));	break;
+	case PROFILER_STATES::E_ADVANCED:	mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler ADVANCED",  textPos, XMCOLOR(0xffffffff));	break;
+	case PROFILER_STATES::E_CPU:		mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler CPU",       textPos, XMCOLOR(0xffffffff));	break;
+	case PROFILER_STATES::E_GPU:		mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler GPU",       textPos, XMCOLOR(0xffffffff));	break;
+	case PROFILER_STATES::E_MEMORY:		mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler MEMORY",    textPos, XMCOLOR(0xffffffff));	break;
+	case PROFILER_STATES::E_PHYSICS:	mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler PHYSICS",   textPos, XMCOLOR(0xffffffff));	break;
+	case PROFILER_STATES::E_ANIMATION:	mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler ANIMATION", textPos, XMCOLOR(0xffffffff));	break;
+	case PROFILER_STATES::E_AI:			mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler AI",        textPos, XMCOLOR(0xffffffff));	break;
+	case PROFILER_STATES::E_SCRIPT:		mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler SCRIPT",    textPos, XMCOLOR(0xffffffff));	break;
+	case PROFILER_STATES::E_SOUND:		mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler SOUND",     textPos, XMCOLOR(0xffffffff));	break;
 	default:	break;
 	}
 }

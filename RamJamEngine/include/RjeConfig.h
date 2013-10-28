@@ -1,9 +1,5 @@
 #pragma once
 
-#ifndef RJE_PROFILING
-#define RJE_PROFILING 0
-#endif
-
 #ifndef RJE_DOUBLE_PRECISION
 #define RJE_DOUBLE_PRECISION 0
 #endif
