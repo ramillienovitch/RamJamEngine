@@ -954,7 +954,7 @@ void DX11Wrapper::DrawScene()
 	//////////////////////////////////////////////////////////////////////////
 
 // 	{
-// 		PROFILE("Get Data");
+// 		PROFILE_CPU("Get Data");
 // 		D3D11_QUERY_DATA_PIPELINE_STATISTICS	pipelineStatsData;
 // 		mDX11Device->md3dImmediateContext->End(pPipelineStatsQuery);
 // 		while( S_OK != 	mDX11Device->md3dImmediateContext->GetData(pPipelineStatsQuery, &pipelineStatsData, sizeof(D3D11_QUERY_DATA_PIPELINE_STATISTICS), 0) )
@@ -1000,7 +1000,7 @@ void DX11Wrapper::DrawScene()
 //////////////////////////////////////////////////////////////////////////
 void DX11Wrapper::DrawConsole()
 {
-	PROFILE("Draw Console");
+	PROFILE_CPU("Draw Console");
 
 	char cmd[COMMAND_MAX_LENGTH];
 	Console::Instance()->GetCommand(cmd);
@@ -1022,7 +1022,7 @@ void DX11Wrapper::DrawConsole()
 //////////////////////////////////////////////////////////////////////////
 void DX11Wrapper::DrawProfiler()
 {
-	PROFILE ("Draw Profiler");
+	PROFILE_CPU ("Draw Profiler");
 
 	POINT statsPos = {500, 10};
 	POINT APos = {200, 30};

@@ -98,7 +98,7 @@ void System::Run()
 		}
 		else	// Otherwise, do animation/game stuff.
 		{
-			PROFILE("Frame");
+			PROFILE_CPU("Frame");
 			Timer::Instance()->Update();
 
 			if (!Console::Instance()->IsActive())
@@ -263,7 +263,7 @@ LRESULT CALLBACK System::MessageHandler(HWND hwnd, UINT umsg, WPARAM wparam, LPA
 //////////////////////////////////////////////////////////////////////////
 BOOL System::UpdateScene(float dt)
 {
-	PROFILE("Update Scene");
+	PROFILE_CPU("Update Scene");
 	mGraphicAPI->UpdateScene(dt);
 	return true;
 }
@@ -271,7 +271,7 @@ BOOL System::UpdateScene(float dt)
 //////////////////////////////////////////////////////////////////////////
 BOOL System::DrawScene()
 {
-	PROFILE("Draw Scene");
+	PROFILE_CPU("Draw Scene");
 	mGraphicAPI->DrawScene();
 	return true;
 }

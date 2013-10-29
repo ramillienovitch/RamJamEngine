@@ -46,7 +46,7 @@ void Profiler::ExitProfiler()
 //////////////////////////////////////////////////////////////////////////
 void Profiler::Update()
 {
-	PROFILE("Update Profiler");
+	PROFILE_CPU("Update Profiler");
 	if (mIsActive)
 	{
 		if (Input::Instance()->GetKeyboardDown(F2))		ChangeState();

@@ -319,7 +319,7 @@ void Console::DisplayError()
 //////////////////////////////////////////////////////////////////////////
 void Console::Update()
 {
-	PROFILE("Update Console");
+	PROFILE_CPU("Update Console");
 	if (mIsActive)
 	{
 		if (Input::Instance()->GetKeyboardDown(Keycode::Backspace))		RemoveCharacter();

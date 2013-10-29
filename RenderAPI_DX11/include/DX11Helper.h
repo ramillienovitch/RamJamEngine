@@ -41,6 +41,7 @@
 
 //////////////////////////////////////////////////////////////////////////
 #include "DX11Math.h"
+#include "DX11Profiler.h"
 #include "DX11Device.h"
 #include "DX11DepthBuffer.h"
 #include "DX11CommonStates.h"

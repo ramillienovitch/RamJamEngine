@@ -102,11 +102,8 @@ struct AutoProfile
 	LARGE_INTEGER startTime;
 };
 
-#if RJE_PROFILE == RJE_PROFILE_NONE
-#	define PROFILE(name)	(void)0
-// TODO: Profiler Sample mode
-// #elif RJE_PROFILE == RJE_PROFILE_SAMPLE
-// #	define PROFILE(name)	AutoProfile profile(name)
-#elif RJE_PROFILE == RJE_PROFILE_INTRUSIVE
-#	define PROFILE(name)	AutoProfile profile(name)
+#if RJE_PROFILE_CPU
+#	define PROFILE_CPU(name)	AutoProfile profile(name)
+#elif
+#	define PROFILE_CPU(name)	(void)0
 #endif

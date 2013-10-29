@@ -89,6 +89,7 @@
     <ClInclude Include="include\DX11InputLayout.h" />
     <ClInclude Include="include\DX11Light.h" />
     <ClInclude Include="include\DX11Math.h" />
+    <ClInclude Include="include\DX11Profiler.h" />
     <ClInclude Include="include\DX11SpriteBatch.h" />
     <ClInclude Include="include\DX11Vertex.h" />
     <ClInclude Include="include\DX11Wrapper.h" />
@@ -108,6 +109,7 @@
     <ClCompile Include="src\DX11SpriteBatch.cpp" />
     <ClCompile Include="src\DX11Wrapper.cpp" />
     <ClCompile Include="src\GeometryGenerator.cpp" />
+    <ClCompile Include="src\DX11Profiler.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="..\RamJamEngine\data\shaders\HLSL\basic.fx">

@@ -114,7 +114,7 @@ HRESULT DX11FontSheet::BuildFontSheetBitmap( Gdiplus::Font& font, Gdiplus::Graph
 	Gdiplus::SolidBrush whiteBrush(Gdiplus::Color(255, 255, 255, 255));
 	UINT fontSheetX   = 0;
 	UINT fontSheetY   = 0;
-	UINT maxCharWidth = 0;
+	int maxCharWidth  = 0;
 	for(UINT i = 0; i < NumChars; ++i)
 	{
 		charString[0] = static_cast<WCHAR>(StartChar + i);
