@@ -17,6 +17,26 @@ System::System()
 	minfps = 1e9f;
 	maxfps = 0.0f;
 
+	// -------------------
+	int CPUInfo[4] = {-1};
+	unsigned nExIds;
+	// Get the information associated with each extended ID.
+	__cpuid(CPUInfo, 0x80000000);
+	nExIds = CPUInfo[0];
+	for (unsigned i=0x80000000; i<=nExIds; ++i)
+	{
+		__cpuid(CPUInfo, i);
+		// Interpret CPU brand string
+		if (i == 0x80000002)			memcpy(mCpuDescription,      CPUInfo, sizeof(CPUInfo));
+		else if (i == 0x80000003)		memcpy(mCpuDescription + 16, CPUInfo, sizeof(CPUInfo));
+		else if (i == 0x80000004)		memcpy(mCpuDescription + 32, CPUInfo, sizeof(CPUInfo));
+	}
+	MEMORYSTATUSEX statex;
+	statex.dwLength = sizeof (statex);
+	GlobalMemoryStatusEx(&statex);
+	mTotalSystemRAM = (statex.ullTotalPhys/1024)/1024;
+	// -------------------
+
 	mLastMousePos.x  = 0;
 	mLastMousePos.y  = 0;
 	mCameraTheta	 = 1.5f*RJE::Math::Pi;

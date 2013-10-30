@@ -23,8 +23,10 @@ public:
 	float	minfps;
 	float	maxfps;
 
-	// GPU Infos
+	// System Infos
+	CHAR	mCpuDescription[64];
 	WCHAR	mGpuDescription[128];
+	SIZE_T	mTotalSystemRAM;
 	SIZE_T	mGpuDedicatedVRAM;
 	SIZE_T	mGpuSharedVRAM;
 

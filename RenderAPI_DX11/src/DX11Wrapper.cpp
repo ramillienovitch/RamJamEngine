@@ -151,6 +151,12 @@ void DX11Wrapper::Initialize(HWND hMainWnd, int windowWidth, int windowHeight)
 		RJE_MESSAGE_BOX(0, L"Direct3D Feature Level 11 unsupported.", 0, 0);
 		return;
 	}
+
+	//////////////////////////////////////////////////////////////////////////
+
+	PROFILE_GPU_INIT(mDX11Device->md3dDevice, mDX11Device->md3dImmediateContext);
+
+	//////////////////////////////////////////////////////////////////////////
 	
 	//------- Not used for now
 // #ifdef RJE_DEBUG
@@ -231,8 +237,8 @@ void DX11Wrapper::Initialize(HWND hMainWnd, int windowWidth, int windowHeight)
 	DXGI_ADAPTER_DESC adapterDesc;
 	dxgiAdapter->GetDesc(&adapterDesc);
 	memcpy_s(System::Instance()->mGpuDescription, 128*sizeof(WCHAR), adapterDesc.Description, 128*sizeof(WCHAR));
-	System::Instance()->mGpuDedicatedVRAM = adapterDesc.DedicatedVideoMemory;
-	System::Instance()->mGpuSharedVRAM    = adapterDesc.SharedSystemMemory;
+	System::Instance()->mGpuDedicatedVRAM = (adapterDesc.DedicatedVideoMemory/1024)/1024;
+	System::Instance()->mGpuSharedVRAM    = (adapterDesc.SharedSystemMemory/1024)/1024;
 
 	RJE_SAFE_RELEASE(dxgiDevice);
 	RJE_SAFE_RELEASE(dxgiAdapter);
@@ -529,6 +535,8 @@ void DX11Wrapper::DrawScene()
 {
 	RJE_ASSERT(mDX11Device->md3dImmediateContext);
 	RJE_ASSERT(mSwapChain);
+
+	PROFILE_GPU_START(L"Render Scene");
 
 	//////////////////////////////////////////////////////////////////////////
 
@@ -951,6 +959,7 @@ void DX11Wrapper::DrawScene()
 		}
 	}
 
+
 	//////////////////////////////////////////////////////////////////////////
 
 // 	{
@@ -984,7 +993,12 @@ void DX11Wrapper::DrawScene()
 		DrawProfiler();
 	else if (!mbWireframe)
 		Draw2dElements();
-	
+
+	//////////////////////////////////////////////////////////////////////////
+
+	PROFILE_GPU_END(L"Render Scene");
+	PROFILE_GPU_END_FRAME();
+
 	//////////////////////////////////////////////////////////////////////////
 
 	if (RJE_GLOBALS::gVsyncEnabled)

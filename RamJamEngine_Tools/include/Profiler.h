@@ -43,7 +43,9 @@ struct Profiler
 	{
 		if(sInstance)
 		{
+#if RJE_PROFILE_CPU
 			sInstance->PrintToFile();
+#endif
 			delete sInstance;
 			sInstance = nullptr;
 		}
@@ -104,6 +106,6 @@ struct AutoProfile
 
 #if RJE_PROFILE_CPU
 #	define PROFILE_CPU(name)	AutoProfile profile(name)
-#elif
+#else
 #	define PROFILE_CPU(name)	(void)0
 #endif

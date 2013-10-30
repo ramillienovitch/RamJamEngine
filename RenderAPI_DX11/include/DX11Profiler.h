@@ -4,7 +4,7 @@
 
 struct DX11Profiler
 {
-	static DX11Profiler sProfiler;
+	static DX11Profiler sInstance;
 
 	static const u64 QueryLatency = 5;
 
@@ -18,10 +18,28 @@ struct DX11Profiler
 
 		float mElaspedTime;
 
-		ProfileData() : mElaspedTime(0.0f), mQueryStarted(false), mQueryFinished(false) {}
+		ProfileData() : mElaspedTime(0.0f), mQueryStarted(false), mQueryFinished(false)
+		{
+			for (int i=0 ; i<QueryLatency ; ++i)
+			{
+				mDisjointQuery      [i] = nullptr;
+				mTimestampStartQuery[i] = nullptr;
+				mTimestampEndQuery  [i] = nullptr;
+			}
+		}
+
+		~ProfileData()
+		{
+			for (int i=0 ; i<QueryLatency ; ++i)
+			{
+				RJE_SAFE_RELEASE(mDisjointQuery      [i]);
+				RJE_SAFE_RELEASE(mTimestampStartQuery[i]);
+				RJE_SAFE_RELEASE(mTimestampEndQuery  [i]);
+			}
+		}
 	};
 
-	typedef std::map<const char*, ProfileData> ProfileMap;
+	typedef std::map<wstring, ProfileData> ProfileMap;
 
 	ProfileMap	mProfiles;
 	u64			mCurrFrame;
@@ -35,31 +53,22 @@ struct DX11Profiler
 
 	void Initialize(ID3D11Device* device, ID3D11DeviceContext* immContext);
 
-	void StartProfile(const char* name);
-	void EndProfile(  const char* name);
+	void StartProfile(const wstring& name);
+	void EndProfile(  const wstring& name);
 
 	void EndFrame();
 };
 
 //////////////////////////////////////////////////////////////////////////
-struct AutoDXProfile
-{
-	AutoDXProfile(const char* name)
-	{
-		name = name;
-		DX11Profiler::sProfiler.StartProfile(name);
-	}
-
-	~AutoDXProfile()
-	{
-		DX11Profiler::sProfiler.EndProfile(name);
-	}
-
-	const char* name;
-};
 
 #if RJE_PROFILE_GPU
-#	define PROFILE_GPU(name)	AutoDXProfile profile(name)
-#elif
-#	define PROFILE_GPU(name)	(void)0
+#	define PROFILE_GPU_INIT(device, context)	DX11Profiler::sInstance.Initialize(device, context);
+#	define PROFILE_GPU_START(name)				DX11Profiler::sInstance.StartProfile(name);
+#	define PROFILE_GPU_END(name)				DX11Profiler::sInstance.EndProfile(name);
+#	define PROFILE_GPU_END_FRAME()				DX11Profiler::sInstance.EndFrame();
+#else
+#	define PROFILE_GPU_INIT(device, context)	(void)0
+#	define PROFILE_GPU_START(name)				(void)0
+#	define PROFILE_GPU_END(name)				(void)0
+#	define PROFILE_GPU_END_FRAME()				(void)0
 #endif

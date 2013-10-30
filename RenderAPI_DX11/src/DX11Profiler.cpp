@@ -1,7 +1,7 @@
 #include "DX11Profiler.h"
 #include "Timer.h"
 
-DX11Profiler DX11Profiler::sProfiler;
+DX11Profiler DX11Profiler::sInstance;
 
 //////////////////////////////////////////////////////////////////////////
 void DX11Profiler::Initialize( ID3D11Device* device, ID3D11DeviceContext* immContext )
@@ -14,7 +14,7 @@ void DX11Profiler::Initialize( ID3D11Device* device, ID3D11DeviceContext* immCon
 }
 
 //////////////////////////////////////////////////////////////////////////
-void DX11Profiler::StartProfile( const char* name )
+void DX11Profiler::StartProfile(const wstring& name)
 {
 	ProfileData& profileData = mProfiles[name];
 	RJE_ASSERT(profileData.mQueryStarted  == FALSE);
@@ -43,7 +43,7 @@ void DX11Profiler::StartProfile( const char* name )
 }
 
 //////////////////////////////////////////////////////////////////////////
-void DX11Profiler::EndProfile(const char* name)
+void DX11Profiler::EndProfile(const wstring& name)
 {
 	ProfileData& profileData = mProfiles[name];
 	RJE_ASSERT(profileData.mQueryStarted  == TRUE);
@@ -62,10 +62,6 @@ void DX11Profiler::EndProfile(const char* name)
 //////////////////////////////////////////////////////////////////////////
 void DX11Profiler::EndFrame()
 {
-	mCurrFrame = (mCurrFrame + 1) % QueryLatency;
-
-	XMMATRIX transform = XMMatrixTranslation(25.0f, 100.0f, 0.0f);
-
 	float queryTime = 0.0f;
 
 	// Iterate over all of the profiles
@@ -84,12 +80,15 @@ void DX11Profiler::EndFrame()
 		// Get the query data
 		u64 startTime = 0;
 		RJE_WAIT_FOR_SUCCESS(mContext->GetData(profile.mTimestampStartQuery[mCurrFrame], &startTime, sizeof(startTime), 0));
+		RJE_SAFE_RELEASE(profile.mTimestampStartQuery[mCurrFrame]);
 
 		u64 endTime = 0;
 		RJE_WAIT_FOR_SUCCESS(mContext->GetData(profile.mTimestampEndQuery[mCurrFrame], &endTime, sizeof(endTime), 0));
+		RJE_SAFE_RELEASE(profile.mTimestampEndQuery[mCurrFrame]);
 
 		D3D11_QUERY_DATA_TIMESTAMP_DISJOINT disjointData;
 		RJE_WAIT_FOR_SUCCESS(mContext->GetData(profile.mDisjointQuery[mCurrFrame], &disjointData, sizeof(disjointData), 0));
+		RJE_SAFE_RELEASE(profile.mDisjointQuery[mCurrFrame]);
 
 		queryTime += Timer::Instance()->RealDeltaTime();
 
@@ -103,4 +102,6 @@ void DX11Profiler::EndFrame()
 		profile.mElaspedTime = time;
 	}
 	mTimeWaitingForQueries = queryTime;
+
+	mCurrFrame = (mCurrFrame + 1) % QueryLatency;
 }
