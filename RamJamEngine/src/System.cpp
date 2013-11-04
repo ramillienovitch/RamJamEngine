@@ -17,7 +17,7 @@ System::System()
 	minfps = 1e9f;
 	maxfps = 0.0f;
 
-	// -------------------
+	// ===================================
 	int CPUInfo[4] = {-1};
 	unsigned nExIds;
 	// Get the information associated with each extended ID.
@@ -35,7 +35,7 @@ System::System()
 	statex.dwLength = sizeof (statex);
 	GlobalMemoryStatusEx(&statex);
 	mTotalSystemRAM = (statex.ullTotalPhys/1024)/1024;
-	// -------------------
+	// ===================================
 
 	mLastMousePos.x  = 0;
 	mLastMousePos.y  = 0;
@@ -65,6 +65,9 @@ System::~System(){}
 BOOL System::Initialize(int nCmdShow)
 {
 	HACCEL hAccelTable;
+
+	mResourcesPath = "../data/Resources.ini";
+	mDataPath = CIniFile::GetValue("datapath", "repositories", mResourcesPath);
 
 	// Initialize all the globals defined in the .ini files
 	LoadConfigFile();
@@ -559,10 +562,10 @@ void System::HandleInputs()
 //////////////////////////////////////////////////////////////////////////
 void System::LoadCameraSettings()
 {
-	mCameraFOV       = CIniFile::GetValueFloat("fov",        "camera", "..\\..\\RamJamEngine\\data\\Scene.ini");
-	mCameraOrthoZoom = CIniFile::GetValueFloat("ortho_zoom", "camera", "..\\..\\RamJamEngine\\data\\Scene.ini");
-	mCameraNearZ     = CIniFile::GetValueFloat("nearz",      "camera", "..\\..\\RamJamEngine\\data\\Scene.ini");
-	mCameraFarZ      = CIniFile::GetValueFloat("farz",       "camera", "..\\..\\RamJamEngine\\data\\Scene.ini");
+	mCameraFOV       = CIniFile::GetValueFloat("fov",        "camera", "../data/Scene.ini");
+	mCameraOrthoZoom = CIniFile::GetValueFloat("ortho_zoom", "camera", "../data/Scene.ini");
+	mCameraNearZ     = CIniFile::GetValueFloat("nearz",      "camera", "../data/Scene.ini");
+	mCameraFarZ      = CIniFile::GetValueFloat("farz",       "camera", "../data/Scene.ini");
 
 	RJE_ASSERT(mCameraFOV >= 1.0f && mCameraFOV < 180.0f);
 	RJE_ASSERT(mCameraOrthoZoom >= 0.0001f);

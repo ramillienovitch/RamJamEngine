@@ -66,8 +66,6 @@ struct Profiler
 	int GetState();
 	void ChangeState();
 
-	ProfilingInfo mInfos;
-
 private:
 	Profiler();
 	static Profiler* sInstance;

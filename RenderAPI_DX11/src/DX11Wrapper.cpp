@@ -259,12 +259,12 @@ void DX11Wrapper::Initialize(HWND hMainWnd, int windowWidth, int windowHeight)
 	RJE_CHECK_FOR_SUCCESS(mProfilerFont->Initialize(mDX11Device->md3dDevice, L"Consolas", 12.0f, FontSheet::FontStyleRegular, true));
 	RJE_CHECK_FOR_SUCCESS(mSpriteBatch-> Initialize(mDX11Device->md3dDevice));
 
-	LoadTexture("box",                "textures", "../data/Resources.ini", &mBoxMap);
-	LoadTexture("grid",               "textures", "../data/Resources.ini", &mGridMap);
-	LoadTexture("sphere",             "textures", "../data/Resources.ini", &mSphereMap);
-	LoadTexture("cylinder",           "textures", "../data/Resources.ini", &mCylinderMap);
-	LoadTexture("mask",               "textures", "../data/Resources.ini", &mMaskMap);
-	LoadTexture("rje_logo",           "textures", "../data/Resources.ini", &mRjeLogo);
+	LoadTexture("box",      &mBoxMap);
+	LoadTexture("grid",     &mGridMap);
+	LoadTexture("sphere",   &mSphereMap);
+	LoadTexture("cylinder", &mCylinderMap);
+	LoadTexture("mask",     &mMaskMap);
+	LoadTexture("rje_logo", &mRjeLogo);
 	Create2DTexture(1,1, RJE_GLOBALS::Colors::TransDarkGray, &mConsoleBackground);
 	Create2DTexture(1,1, RJE_GLOBALS::Colors::White,         &mWhiteSRV);
 
@@ -272,12 +272,10 @@ void DX11Wrapper::Initialize(HWND hMainWnd, int windowWidth, int windowHeight)
 }
 
 //////////////////////////////////////////////////////////////////////////
-void DX11Wrapper::LoadTexture(string keyName, string sectionName, string fileName, ID3D11ShaderResourceView** shaderResourceView)
-{
-	wchar_t* texturePath = nullptr;
-	CIniFile::GetValueWchar(keyName, sectionName, fileName, &texturePath);
-	RJE_CHECK_FOR_SUCCESS(CreateDDSTextureFromFile( mDX11Device->md3dDevice, texturePath, nullptr, shaderResourceView));
-	RJE_SAFE_DELETE(texturePath);
+void DX11Wrapper::LoadTexture(string keyName, ID3D11ShaderResourceView** shaderResourceView)
+{	
+	wstring texturePath = StringToWString(System::Instance()->mDataPath) + CIniFile::GetValueW(keyName, "textures", System::Instance()->mResourcesPath);
+	RJE_CHECK_FOR_SUCCESS(CreateDDSTextureFromFile( mDX11Device->md3dDevice, texturePath.c_str(), nullptr, shaderResourceView));
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -332,7 +330,8 @@ void DX11Wrapper::Create2DTexture(i32 height, i32 width, const float color[4], I
 void DX11Wrapper::BuildGeometryBuffers()
 {
 	FILE* fIn;
-	fopen_s(&fIn, CIniFile::GetValue("modelpath", "meshes", "../data/Resources.ini").c_str(), "rb");
+	string modelPath = System::Instance()->mDataPath + CIniFile::GetValue("modelpath", "meshes", System::Instance()->mResourcesPath);
+	fopen_s(&fIn, modelPath.c_str(), "rb");
 
 	if(!fIn)
 	{
@@ -537,20 +536,8 @@ void DX11Wrapper::DrawScene()
 	RJE_ASSERT(mSwapChain);
 
 	PROFILE_GPU_START(L"Render Scene");
-
-	//////////////////////////////////////////////////////////////////////////
-
-	// 	D3D11_QUERY_DESC pipelineStatsQueryDesc;
-	// 	pipelineStatsQueryDesc.Query     = D3D11_QUERY_PIPELINE_STATISTICS;
-	// 	pipelineStatsQueryDesc.MiscFlags = NULL;
-	// 	ID3D11Query* pPipelineStatsQuery;
-	// 	if ( S_OK != mDX11Device->md3dDevice->CreateQuery(&pipelineStatsQueryDesc, &pPipelineStatsQuery))
-	// 		RJE_BREAK();
-	// 
-	// 	mDX11Device->md3dImmediateContext->Begin(pPipelineStatsQuery);
-
-	//////////////////////////////////////////////////////////////////////////
-
+	PROFILE_GPU_START_DEEP(L"DEEP Scene");
+	
 	mDX11Device->md3dImmediateContext->ClearRenderTargetView(mRenderTargetView, DirectX::Colors::LightSteelBlue);
 	mDX11Device->md3dImmediateContext->ClearDepthStencilView(mDX11DepthBuffer->mDepthStencilView, D3D11_CLEAR_DEPTH|D3D11_CLEAR_STENCIL, 1.0f, 0);
 
@@ -958,31 +945,6 @@ void DX11Wrapper::DrawScene()
 			mDX11Device->md3dImmediateContext->OMSetDepthStencilState(0, 0);
 		}
 	}
-
-
-	//////////////////////////////////////////////////////////////////////////
-
-// 	{
-// 		PROFILE_CPU("Get Data");
-// 		D3D11_QUERY_DATA_PIPELINE_STATISTICS	pipelineStatsData;
-// 		mDX11Device->md3dImmediateContext->End(pPipelineStatsQuery);
-// 		while( S_OK != 	mDX11Device->md3dImmediateContext->GetData(pPipelineStatsQuery, &pipelineStatsData, sizeof(D3D11_QUERY_DATA_PIPELINE_STATISTICS), 0) )
-// 		{}
-// 		RJE_SAFE_RELEASE(pPipelineStatsQuery);
-// 		
-// 		Profiler::Instance()->mInfos.Info_Rendering.IAVertices           = pipelineStatsData.IAVertices;
-// 		Profiler::Instance()->mInfos.Info_Rendering.IAPrimitives         = pipelineStatsData.IAPrimitives;
-// 		Profiler::Instance()->mInfos.Info_Rendering.VSInvoc              = pipelineStatsData.VSInvocations;
-// 		Profiler::Instance()->mInfos.Info_Rendering.PSInvoc              = pipelineStatsData.PSInvocations;
-// 		Profiler::Instance()->mInfos.Info_Rendering.GSInvoc              = pipelineStatsData.GSInvocations;
-// 		Profiler::Instance()->mInfos.Info_Rendering.HSInvoc              = pipelineStatsData.HSInvocations;
-// 		Profiler::Instance()->mInfos.Info_Rendering.DSInvoc              = pipelineStatsData.DSInvocations;
-// 		Profiler::Instance()->mInfos.Info_Rendering.CSInvoc              = pipelineStatsData.CSInvocations;
-// 		Profiler::Instance()->mInfos.Info_Rendering.rasterizerPrimitives = pipelineStatsData.CInvocations;
-// 		Profiler::Instance()->mInfos.Info_Rendering.renderedPrimitives   = pipelineStatsData.CPrimitives;
-// 	}
-
-	//////////////////////////////////////////////////////////////////////////
 	
 	mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_Solid);
 	mDX11Device->md3dImmediateContext->OMSetBlendState(DX11CommonStates::sBlendState_AlphaToCoverage, blendFactor, 0xffffffff);
@@ -997,6 +959,7 @@ void DX11Wrapper::DrawScene()
 	//////////////////////////////////////////////////////////////////////////
 
 	PROFILE_GPU_END(L"Render Scene");
+	PROFILE_GPU_END_DEEP(L"DEEP Scene");
 	PROFILE_GPU_END_FRAME();
 
 	//////////////////////////////////////////////////////////////////////////
@@ -1039,13 +1002,24 @@ void DX11Wrapper::DrawProfiler()
 	PROFILE_CPU ("Draw Profiler");
 
 	POINT statsPos = {500, 10};
-	POINT APos = {200, 30};
-	POINT BPos = {200, 40};
 	POINT textPos = {500, 20};
 
 	std::wstring fps;
-	fps = L"FPS : " + ToString(System::Instance()->fps);
+// 	fps = L"FPS : " + ToString(System::Instance()->fps);
+// 	mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, fps, statsPos, XMCOLOR(0xffffffff));
+	//-----------------------------
+// 	DX11Profiler::ProfileMap::iterator it;
+// 	for(it = DX11Profiler::sInstance.mProfiles.begin(); it != DX11Profiler::sInstance.mProfiles.end(); it++)
+// 	{
+// 		DX11Profiler::ProfileData& profile = (*it).second;
+// 
+// 		fps = (*it).first + ToString(profile.mElaspedTime) + L"ms";
+// 		mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, fps, statsPos, XMCOLOR(0xffffffff));
+// 	}
+	//-----------------------------
+	fps = L"Time waiting for queries: " + ToString(DX11Profiler::sInstance.mTimeWaitingForQueries);
 	mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, fps, statsPos, XMCOLOR(0xffffffff));
+	//-----------------------------
 	switch (Profiler::Instance()->GetState())
 	{
 	case PROFILER_STATES::E_NONE:		mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler NONE",      textPos, XMCOLOR(0xffffffff), RightAligned);	break;

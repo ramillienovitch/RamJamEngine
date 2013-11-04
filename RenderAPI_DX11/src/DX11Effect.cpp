@@ -1,4 +1,5 @@
 #include "DX11Effect.h"
+#include "../../RamJamEngine/include/System.h"
 
 #pragma region Effect
 Effect::Effect(ID3D11Device* device, const std::wstring& filename)
@@ -98,17 +99,13 @@ SpriteEffect* DX11Effects::SpriteFX = nullptr;
 
 void DX11Effects::InitAll(ID3D11Device* device)
 {
-	wchar_t* texturePathBasic  = nullptr;
-	wchar_t* texturePathSprite = nullptr;
+	wstring shaderPath = StringToWString(System::Instance()->mDataPath);
 
-	CIniFile::GetValueWchar("basic",  "shaders", "..\\..\\RamJamEngine\\data\\Resources.ini", &texturePathBasic);
-	CIniFile::GetValueWchar("sprite", "shaders", "..\\..\\RamJamEngine\\data\\Resources.ini", &texturePathSprite);
-
-	BasicFX  = new BasicEffect( device, texturePathBasic);
-	SpriteFX = new SpriteEffect(device, texturePathSprite);
-
-	RJE_SAFE_DELETE(texturePathBasic);
-	RJE_SAFE_DELETE(texturePathSprite);
+	shaderPath += CIniFile::GetValueW("basic",  "shaders", System::Instance()->mResourcesPath);
+	BasicFX  = new BasicEffect( device, shaderPath);
+	//-------------
+	shaderPath = StringToWString(System::Instance()->mDataPath) + CIniFile::GetValueW("sprite", "shaders", System::Instance()->mResourcesPath);
+	SpriteFX = new SpriteEffect(device, shaderPath);
 }
 
 void DX11Effects::DestroyAll()

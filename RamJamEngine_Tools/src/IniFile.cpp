@@ -230,22 +230,9 @@ string CIniFile::GetValue(string KeyName, string SectionName, string FileName)
 	return "";																// No value was found
 }
 
-const void /*wchar_t**/ CIniFile::GetValueWchar(string KeyName, string SectionName, string FileName, wchar_t** value)
+wstring CIniFile::GetValueW(string KeyName, string SectionName, string FileName)
 {
-	vector<Record> content = GetRecord(KeyName,SectionName, FileName);		// Get the Record
-
-	if(!content.empty())													// Make sure there is a value to return
-	{
-		string key = content[0].Value;
-		*value = new wchar_t[key.size()+1];
-
-		for(string::size_type i=0; i<key.size()+1; ++i)
-			(*value)[i]=key[i];
-
-		//return value;														// And return the value
-	}
-
-	//return nullptr;															// No value was found
+	return StringToWString(GetValue(KeyName, SectionName, FileName));
 }
 
 int CIniFile::GetValueInt(string KeyName, string SectionName, string FileName)

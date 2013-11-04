@@ -26,6 +26,12 @@ namespace RJE
 	class Math
 	{
 	public:
+		template<typename T>
+		inline static T Abs(T number)
+		{
+			return (number > 0 ? number : -number);
+		}
+
 		// Returns random int in [0, 1[.
 		inline static int Rand()
 		{
@@ -46,6 +52,18 @@ namespace RJE
 		inline static float RandF(float a, float b)
 		{
 			return a + RandF()*(b-a);
+		}
+
+		template<typename T>
+		inline static BOOL IsZero(T number)
+		{
+			return (Abs(number) < std::numeric_limits<T>::epsilon());
+		}
+
+		template<typename T>
+		inline static BOOL IsOne(T number)
+		{
+			return ( number < 0 ? false : IsZero(number-1));
 		}
 
 		template<typename T>

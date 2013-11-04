@@ -17,6 +17,9 @@ public:
 	int			mScreenWidth;
 	int			mScreenHeight;
 
+	string		mDataPath;
+	string		mResourcesPath;
+
 	// Application Statistics
 	float	fps;		// Frames Per Seconds
 	float	mspf;		// MilliSeconds Per Frame

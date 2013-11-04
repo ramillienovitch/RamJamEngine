@@ -48,27 +48,6 @@ typedef				long double			f80;
 
 
 //////////////////////////////////////////////////////////////////////////
-//----------------- Debug and Profiling Utilities ---------------------//
-struct ProfilingInfo_Rendering
-{
-	u64 IAVertices;
-	u64 IAPrimitives;
-	u64 VSInvoc;
-	u64 PSInvoc;
-	u64 GSInvoc;
-	u64 HSInvoc;
-	u64 DSInvoc;
-	u64 CSInvoc;
-	u64 rasterizerPrimitives;
-	u64 renderedPrimitives;
-};
-struct ProfilingInfo
-{
-	ProfilingInfo_Rendering Info_Rendering;
-};
-
-
-//////////////////////////////////////////////////////////////////////////
 //---------------------- Conversion Utilities -------------------------//
 #define dtoa _gcvt_s
 
@@ -80,6 +59,14 @@ inline std::wstring AnsiToWString(const char* ansiString)
 		return std::wstring(buffer);
 	
 	return std::wstring();
+}
+
+// Converts an ANSI string to a std::wstring
+inline std::wstring StringToWString(const std::string &s)
+{
+	std::wstring wsTmp(s.begin(), s.end());
+
+	return wsTmp;
 }
 
 // Converts a number to a string
@@ -98,21 +85,6 @@ inline std::string ToAnsiString(const T& val)
 	std::ostringstream stream;
 	stream << val;
 	return stream.str();
-}
-
-
-//////////////////////////////////////////////////////////////////////////
-//---------------------- Comparison Utilities -------------------------//
-template<typename T>
-inline BOOL IsZero(T number)
-{
-	return (number < std::numeric_limits<T>::epsilon( ));
-}
-
-template<typename T>
-inline BOOL IsOne(T number)
-{
-	return (number-1 < std::numeric_limits<T>::epsilon( ));
 }
 
 

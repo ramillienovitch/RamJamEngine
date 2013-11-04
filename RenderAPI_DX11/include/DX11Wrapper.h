@@ -105,7 +105,7 @@ struct DX11Wrapper : GraphicAPI
 
 	//////////////////////////////////////////////////////////////////////////
 
-	void LoadTexture(string keyName, string sectionName, string fileName, ID3D11ShaderResourceView** shaderResourceView);
+	void LoadTexture(string keyName, ID3D11ShaderResourceView** shaderResourceView);
 	void Create2DTexture(i32 height, i32 width, float r, float g, float b, float a, ID3D11ShaderResourceView** textureSRV);
 	void Create2DTexture(i32 height, i32 width, const float color[4], ID3D11ShaderResourceView** textureSRV);
 	void BuildGeometryBuffers();
