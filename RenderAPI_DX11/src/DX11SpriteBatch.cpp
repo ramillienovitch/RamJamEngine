@@ -24,12 +24,14 @@ DX11SpriteBatch::~DX11SpriteBatch()
 }
 
 //////////////////////////////////////////////////////////////////////////
-HRESULT DX11SpriteBatch::Initialize(ID3D11Device* device)
+HRESULT DX11SpriteBatch::Initialize(ID3D11Device* device, ID3D11DeviceContext* context)
 {
 	// Prevent double Init.
 	RJE_ASSERT(!mInitialized);
 
 	HRESULT hr = S_OK;
+
+	mContext = context;
 
 	mSpriteList.reserve(128);
 
@@ -260,7 +262,7 @@ void DX11SpriteBatch::DrawTexture2D(ID3D11ShaderResourceView* texSRV, ID3D11Devi
 }
 
 //////////////////////////////////////////////////////////////////////////
-void DX11SpriteBatch::DrawString(ID3D11DeviceContext* dc, DX11FontSheet& fs, const std::wstring& text, const POINT& pos, XMCOLOR color, TextAlignment alignment)
+void DX11SpriteBatch::DrawString(DX11FontSheet& fs, const std::wstring& text, const POINT& pos, XMCOLOR color, TextAlignment alignment)
 {
 	BeginBatch(fs.GetFontSheetSRV());
 
@@ -335,11 +337,11 @@ void DX11SpriteBatch::DrawString(ID3D11DeviceContext* dc, DX11FontSheet& fs, con
 		}
 	}
 
-	EndBatch(dc);
+	EndBatch(mContext);
 }
 
 //////////////////////////////////////////////////////////////////////////
-void DX11SpriteBatch::DrawString(ID3D11DeviceContext* dc, DX11FontSheet& fs, const char text[], const POINT& pos, XMCOLOR color, TextAlignment alignment)
+void DX11SpriteBatch::DrawString(DX11FontSheet& fs, const char text[], const POINT& pos, XMCOLOR color, TextAlignment alignment)
 {
 	BeginBatch(fs.GetFontSheetSRV());
 
@@ -413,11 +415,11 @@ void DX11SpriteBatch::DrawString(ID3D11DeviceContext* dc, DX11FontSheet& fs, con
 		}
 	}
 
-	EndBatch(dc);
+	EndBatch(mContext);
 }
 
 //////////////////////////////////////////////////////////////////////////
-void DX11SpriteBatch::DrawInfoText(ID3D11DeviceContext* dc, DX11FontSheet& fs, const char* text, const POINT& pos)
+void DX11SpriteBatch::DrawInfoText(DX11FontSheet& fs, const char* text, const POINT& pos)
 {
 	BeginBatch(fs.GetFontSheetSRV());
 
@@ -464,11 +466,11 @@ void DX11SpriteBatch::DrawInfoText(ID3D11DeviceContext* dc, DX11FontSheet& fs, c
 		++i;
 	}
 
-	EndBatch(dc);
+	EndBatch(mContext);
 }
 
 //////////////////////////////////////////////////////////////////////////
-void DX11SpriteBatch::DrawConsoleCommand(ID3D11DeviceContext* dc, DX11FontSheet& fs, char (&text)[COMMAND_MAX_LENGTH], const POINT& pos)
+void DX11SpriteBatch::DrawConsoleCommand(DX11FontSheet& fs, char (&text)[COMMAND_MAX_LENGTH], const POINT& pos)
 {
 	BeginBatch(fs.GetFontSheetSRV());
 
@@ -514,7 +516,7 @@ void DX11SpriteBatch::DrawConsoleCommand(ID3D11DeviceContext* dc, DX11FontSheet&
 
 	Draw(CD3D11_RECT(posX, posY, posX + width, posY + height), charRect, color);
 
-	EndBatch(dc);
+	EndBatch(mContext);
 }
 
 //////////////////////////////////////////////////////////////////////////

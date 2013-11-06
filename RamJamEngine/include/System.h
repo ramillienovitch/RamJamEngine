@@ -1,6 +1,7 @@
 #pragma once
 
 #include "stdafx.h"
+#include <Psapi.h>
 
 struct System
 {
@@ -25,6 +26,11 @@ public:
 	float	mspf;		// MilliSeconds Per Frame
 	float	minfps;
 	float	maxfps;
+	int		mTotalFrames;
+	//---------------
+	DWORD					mProcessID;
+	i16						mProcessCpuUsage;
+	PROCESS_MEMORY_COUNTERS	mProcessMemoryCounters;
 
 	// System Infos
 	CHAR	mCpuDescription[64];
@@ -86,6 +92,18 @@ private:
 
 	static System* sInstance;
 
+	//system total times
+	FILETIME mFtPrevSysKernel;
+	FILETIME mFtPrevSysUser;
+	//process times
+	FILETIME mFtPrevProcKernel;
+	FILETIME mFtPrevProcUser;
+
+	i16 mCpuUsage;
+	u64 mDwLastRun;
+
+	volatile LONG mRunCount;
+
 	BOOL UpdateScene(float dt);
 	BOOL DrawScene();
 	BOOL InitializeWindows(int);
@@ -95,6 +113,13 @@ private:
 	void HandleInputs();
 	void LoadCameraSettings();
 	void LoadConfigFile();
+
+	i16  GetProcessCpuUsage();
+	void GetMemoryInfo(DWORD processID);
+	u64  SubtractTimes(const FILETIME& ftA, const FILETIME& ftB);
+	BOOL EnoughTimePassed();
+
+	inline bool IsFirstRun() const { return (mDwLastRun == 0); }
 };
 
 static LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);

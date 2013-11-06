@@ -8,6 +8,9 @@ Timer::Timer()
 	mActive    = false;
 	mTimeScale = 1.0f;
 
+	mDeltaTime = 0.0f;
+	mRealDeltaTime = 0.0f;
+
 	u64 frequency;
 	QueryPerformanceFrequency((LARGE_INTEGER*)&frequency);
 	mSecondsPerCount = 1.0f / frequency;

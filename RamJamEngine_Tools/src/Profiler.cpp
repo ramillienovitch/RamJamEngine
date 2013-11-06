@@ -1,8 +1,12 @@
 #include "Profiler.h"
+#include "Memory.h"
 #include "Debug.h"
 #include "Input.h"
 
 Profiler* Profiler::sInstance = nullptr;
+
+//////////////////////////////////////////////////////////////////////////
+Profiler::~Profiler() { delete mProfileInfoString; }
 
 //////////////////////////////////////////////////////////////////////////
 Profiler::Profiler()
@@ -17,6 +21,9 @@ Profiler::Profiler()
 	LARGE_INTEGER frequencyCount;
 	QueryPerformanceFrequency(&frequencyCount);
 	countsPerMs = double(frequencyCount.QuadPart)/1000;
+
+	mProfileInfoString = new char[PROFILE_INFO_MAX_LENGTH];
+	ResetProfilerInfo();
 
 	Profile fs;
 	fs.totalCalls = 0;
@@ -185,4 +192,108 @@ void Profiler::PrintToFile()
 	PrintChildren(fout, 0, 0);
 
 	fout.close();
+}
+
+//////////////////////////////////////////////////////////////////////////
+void Profiler::GetProfilerInfo()
+{
+	ResetProfilerInfo();
+	switch (mCurrentState)
+	{
+	case E_SIMPLE:		DisplaySimpleState();		return;
+	case E_ADVANCED:	DisplayAdvancedState();		return;
+	case E_CPU:			DisplayCpuState();			return;
+	case E_MEMORY:		DisplayMemoryState();		return;
+	case E_PHYSICS:		DisplayPhysicsState();		return;
+	case E_ANIMATION:	DisplayAnimationState();	return;
+	case E_AI:			DisplayAiState();			return;
+	case E_SCRIPT:		DisplayScriptState();		return;
+	case E_SOUND:		DisplaySoundState();		return;
+	case E_NONE:
+	case E_GPU:			// The GPU Profiling is displayed by the Rendering API itself (DX11Profiler or OglProfiler)
+	default:			return;
+	}
+}
+
+//////////////////////////////////////////////////////////////////////////
+void Profiler::DisplaySimpleState()
+{
+	ConcatText("Simple");
+}
+
+//////////////////////////////////////////////////////////////////////////
+void Profiler::DisplayAdvancedState()
+{
+	ConcatText("Advanced");
+}
+
+//////////////////////////////////////////////////////////////////////////
+void Profiler::DisplayCpuState()
+{
+	ConcatText("CPU");
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void Profiler::DisplayMemoryState()
+{
+	ConcatText("Memory");
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void Profiler::DisplayPhysicsState()
+{
+	ConcatText("Physics");
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void Profiler::DisplayAnimationState()
+{
+	ConcatText("Animation");
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void Profiler::DisplayAiState()
+{
+	ConcatText("Artificial Intelligence");
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void Profiler::DisplayScriptState()
+{
+	ConcatText("Script");
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void Profiler::DisplaySoundState()
+{
+	ConcatText("Sound");
+}
+
+//////////////////////////////////////////////////////////////////////////
+void Profiler::ConcatText(const char* text, u8 color)
+{
+	int newSize = (int)strlen(text);
+
+	if (color == SCREEN_WHITE)
+	{
+		memcpy(mProfileInfoString+mProfileInfoStringSize, text, newSize);
+		mProfileInfoString[mProfileInfoStringSize+newSize] = nullchar;
+		mProfileInfoStringSize += newSize;
+	}
+	else
+	{
+		mProfileInfoString[mProfileInfoStringSize] = (char)color;
+		memcpy(mProfileInfoString+mProfileInfoStringSize+1, text, newSize);
+		mProfileInfoString[mProfileInfoStringSize+newSize+1] = (char)SCREEN_WHITE;
+		mProfileInfoString[mProfileInfoStringSize+newSize+2] = nullchar;
+		mProfileInfoStringSize += newSize+2;
+	}
+
+}
+
+//////////////////////////////////////////////////////////////////////////
+void Profiler::ResetProfilerInfo()
+{
+	mProfileInfoString[0]  = nullchar;
+	mProfileInfoStringSize = 0;
 }

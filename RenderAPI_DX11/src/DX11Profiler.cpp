@@ -1,5 +1,6 @@
 #include "DX11Profiler.h"
 #include "Timer.h"
+#include "Memory.h"
 #include "Profiler.h"
 
 DX11Profiler DX11Profiler::sInstance;
@@ -13,6 +14,9 @@ void DX11Profiler::Initialize( ID3D11Device* device, ID3D11DeviceContext* immCon
 
 	mDevice  = device;
 	mContext = immContext;
+
+	mProfileInfoString = new char[PROFILE_INFO_MAX_LENGTH];
+	ResetProfilerInfo();
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -197,4 +201,46 @@ void DX11Profiler::EndFrame()
 	mTimeWaitingForQueries = queryTime;
 
 	mCurrFrame = (mCurrFrame + 1) % QueryLatency;
+}
+
+//////////////////////////////////////////////////////////////////////////
+void DX11Profiler::Exit()
+{
+	RJE_SAFE_DELETE(mProfileInfoString);
+}
+
+//////////////////////////////////////////////////////////////////////////
+void DX11Profiler::GetProfilerInfo()
+{
+	ResetProfilerInfo();
+	ConcatText("GPU");
+}
+
+//////////////////////////////////////////////////////////////////////////
+void DX11Profiler::ConcatText(const char* text, u8 color)
+{
+	int newSize = (int)strlen(text);
+
+	if (color == SCREEN_WHITE)
+	{
+		memcpy(mProfileInfoString+mProfileInfoStringSize, text, newSize);
+		mProfileInfoString[mProfileInfoStringSize+newSize] = nullchar;
+		mProfileInfoStringSize += newSize;
+	}
+	else
+	{
+		mProfileInfoString[mProfileInfoStringSize] = (char)color;
+		memcpy(mProfileInfoString+mProfileInfoStringSize+1, text, newSize);
+		mProfileInfoString[mProfileInfoStringSize+newSize+1] = (char)SCREEN_WHITE;
+		mProfileInfoString[mProfileInfoStringSize+newSize+2] = nullchar;
+		mProfileInfoStringSize += newSize+2;
+	}
+
+}
+
+//////////////////////////////////////////////////////////////////////////
+void DX11Profiler::ResetProfilerInfo()
+{
+	mProfileInfoString[0]  = nullchar;
+	mProfileInfoStringSize = 0;
 }

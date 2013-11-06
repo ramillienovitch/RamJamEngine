@@ -19,7 +19,7 @@ public:
 	DX11SpriteBatch();
 	~DX11SpriteBatch();
 
-	HRESULT Initialize(ID3D11Device* device);
+	HRESULT Initialize(ID3D11Device* device, ID3D11DeviceContext* context);
 
 	/// Begins a new sprite batch.  All sprites in the batch will use the given texture.
 	//  All Draw() calls add a sprite to the batch.
@@ -44,10 +44,10 @@ public:
 	/// Draws a string to the screen.
 	//  DrawString should not be called inside BeginBatch()/EndBatch().
 	//  Internally, DrawString calls BeginBatch()/EndBatch() to draw the string characters as a single batch.
-	void DrawString(        ID3D11DeviceContext* dc, DX11FontSheet& fs, const std::wstring& text,         const POINT& pos, XMCOLOR color, TextAlignment alignment = LeftAligned);
-	void DrawString(        ID3D11DeviceContext* dc, DX11FontSheet& fs, const char text[],                const POINT& pos, XMCOLOR color, TextAlignment alignment = LeftAligned);
-	void DrawInfoText(      ID3D11DeviceContext* dc, DX11FontSheet& fs, const char* text,                 const POINT& pos);
-	void DrawConsoleCommand(ID3D11DeviceContext* dc, DX11FontSheet& fs, char (&text)[COMMAND_MAX_LENGTH], const POINT& pos);
+	void DrawString(        DX11FontSheet& fs, const std::wstring& text,         const POINT& pos, XMCOLOR color, TextAlignment alignment = LeftAligned);
+	void DrawString(        DX11FontSheet& fs, const char text[],                const POINT& pos, XMCOLOR color, TextAlignment alignment = LeftAligned);
+	void DrawInfoText(      DX11FontSheet& fs, const char* text,                 const POINT& pos);
+	void DrawConsoleCommand(DX11FontSheet& fs, char (&text)[COMMAND_MAX_LENGTH], const POINT& pos);
 
 private:
 
@@ -85,6 +85,8 @@ private:
 
 	ID3D11Buffer* mVertexBuffer;
 	ID3D11Buffer* mIndexBuffer;
+
+	ID3D11DeviceContext* mContext;
 
 	ID3D11InputLayout* mInputLayout;
 

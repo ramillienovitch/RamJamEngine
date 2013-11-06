@@ -256,8 +256,8 @@ void DX11Wrapper::Initialize(HWND hMainWnd, int windowWidth, int windowHeight)
 	mConsoleFont  = new DX11FontSheet();
 	mSpriteBatch  = new DX11SpriteBatch();
 	RJE_CHECK_FOR_SUCCESS(mConsoleFont-> Initialize(mDX11Device->md3dDevice, L"Consolas", 16.0f, FontSheet::FontStyleRegular, true));
-	RJE_CHECK_FOR_SUCCESS(mProfilerFont->Initialize(mDX11Device->md3dDevice, L"Consolas", 12.0f, FontSheet::FontStyleRegular, true));
-	RJE_CHECK_FOR_SUCCESS(mSpriteBatch-> Initialize(mDX11Device->md3dDevice));
+	RJE_CHECK_FOR_SUCCESS(mProfilerFont->Initialize(mDX11Device->md3dDevice, L"Consolas", 16.0f, FontSheet::FontStyleBold,    true));
+	RJE_CHECK_FOR_SUCCESS(mSpriteBatch-> Initialize(mDX11Device->md3dDevice, mDX11Device->md3dImmediateContext));
 
 	LoadTexture("box",      &mBoxMap);
 	LoadTexture("grid",     &mGridMap);
@@ -989,8 +989,8 @@ void DX11Wrapper::DrawConsole()
 	CD3D11_RECT rect( 0, -consoleElevation, System::Instance()->mScreenWidth, CONSOLE_HEIGHT-consoleElevation);
 	CD3D11_RECT rectLogo( System::Instance()->mScreenWidth - 220, 40-consoleElevation, System::Instance()->mScreenWidth - 30, 160-consoleElevation);
 	
-	mSpriteBatch->DrawInfoText(      mDX11Device->md3dImmediateContext, *mConsoleFont, Console::Instance()->mConsoleBuffer, textPos);
-	mSpriteBatch->DrawConsoleCommand(mDX11Device->md3dImmediateContext, *mConsoleFont, cmd, cmdPos);
+	mSpriteBatch->DrawInfoText(      *mConsoleFont, Console::Instance()->mConsoleBuffer, textPos);
+	mSpriteBatch->DrawConsoleCommand(*mConsoleFont, cmd, cmdPos);
 
 	mSpriteBatch->DrawTexture2D(mRjeLogo,           mDX11Device->md3dImmediateContext, rectLogo, 0xffffffff);
 	mSpriteBatch->DrawTexture2D(mConsoleBackground, mDX11Device->md3dImmediateContext, rect,     0xffffffff);
@@ -1001,13 +1001,23 @@ void DX11Wrapper::DrawProfiler()
 {
 	PROFILE_CPU ("Draw Profiler");
 
-	POINT statsPos = {500, 10};
-	POINT textPos = {500, 20};
+	POINT profileStatsPos = {20, 20};
+	POINT profileInfoPos  = {500, 100};
+	POINT textPos         = {500, 200};
 
-	std::wstring fps;
-// 	fps = L"FPS : " + ToString(System::Instance()->fps);
-// 	mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, fps, statsPos, XMCOLOR(0xffffffff));
-	//-----------------------------
+	std::wstring stats;
+	stats =  L"RamJam Engine Profiler";
+	stats += L"\nCPU  : " + AnsiToWString(System::Instance()->mCpuDescription);
+	stats += L"\nGPU  : " + wstring(System::Instance()->mGpuDescription);
+	stats += L"\nRAM  : " + ToString(System::Instance()->mTotalSystemRAM)   + L"MB";
+	stats += L"\nVRAM : " + ToString(System::Instance()->mGpuDedicatedVRAM) + L"MB (Dedicated)";
+	stats += L"\nVRAM : " + ToString(System::Instance()->mGpuSharedVRAM)    + L"MB (Shared)";
+	stats += L"\nFrame "  + ToString(System::Instance()->mTotalFrames);
+	stats += L"\nFPS : "  + ToString(System::Instance()->fps);
+	stats += L" (Min:"    + ToString(System::Instance()->minfps);
+	stats += L" - Max:"   + ToString(System::Instance()->maxfps) + L")\n";
+	mSpriteBatch->DrawString(*mProfilerFont, stats, profileStatsPos, XMCOLOR(0xffffff00));
+// 	//-----------------------------
 // 	DX11Profiler::ProfileMap::iterator it;
 // 	for(it = DX11Profiler::sInstance.mProfiles.begin(); it != DX11Profiler::sInstance.mProfiles.end(); it++)
 // 	{
@@ -1016,24 +1026,19 @@ void DX11Wrapper::DrawProfiler()
 // 		fps = (*it).first + ToString(profile.mElaspedTime) + L"ms";
 // 		mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, fps, statsPos, XMCOLOR(0xffffffff));
 // 	}
+// 	//-----------------------------
+// 	fps = L"Time waiting for queries: " + ToString(DX11Profiler::sInstance.mTimeWaitingForQueries);
+// 	mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, fps, profileStatsPos, XMCOLOR(0xffffffff));
 	//-----------------------------
-	fps = L"Time waiting for queries: " + ToString(DX11Profiler::sInstance.mTimeWaitingForQueries);
-	mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, fps, statsPos, XMCOLOR(0xffffffff));
-	//-----------------------------
-	switch (Profiler::Instance()->GetState())
+	if (Profiler::Instance()->GetState() == PROFILER_STATES::E_GPU)
 	{
-	case PROFILER_STATES::E_NONE:		mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler NONE",      textPos, XMCOLOR(0xffffffff), RightAligned);	break;
-	case PROFILER_STATES::E_SIMPLE:		mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler SIMPLE",    textPos, XMCOLOR(0xffffffff), RightAligned);	break;
-	case PROFILER_STATES::E_ADVANCED:	mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler ADVANCED",  textPos, XMCOLOR(0xffffffff), RightAligned);	break;
-	case PROFILER_STATES::E_CPU:		mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler CPU",       textPos, XMCOLOR(0xffffffff), RightAligned);	break;
-	case PROFILER_STATES::E_GPU:		mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler GPU",       textPos, XMCOLOR(0xffffffff), RightAligned);	break;
-	case PROFILER_STATES::E_MEMORY:		mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler MEMORY",    textPos, XMCOLOR(0xffffffff), RightAligned);	break;
-	case PROFILER_STATES::E_PHYSICS:	mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler PHYSICS",   textPos, XMCOLOR(0xffffffff), RightAligned);	break;
-	case PROFILER_STATES::E_ANIMATION:	mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler ANIMATION", textPos, XMCOLOR(0xffffffff), RightAligned);	break;
-	case PROFILER_STATES::E_AI:			mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler AI",        textPos, XMCOLOR(0xffffffff), RightAligned);	break;
-	case PROFILER_STATES::E_SCRIPT:		mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler SCRIPT",    textPos, XMCOLOR(0xffffffff), RightAligned);	break;
-	case PROFILER_STATES::E_SOUND:		mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"Profiler SOUND",     textPos, XMCOLOR(0xffffffff), RightAligned);	break;
-	default:	break;
+		DX11Profiler::sInstance.GetProfilerInfo();
+		mSpriteBatch->DrawInfoText(*mProfilerFont, DX11Profiler::sInstance.mProfileInfoString, profileInfoPos);
+	}
+	else 
+	{
+		Profiler::Instance()->GetProfilerInfo();
+		mSpriteBatch->DrawInfoText(*mProfilerFont, Profiler::Instance()->mProfileInfoString, profileInfoPos);
 	}
 }
 
@@ -1047,6 +1052,8 @@ void DX11Wrapper::Draw2dElements()
 //////////////////////////////////////////////////////////////////////////
 void DX11Wrapper::Shutdown()
 {
+	PROFILE_GPU_EXIT();
+
 	RJE_SAFE_RELEASE(mVertexBuffer);
 	RJE_SAFE_RELEASE(mIndexBuffer);
 

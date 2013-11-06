@@ -2,6 +2,7 @@
 
 #include "Types.h"
 #include "Debug.h"
+#include "Globals.h"
 
 //////////////////////////////////////////////////////////////////////////
 typedef enum PROFILER_STATES
@@ -28,6 +29,8 @@ struct Profile
 	u64 totalTime;
 };
 
+#define PROFILE_INFO_MAX_LENGTH 2048
+
 //////////////////////////////////////////////////////////////////////////
 struct Profiler
 {
@@ -51,6 +54,9 @@ struct Profiler
 		}
 	}
 
+	char*	mProfileInfoString;
+	u16		mProfileInfoStringSize;
+
 	//-----------
 	void PrintChildren(std::ofstream &fout, int parent, int depth);
 	void ProfileStart(const char* name);
@@ -63,11 +69,26 @@ struct Profiler
 	//-----------
 	void Update();
 	//-----------
-	int GetState();
+	int  GetState();
 	void ChangeState();
+	//-----------
+	void GetProfilerInfo();
+	void DisplaySimpleState();
+	void DisplayAdvancedState();
+	void DisplayCpuState();
+	void DisplayMemoryState();
+	void DisplayPhysicsState();
+	void DisplayAnimationState();
+	void DisplayAiState();
+	void DisplayScriptState();
+	void DisplaySoundState();
+	//-----------
+	void ConcatText(const char* text, u8 color = SCREEN_WHITE);
+	void ResetProfilerInfo();
 
 private:
 	Profiler();
+	~Profiler();
 	static Profiler* sInstance;
 
 	BOOL mIsActive;

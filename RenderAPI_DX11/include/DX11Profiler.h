@@ -20,6 +20,7 @@ struct ProfilingInfo
 	ProfilingInfo_Rendering Info_Rendering;
 };
 
+//////////////////////////////////////////////////////////////////////////
 struct DX11Profiler
 {
 	static DX11Profiler sInstance;
@@ -95,6 +96,9 @@ struct DX11Profiler
 
 	float	mTimeWaitingForQueries;
 
+	char*	mProfileInfoString;
+	u16		mProfileInfoStringSize;
+
 	//---------------------------
 
 	void Initialize(ID3D11Device* device, ID3D11DeviceContext* immContext);
@@ -105,6 +109,11 @@ struct DX11Profiler
 	void EndDeepProfile(  const wstring& name);
 
 	void EndFrame();
+	void Exit();
+
+	void GetProfilerInfo();
+	void ConcatText(const char* text, u8 color = SCREEN_WHITE);
+	void ResetProfilerInfo();
 };
 
 //////////////////////////////////////////////////////////////////////////
@@ -116,6 +125,7 @@ struct DX11Profiler
 #	define PROFILE_GPU_END(name)				DX11Profiler::sInstance.EndProfile(name);
 #	define PROFILE_GPU_END_DEEP(name)			DX11Profiler::sInstance.EndDeepProfile(name);
 #	define PROFILE_GPU_END_FRAME()				DX11Profiler::sInstance.EndFrame();
+#	define PROFILE_GPU_EXIT()					DX11Profiler::sInstance.Exit();
 #else
 #	define PROFILE_GPU_INIT(device, context)	(void)0
 #	define PROFILE_GPU_START(name)				(void)0
@@ -123,4 +133,5 @@ struct DX11Profiler
 #	define PROFILE_GPU_END(name)				(void)0
 #	define PROFILE_GPU_END_DEEP(name)			(void)0
 #	define PROFILE_GPU_END_FRAME()				(void)0
+#	define PROFILE_GPU_EXIT()					(void)0
 #endif

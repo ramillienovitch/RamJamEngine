@@ -17,6 +17,12 @@ System::System()
 	minfps = 1e9f;
 	maxfps = 0.0f;
 
+	mTotalFrames = 0;
+
+	mCpuUsage  = -1;
+	mDwLastRun = 0;
+	mRunCount  = 0;
+
 	// ===================================
 	int CPUInfo[4] = {-1};
 	unsigned nExIds;
@@ -31,10 +37,16 @@ System::System()
 		else if (i == 0x80000003)		memcpy(mCpuDescription + 16, CPUInfo, sizeof(CPUInfo));
 		else if (i == 0x80000004)		memcpy(mCpuDescription + 32, CPUInfo, sizeof(CPUInfo));
 	}
+	// We remove all white spaces before the cpu description
+	int i = 0;
+	while(mCpuDescription[i] == ' ') { ++i; }
+	memcpy(mCpuDescription, mCpuDescription+i, 64-i);
+
 	MEMORYSTATUSEX statex;
 	statex.dwLength = sizeof (statex);
 	GlobalMemoryStatusEx(&statex);
 	mTotalSystemRAM = (statex.ullTotalPhys/1024)/1024;
+	mProcessID = ::GetCurrentProcessId();
 	// ===================================
 
 	mLastMousePos.x  = 0;
@@ -110,6 +122,8 @@ void System::Run()
 
 	Timer::Instance()->Start();
 
+	float processRefreshRate = 0.0f;	// the refresh rate in seconds for measurements only
+
 	// Enter the infinite message loop
 	while(msg.message != WM_QUIT)
 	{
@@ -121,6 +135,14 @@ void System::Run()
 		}
 		else	// Otherwise, do animation/game stuff.
 		{
+			processRefreshRate += Timer::Instance()->RealDeltaTime();
+			if (processRefreshRate > 2)
+			{
+				mProcessCpuUsage = GetProcessCpuUsage();
+				GetMemoryInfo(mProcessID);
+				processRefreshRate = 0.0f;
+			}
+
 			PROFILE_CPU("Frame");
 			Timer::Instance()->Update();
 
@@ -414,14 +436,11 @@ void System::ShutdownWindows()
 //////////////////////////////////////////////////////////////////////////
 void System::CalculateFrameStats()
 {
-	// Code computes the average frames per second, and also the 
-	// average time it takes to render one frame.  These stats 
-	// are appended to the window caption bar.
-
 	static int frameCnt = 0;
 	static float timeElapsed = 0.0f;
 
-	frameCnt++;
+	++frameCnt;
+	++mTotalFrames;
 
 	// Compute averages over one second period.
 	if( (Timer::Instance()->Time() - timeElapsed) >= 1.0f )
@@ -433,10 +452,11 @@ void System::CalculateFrameStats()
 
 		std::wostringstream outs;
 		outs.precision(6);
-		outs << sInstance->mSzTitle    << L"    "
-			<< L"FPS: "        << fps
-			<< L" ("           << minfps
-			<< L"-"            << maxfps
+		outs << sInstance->mSzTitle << L"    "
+//			<< L"Frame N° "         << mTotalFrames
+			<< L" FPS: "            << fps
+			<< L" ("                << minfps
+			<< L"-"                 << maxfps
 			<< L")    Frame Time: " << mspf << L" (ms)";
 		SetWindowText(mHWnd, outs.str().c_str());
 
@@ -612,6 +632,97 @@ void System::LoadConfigFile()
 
 	RJE_GLOBALS::gDebugVerbosity		= CIniFile::GetValueInt("debugverbosity",  "debug", filename);
 	RJE_GLOBALS::gShowCursor			= CIniFile::GetValueBool("showcursor",     "debug", filename);
+}
+
+//////////////////////////////////////////////////////////////////////////
+i16 System::GetProcessCpuUsage()
+{
+	//create a local copy to protect against race conditions in setting the member variable
+	short nCpuCopy = mCpuUsage;
+	if (::InterlockedIncrement(&mRunCount) == 1)
+	{
+		//If this is called too often, the measurement itself will greatly affect the results.
+		if (!EnoughTimePassed())
+		{
+			::InterlockedDecrement(&mRunCount);
+			return nCpuCopy;
+		}
+
+		FILETIME ftSysIdle, ftSysKernel, ftSysUser;
+		FILETIME ftProcCreation, ftProcExit, ftProcKernel, ftProcUser;
+
+		if (!GetSystemTimes(&ftSysIdle, &ftSysKernel, &ftSysUser) ||
+			!GetProcessTimes(GetCurrentProcess(), &ftProcCreation, &ftProcExit, &ftProcKernel, &ftProcUser))
+		{
+			::InterlockedDecrement(&mRunCount);
+			return nCpuCopy;
+		}
+
+		if (!IsFirstRun())
+		{
+			// CPU usage is calculated by getting the total amount of time the system has operated
+			// since the last measurement (made up of kernel + user) and the total
+			// amount of time the process has run (kernel + user).
+			ULONGLONG ftSysKernelDiff = SubtractTimes(ftSysKernel, mFtPrevSysKernel);
+			ULONGLONG ftSysUserDiff   = SubtractTimes(ftSysUser,   mFtPrevSysUser);
+
+			ULONGLONG ftProcKernelDiff = SubtractTimes(ftProcKernel, mFtPrevProcKernel);
+			ULONGLONG ftProcUserDiff   = SubtractTimes(ftProcUser,   mFtPrevProcUser);
+
+			ULONGLONG nTotalSys  = ftSysKernelDiff  + ftSysUserDiff;
+			ULONGLONG nTotalProc = ftProcKernelDiff + ftProcUserDiff;
+
+			if (nTotalSys > 0)
+				mCpuUsage = (short)((100.0 * nTotalProc) / nTotalSys);
+		}
+		
+		mFtPrevSysKernel  = ftSysKernel;
+		mFtPrevSysUser    = ftSysUser;
+		mFtPrevProcKernel = ftProcKernel;
+		mFtPrevProcUser   = ftProcUser;
+		
+		mDwLastRun = GetTickCount64();
+
+		nCpuCopy = mCpuUsage;
+	}
+	
+	::InterlockedDecrement(&mRunCount);
+	return nCpuCopy;
+}
+
+//////////////////////////////////////////////////////////////////////////
+u64 System::SubtractTimes(const FILETIME& ftA, const FILETIME& ftB)
+{
+	LARGE_INTEGER a, b;
+	a.LowPart  = ftA.dwLowDateTime;
+	a.HighPart = ftA.dwHighDateTime;
+
+	b.LowPart  = ftB.dwLowDateTime;
+	b.HighPart = ftB.dwHighDateTime;
+
+	return a.QuadPart - b.QuadPart;
+}
+
+//////////////////////////////////////////////////////////////////////////
+BOOL System::EnoughTimePassed()
+{
+	const int minElapsedMS = 250;//milliseconds
+
+	ULONGLONG dwCurrentTickCount = GetTickCount64();
+	return (dwCurrentTickCount - mDwLastRun) > minElapsedMS; 
+}
+
+//////////////////////////////////////////////////////////////////////////
+void System::GetMemoryInfo( DWORD processID )
+{
+	HANDLE hProcess;
+	hProcess = OpenProcess( PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processID );
+	if (hProcess == NULL)
+		return;
+
+	GetProcessMemoryInfo( hProcess, &mProcessMemoryCounters, sizeof(mProcessMemoryCounters));
+
+	CloseHandle( hProcess );
 }
 
 //////////////////////////////////////////////////////////////////////////

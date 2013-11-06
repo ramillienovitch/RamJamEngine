@@ -25,7 +25,10 @@ namespace RJE_GLOBALS
 #		define SCREEN_RED			2
 #		define SCREEN_GREEN			3
 #		define SCREEN_BLUE			4
-#		define SCREEN_BLACK			5
+#		define SCREEN_YELLOW		5
+#		define SCREEN_ORANGE		6
+#		define SCREEN_ROSE			7
+#		define SCREEN_BLACK			8
 	}
 
 #	define nullchar		'\0'
