@@ -15,7 +15,9 @@ void DX11Profiler::Initialize( ID3D11Device* device, ID3D11DeviceContext* immCon
 	mDevice  = device;
 	mContext = immContext;
 
-	mProfileInfoString = new char[PROFILE_INFO_MAX_LENGTH];
+	mProfileInfoString       = new char[PROFILE_INFO_MAX_LENGTH];
+	mProfileDeepInfoString   = new char[PROFILE_INFO_MAX_LENGTH];
+	mProfilerRefreshRate     = -1.0f;
 	ResetProfilerInfo();
 }
 
@@ -207,40 +209,101 @@ void DX11Profiler::EndFrame()
 void DX11Profiler::Exit()
 {
 	RJE_SAFE_DELETE(mProfileInfoString);
+	RJE_SAFE_DELETE(mProfileDeepInfoString);
 }
 
 //////////////////////////////////////////////////////////////////////////
 void DX11Profiler::GetProfilerInfo()
 {
+	if (mProfilerRefreshRate > 0)
+	{
+		mProfilerRefreshRate -= Timer::Instance()->RealDeltaTime();
+		return;
+	}
+	mProfilerRefreshRate = 1.0f;
 	ResetProfilerInfo();
-	ConcatText("GPU");
+	//------------------------
+	char buf[32];
+	ConcatText("  - Profiler GPU Mode - \n", SCREEN_ROSE);
+	ConcatText("Time waiting for GPU queries : ");
+	dtoa(buf, 32, mTimeWaitingForQueries, 10);
+	ConcatText(buf);
+	ConcatText("ms\n\n");
+	for (ProfileMap::iterator it=mProfiles.begin() ; it!=mProfiles.end() ; ++it)
+	{
+		ProfileData& profile = (*it).second;
+		wstring name = (*it).first;
+		ConcatText(WStringToString(name).c_str());
+		ConcatText(" : ");
+		dtoa(buf, 32, profile.mElaspedTime, 10);
+		ConcatText(buf);
+		ConcatText("ms\n");
+	}
+	//------------------------
+	ConcatText("  - GPU Infos - \n", SCREEN_ORANGE, true);
+	for (DeepProfileMap::iterator it=mDeepProfiles.begin() ; it!=mDeepProfiles.end() ; ++it)
+	{
+		ProfileDataDeep& profile = (*it).second;
+// 		wstring name = (*it).first;
+// 		ConcatText(WStringToString(name).c_str());
+		//ConcatText("Input Assembler Primitives : ", SCREEN_WHITE, true);	itoa((int)profile.mInfos.Info_Rendering.IAPrimitives		, buf, 32, 10);		ConcatText(buf, SCREEN_WHITE, true);
+		//ConcatText("\nRasterized Primitives : ",   SCREEN_WHITE, true);	itoa((int)profile.mInfos.Info_Rendering.rasterizerPrimitives, buf, 32, 10);		ConcatText(buf, SCREEN_WHITE, true);
+		ConcatText("Rendered Primitives : ",    SCREEN_WHITE, true);	itoa((int)profile.mInfos.Info_Rendering.renderedPrimitives	, buf, 32, 10);		ConcatText(buf, SCREEN_WHITE, true);
+		ConcatText("\nVertex Shader Call : ",   SCREEN_WHITE, true);	itoa((int)profile.mInfos.Info_Rendering.VSInvoc				, buf, 32, 10);		ConcatText(buf, SCREEN_WHITE, true);
+		ConcatText("\nPixel Shader Call : ",    SCREEN_WHITE, true);	itoa((int)profile.mInfos.Info_Rendering.PSInvoc				, buf, 32, 10);		ConcatText(buf, SCREEN_WHITE, true);
+		ConcatText("\nGeometry Shader Call : ", SCREEN_WHITE, true);	itoa((int)profile.mInfos.Info_Rendering.GSInvoc				, buf, 32, 10);		ConcatText(buf, SCREEN_WHITE, true);
+		ConcatText("\nHull Shader Call : ",     SCREEN_WHITE, true);	itoa((int)profile.mInfos.Info_Rendering.HSInvoc				, buf, 32, 10);		ConcatText(buf, SCREEN_WHITE, true);
+		ConcatText("\nDomain Shader Call : ",   SCREEN_WHITE, true);	itoa((int)profile.mInfos.Info_Rendering.DSInvoc				, buf, 32, 10);		ConcatText(buf, SCREEN_WHITE, true);
+		ConcatText("\nCompute Shader Call : ",  SCREEN_WHITE, true);	itoa((int)profile.mInfos.Info_Rendering.CSInvoc				, buf, 32, 10);		ConcatText(buf, SCREEN_WHITE, true);
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////
-void DX11Profiler::ConcatText(const char* text, u8 color)
+void DX11Profiler::ConcatText(const char* text, u8 color /* = SCREEN_WHITE */, BOOL deepProfile /* = false */)
 {
 	int newSize = (int)strlen(text);
 
-	if (color == SCREEN_WHITE)
+	if (deepProfile)
 	{
-		memcpy(mProfileInfoString+mProfileInfoStringSize, text, newSize);
-		mProfileInfoString[mProfileInfoStringSize+newSize] = nullchar;
-		mProfileInfoStringSize += newSize;
+		if (color == SCREEN_WHITE)
+		{
+			memcpy(mProfileDeepInfoString+mProfileDeepInfoStringSize, text, newSize);
+			mProfileDeepInfoString[mProfileDeepInfoStringSize+newSize] = nullchar;
+			mProfileDeepInfoStringSize += newSize;
+		}
+		else
+		{
+			mProfileDeepInfoString[mProfileDeepInfoStringSize] = (char)color;
+			memcpy(mProfileDeepInfoString+mProfileDeepInfoStringSize+1, text, newSize);
+			mProfileDeepInfoString[mProfileDeepInfoStringSize+newSize+1] = (char)SCREEN_WHITE;
+			mProfileDeepInfoString[mProfileDeepInfoStringSize+newSize+2] = nullchar;
+			mProfileDeepInfoStringSize += newSize+2;
+		}
 	}
 	else
 	{
-		mProfileInfoString[mProfileInfoStringSize] = (char)color;
-		memcpy(mProfileInfoString+mProfileInfoStringSize+1, text, newSize);
-		mProfileInfoString[mProfileInfoStringSize+newSize+1] = (char)SCREEN_WHITE;
-		mProfileInfoString[mProfileInfoStringSize+newSize+2] = nullchar;
-		mProfileInfoStringSize += newSize+2;
+		if (color == SCREEN_WHITE)
+		{
+			memcpy(mProfileInfoString+mProfileInfoStringSize, text, newSize);
+			mProfileInfoString[mProfileInfoStringSize+newSize] = nullchar;
+			mProfileInfoStringSize += newSize;
+		}
+		else
+		{
+			mProfileInfoString[mProfileInfoStringSize] = (char)color;
+			memcpy(mProfileInfoString+mProfileInfoStringSize+1, text, newSize);
+			mProfileInfoString[mProfileInfoStringSize+newSize+1] = (char)SCREEN_WHITE;
+			mProfileInfoString[mProfileInfoStringSize+newSize+2] = nullchar;
+			mProfileInfoStringSize += newSize+2;
+		}
 	}
-
 }
 
 //////////////////////////////////////////////////////////////////////////
 void DX11Profiler::ResetProfilerInfo()
 {
-	mProfileInfoString[0]  = nullchar;
-	mProfileInfoStringSize = 0;
+	mProfileInfoString[0]          = nullchar;
+	mProfileDeepInfoString[0]      = nullchar;
+	mProfileInfoStringSize         = 0;
+	mProfileDeepInfoStringSize     = 0;
 }

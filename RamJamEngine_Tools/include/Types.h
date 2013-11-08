@@ -5,6 +5,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <algorithm>
 #include <vector>
 #include <list>
 #include <map>
@@ -50,6 +51,7 @@ typedef				long double			f80;
 //////////////////////////////////////////////////////////////////////////
 //---------------------- Conversion Utilities -------------------------//
 #define dtoa _gcvt_s
+#define itoa _itoa_s
 
 // Converts an ANSI string to a std::wstring
 inline std::wstring AnsiToWString(const char* ansiString)
@@ -67,6 +69,14 @@ inline std::wstring StringToWString(const std::string &s)
 	std::wstring wsTmp(s.begin(), s.end());
 
 	return wsTmp;
+}
+
+// Converts a wstring to an ANSI string
+inline std::string WStringToString(const std::wstring &ws)
+{
+	std::string sTmp(ws.begin(), ws.end());
+
+	return sTmp;
 }
 
 // Converts a number to a string

@@ -114,6 +114,8 @@ private:
 	void LoadCameraSettings();
 	void LoadConfigFile();
 
+	void FeedProfilerInfo();
+
 	i16  GetProcessCpuUsage();
 	void GetMemoryInfo(DWORD processID);
 	u64  SubtractTimes(const FILETIME& ftA, const FILETIME& ftB);

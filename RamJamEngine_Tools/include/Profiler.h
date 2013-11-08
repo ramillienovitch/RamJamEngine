@@ -27,6 +27,15 @@ struct Profile
 	int parentId;
 	int totalCalls;
 	u64 totalTime;
+
+	BOOL operator<(const Profile& rhs) {return (this->totalTime < rhs.totalTime);}
+};
+
+struct ProfilerInfos
+{
+	i16		ProcessCpuUsage;
+	i16		ProcessPeakWorkingSet;
+	i16		ProcessWorkingSet;
 };
 
 #define PROFILE_INFO_MAX_LENGTH 2048
@@ -54,8 +63,10 @@ struct Profiler
 		}
 	}
 
-	char*	mProfileInfoString;
-	u16		mProfileInfoStringSize;
+	char*			mProfileInfoString;
+	u16				mProfileInfoStringSize;
+	ProfilerInfos*	mProfilerInfos;
+	float			mProfilerRefreshRate;
 
 	//-----------
 	void PrintChildren(std::ofstream &fout, int parent, int depth);

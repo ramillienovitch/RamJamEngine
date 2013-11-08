@@ -2,11 +2,16 @@
 #include "Memory.h"
 #include "Debug.h"
 #include "Input.h"
+#include "Timer.h"
 
 Profiler* Profiler::sInstance = nullptr;
 
 //////////////////////////////////////////////////////////////////////////
-Profiler::~Profiler() { delete mProfileInfoString; }
+Profiler::~Profiler()
+{ 
+	RJE_SAFE_DELETE(mProfileInfoString);
+	RJE_SAFE_DELETE(mProfilerInfos);
+}
 
 //////////////////////////////////////////////////////////////////////////
 Profiler::Profiler()
@@ -22,7 +27,9 @@ Profiler::Profiler()
 	QueryPerformanceFrequency(&frequencyCount);
 	countsPerMs = double(frequencyCount.QuadPart)/1000;
 
-	mProfileInfoString = new char[PROFILE_INFO_MAX_LENGTH];
+	mProfileInfoString	 = new char[PROFILE_INFO_MAX_LENGTH];
+	mProfilerInfos		 = new ProfilerInfos;
+	mProfilerRefreshRate = -1.0f;
 	ResetProfilerInfo();
 
 	Profile fs;
@@ -57,7 +64,11 @@ void Profiler::Update()
 	if (mIsActive)
 	{
 		if (Input::Instance()->GetKeyboardDown(F2))		ChangeState();
-		if (Input::Instance()->GetKeyboardDown(Keycode::Esc) || Input::Instance()->GetKeyboardDown(Keycode::F1))	ExitProfiler();
+		if (Input::Instance()->GetKeyboardDown(Keycode::Esc) || Input::Instance()->GetKeyboardDown(Keycode::F1))
+		{
+			ExitProfiler();
+			mProfilerRefreshRate = -1.0f;
+		}
 	}
 	else
 	{
@@ -69,6 +80,7 @@ void Profiler::Update()
 int Profiler::GetState() {return (int) mCurrentState;}
 void Profiler::ChangeState()
 {
+	mProfilerRefreshRate = -1.0f;
 	switch (mCurrentState)
 	{
 	case E_NONE:		mCurrentState = E_SIMPLE;		return;
@@ -197,12 +209,19 @@ void Profiler::PrintToFile()
 //////////////////////////////////////////////////////////////////////////
 void Profiler::GetProfilerInfo()
 {
+	if (mProfilerRefreshRate > 0)
+	{
+		mProfilerRefreshRate -= Timer::Instance()->RealDeltaTime();
+		return;
+	}
+
+	mProfilerRefreshRate = 1.0f;
 	ResetProfilerInfo();
 	switch (mCurrentState)
 	{
 	case E_SIMPLE:		DisplaySimpleState();		return;
-	case E_ADVANCED:	DisplayAdvancedState();		return;
 	case E_CPU:			DisplayCpuState();			return;
+	case E_ADVANCED:	DisplayAdvancedState();		return;
 	case E_MEMORY:		DisplayMemoryState();		return;
 	case E_PHYSICS:		DisplayPhysicsState();		return;
 	case E_ANIMATION:	DisplayAnimationState();	return;
@@ -218,55 +237,92 @@ void Profiler::GetProfilerInfo()
 //////////////////////////////////////////////////////////////////////////
 void Profiler::DisplaySimpleState()
 {
-	ConcatText("Simple");
+	ConcatText("  - Profiler Simple Mode - \n", SCREEN_ROSE);
+	//-------------
+	ConcatText("CPU Usage : ");
+	char buf[32];
+	itoa(mProfilerInfos->ProcessCpuUsage, buf, 32, 10);
+	ConcatText(buf); 
+	ConcatText("%\n");
+	//-------------
+	ConcatText("RAM Usage : ");
+	ZeroMemory(buf, 32);
+	itoa(mProfilerInfos->ProcessPeakWorkingSet, buf, 32, 10);
+	ConcatText(buf); 
+	ConcatText("MB\n");
+	//-------------
+	ConcatText("\nPhysics : ");		ConcatText("Not Yet Available", SCREEN_GRAY);
+	ConcatText("\nAnimation : ");	ConcatText("Not Yet Available", SCREEN_GRAY);
+	ConcatText("\nAI : ");			ConcatText("Not Yet Available", SCREEN_GRAY);
+	ConcatText("\nScripts : ");		ConcatText("Not Yet Available", SCREEN_GRAY);
+	ConcatText("\nSound : ");		ConcatText("Not Yet Available", SCREEN_GRAY);
 }
 
 //////////////////////////////////////////////////////////////////////////
 void Profiler::DisplayAdvancedState()
 {
-	ConcatText("Advanced");
+	ConcatText("Advanced Mode Not Yet Supported", SCREEN_RED);
 }
 
 //////////////////////////////////////////////////////////////////////////
 void Profiler::DisplayCpuState()
 {
-	ConcatText("CPU");
+	ConcatText("  - Profiler CPU Mode - \n", SCREEN_ROSE);
+	//-------------
+	ConcatText("CPU Usage : ");
+	char buf[32];
+	itoa(mProfilerInfos->ProcessCpuUsage, buf, 32, 10);
+	ConcatText(buf); 
+	ConcatText("%\n");
+	//-------------
+	std::sort(profiles.rbegin(), profiles.rend());	// reverse sort the profiles (using totalTimes)
+	for (std::vector<Profile>::iterator it=profiles.begin()+1 ; it<profiles.end(); ++it)
+	{
+		ConcatText(it->name);
+		dtoa(buf, 32, (float)((it->totalTime/totalFrames)/countsPerMs), 10);
+		ConcatText(" : ");
+		ConcatText(buf);
+		ConcatText("ms (");
+		dtoa(buf, 32, (float)(((float)it->totalTime/profiles[0].totalTime) * 100.0f), 10);
+		ConcatText(buf);
+		ConcatText("%)\n");
+	}
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void Profiler::DisplayMemoryState()
 {
-	ConcatText("Memory");
+	ConcatText("Memory Mode Not Yet Supported", SCREEN_RED);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void Profiler::DisplayPhysicsState()
 {
-	ConcatText("Physics");
+	ConcatText("Physics Mode Not Yet Supported", SCREEN_RED);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void Profiler::DisplayAnimationState()
 {
-	ConcatText("Animation");
+	ConcatText("Animation Mode Not Yet Supported", SCREEN_RED);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void Profiler::DisplayAiState()
 {
-	ConcatText("Artificial Intelligence");
+	ConcatText("AI Mode Not Yet Supported", SCREEN_RED);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void Profiler::DisplayScriptState()
 {
-	ConcatText("Script");
+	ConcatText("Script Mode Not Yet Supported", SCREEN_RED);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void Profiler::DisplaySoundState()
 {
-	ConcatText("Sound");
+	ConcatText("Sound Mode Not Yet Supported", SCREEN_RED);
 }
 
 //////////////////////////////////////////////////////////////////////////

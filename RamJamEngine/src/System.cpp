@@ -143,6 +143,8 @@ void System::Run()
 				processRefreshRate = 0.0f;
 			}
 
+			FeedProfilerInfo();
+
 			PROFILE_CPU("Frame");
 			Timer::Instance()->Update();
 
@@ -723,6 +725,14 @@ void System::GetMemoryInfo( DWORD processID )
 	GetProcessMemoryInfo( hProcess, &mProcessMemoryCounters, sizeof(mProcessMemoryCounters));
 
 	CloseHandle( hProcess );
+}
+
+//////////////////////////////////////////////////////////////////////////
+void System::FeedProfilerInfo()
+{
+	Profiler::Instance()->mProfilerInfos->ProcessCpuUsage       = mProcessCpuUsage;
+	Profiler::Instance()->mProfilerInfos->ProcessPeakWorkingSet = (i16)(mProcessMemoryCounters.PeakWorkingSetSize/ 1048576);
+	Profiler::Instance()->mProfilerInfos->ProcessWorkingSet     = (i16)(mProcessMemoryCounters.WorkingSetSize/ 1048576);
 }
 
 //////////////////////////////////////////////////////////////////////////

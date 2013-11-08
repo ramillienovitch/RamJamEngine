@@ -237,6 +237,13 @@ void DX11Wrapper::Initialize(HWND hMainWnd, int windowWidth, int windowHeight)
 	DXGI_ADAPTER_DESC adapterDesc;
 	dxgiAdapter->GetDesc(&adapterDesc);
 	memcpy_s(System::Instance()->mGpuDescription, 128*sizeof(WCHAR), adapterDesc.Description, 128*sizeof(WCHAR));
+	// Remove white space at the end
+	for(size_t i=wcslen(System::Instance()->mGpuDescription)-1 ; i>0 ; --i)
+	{
+		if(System::Instance()->mGpuDescription[i] == ' ')
+			System::Instance()->mGpuDescription[i] = nullchar;
+		else break;
+	}
 	System::Instance()->mGpuDedicatedVRAM = (adapterDesc.DedicatedVideoMemory/1024)/1024;
 	System::Instance()->mGpuSharedVRAM    = (adapterDesc.SharedSystemMemory/1024)/1024;
 
@@ -1001,39 +1008,31 @@ void DX11Wrapper::DrawProfiler()
 {
 	PROFILE_CPU ("Draw Profiler");
 
-	POINT profileStatsPos = {20, 20};
-	POINT profileInfoPos  = {500, 100};
-	POINT textPos         = {500, 200};
+	POINT profileStatsPos = {System::Instance()->mScreenWidth - 500, 20};
+	POINT profileInfoPos  = {20, 70};
 
 	std::wstring stats;
-	stats =  L"RamJam Engine Profiler";
-	stats += L"\nCPU  : " + AnsiToWString(System::Instance()->mCpuDescription);
-	stats += L"\nGPU  : " + wstring(System::Instance()->mGpuDescription);
-	stats += L"\nRAM  : " + ToString(System::Instance()->mTotalSystemRAM)   + L"MB";
-	stats += L"\nVRAM : " + ToString(System::Instance()->mGpuDedicatedVRAM) + L"MB (Dedicated)";
-	stats += L"\nVRAM : " + ToString(System::Instance()->mGpuSharedVRAM)    + L"MB (Shared)";
-	stats += L"\nFrame "  + ToString(System::Instance()->mTotalFrames);
-	stats += L"\nFPS : "  + ToString(System::Instance()->fps);
-	stats += L" (Min:"    + ToString(System::Instance()->minfps);
-	stats += L" - Max:"   + ToString(System::Instance()->maxfps) + L")\n";
+	stats =  L"CPU : "  + AnsiToWString(System::Instance()->mCpuDescription) + L"\n";
+	stats += L"GPU : "  + wstring(System::Instance()->mGpuDescription)       + L"\n";
+	stats += L"RAM : "  + ToString(System::Instance()->mTotalSystemRAM)      + L" MB\n";
+	stats += L"VRAM : " + ToString(System::Instance()->mGpuDedicatedVRAM)    + L" MB (Dedicated)\n";
+	stats += L"VRAM : " + ToString(System::Instance()->mGpuSharedVRAM)       + L" MB (Shared)";
 	mSpriteBatch->DrawString(*mProfilerFont, stats, profileStatsPos, XMCOLOR(0xffffff00));
-// 	//-----------------------------
-// 	DX11Profiler::ProfileMap::iterator it;
-// 	for(it = DX11Profiler::sInstance.mProfiles.begin(); it != DX11Profiler::sInstance.mProfiles.end(); it++)
-// 	{
-// 		DX11Profiler::ProfileData& profile = (*it).second;
-// 
-// 		fps = (*it).first + ToString(profile.mElaspedTime) + L"ms";
-// 		mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, fps, statsPos, XMCOLOR(0xffffffff));
-// 	}
-// 	//-----------------------------
-// 	fps = L"Time waiting for queries: " + ToString(DX11Profiler::sInstance.mTimeWaitingForQueries);
-// 	mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, fps, profileStatsPos, XMCOLOR(0xffffffff));
+	//---------------
+	profileStatsPos.x = profileStatsPos.y = 20;
+	stats =  L"FPS : "        + ToString(System::Instance()->fps);
+	stats += L" (Min:"        + ToString(System::Instance()->minfps);
+	stats += L" - Max:"       + ToString(System::Instance()->maxfps) + L")\n";
+	stats += L"Time/Frame : " + ToString(System::Instance()->mspf) + L" ms";
+	stats += L" (frame "      + ToString(System::Instance()->mTotalFrames) + L")";
+	mSpriteBatch->DrawString(*mProfilerFont, stats, profileStatsPos, XMCOLOR(0xffffff00));
 	//-----------------------------
 	if (Profiler::Instance()->GetState() == PROFILER_STATES::E_GPU)
 	{
 		DX11Profiler::sInstance.GetProfilerInfo();
 		mSpriteBatch->DrawInfoText(*mProfilerFont, DX11Profiler::sInstance.mProfileInfoString, profileInfoPos);
+		profileInfoPos.x += 600;
+		mSpriteBatch->DrawInfoText(*mProfilerFont, DX11Profiler::sInstance.mProfileDeepInfoString, profileInfoPos);
 	}
 	else 
 	{

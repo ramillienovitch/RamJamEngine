@@ -96,8 +96,13 @@ struct DX11Profiler
 
 	float	mTimeWaitingForQueries;
 
+	//------------------
+
 	char*	mProfileInfoString;
+	char*	mProfileDeepInfoString;
 	u16		mProfileInfoStringSize;
+	u16		mProfileDeepInfoStringSize;
+	float	mProfilerRefreshRate;
 
 	//---------------------------
 
@@ -112,7 +117,7 @@ struct DX11Profiler
 	void Exit();
 
 	void GetProfilerInfo();
-	void ConcatText(const char* text, u8 color = SCREEN_WHITE);
+	void ConcatText(const char* text, u8 color = SCREEN_WHITE, BOOL deepProfile  = false);
 	void ResetProfilerInfo();
 };
 

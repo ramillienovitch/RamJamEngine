@@ -440,11 +440,15 @@ void DX11SpriteBatch::DrawInfoText(DX11FontSheet& fs, const char* text, const PO
 			posX  = pos.x;
 			posY += fs.GetCharHeight();
 		}
-		else if(character == SCREEN_WHITE)		color = 0xffffffff;		// Write in white
-		else if(character == SCREEN_RED)		color = 0xffff0000;		// Write in red
-		else if(character == SCREEN_GREEN)		color = 0xff00ff00;		// Write in green
-		else if(character == SCREEN_BLUE)		color = 0xff0000ff;		// Write in blue
-		else if(character == SCREEN_BLACK)		color = 0x000000ff;		// Write in black
+		else if(character == SCREEN_WHITE)		color = 0xffffffff;
+		else if(character == SCREEN_RED)		color = 0xffff0000;
+		else if(character == SCREEN_GREEN)		color = 0xff00ff00;
+		else if(character == SCREEN_BLUE)		color = 0xff0000ff;
+		else if(character == SCREEN_YELLOW)		color = 0xffffff00;
+		else if(character == SCREEN_ORANGE)		color = 0xffff8800;
+		else if(character == SCREEN_ROSE)		color = 0xffff00ff;
+		else if(character == SCREEN_GRAY)		color = 0xffa9a9a9;
+		else if(character == SCREEN_BLACK)		color = 0xff0000ff;
 		else if(character == nullchar)			break;
 		else
 		{
