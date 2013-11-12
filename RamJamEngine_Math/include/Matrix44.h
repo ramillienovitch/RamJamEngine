@@ -3,32 +3,37 @@
 #include "Types.h"
 #include <DirectXMath.h>
 
-struct Matrix44
+template <typename Real>
+struct Matrix44_T
 {
-	f32 m11, m12, m13, m14;
-	f32 m21, m22, m23, m24;
-	f32 m31, m32, m33, m34;
-	f32 m41, m42, m43, m44;
+	Real m11, m12, m13, m14;
+	Real m21, m22, m23, m24;
+	Real m31, m32, m33, m34;
+	Real m41, m42, m43, m44;
 
-	Matrix44();
-	Matrix44(	f32 m11, f32 m12, f32 m13, f32 m14,
-				f32 m21, f32 m22, f32 m23, f32 m24,
-				f32 m31, f32 m32, f32 m33, f32 m34,
-				f32 m41, f32 m42, f32 m43, f32 m44);
-	Matrix44(const Matrix44&);
-	~Matrix44();
+	Matrix44_T();
+	Matrix44_T(	Real m11, Real m12, Real m13, Real m14,
+				Real m21, Real m22, Real m23, Real m24,
+				Real m31, Real m32, Real m33, Real m34,
+				Real m41, Real m42, Real m43, Real m44);
+	Matrix44_T(const Matrix44_T&);
 
-	static const Matrix44 identity;
+	static const Matrix44_T identity;
 
-	Matrix44  operator + (const Matrix44&);
-	Matrix44  operator - (const Matrix44&);
-	Matrix44  operator * (const Matrix44&);
-	Matrix44& operator = (const Matrix44&);
-	Matrix44& operator = (const DirectX::XMMATRIX&);
+	Matrix44_T  operator + (const Matrix44_T&);
+	Matrix44_T  operator - (const Matrix44_T&);
+	Matrix44_T  operator * (const Matrix44_T&);
+	Matrix44_T& operator = (const Matrix44_T&);
+	Matrix44_T& operator = (const DirectX::XMMATRIX&);
 
 	operator DirectX::XMMATRIX();
 
-	friend Matrix44 operator == (const Matrix44&, const Matrix44&);
-
+	friend Matrix44_T operator == (const Matrix44_T&, const Matrix44_T&);
+	//---------------------------
+	Real		Trace();
 	// TODO: add matrix "everything" !
 };
+
+typedef Matrix44_T<f32> Matrix44;
+
+#include "Matrix44.inl"

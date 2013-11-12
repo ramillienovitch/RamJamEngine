@@ -4,10 +4,10 @@
 #include "../../RamJamEngine/include/GraphicAPI.h"
 
 
-struct DX11Wrapper : GraphicAPI
+struct DX11RenderingAPI : GraphicAPI
 {
-	DX11Wrapper();
-	~DX11Wrapper();
+	DX11RenderingAPI();
+	~DX11RenderingAPI();
 
 	DX11Device*				mDX11Device;
 	DX11DepthBuffer*		mDX11DepthBuffer;
@@ -83,7 +83,7 @@ struct DX11Wrapper : GraphicAPI
 
 	XMFLOAT3 mEyePosW;
 
-	// Scene Parameters : TODO: Get these out of DX11Wrapper !
+	// Scene Parameters : TODO: Get these out of DX11RenderingAPI !
 	UINT mDirLightCount;
 	UINT mPointLightCount;
 	BOOL mbUseTexture;

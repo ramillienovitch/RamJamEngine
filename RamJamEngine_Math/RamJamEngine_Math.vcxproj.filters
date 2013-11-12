@@ -35,23 +35,25 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\Quaternion.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Vector2.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Vector3.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Vector4.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\MathHelper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Matrix44.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="include\Vector2.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="include\Vector4.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="include\Matrix44.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="include\Vector3.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="include\Quaternion.inl">
+      <Filter>Header Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

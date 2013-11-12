@@ -92,7 +92,7 @@
     <ClInclude Include="include\DX11Profiler.h" />
     <ClInclude Include="include\DX11SpriteBatch.h" />
     <ClInclude Include="include\DX11Vertex.h" />
-    <ClInclude Include="include\DX11Wrapper.h" />
+    <ClInclude Include="include\DX11RenderingAPI.h" />
     <ClInclude Include="include\DxErr.h" />
     <ClInclude Include="include\GeometryGenerator.h" />
   </ItemGroup>
@@ -107,7 +107,7 @@
     <ClCompile Include="src\DX11Math.cpp" />
     <ClCompile Include="src\DX11InputLayout.cpp" />
     <ClCompile Include="src\DX11SpriteBatch.cpp" />
-    <ClCompile Include="src\DX11Wrapper.cpp" />
+    <ClCompile Include="src\DX11RenderingAPI.cpp" />
     <ClCompile Include="src\GeometryGenerator.cpp" />
     <ClCompile Include="src\DX11Profiler.cpp" />
   </ItemGroup>

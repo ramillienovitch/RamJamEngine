@@ -83,11 +83,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\MathHelper.cpp" />
-    <ClCompile Include="src\Matrix44.cpp" />
-    <ClCompile Include="src\Quaternion.cpp" />
-    <ClCompile Include="src\Vector2.cpp" />
-    <ClCompile Include="src\Vector3.cpp" />
-    <ClCompile Include="src\Vector4.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="include\Matrix44.inl" />
+    <None Include="include\Quaternion.inl" />
+    <None Include="include\Vector2.inl" />
+    <None Include="include\Vector3.inl" />
+    <None Include="include\Vector4.inl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

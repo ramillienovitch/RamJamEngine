@@ -27,9 +27,6 @@
     <ClInclude Include="include\D3DX11Effect.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\DX11Wrapper.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="include\DX11Helper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -72,15 +69,15 @@
     <ClInclude Include="include\DX11Profiler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\DX11RenderingAPI.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\DX11DepthBuffer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\DX11Device.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\DX11Wrapper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\GeometryGenerator.cpp">
@@ -111,6 +108,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\DX11Profiler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DX11RenderingAPI.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

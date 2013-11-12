@@ -55,7 +55,7 @@
 // Application Programming Interface
 #include "GraphicAPI.h"
 #if (RJE_GRAPHIC_API == DIRECTX_11)
-#	include "DX11Wrapper.h"
+#	include "DX11RenderingAPI.h"
 #else
 #	include "OglWrapper.h"
 #endif
@@ -63,3 +63,4 @@
 // RamJam Engine SubCores
 #include "System.h"
 #include "Console.h"
+#include "Transform.h"

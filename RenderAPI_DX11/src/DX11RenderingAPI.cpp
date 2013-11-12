@@ -1,7 +1,7 @@
-#include "DX11Wrapper.h"
+#include "DX11RenderingAPI.h"
 #include "../../RamJamEngine/include/System.h"
 
-DX11Wrapper::DX11Wrapper()
+DX11RenderingAPI::DX11RenderingAPI()
 {
 	mDX11Device			= nullptr;
 	mDX11DepthBuffer	= nullptr;
@@ -123,7 +123,7 @@ DX11Wrapper::DX11Wrapper()
 }
 
 //////////////////////////////////////////////////////////////////////////
-void DX11Wrapper::Initialize(HWND hMainWnd, int windowWidth, int windowHeight)
+void DX11RenderingAPI::Initialize(HWND hMainWnd, int windowWidth, int windowHeight)
 {
 	mDX11Device       = new DX11Device;
 	mDX11DepthBuffer  = new DX11DepthBuffer;
@@ -279,14 +279,14 @@ void DX11Wrapper::Initialize(HWND hMainWnd, int windowWidth, int windowHeight)
 }
 
 //////////////////////////////////////////////////////////////////////////
-void DX11Wrapper::LoadTexture(string keyName, ID3D11ShaderResourceView** shaderResourceView)
+void DX11RenderingAPI::LoadTexture(string keyName, ID3D11ShaderResourceView** shaderResourceView)
 {	
 	wstring texturePath = StringToWString(System::Instance()->mDataPath) + CIniFile::GetValueW(keyName, "textures", System::Instance()->mResourcesPath);
 	RJE_CHECK_FOR_SUCCESS(CreateDDSTextureFromFile( mDX11Device->md3dDevice, texturePath.c_str(), nullptr, shaderResourceView));
 }
 
 //////////////////////////////////////////////////////////////////////////
-void DX11Wrapper::Create2DTexture(i32 height, i32 width, float r, float g, float b, float a, ID3D11ShaderResourceView** textureSRV)
+void DX11RenderingAPI::Create2DTexture(i32 height, i32 width, float r, float g, float b, float a, ID3D11ShaderResourceView** textureSRV)
 {
 	UINT textureSize = height * width;
 	u8* texArray = new u8[textureSize*4];
@@ -328,13 +328,13 @@ void DX11Wrapper::Create2DTexture(i32 height, i32 width, float r, float g, float
 }
 
 //////////////////////////////////////////////////////////////////////////
-void DX11Wrapper::Create2DTexture(i32 height, i32 width, const float color[4], ID3D11ShaderResourceView** textureSRV)
+void DX11RenderingAPI::Create2DTexture(i32 height, i32 width, const float color[4], ID3D11ShaderResourceView** textureSRV)
 {
 	Create2DTexture(height, width, color[0], color[1], color[2], color[3], textureSRV);
 }
 
 //////////////////////////////////////////////////////////////////////////
-void DX11Wrapper::BuildGeometryBuffers()
+void DX11RenderingAPI::BuildGeometryBuffers()
 {
 	FILE* fIn;
 	string modelPath = System::Instance()->mDataPath + CIniFile::GetValue("modelpath", "meshes", System::Instance()->mResourcesPath);
@@ -481,7 +481,7 @@ void DX11Wrapper::BuildGeometryBuffers()
 }
 
 //////////////////////////////////////////////////////////////////////////
-void DX11Wrapper::UpdateScene( float dt )
+void DX11RenderingAPI::UpdateScene( float dt )
 {
 	// Convert Spherical to Cartesian coordinates.
 	float x = System::Instance()->mCameraRadius*sinf(System::Instance()->mCameraPhi)*cosf(System::Instance()->mCameraTheta);
@@ -496,7 +496,7 @@ void DX11Wrapper::UpdateScene( float dt )
 	mCamera->mUp       = Vector3(0.0f, 1.0f, 0.0f);
 	mCamera->UpdateViewMatrix();
 	
-	// Inputs modifiers : TODO: Get these out of DX11Wrapper !
+	// Inputs modifiers : TODO: Get these out of DX11RenderingAPI !
 	if (!Console::Instance()->IsActive())
 	{
 		if (Input::Instance()->GetKeyboardDown(Keyboard0))	mDirLightCount = 0;
@@ -537,7 +537,7 @@ void DX11Wrapper::UpdateScene( float dt )
 }
 
 //////////////////////////////////////////////////////////////////////////
-void DX11Wrapper::DrawScene()
+void DX11RenderingAPI::DrawScene()
 {
 	RJE_ASSERT(mDX11Device->md3dImmediateContext);
 	RJE_ASSERT(mSwapChain);
@@ -982,7 +982,7 @@ void DX11Wrapper::DrawScene()
 }
 
 //////////////////////////////////////////////////////////////////////////
-void DX11Wrapper::DrawConsole()
+void DX11RenderingAPI::DrawConsole()
 {
 	PROFILE_CPU("Draw Console");
 
@@ -1004,7 +1004,7 @@ void DX11Wrapper::DrawConsole()
 }
 
 //////////////////////////////////////////////////////////////////////////
-void DX11Wrapper::DrawProfiler()
+void DX11RenderingAPI::DrawProfiler()
 {
 	PROFILE_CPU ("Draw Profiler");
 
@@ -1029,27 +1029,35 @@ void DX11Wrapper::DrawProfiler()
 	//-----------------------------
 	if (Profiler::Instance()->GetState() == PROFILER_STATES::E_GPU)
 	{
+#if RJE_PROFILE_GPU
 		DX11Profiler::sInstance.GetProfilerInfo();
 		mSpriteBatch->DrawInfoText(*mProfilerFont, DX11Profiler::sInstance.mProfileInfoString, profileInfoPos);
 		profileInfoPos.x += 600;
 		mSpriteBatch->DrawInfoText(*mProfilerFont, DX11Profiler::sInstance.mProfileDeepInfoString, profileInfoPos);
+#else
+		mSpriteBatch->DrawInfoText(*mProfilerFont, "GPU Profiling Not Enabled", profileInfoPos);
+#endif
 	}
 	else 
 	{
+#if RJE_PROFILE_CPU
 		Profiler::Instance()->GetProfilerInfo();
 		mSpriteBatch->DrawInfoText(*mProfilerFont, Profiler::Instance()->mProfileInfoString, profileInfoPos);
+#else
+		mSpriteBatch->DrawInfoText(*mProfilerFont, "CPU and Memory Profiling Not Enabled", profileInfoPos);
+#endif
 	}
 }
 
 //////////////////////////////////////////////////////////////////////////
-void DX11Wrapper::Draw2dElements()
+void DX11RenderingAPI::Draw2dElements()
 {
 	POINT textPos = {10, 10};
 	//mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"RamJam Engine", textPos, XMCOLOR(0xffffffff));
 }
 
 //////////////////////////////////////////////////////////////////////////
-void DX11Wrapper::Shutdown()
+void DX11RenderingAPI::Shutdown()
 {
 	PROFILE_GPU_EXIT();
 
@@ -1093,7 +1101,7 @@ void DX11Wrapper::Shutdown()
 }
 
 //////////////////////////////////////////////////////////////////////////
-void DX11Wrapper::ResizeWindow(int newSizeWidth, int newSizeHeight)
+void DX11RenderingAPI::ResizeWindow(int newSizeWidth, int newSizeHeight)
 {
 	RJE_ASSERT(mDX11Device->md3dImmediateContext);
 	RJE_ASSERT(mDX11Device->md3dDevice);
@@ -1166,7 +1174,7 @@ void DX11Wrapper::ResizeWindow(int newSizeWidth, int newSizeHeight)
 }
 
 //////////////////////////////////////////////////////////////////////////
-void DX11Wrapper::SetWireframe(BOOL state)
+void DX11RenderingAPI::SetWireframe(BOOL state)
 {
 	if (state)
 	{

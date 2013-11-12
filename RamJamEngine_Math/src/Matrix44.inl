@@ -1,12 +1,16 @@
 #include "Matrix44.h"
 
-Matrix44::Matrix44()
+//------------------------
+template <typename Real>
+Matrix44_T<Real>::Matrix44_T()
 {
 	m12=m13=m14=m21=m23=m24=m31=m32=m34=m41=m42=m43 = 0.0f;
 	m11=m22=m33=m44 = 1.0f;
 }
 
-Matrix44::Matrix44( const Matrix44& matIn )
+//------------------------
+template <typename Real>
+Matrix44_T<Real>::Matrix44_T( const Matrix44_T& matIn )
 {
 	m11 = matIn.m11;
 	m12 = matIn.m12;
@@ -26,7 +30,9 @@ Matrix44::Matrix44( const Matrix44& matIn )
 	m44 = matIn.m44;
 }
 
-Matrix44::Matrix44( f32 _m11, f32 _m12, f32 _m13, f32 _m14, f32 _m21, f32 _m22, f32 _m23, f32 _m24, f32 _m31, f32 _m32, f32 _m33, f32 _m34, f32 _m41, f32 _m42, f32 _m43, f32 _m44 )
+//------------------------
+template <typename Real>
+Matrix44_T<Real>::Matrix44_T( Real _m11, Real _m12, Real _m13, Real _m14, Real _m21, Real _m22, Real _m23, Real _m24, Real _m31, Real _m32, Real _m33, Real _m34, Real _m41, Real _m42, Real _m43, Real _m44 )
 {
 	m11 = _m11;
 	m12 = _m12;
@@ -46,13 +52,15 @@ Matrix44::Matrix44( f32 _m11, f32 _m12, f32 _m13, f32 _m14, f32 _m21, f32 _m22, 
 	m44 = _m44;
 }
 
-Matrix44::~Matrix44() {}
+//------------------------
+template <typename Real>
+const Matrix44_T<Real> Matrix44_T<Real>::identity = Matrix44_T<Real>();
 
-const Matrix44 Matrix44::identity = Matrix44();
-
-Matrix44 Matrix44::operator+( const Matrix44& matIn )
+//------------------------
+template <typename Real>
+Matrix44_T<Real> Matrix44_T<Real>::operator+( const Matrix44_T<Real>& matIn )
 {
-	Matrix44 matOut = (*this);
+	Matrix44_T matOut = (*this);
 	matOut.m11 += matIn.m11;
 	matOut.m12 += matIn.m12;
 	matOut.m13 += matIn.m13;
@@ -72,9 +80,11 @@ Matrix44 Matrix44::operator+( const Matrix44& matIn )
 	return matOut;
 }
 
-Matrix44 Matrix44::operator-( const Matrix44& matIn )
+//------------------------
+template <typename Real>
+Matrix44_T<Real> Matrix44_T<Real>::operator-( const Matrix44_T<Real>& matIn )
 {
-	Matrix44 matOut = (*this);
+	Matrix44_T matOut = (*this);
 	matOut.m11 -= matIn.m11;
 	matOut.m12 -= matIn.m12;
 	matOut.m13 -= matIn.m13;
@@ -94,9 +104,11 @@ Matrix44 Matrix44::operator-( const Matrix44& matIn )
 	return matOut;
 }
 
-Matrix44 Matrix44::operator*( const Matrix44& matIn )
+//------------------------
+template <typename Real>
+Matrix44_T<Real> Matrix44_T<Real>::operator*( const Matrix44_T<Real>& matIn )
 {
-	*this = Matrix44 (	matIn.m11 * m11 + matIn.m21 * m12 + matIn.m31 * m13 + matIn.m41 * m14,
+	*this = Matrix44_T (	matIn.m11 * m11 + matIn.m21 * m12 + matIn.m31 * m13 + matIn.m41 * m14,
 						matIn.m12 * m11 + matIn.m22 * m12 + matIn.m32 * m13 + matIn.m42 * m14,
 						matIn.m13 * m11 + matIn.m23 * m12 + matIn.m33 * m13 + matIn.m43 * m14,
 						matIn.m14 * m11 + matIn.m24 * m12 + matIn.m34 * m13 + matIn.m44 * m14,
@@ -115,7 +127,9 @@ Matrix44 Matrix44::operator*( const Matrix44& matIn )
 	return *this;
 }
 
-Matrix44& Matrix44::operator=( const Matrix44& matIn )
+//------------------------
+template <typename Real>
+Matrix44_T<Real>& Matrix44_T<Real>::operator=( const Matrix44_T<Real>& matIn )
 {
 	m11 = matIn.m11;
 	m12 = matIn.m12;
@@ -136,7 +150,9 @@ Matrix44& Matrix44::operator=( const Matrix44& matIn )
 	return *this;
 }
 
-Matrix44::operator DirectX::XMMATRIX ()
+//------------------------
+template <typename Real>
+Matrix44_T<Real>::operator DirectX::XMMATRIX ()
 {
 	DirectX::XMMATRIX M(	m11, m12, m13, m14,
 		m21, m22, m23, m24,
@@ -145,7 +161,9 @@ Matrix44::operator DirectX::XMMATRIX ()
 	return M;
 }
 
-Matrix44& Matrix44::operator=( const DirectX::XMMATRIX& matIn)
+//------------------------
+template <typename Real>
+Matrix44_T<Real>& Matrix44_T<Real>::operator=( const DirectX::XMMATRIX& matIn)
 {
 	m11 = matIn.r[0].m128_f32[0];
 	m12 = matIn.r[0].m128_f32[1];

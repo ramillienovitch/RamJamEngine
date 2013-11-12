@@ -64,7 +64,7 @@ System::System()
 
 
 #if (RJE_GRAPHIC_API == DIRECTX_11)
-	mGraphicAPI = new DX11Wrapper();
+	mGraphicAPI = new DX11RenderingAPI();
 	mGraphicAPI->mCamera = new DX11Camera();
 #else
 	mGraphicAPI = new OglWrapper();

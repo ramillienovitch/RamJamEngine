@@ -1,0 +1,163 @@
+//////////////////////////////////////////////////////////////////////////
+
+#include "MathHelper.h"
+
+//-----------------------------
+template <typename Real>
+const Vector3_T<Real> Vector3_T<Real>::zero		= Vector3_T<Real>();
+//-----------------------------
+template <typename Real>
+const Vector3_T<Real> Vector3_T<Real>::one		= Vector3_T<Real>(1.0f);
+//-----------------------------
+template <typename Real>
+const Vector3_T<Real> Vector3_T<Real>::right	= Vector3_T<Real>(1.0f, 0.0f, 0.0f);
+//-----------------------------
+template <typename Real>
+const Vector3_T<Real> Vector3_T<Real>::up		= Vector3_T<Real>(0.0f, 1.0f, 0.0f);
+//-----------------------------
+template <typename Real>
+const Vector3_T<Real> Vector3_T<Real>::forward	= Vector3_T<Real>(0.0f, 0.0f, 1.0f);
+//-----------------------------
+
+
+//----------------------------------------------------------------------
+template <typename Real>
+FORCEINLINE Vector3_T<Real> Vector3_T<Real>::operator + (const Vector3_T<Real>& v)
+{ return Vector3_T<Real>(this->x+v.x, this->y+v.y, this->z+v.z); }
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+template <typename Real>
+FORCEINLINE Vector3_T<Real> Vector3_T<Real>::operator - (const Vector3_T<Real>& v)
+{ return Vector3_T<Real>(this->x-v.x, this->y-v.y, this->z-v.z); }
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+template <typename Real>
+FORCEINLINE Vector3_T<Real> Vector3_T<Real>::operator - ()
+{ return Vector3_T<Real>(-this->x, -this->y, -this->z); }
+//---------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+template <typename Real>
+FORCEINLINE Vector3_T<Real> Vector3_T<Real>::operator / (const Vector3_T<Real>& v)
+{ return Vector3_T<Real>(this->x/v.x, this->y/v.y, this->z/v.z); }
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+template <typename Real>
+FORCEINLINE Vector3_T<Real> Vector3_T<Real>::operator / (const Real& f)
+{ RJE_ASSERT(f!=0);	return Vector3_T<Real>(this->x/f, this->y/f, this->z/f); }
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+template <typename Real>
+FORCEINLINE Vector3_T<Real> Vector3_T<Real>::operator * (const Real& f)
+{ return Vector3_T<Real>(this->x*f, this->y*f, this->z*f); }
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+template <typename Real>
+FORCEINLINE Vector3_T<Real> operator * (const Real& f, const Vector3_T<Real>&v)
+{ return Vector3_T<Real>(v.x*f, v.y*f, v.z*f); }
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+template <typename Real>
+FORCEINLINE Vector3_T<Real> operator * (const int& f, const Vector3_T<Real>&v)
+{ return Vector3_T<Real>(v.x*f, v.y*f, v.z*f); }
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+template <typename Real>
+FORCEINLINE Vector3_T<Real>& Vector3_T<Real>::operator = (const Vector3_T<Real>& vIn)
+{ x = vIn.x; y = vIn.y; z = vIn.z; return *this; }
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+template <typename Real>
+FORCEINLINE Vector3_T<Real>& Vector3_T<Real>::operator += (const Vector3_T<Real>& v)
+{ x += v.x; y += v.y; z += v.z; return *this; }
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+template <typename Real>
+FORCEINLINE Vector3_T<Real>& Vector3_T<Real>::operator -= (const Vector3_T<Real>& v)
+{ x -= v.x; y -= v.y; z -= v.z; return *this; }
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+template <typename Real>
+FORCEINLINE Vector3_T<Real>& Vector3_T<Real>::operator /= (const Vector3_T<Real>& v)
+{ x /= v.x; y /= v.y; z /= v.z; return *this; }
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+template <typename Real>
+FORCEINLINE Vector3_T<Real>& Vector3_T<Real>::operator /= (const Real& f)
+{ x /= f; y /= f; z /= f; return *this; }
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+template <typename Real>
+FORCEINLINE Vector3_T<Real>& Vector3_T<Real>::operator *= (const Real& f)
+{ x *= f; y *= f; z *= f; return *this; }
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+template <typename Real>
+FORCEINLINE BOOL Vector3_T<Real>::operator == (const Vector3_T<Real>& v)
+{ return (x == v.x && y == v.y && z == v.z); }
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+template <typename Real>
+FORCEINLINE BOOL Vector3_T<Real>::operator != (const Vector3_T<Real>& v)
+{ return (x != v.x || y != v.y || z != v.z); }
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+template <typename Real>
+FORCEINLINE void Vector3_T<Real>::Set (Real fx, Real fy, Real fz)
+{ x=fx; y=fy; z=fz; }
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+template <typename Real>
+FORCEINLINE Real Vector3_T<Real>::SqrMagnitude()
+{ return x*x + y*y + z*z }
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+template <typename Real>
+FORCEINLINE Real Vector3_T<Real>::Magnitude()
+{ return sqrt(x*x + y*y + z*z); }
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+template <typename Real>
+FORCEINLINE Vector3_T<Real>& Vector3_T<Real>::Normalize()
+{
+	Real mag = Magnitude(); 
+	if (!RJE::Math::IsZero(mag))
+		*this /= mag; 
+	return *this;
+}
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+template <typename Real>
+FORCEINLINE Vector3_T<Real>& Vector3_T<Real>::Scale(const Vector3_T& v)
+{ x *= v.x; y *= v.y; z *= v.z; return *this; }
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+template <typename Real>
+FORCEINLINE static Vector3_T<Real> Vector3_T<Real>::Cross(const Vector3_T& v1, const Vector3_T& v2)
+{ return Vector3_T<Real>( v1.y*v2.z - v1.z*v2.y, v1.z*v2.x - v1.x*v2.z, v1.x*v2.y - v1.y*v2.x); }
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+template <typename Real>
+FORCEINLINE static Real Vector3_T<Real>::Dot(const Vector3_T& v1, const Vector3_T& v2)
+{ return v1.x*v2.x + v1.y*v2.y + v1.z*v2.z; }
