@@ -63,6 +63,9 @@
     <ClInclude Include="..\include\Transform.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\GeometryGenerator.h">
+      <Filter>Header Files\RJE_Graphic</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\System.cpp">
@@ -82,6 +85,9 @@
     </ClCompile>
     <ClCompile Include="..\src\Transform.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\GeometryGenerator.cpp">
+      <Filter>Source Files\RJE_Graphic</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -6,15 +6,15 @@ namespace Vertex
 {
 	struct PosNormalTex
 	{
-		XMFLOAT3 Pos;
-		XMFLOAT3 Normal;
-		XMFLOAT2 Tex;
+		Vector3 Pos;
+		Vector3 Normal;
+		Vector2 Tex;
 	};
 
 	struct SpriteVertex
 	{
-		XMFLOAT3 Pos;
-		XMFLOAT2 Tex;
+		Vector3 Pos;
+		Vector2 Tex;
 		DirectX::PackedVector::XMCOLOR Color;
 	};
 }

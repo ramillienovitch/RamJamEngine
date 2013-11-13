@@ -14,9 +14,7 @@
 
 #pragma once
 
-#include "DX11Helper.h"
-
-using namespace DirectX;
+#include "MathHelper.h"
 
 class GeometryGenerator
 {
@@ -24,7 +22,7 @@ public:
 	struct Vertex
 	{
 		Vertex(){}
-		Vertex(const XMFLOAT3& p, const XMFLOAT3& n, const XMFLOAT3& t, const XMFLOAT2& uv)
+		Vertex(const Vector3& p, const Vector3& n, const Vector3& t, const Vector2& uv)
 			: Position(p), Normal(n), TangentU(t), TexC(uv){}
 		Vertex(
 			float px, float py, float pz, 
@@ -34,10 +32,10 @@ public:
 			: Position(px,py,pz), Normal(nx,ny,nz),
 			  TangentU(tx, ty, tz), TexC(u,v){}
 
-		XMFLOAT3 Position;
-		XMFLOAT3 Normal;
-		XMFLOAT3 TangentU;
-		XMFLOAT2 TexC;
+		Vector3 Position;
+		Vector3 Normal;
+		Vector3 TangentU;
+		Vector2 TexC;
 	};
 
 	struct MeshData
@@ -84,6 +82,6 @@ public:
 
 private:
 	void Subdivide(MeshData& meshData);
-	void BuildCylinderTopCap(float bottomRadius, float topRadius, float height, UINT sliceCount, UINT stackCount, MeshData& meshData);
+	void BuildCylinderTopCap(   float bottomRadius, float topRadius, float height, UINT sliceCount, UINT stackCount, MeshData& meshData);
 	void BuildCylinderBottomCap(float bottomRadius, float topRadius, float height, UINT sliceCount, UINT stackCount, MeshData& meshData);
 };

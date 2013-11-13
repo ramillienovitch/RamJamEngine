@@ -33,9 +33,6 @@
     <ClInclude Include="include\DxErr.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\GeometryGenerator.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="include\DX11Math.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -78,9 +75,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\DX11Device.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\GeometryGenerator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\DX11Math.cpp">

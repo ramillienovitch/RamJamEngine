@@ -110,6 +110,7 @@
     <ClInclude Include="..\include\Camera.h" />
     <ClInclude Include="..\include\Console.h" />
     <ClInclude Include="..\include\FontSheet.h" />
+    <ClInclude Include="..\include\GeometryGenerator.h" />
     <ClInclude Include="..\include\GraphicAPI.h" />
     <ClInclude Include="..\include\Resource.h" />
     <ClInclude Include="..\include\RjeConfig.h" />
@@ -124,6 +125,10 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\src\FontSheet.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\src\GeometryGenerator.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>

@@ -53,5 +53,4 @@
 #include "DX11SpriteBatch.h"
 #include "DX11InputLayout.h"
 #include "DDSTextureLoader.h"
-#include "GeometryGenerator.h"
 //////////////////////////////////////////////////////////////////////////

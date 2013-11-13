@@ -596,8 +596,10 @@ void DX11SpriteBatch::BuildSpriteQuad(const Sprite& sprite, Vertex::SpriteVertex
 	// Rotate and scale the quad in NDC space.
 	for(int i = 0; i < 4; ++i)
 	{
-		XMVECTOR p = XMLoadFloat3(&v[i].Pos);
+		XMFLOAT3 vec = v[i].Pos;
+		XMVECTOR p = XMLoadFloat3(&vec);
 		p = XMVector3TransformCoord(p, T);
-		XMStoreFloat3(&v[i].Pos, p);
+		XMStoreFloat3(&vec, p);
+		v[i].Pos.Set(vec.x, vec.y, vec.z);
 	}
 }

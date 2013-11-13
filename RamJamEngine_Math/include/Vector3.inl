@@ -76,6 +76,12 @@ FORCEINLINE Vector3_T<Real>& Vector3_T<Real>::operator = (const Vector3_T<Real>&
 
 //----------------------------------------------------------------------
 template <typename Real>
+FORCEINLINE Vector3_T<Real>& Vector3_T<Real>::operator = (const DirectX::XMFLOAT3& vIn)
+{ x = vIn.x; y = vIn.y; z = vIn.z; return *this; }
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+template <typename Real>
 FORCEINLINE Vector3_T<Real>& Vector3_T<Real>::operator += (const Vector3_T<Real>& v)
 { x += v.x; y += v.y; z += v.z; return *this; }
 //----------------------------------------------------------------------
@@ -118,6 +124,11 @@ FORCEINLINE BOOL Vector3_T<Real>::operator != (const Vector3_T<Real>& v)
 
 //----------------------------------------------------------------------
 template <typename Real>
+Vector3_T<Real>::operator DirectX::XMFLOAT3 ()
+{ return DirectX::XMFLOAT3(x, y, z); }
+
+//----------------------------------------------------------------------
+template <typename Real>
 FORCEINLINE void Vector3_T<Real>::Set (Real fx, Real fy, Real fz)
 { x=fx; y=fy; z=fz; }
 //----------------------------------------------------------------------
@@ -153,11 +164,11 @@ FORCEINLINE Vector3_T<Real>& Vector3_T<Real>::Scale(const Vector3_T& v)
 
 //----------------------------------------------------------------------
 template <typename Real>
-FORCEINLINE static Vector3_T<Real> Vector3_T<Real>::Cross(const Vector3_T& v1, const Vector3_T& v2)
+FORCEINLINE Vector3_T<Real> Vector3_T<Real>::Cross(const Vector3_T& v1, const Vector3_T& v2)
 { return Vector3_T<Real>( v1.y*v2.z - v1.z*v2.y, v1.z*v2.x - v1.x*v2.z, v1.x*v2.y - v1.y*v2.x); }
 //----------------------------------------------------------------------
 
 //----------------------------------------------------------------------
 template <typename Real>
-FORCEINLINE static Real Vector3_T<Real>::Dot(const Vector3_T& v1, const Vector3_T& v2)
+FORCEINLINE Real Vector3_T<Real>::Dot(const Vector3_T& v1, const Vector3_T& v2)
 { return v1.x*v2.x + v1.y*v2.y + v1.z*v2.z; }

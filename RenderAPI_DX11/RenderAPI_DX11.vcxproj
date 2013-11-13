@@ -94,7 +94,6 @@
     <ClInclude Include="include\DX11Vertex.h" />
     <ClInclude Include="include\DX11RenderingAPI.h" />
     <ClInclude Include="include\DxErr.h" />
-    <ClInclude Include="include\GeometryGenerator.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\DDSTextureLoader.cpp" />
@@ -108,7 +107,6 @@
     <ClCompile Include="src\DX11InputLayout.cpp" />
     <ClCompile Include="src\DX11SpriteBatch.cpp" />
     <ClCompile Include="src\DX11RenderingAPI.cpp" />
-    <ClCompile Include="src\GeometryGenerator.cpp" />
     <ClCompile Include="src\DX11Profiler.cpp" />
   </ItemGroup>
   <ItemGroup>

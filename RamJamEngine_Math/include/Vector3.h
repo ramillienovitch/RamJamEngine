@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Types.h"
+#include <DirectXMath.h>
 
 template <typename Real>
 struct Vector3_T
@@ -27,6 +28,7 @@ struct Vector3_T
 	Vector3_T	operator /  (const Real&);
 	Vector3_T	operator *  (const Real&);
 	Vector3_T&	operator =  (const Vector3_T&);
+	Vector3_T&	operator =  (const DirectX::XMFLOAT3&);
 	Vector3_T&	operator += (const Vector3_T&);
 	Vector3_T&	operator -= (const Vector3_T&);
 	Vector3_T&	operator /= (const Vector3_T&);
@@ -35,6 +37,8 @@ struct Vector3_T
 	//Vector3_T	operator *= (const Matrix33_T&);
 	BOOL		operator == (const Vector3_T&);
 	BOOL		operator != (const Vector3_T&);
+	//---------------
+	operator DirectX::XMFLOAT3();
 	//---------------
 	void		Set (Real x, Real y, Real z);
 	Real		SqrMagnitude();
