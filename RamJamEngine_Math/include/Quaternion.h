@@ -30,7 +30,7 @@ struct Quaternion_T
 
 	static const Quaternion_T identity;
 
-	Quaternion_T()                               : w(0.0), x(0.0), y(0.0), z(0.0)	{};
+	Quaternion_T()                               : w(0.0), x(0.0), y(0.0), z(0.0)	{}
 	Quaternion_T(Real w, Real x, Real y, Real z) { Set(w,x,y,z); }
 	Quaternion_T(const Quaternion_T& q)          { Set(q.w, q.x, q.y, q.z); }
 	Quaternion_T(Real pitch, Real yaw, Real roll);

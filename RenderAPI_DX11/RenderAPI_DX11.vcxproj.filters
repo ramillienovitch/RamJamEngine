@@ -42,9 +42,6 @@
     <ClInclude Include="include\DX11Effect.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\DX11Vertex.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="include\DX11InputLayout.h">
       <Filter>Header Files</Filter>
     </ClInclude>

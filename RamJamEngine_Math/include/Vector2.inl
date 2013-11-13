@@ -87,7 +87,7 @@ FORCEINLINE Vector2_T<Real>& Vector2_T<Real>::operator /= (const Vector2_T<Real>
 //----------------------------------------------------------------------
 template <typename Real>
 FORCEINLINE Vector2_T<Real>& Vector2_T<Real>::operator /= (const Real& f)
-{ x /= f; y /= f; return *this; }
+{ RJE_ASSERT(f!=0); x /= f; y /= f; return *this; }
 //----------------------------------------------------------------------
 
 //----------------------------------------------------------------------

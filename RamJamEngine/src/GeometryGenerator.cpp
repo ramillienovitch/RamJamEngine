@@ -4,53 +4,53 @@
 
 #include "GeometryGenerator.h"
 
-void GeometryGenerator::CreateBox(float width, float height, float depth, MeshData& meshData)
+void GeometryGenerator::CreateBox(float width, float height, float depth, Data<PosNormTanTex>& meshData)
 {
 	//
 	// Create the vertices.
 	//
 
-	Vertex v[24];
+	MeshData::PosNormTanTex v[24];
 
 	float w2 = 0.5f*width;
 	float h2 = 0.5f*height;
 	float d2 = 0.5f*depth;
 	
 	// Fill in the front face vertex data.
-	v[0] = Vertex(-w2, -h2, -d2, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
-	v[1] = Vertex(-w2, +h2, -d2, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
-	v[2] = Vertex(+w2, +h2, -d2, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f);
-	v[3] = Vertex(+w2, -h2, -d2, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f);
+	v[0] = MeshData::PosNormTanTex(-w2, -h2, -d2, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+	v[1] = MeshData::PosNormTanTex(-w2, +h2, -d2, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+	v[2] = MeshData::PosNormTanTex(+w2, +h2, -d2, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+	v[3] = MeshData::PosNormTanTex(+w2, -h2, -d2, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f);
 
 	// Fill in the back face vertex data.
-	v[4] = Vertex(-w2, -h2, +d2, 0.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f);
-	v[5] = Vertex(+w2, -h2, +d2, 0.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
-	v[6] = Vertex(+w2, +h2, +d2, 0.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
-	v[7] = Vertex(-w2, +h2, +d2, 0.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+	v[4] = MeshData::PosNormTanTex(-w2, -h2, +d2, 0.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f);
+	v[5] = MeshData::PosNormTanTex(+w2, -h2, +d2, 0.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+	v[6] = MeshData::PosNormTanTex(+w2, +h2, +d2, 0.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+	v[7] = MeshData::PosNormTanTex(-w2, +h2, +d2, 0.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f);
 
 	// Fill in the top face vertex data.
-	v[8]  = Vertex(-w2, +h2, -d2, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
-	v[9]  = Vertex(-w2, +h2, +d2, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
-	v[10] = Vertex(+w2, +h2, +d2, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f);
-	v[11] = Vertex(+w2, +h2, -d2, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f);
+	v[8]  = MeshData::PosNormTanTex(-w2, +h2, -d2, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+	v[9]  = MeshData::PosNormTanTex(-w2, +h2, +d2, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+	v[10] = MeshData::PosNormTanTex(+w2, +h2, +d2, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+	v[11] = MeshData::PosNormTanTex(+w2, +h2, -d2, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f);
 
 	// Fill in the bottom face vertex data.
-	v[12] = Vertex(-w2, -h2, -d2, 0.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f);
-	v[13] = Vertex(+w2, -h2, -d2, 0.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
-	v[14] = Vertex(+w2, -h2, +d2, 0.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
-	v[15] = Vertex(-w2, -h2, +d2, 0.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+	v[12] = MeshData::PosNormTanTex(-w2, -h2, -d2, 0.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f);
+	v[13] = MeshData::PosNormTanTex(+w2, -h2, -d2, 0.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+	v[14] = MeshData::PosNormTanTex(+w2, -h2, +d2, 0.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+	v[15] = MeshData::PosNormTanTex(-w2, -h2, +d2, 0.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f);
 
 	// Fill in the left face vertex data.
-	v[16] = Vertex(-w2, -h2, +d2, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f);
-	v[17] = Vertex(-w2, +h2, +d2, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f);
-	v[18] = Vertex(-w2, +h2, -d2, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f);
-	v[19] = Vertex(-w2, -h2, -d2, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f);
+	v[16] = MeshData::PosNormTanTex(-w2, -h2, +d2, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f);
+	v[17] = MeshData::PosNormTanTex(-w2, +h2, +d2, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f);
+	v[18] = MeshData::PosNormTanTex(-w2, +h2, -d2, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f);
+	v[19] = MeshData::PosNormTanTex(-w2, -h2, -d2, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f);
 
 	// Fill in the right face vertex data.
-	v[20] = Vertex(+w2, -h2, -d2, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f);
-	v[21] = Vertex(+w2, +h2, -d2, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f);
-	v[22] = Vertex(+w2, +h2, +d2, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f);
-	v[23] = Vertex(+w2, -h2, +d2, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
+	v[20] = MeshData::PosNormTanTex(+w2, -h2, -d2, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f);
+	v[21] = MeshData::PosNormTanTex(+w2, +h2, -d2, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f);
+	v[22] = MeshData::PosNormTanTex(+w2, +h2, +d2, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f);
+	v[23] = MeshData::PosNormTanTex(+w2, -h2, +d2, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
 
 	meshData.Vertices.assign(&v[0], &v[24]);
  
@@ -87,7 +87,7 @@ void GeometryGenerator::CreateBox(float width, float height, float depth, MeshDa
 	meshData.Indices.assign(&i[0], &i[36]);
 }
 
-void GeometryGenerator::CreateSphere(float radius, UINT sliceCount, UINT stackCount, MeshData& meshData)
+void GeometryGenerator::CreateSphere(float radius, UINT sliceCount, UINT stackCount, Data<PosNormTanTex>& meshData)
 {
 	meshData.Vertices.clear();
 	meshData.Indices.clear();
@@ -99,8 +99,8 @@ void GeometryGenerator::CreateSphere(float radius, UINT sliceCount, UINT stackCo
 	// Poles: note that there will be texture coordinate distortion as there is
 	// not a unique point on the texture map to assign to the pole when mapping
 	// a rectangular texture onto a sphere.
-	Vertex topVertex(0.0f, +radius, 0.0f, 0.0f, +1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
-	Vertex bottomVertex(0.0f, -radius, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+	MeshData::PosNormTanTex topVertex(0.0f, +radius, 0.0f, 0.0f, +1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+	MeshData::PosNormTanTex bottomVertex(0.0f, -radius, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
 
 	meshData.Vertices.push_back( topVertex );
 
@@ -117,7 +117,7 @@ void GeometryGenerator::CreateSphere(float radius, UINT sliceCount, UINT stackCo
 		{
 			float theta = j*thetaStep;
 
-			Vertex v;
+			MeshData::PosNormTanTex v;
 
 			// spherical to cartesian
 			v.Position.x = radius*sinf(phi)*cosf(theta);
@@ -194,10 +194,10 @@ void GeometryGenerator::CreateSphere(float radius, UINT sliceCount, UINT stackCo
 	}
 }
  
-void GeometryGenerator::Subdivide(MeshData& meshData)
+void GeometryGenerator::Subdivide(Data<PosNormTanTex>& meshData)
 {
 	// Save a copy of the input geometry.
-	MeshData inputCopy = meshData;
+	Data<PosNormTanTex> inputCopy = meshData;
 
 
 	meshData.Vertices.resize(0);
@@ -216,15 +216,15 @@ void GeometryGenerator::Subdivide(MeshData& meshData)
 	size_t numTris = inputCopy.Indices.size()/3;
 	for(UINT i = 0; i < (UINT)numTris; ++i)
 	{
-		Vertex v0 = inputCopy.Vertices[ inputCopy.Indices[i*3+0] ];
-		Vertex v1 = inputCopy.Vertices[ inputCopy.Indices[i*3+1] ];
-		Vertex v2 = inputCopy.Vertices[ inputCopy.Indices[i*3+2] ];
+		MeshData::PosNormTanTex v0 = inputCopy.Vertices[ inputCopy.Indices[i*3+0] ];
+		MeshData::PosNormTanTex v1 = inputCopy.Vertices[ inputCopy.Indices[i*3+1] ];
+		MeshData::PosNormTanTex v2 = inputCopy.Vertices[ inputCopy.Indices[i*3+2] ];
 
 		//
 		// Generate the midpoints.
 		//
 
-		Vertex m0, m1, m2;
+		MeshData::PosNormTanTex m0, m1, m2;
 
 		// For subdivision, we just care about the position component.
 		// We derive the other vertex components in CreateGeosphere.
@@ -270,7 +270,7 @@ void GeometryGenerator::Subdivide(MeshData& meshData)
 	}
 }
 
-void GeometryGenerator::CreateGeosphere(float radius, UINT numSubdivisions, MeshData& meshData)
+void GeometryGenerator::CreateGeosphere(float radius, UINT numSubdivisions, Data<PosNormTanTex>& meshData)
 {
 	// Put a cap on the number of subdivisions.
 	numSubdivisions = RJE::Math::Min(numSubdivisions, 5u);
@@ -339,7 +339,7 @@ void GeometryGenerator::CreateGeosphere(float radius, UINT numSubdivisions, Mesh
 	}
 }
 
-void GeometryGenerator::CreateCylinder(float bottomRadius, float topRadius, float height, UINT sliceCount, UINT stackCount, MeshData& meshData)
+void GeometryGenerator::CreateCylinder(float bottomRadius, float topRadius, float height, UINT sliceCount, UINT stackCount, Data<PosNormTanTex>& meshData)
 {
 	meshData.Vertices.clear();
 	meshData.Indices.clear();
@@ -365,7 +365,7 @@ void GeometryGenerator::CreateCylinder(float bottomRadius, float topRadius, floa
 		float dTheta = 2.0f*RJE_PI_F/sliceCount;
 		for(UINT j = 0; j <= sliceCount; ++j)
 		{
-			Vertex vertex;
+			MeshData::PosNormTanTex vertex;
 
 			float c = cosf(j*dTheta);
 			float s = sinf(j*dTheta);
@@ -429,7 +429,7 @@ void GeometryGenerator::CreateCylinder(float bottomRadius, float topRadius, floa
 }
 
 void GeometryGenerator::BuildCylinderTopCap(float bottomRadius, float topRadius, float height, 
-											UINT sliceCount, UINT stackCount, MeshData& meshData)
+											UINT sliceCount, UINT stackCount, Data<PosNormTanTex>& meshData)
 {
 	UINT baseIndex = (UINT)meshData.Vertices.size();
 
@@ -447,11 +447,11 @@ void GeometryGenerator::BuildCylinderTopCap(float bottomRadius, float topRadius,
 		float u = x/height + 0.5f;
 		float v = z/height + 0.5f;
 
-		meshData.Vertices.push_back( Vertex(x, y, z, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, u, v) );
+		meshData.Vertices.push_back( MeshData::PosNormTanTex(x, y, z, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, u, v) );
 	}
 
 	// Cap center vertex.
-	meshData.Vertices.push_back( Vertex(0.0f, y, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.5f, 0.5f) );
+	meshData.Vertices.push_back( MeshData::PosNormTanTex(0.0f, y, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.5f, 0.5f) );
 
 	// Index of center vertex.
 	UINT centerIndex = (UINT)meshData.Vertices.size()-1;
@@ -465,7 +465,7 @@ void GeometryGenerator::BuildCylinderTopCap(float bottomRadius, float topRadius,
 }
 
 void GeometryGenerator::BuildCylinderBottomCap(float bottomRadius, float topRadius, float height, 
-											   UINT sliceCount, UINT stackCount, MeshData& meshData)
+											   UINT sliceCount, UINT stackCount, Data<PosNormTanTex>& meshData)
 {
 	// 
 	// Build bottom cap.
@@ -486,11 +486,11 @@ void GeometryGenerator::BuildCylinderBottomCap(float bottomRadius, float topRadi
 		float u = x/height + 0.5f;
 		float v = z/height + 0.5f;
 
-		meshData.Vertices.push_back( Vertex(x, y, z, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f, 0.0f, u, v) );
+		meshData.Vertices.push_back( MeshData::PosNormTanTex(x, y, z, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f, 0.0f, u, v) );
 	}
 
 	// Cap center vertex.
-	meshData.Vertices.push_back( Vertex(0.0f, y, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.5f, 0.5f) );
+	meshData.Vertices.push_back( MeshData::PosNormTanTex(0.0f, y, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.5f, 0.5f) );
 
 	// Cache the index of center vertex.
 	UINT centerIndex = (UINT)meshData.Vertices.size()-1;
@@ -503,7 +503,7 @@ void GeometryGenerator::BuildCylinderBottomCap(float bottomRadius, float topRadi
 	}
 }
 
-void GeometryGenerator::CreateGrid(float width, float depth, UINT m, UINT n, MeshData& meshData)
+void GeometryGenerator::CreateGrid(float width, float depth, UINT m, UINT n, Data<PosNormTanTex>& meshData)
 {
 	UINT vertexCount = m*n;
 	UINT faceCount   = (m-1)*(n-1)*2;
@@ -564,31 +564,31 @@ void GeometryGenerator::CreateGrid(float width, float depth, UINT m, UINT n, Mes
 	}
 }
 
-void GeometryGenerator::CreateFullscreenQuad(MeshData& meshData)
+void GeometryGenerator::CreateFullscreenQuad(Data<PosNormTanTex>& meshData)
 {
 	meshData.Vertices.resize(4);
 	meshData.Indices.resize(6);
 
 	// Position coordinates specified in NDC space.
-	meshData.Vertices[0] = Vertex(
+	meshData.Vertices[0] = MeshData::PosNormTanTex(
 		-1.0f, -1.0f, 0.0f, 
 		0.0f, 0.0f, -1.0f,
 		1.0f, 0.0f, 0.0f,
 		0.0f, 1.0f);
 
-	meshData.Vertices[1] = Vertex(
+	meshData.Vertices[1] = MeshData::PosNormTanTex(
 		-1.0f, +1.0f, 0.0f, 
 		0.0f, 0.0f, -1.0f,
 		1.0f, 0.0f, 0.0f,
 		0.0f, 0.0f);
 
-	meshData.Vertices[2] = Vertex(
+	meshData.Vertices[2] = MeshData::PosNormTanTex(
 		+1.0f, +1.0f, 0.0f, 
 		0.0f, 0.0f, -1.0f,
 		1.0f, 0.0f, 0.0f,
 		1.0f, 0.0f);
 
-	meshData.Vertices[3] = Vertex(
+	meshData.Vertices[3] = MeshData::PosNormTanTex(
 		+1.0f, -1.0f, 0.0f, 
 		0.0f, 0.0f, -1.0f,
 		1.0f, 0.0f, 0.0f,

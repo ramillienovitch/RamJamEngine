@@ -66,6 +66,9 @@
     <ClInclude Include="..\include\GeometryGenerator.h">
       <Filter>Header Files\RJE_Graphic</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\MeshData.h">
+      <Filter>Header Files\RJE_Graphic</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\System.cpp">

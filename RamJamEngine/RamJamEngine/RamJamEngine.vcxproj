@@ -112,6 +112,7 @@
     <ClInclude Include="..\include\FontSheet.h" />
     <ClInclude Include="..\include\GeometryGenerator.h" />
     <ClInclude Include="..\include\GraphicAPI.h" />
+    <ClInclude Include="..\include\MeshData.h" />
     <ClInclude Include="..\include\Resource.h" />
     <ClInclude Include="..\include\RjeConfig.h" />
     <ClInclude Include="..\include\stdafx.h" />

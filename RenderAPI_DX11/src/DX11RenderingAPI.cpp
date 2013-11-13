@@ -354,10 +354,10 @@ void DX11RenderingAPI::BuildGeometryBuffers()
 
 	mModelIndexCount = 3*modelTriangleCount;
 
-	GeometryGenerator::MeshData box;
-	GeometryGenerator::MeshData grid;
-	GeometryGenerator::MeshData sphere;
-	GeometryGenerator::MeshData cylinder;
+	MeshData::Data<PosNormTanTex> box;
+	MeshData::Data<PosNormTanTex> grid;
+	MeshData::Data<PosNormTanTex> sphere;
+	MeshData::Data<PosNormTanTex> cylinder;
 
 	GeometryGenerator geoGen;
 	geoGen.CreateBox(1.0f, 1.0f, 1.0f, box);
@@ -399,7 +399,7 @@ void DX11RenderingAPI::BuildGeometryBuffers()
 							mModelIndexCount;
 
 
-	std::vector<Vertex::PosNormalTex> vertices(totalVertexCount);
+	std::vector<MeshData::PosNormalTex> vertices(totalVertexCount);
 	XMFLOAT4 black(0.0f, 0.0f, 0.0f, 1.0f);
 	UINT k = 0;
 
@@ -454,7 +454,7 @@ void DX11RenderingAPI::BuildGeometryBuffers()
 
 	D3D11_BUFFER_DESC vbd;
 	vbd.Usage          = D3D11_USAGE_IMMUTABLE;
-	vbd.ByteWidth      = (UINT) (sizeof(Vertex::PosNormalTex) * totalVertexCount);
+	vbd.ByteWidth      = (UINT) (sizeof(MeshData::PosNormalTex) * totalVertexCount);
 	vbd.BindFlags      = D3D11_BIND_VERTEX_BUFFER;
 	vbd.CPUAccessFlags = 0;
 	vbd.MiscFlags      = 0;
@@ -559,7 +559,7 @@ void DX11RenderingAPI::DrawScene()
 	float fogRange = CIniFile::GetValueFloat("fog_range",   "camera",      "../data/Scene.ini");
 	float blendFactor[4] = {rbg, rbg, rbg, alpha};
 
-	UINT stride = sizeof(Vertex::PosNormalTex);
+	UINT stride = sizeof(MeshData::PosNormalTex);
 	UINT offset = 0;
 	mDX11Device->md3dImmediateContext->IASetVertexBuffers(0, 1, &mVertexBuffer, &stride, &offset);
 	mDX11Device->md3dImmediateContext->IASetIndexBuffer(mIndexBuffer, DXGI_FORMAT_R32_UINT, 0);

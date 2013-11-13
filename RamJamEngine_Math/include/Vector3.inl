@@ -47,7 +47,7 @@ FORCEINLINE Vector3_T<Real> Vector3_T<Real>::operator / (const Vector3_T<Real>& 
 //----------------------------------------------------------------------
 template <typename Real>
 FORCEINLINE Vector3_T<Real> Vector3_T<Real>::operator / (const Real& f)
-{ RJE_ASSERT(f!=0);	return Vector3_T<Real>(this->x/f, this->y/f, this->z/f); }
+{ return Vector3_T<Real>(this->x/f, this->y/f, this->z/f); }
 //----------------------------------------------------------------------
 
 //----------------------------------------------------------------------

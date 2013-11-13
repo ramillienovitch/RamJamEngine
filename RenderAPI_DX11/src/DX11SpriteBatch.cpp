@@ -64,7 +64,7 @@ HRESULT DX11SpriteBatch::Initialize(ID3D11Device* device, ID3D11DeviceContext* c
 		return hr;
 
 	D3D11_BUFFER_DESC vbd;
-	vbd.ByteWidth           = BatchSize*4*sizeof(Vertex::SpriteVertex);
+	vbd.ByteWidth           = BatchSize*4*sizeof(MeshData::SpriteVertex);
 	vbd.Usage               = D3D11_USAGE_DYNAMIC;
 	vbd.BindFlags           = D3D11_BIND_VERTEX_BUFFER;
 	vbd.CPUAccessFlags      = D3D11_CPU_ACCESS_WRITE;
@@ -129,7 +129,7 @@ void DX11SpriteBatch::EndBatch(ID3D11DeviceContext* dc)
 	mScreenWidth  = vp.Width;
 	mScreenHeight = vp.Height;
 
-	UINT stride = sizeof(Vertex::SpriteVertex);
+	UINT stride = sizeof(MeshData::SpriteVertex);
 	UINT offset = 0;
 	dc->IASetInputLayout(mInputLayout);
 	dc->IASetIndexBuffer(mIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
@@ -529,13 +529,13 @@ void DX11SpriteBatch::DrawBatch(ID3D11DeviceContext* dc, UINT startSpriteIndex, 
 	// Write the quads to the vertex buffer.
 	D3D11_MAPPED_SUBRESOURCE mappedData;
 	dc->Map(mVertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedData);
-	Vertex::SpriteVertex* v = reinterpret_cast<Vertex::SpriteVertex*>(mappedData.pData);
+	MeshData::SpriteVertex* v = reinterpret_cast<MeshData::SpriteVertex*>(mappedData.pData);
 
 	for(UINT i = 0; i < spriteCount; ++i)
 	{
 		const Sprite& sprite = mSpriteList[startSpriteIndex + i];
 
-		Vertex::SpriteVertex quad[4];
+		MeshData::SpriteVertex quad[4];
 		BuildSpriteQuad(sprite, quad);
 
 		v[i*4+0] = quad[0];
@@ -550,19 +550,11 @@ void DX11SpriteBatch::DrawBatch(ID3D11DeviceContext* dc, UINT startSpriteIndex, 
 }
 
 //////////////////////////////////////////////////////////////////////////
-XMFLOAT3 DX11SpriteBatch::PointToNdc(int x, int y, float z)
-{
-	XMFLOAT3 p;
-
-	p.x = 2.0f*(float)x/mScreenWidth - 1.0f;
-	p.y = 1.0f - 2.0f*(float)y/mScreenHeight;
-	p.z = z;
-
-	return p;
-}
+Vector3 DX11SpriteBatch::PointToNdc(int x, int y, float z)
+{ return Vector3(2.0f*(float)x/mScreenWidth - 1.0f, 1.0f - 2.0f*(float)y/mScreenHeight, z); }
 
 //////////////////////////////////////////////////////////////////////////
-void DX11SpriteBatch::BuildSpriteQuad(const Sprite& sprite, Vertex::SpriteVertex v[4])
+void DX11SpriteBatch::BuildSpriteQuad(const Sprite& sprite, MeshData::SpriteVertex v[4])
 {
 	const CD3D11_RECT& dest = sprite.DestRect;
 	const CD3D11_RECT& src  = sprite.SrcRect;
@@ -574,10 +566,10 @@ void DX11SpriteBatch::BuildSpriteQuad(const Sprite& sprite, Vertex::SpriteVertex
 	v[3].Pos = PointToNdc(dest.right, dest.bottom, sprite.Z);
 
 	// Source rect defines subset of texture to use from sprite sheet.
-	v[0].Tex = XMFLOAT2((float)src.left  / mTexWidth, (float)src.bottom / mTexHeight); 
-	v[1].Tex = XMFLOAT2((float)src.left  / mTexWidth, (float)src.top    / mTexHeight); 
-	v[2].Tex = XMFLOAT2((float)src.right / mTexWidth, (float)src.top    / mTexHeight); 
-	v[3].Tex = XMFLOAT2((float)src.right / mTexWidth, (float)src.bottom / mTexHeight); 
+	v[0].Tex = Vector2((float)src.left  / mTexWidth, (float)src.bottom / mTexHeight); 
+	v[1].Tex = Vector2((float)src.left  / mTexWidth, (float)src.top    / mTexHeight); 
+	v[2].Tex = Vector2((float)src.right / mTexWidth, (float)src.top    / mTexHeight); 
+	v[3].Tex = Vector2((float)src.right / mTexWidth, (float)src.bottom / mTexHeight); 
 
 	v[0].Color = sprite.Color;
 	v[1].Color = sprite.Color;

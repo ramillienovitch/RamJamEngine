@@ -6,6 +6,7 @@
 // This enable us to work without knowing the API used behind
 
 #include "Camera.h"
+#include "MeshData.h"
 #include "GeometryGenerator.h"
 
 struct GraphicAPI

@@ -91,7 +91,6 @@
     <ClInclude Include="include\DX11Math.h" />
     <ClInclude Include="include\DX11Profiler.h" />
     <ClInclude Include="include\DX11SpriteBatch.h" />
-    <ClInclude Include="include\DX11Vertex.h" />
     <ClInclude Include="include\DX11RenderingAPI.h" />
     <ClInclude Include="include\DxErr.h" />
   </ItemGroup>

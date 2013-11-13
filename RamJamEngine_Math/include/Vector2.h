@@ -9,10 +9,10 @@ struct Vector2_T
 	Real x;
 	Real y;
 
-	Vector2_T()                   : x(), y()       {};
-	Vector2_T(Real x)             : x(x), y(x)     {};
-	Vector2_T(Real x, Real y)     : x(x), y(y)     {};
-	Vector2_T(const Vector2_T& v) : x(v.x), y(v.y) {};
+	Vector2_T()                   : x(), y()       {}
+	Vector2_T(Real x)             : x(x), y(x)     {}
+	Vector2_T(Real x, Real y)     : x(x), y(y)     {}
+	Vector2_T(const Vector2_T& v) : x(v.x), y(v.y) {}
 
 	static const Vector2_T zero;
 	static const Vector2_T one;

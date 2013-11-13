@@ -6,6 +6,7 @@
 #include "Input.h"
 #include "MathHelper.h"
 #include "IniFile.h"
+#include "../../RamJamEngine/include/MeshData.h"
 
 #include <dxgi.h>
 #include <d3d11.h>
@@ -48,7 +49,6 @@
 #include "DX11Light.h"
 #include "DX11Camera.h"
 #include "DX11Effect.h"
-#include "DX11Vertex.h"
 #include "DX11FontSheet.h"
 #include "DX11SpriteBatch.h"
 #include "DX11InputLayout.h"

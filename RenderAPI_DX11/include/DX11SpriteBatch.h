@@ -73,10 +73,10 @@ private:
 	void DrawBatch(ID3D11DeviceContext* dc, UINT startSpriteIndex, UINT spriteCount);
 
 	/// Convert screen space point to NDC space.
-	XMFLOAT3 PointToNdc(int x, int y, float z);
+	Vector3 PointToNdc(int x, int y, float z);
 
 	/// Generates quad for the given sprite. 
-	void BuildSpriteQuad(const Sprite& sprite, Vertex::SpriteVertex v[4]);
+	void BuildSpriteQuad(const Sprite& sprite, MeshData::SpriteVertex v[4]);
 
 private:
 	static const int BatchSize = 512;
