@@ -10,9 +10,9 @@ struct Vector3_T
 	Real y;
 	Real z;
 
-	Vector3_T()                       : x(), y(), z()    {}
-	Vector3_T(Real val)               : x(val), y(val)   {}
-	Vector3_T(Real x, Real y, Real z) : x(x), y(y), z(z) {}
+	Vector3_T()                       : x(), y(), z()          {}
+	Vector3_T(Real val)               : x(val), y(val), z(val) {}
+	Vector3_T(Real x, Real y, Real z) : x(x), y(y), z(z)       {}
 	Vector3_T(const Vector3_T& v)     : x(v.x), y(v.y), z(v.z) {}
 
 	static const Vector3_T zero;

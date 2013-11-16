@@ -30,10 +30,11 @@ struct Quaternion_T
 
 	static const Quaternion_T identity;
 
-	Quaternion_T()                               : w(0.0), x(0.0), y(0.0), z(0.0)	{}
+	Quaternion_T()                               : w(1.0), x(0.0), y(0.0), z(0.0)	{}
 	Quaternion_T(Real w, Real x, Real y, Real z) { Set(w,x,y,z); }
 	Quaternion_T(const Quaternion_T& q)          { Set(q.w, q.x, q.y, q.z); }
 	Quaternion_T(Real pitch, Real yaw, Real roll);
+	Quaternion_T(Vector3_T<Real> axis, Real angle);
 	Quaternion_T(Matrix44_T<Real>& rotation);
 
 	//-------------------------
@@ -59,7 +60,11 @@ struct Quaternion_T
 	Quaternion_T&	Normalize();
 	Quaternion_T&	Inverse();
 	//-------------------------
-	Vector3_T<Real>	ToEulerAngles();
+	Matrix44_T<Real>	ToMatrix();
+	Vector3_T<Real>		ToEulerAngles();
+	Vector3_T<Real>		GetRightVector()   const;
+	Vector3_T<Real>		GetUpVector()      const;
+	Vector3_T<Real>		GetForwardVector() const;
 	//-------------------------
 	static void		Slerp(OUT Quaternion_T& qOut, const IN Quaternion_T& qStart, const IN Quaternion_T& qEnd, Real factor);
 };

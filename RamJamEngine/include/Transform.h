@@ -13,12 +13,12 @@ struct Transform
 	Vector3					LocalScale;
 	//-----------
 	Vector3					EulerAngles;
-	Vector3					LocalEulerAngles;;
+	Vector3					LocalEulerAngles;
 	Quaternion				Rotation;
 	Quaternion				LocalRotation;
 	//-----------
-	Matrix44				WorldMatrix;
-	Matrix44				LocalMatrix;
+// 	Matrix44				WorldMatrix;
+// 	Matrix44				LocalMatrix;
 	//-----------
 	Transform*				Parent;
 	std::set<Transform*>	Children;
@@ -26,6 +26,12 @@ struct Transform
 	//---------------------------
 
 	Transform();
+
+	Vector3 Right();
+	Vector3 Up();
+	Vector3 Forward();
+
+	Matrix44 WorldMatrix ();
 
 	// TODO: add transform "everything" !
 };

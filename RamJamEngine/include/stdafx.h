@@ -48,6 +48,7 @@
 #include "Profiler.h"
 #include "Timer.h"
 #include "Input.h"
+#include "Color.h"
 //////////////////////////////////////////////////////////////////////////
 // Math
 #include "MathHelper.h"

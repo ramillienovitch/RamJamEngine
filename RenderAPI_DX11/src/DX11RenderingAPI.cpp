@@ -15,6 +15,8 @@ DX11RenderingAPI::DX11RenderingAPI()
 
 	mVertexBuffer = nullptr;
 	mIndexBuffer  = nullptr;
+	mVertexBuffer_Gizmo = nullptr;
+	mIndexBuffer_Gizmo  = nullptr;
 	
 	mBoxMap            = nullptr;
 	mGridMap           = nullptr;
@@ -34,6 +36,12 @@ DX11RenderingAPI::DX11RenderingAPI()
 	mbUseBlending    = true;
 	mbWireframe      = false;
 
+	//---------
+	TEST_VEC_ROTATION  = Vector3::zero;
+	TEST_QUAT_ROTATION = Quaternion::identity;
+	TEST_MAT_ROTATION  = Matrix44::identity;
+	//---------
+
 	DirectX::XMMATRIX Id = DirectX::XMMatrixIdentity();
 	XMStoreFloat4x4(&mGridWorld, Id);
 
@@ -48,6 +56,33 @@ DX11RenderingAPI::DX11RenderingAPI()
 	XMStoreFloat4x4(&mSphereTexTransform,   sphereTexScale);
 
 	// Meshes transforms
+	
+	XMMATRIX wireBoxWorld;
+	XMMATRIX wireBoxRotation = XMMatrixIdentity();
+	XMMATRIX wireBoxRotationXY = XMMatrixIdentity();
+	XMMATRIX wireBoxRotationX = XMMatrixRotationX(20);
+	XMMATRIX wireBoxRotationY = XMMatrixRotationY(60);
+	XMMATRIX wireBoxRotationZ = XMMatrixRotationZ(100);
+	XMMATRIX wireBoxScale    = XMMatrixScaling(0.5f, 5.0f, 0.5f);
+	XMMATRIX wireBoxOffset   = XMMatrixTranslation(5.0f, 5.0f, -5.0f);
+	wireBoxWorld = wireBoxScale;
+	wireBoxRotationXY = XMMatrixMultiply(wireBoxRotationX, wireBoxRotationY);
+	wireBoxRotation = XMMatrixMultiply(wireBoxRotationXY, wireBoxRotationZ);
+	wireBoxWorld = XMMatrixMultiply(wireBoxWorld, wireBoxRotation);
+	wireBoxWorld = XMMatrixMultiply(wireBoxWorld, wireBoxOffset);
+
+	Transform t;
+	//t.EulerAngles	= Vector3(45,45,45);
+	//t.Scale			= Vector3(2.5f, 5.0f, 0.5f);
+	t.Position		= Vector3(5.0f, 5.0f, -5.0f);
+	Matrix44 tempworld = t.WorldMatrix();
+
+	//XMStoreFloat4x4(&mWireBoxWorld, wireBoxWorld);
+	XMStoreFloat4x4(&mWireBoxWorld, tempworld);
+	XMStoreFloat4x4(&mAxisWorld, wireBoxWorld);
+
+	//-------------
+
 	XMMATRIX boxScale  = XMMatrixScaling(2.0f, 1.0f, 2.0f);
 	XMMATRIX boxOffset = XMMatrixTranslation(0.0f, 0.51f, 0.0f);		//0.51 to avoid z-fight occurring with 0.5
 	XMStoreFloat4x4(&mBoxWorld, XMMatrixMultiply(boxScale, boxOffset));
@@ -272,10 +307,11 @@ void DX11RenderingAPI::Initialize(HWND hMainWnd, int windowWidth, int windowHeig
 	LoadTexture("cylinder", &mCylinderMap);
 	LoadTexture("mask",     &mMaskMap);
 	LoadTexture("rje_logo", &mRjeLogo);
-	Create2DTexture(1,1, RJE_GLOBALS::Colors::TransDarkGray, &mConsoleBackground);
-	Create2DTexture(1,1, RJE_GLOBALS::Colors::White,         &mWhiteSRV);
+	Create2DTexture(1,1, RJE_COLOR::Color::TransDarkGray, &mConsoleBackground);
+	Create2DTexture(1,1, RJE_COLOR::Color::White,         &mWhiteSRV);
 
 	BuildGeometryBuffers();
+	BuildGizmosBuffers();
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -286,17 +322,17 @@ void DX11RenderingAPI::LoadTexture(string keyName, ID3D11ShaderResourceView** sh
 }
 
 //////////////////////////////////////////////////////////////////////////
-void DX11RenderingAPI::Create2DTexture(i32 height, i32 width, float r, float g, float b, float a, ID3D11ShaderResourceView** textureSRV)
+void DX11RenderingAPI::Create2DTexture(i32 height, i32 width, RJE_COLOR::Color color, ID3D11ShaderResourceView** textureSRV)
 {
 	UINT textureSize = height * width;
 	u8* texArray = new u8[textureSize*4];
 
 	for (UINT i=0; i<textureSize*4; i+=4)
 	{	// Unsigned Normalized 8-bits values
-		texArray[i+0] = (u8) (r*255);
-		texArray[i+1] = (u8) (g*255);
-		texArray[i+2] = (u8) (b*255);
-		texArray[i+3] = (u8) (a*255);
+		texArray[i+0] = color.GetRed();
+		texArray[i+1] = color.GetGreen();
+		texArray[i+2] = color.GetBlue();
+		texArray[i+3] = color.GetAlpha();
 	}
 
 	D3D11_TEXTURE2D_DESC tex2dDesc;
@@ -325,12 +361,6 @@ void DX11RenderingAPI::Create2DTexture(i32 height, i32 width, float r, float g, 
 	RJE_SAFE_RELEASE(tex2D);
 
 	delete[] texArray;
-}
-
-//////////////////////////////////////////////////////////////////////////
-void DX11RenderingAPI::Create2DTexture(i32 height, i32 width, const float color[4], ID3D11ShaderResourceView** textureSRV)
-{
-	Create2DTexture(height, width, color[0], color[1], color[2], color[3], textureSRV);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -481,6 +511,68 @@ void DX11RenderingAPI::BuildGeometryBuffers()
 }
 
 //////////////////////////////////////////////////////////////////////////
+void DX11RenderingAPI::BuildGizmosBuffers()
+{
+	MeshData::Data<ColorVertex> wireBox;
+	MeshData::Data<ColorVertex> axis;
+
+	GeometryGenerator geoGen;
+	//geoGen.CreateLine(up, wireBox, Color::Blue);
+	geoGen.CreateWireBox(1.0f,1.0f,1.0f, wireBox, Color::Red);
+	geoGen.CreateAxisArrows(axis);
+	//geoGen.CreateWireFrustum(rot.GetRightVector(),rot.GetUpVector(),rot.GetForwardVector(), 10, 10, 3, 30, wireBox, Color::Red);
+
+
+	UINT totalVertexCount = (UINT) wireBox.Vertices.size() + (UINT) axis.Vertices.size();
+	UINT totalIndexCount  = (UINT) wireBox.Indices.size()  + (UINT) axis.Indices.size();
+
+	MeshData::Data<ColorVertex> totalGeometry(totalVertexCount);
+	UINT k = 0;
+	for(size_t i = 0; i < wireBox.Vertices.size(); ++i, ++k)
+	{
+		totalGeometry.Vertices[k].pos   = wireBox.Vertices[i].pos;
+		totalGeometry.Vertices[k].color = wireBox.Vertices[i].color;
+	}
+	for(size_t i = 0; i < axis.Vertices.size(); ++i, ++k)
+	{
+		totalGeometry.Vertices[k].pos   = axis.Vertices[i].pos;
+		totalGeometry.Vertices[k].color = axis.Vertices[i].color;
+	}
+	totalGeometry.Indices.insert(totalGeometry.Indices.end(), wireBox.Indices.begin(), wireBox.Indices.end());
+	totalGeometry.Indices.insert(totalGeometry.Indices.end(), axis.Indices.begin(), axis.Indices.end());
+
+	mWireBoxVertexOffset = 0;
+	mWireBoxIndexOffset  = 0;
+	mWireBoxIndexCount   = (UINT)wireBox.Indices.size();
+
+	mAxisVertexOffset = (int) wireBox.Vertices.size();
+	mAxisIndexOffset  = mWireBoxIndexCount;
+	mAxisIndexCount   = (UINT)axis.Indices.size();
+
+	D3D11_BUFFER_DESC vbd;
+	vbd.Usage               = D3D11_USAGE_IMMUTABLE;
+	vbd.ByteWidth           = (UINT) (sizeof(MeshData::ColorVertex) * totalVertexCount);
+	vbd.BindFlags           = D3D11_BIND_VERTEX_BUFFER;
+	vbd.CPUAccessFlags      = 0;
+	vbd.MiscFlags           = 0;
+	vbd.StructureByteStride = 0;
+	D3D11_SUBRESOURCE_DATA vinitData;
+	vinitData.pSysMem = &totalGeometry.Vertices[0];
+	RJE_CHECK_FOR_SUCCESS(mDX11Device->md3dDevice->CreateBuffer(&vbd, &vinitData, &mVertexBuffer_Gizmo));
+
+	D3D11_BUFFER_DESC ibd;
+	ibd.Usage               = D3D11_USAGE_IMMUTABLE;
+	ibd.ByteWidth           = sizeof(UINT) * totalIndexCount;
+	ibd.BindFlags           = D3D11_BIND_INDEX_BUFFER;
+	ibd.CPUAccessFlags      = 0;
+	ibd.MiscFlags           = 0;
+	vbd.StructureByteStride = 0;
+	D3D11_SUBRESOURCE_DATA iinitData;
+	iinitData.pSysMem = &totalGeometry.Indices[0];
+	RJE_CHECK_FOR_SUCCESS(mDX11Device->md3dDevice->CreateBuffer(&ibd, &iinitData, &mIndexBuffer_Gizmo));
+}
+
+//////////////////////////////////////////////////////////////////////////
 void DX11RenderingAPI::UpdateScene( float dt )
 {
 	// Convert Spherical to Cartesian coordinates.
@@ -518,6 +610,22 @@ void DX11RenderingAPI::UpdateScene( float dt )
 		if (Input::Instance()->GetKeyboardDown(O))			DX11CommonStates::sCurrentBlendState      = DX11CommonStates::sBlendState_Transparent;
 		if (Input::Instance()->GetKeyboardDown(P))			DX11CommonStates::sCurrentBlendState      = DX11CommonStates::sBlendState_Opaque;
 		if (Input::Instance()->GetKeyboardUp(W))			SetWireframe(!mbWireframe);
+
+		//-----------
+		Transform t;
+		if (Input::Instance()->GetKeyboard(RightArrow))	TEST_VEC_ROTATION.x += 50*Timer::Instance()->DeltaTime();
+		if (Input::Instance()->GetKeyboard(LeftArrow))	TEST_VEC_ROTATION.x -= 50*Timer::Instance()->DeltaTime();
+		if (Input::Instance()->GetKeyboard(UpArrow))	TEST_VEC_ROTATION.y += 50*Timer::Instance()->DeltaTime();
+		if (Input::Instance()->GetKeyboard(DownArrow))	TEST_VEC_ROTATION.y -= 50*Timer::Instance()->DeltaTime();
+		if (Input::Instance()->GetKeyboard(Numpad6))	TEST_VEC_ROTATION.z += 50*Timer::Instance()->DeltaTime();
+		if (Input::Instance()->GetKeyboard(Numpad4))	TEST_VEC_ROTATION.z -= 50*Timer::Instance()->DeltaTime();
+		if (Input::Instance()->GetKeyboardUp(Numpad5))	TEST_VEC_ROTATION = Vector3::zero;
+		t.EulerAngles	= TEST_VEC_ROTATION;
+		//t.Scale			= Vector3(2.5f, 5.0f, 0.5f);
+		t.Position		= Vector3(0.0f, 5.0f, 0.0f);
+		Matrix44 tempworld = t.WorldMatrix();
+
+		XMStoreFloat4x4(&mWireBoxWorld, tempworld);
 	}
 
 	static float timer = 0.0f;
@@ -548,16 +656,21 @@ void DX11RenderingAPI::DrawScene()
 	mDX11Device->md3dImmediateContext->ClearRenderTargetView(mRenderTargetView, DirectX::Colors::LightSteelBlue);
 	mDX11Device->md3dImmediateContext->ClearDepthStencilView(mDX11DepthBuffer->mDepthStencilView, D3D11_CLEAR_DEPTH|D3D11_CLEAR_STENCIL, 1.0f, 0);
 
+	//////////////////////////////////////////////////////////////////////////
+
+	DrawGizmos();
+
+	//////////////////////////////////////////////////////////////////////////
 	mDX11Device->md3dImmediateContext->IASetInputLayout(DX11InputLayouts::PosNormalTex);
 	mDX11Device->md3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sCurrentRasterizerState);
 
-	float rbg      = CIniFile::GetValueFloat("blend_rgb",   "blendfactor", "../data/Scene.ini");
+	float rgb      = CIniFile::GetValueFloat("blend_rgb",   "blendfactor", "../data/Scene.ini");
 	float alpha    = CIniFile::GetValueFloat("blend_alpha", "blendfactor", "../data/Scene.ini");
 	float fogStart = CIniFile::GetValueFloat("fog_start",   "camera",      "../data/Scene.ini");
 	float fogRange = CIniFile::GetValueFloat("fog_range",   "camera",      "../data/Scene.ini");
-	float blendFactor[4] = {rbg, rbg, rbg, alpha};
+	float blendFactor[4] = {rgb, rgb, rgb, alpha};
 
 	UINT stride = sizeof(MeshData::PosNormalTex);
 	UINT offset = 0;
@@ -982,6 +1095,55 @@ void DX11RenderingAPI::DrawScene()
 }
 
 //////////////////////////////////////////////////////////////////////////
+void DX11RenderingAPI::DrawGizmos()
+{
+	mDX11Device->md3dImmediateContext->IASetInputLayout(DX11InputLayouts::PosColor);
+	mDX11Device->md3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
+
+	//mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_CullNone);
+
+	UINT stride = sizeof(MeshData::ColorVertex);
+	UINT offset = 0;
+	mDX11Device->md3dImmediateContext->IASetVertexBuffers(0, 1, &mVertexBuffer_Gizmo, &stride, &offset);
+	mDX11Device->md3dImmediateContext->IASetIndexBuffer(mIndexBuffer_Gizmo, DXGI_FORMAT_R32_UINT, 0);
+
+	float blendFactor[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+	mDX11Device->md3dImmediateContext->OMSetBlendState(DX11CommonStates::sBlendState_Opaque, blendFactor, 0xffffffff);
+
+	// Set constants
+	DirectX::XMMATRIX view     = mCamera->mView;
+	DirectX::XMMATRIX proj     = *(mCamera->mCurrentProjectionMatrix);
+	DirectX::XMMATRIX viewProj = view*proj;
+
+	D3DX11_TECHNIQUE_DESC techDesc;
+	XMMATRIX world;
+	XMMATRIX worldInvTranspose;
+	XMMATRIX worldViewProj;
+	
+	DX11Effects::ColorFX->ColorTech->GetDesc(&techDesc);
+	
+	// Draw the wireBox.
+	world             = XMLoadFloat4x4(&mWireBoxWorld);
+	worldInvTranspose = DX11Math::InverseTranspose(world);
+	worldViewProj     = world*view*proj;
+
+	DX11Effects::ColorFX->SetWorldViewProj(worldViewProj);
+
+	DX11Effects::ColorFX->ColorTech->GetPassByIndex(0)->Apply(0, mDX11Device->md3dImmediateContext);
+	mDX11Device->md3dImmediateContext->DrawIndexed(mWireBoxIndexCount, mWireBoxIndexOffset, mWireBoxVertexOffset);
+
+	// Draw the Axis.
+	world             = XMLoadFloat4x4(&mWireBoxWorld);
+	worldInvTranspose = DX11Math::InverseTranspose(world);
+	worldViewProj     = world*view*proj;
+
+	DX11Effects::ColorFX->SetWorldViewProj(worldViewProj);
+
+	DX11Effects::ColorFX->ColorTech->GetPassByIndex(0)->Apply(0, mDX11Device->md3dImmediateContext);
+	mDX11Device->md3dImmediateContext->DrawIndexed(mAxisIndexCount, mAxisIndexOffset, mAxisVertexOffset);
+}
+
+//////////////////////////////////////////////////////////////////////////
 void DX11RenderingAPI::DrawConsole()
 {
 	PROFILE_CPU("Draw Console");
@@ -1062,7 +1224,9 @@ void DX11RenderingAPI::Shutdown()
 	PROFILE_GPU_EXIT();
 
 	RJE_SAFE_RELEASE(mVertexBuffer);
+	RJE_SAFE_RELEASE(mVertexBuffer_Gizmo);
 	RJE_SAFE_RELEASE(mIndexBuffer);
+	RJE_SAFE_RELEASE(mIndexBuffer_Gizmo);
 
 	RJE_SAFE_RELEASE(mBoxMap);
 	RJE_SAFE_RELEASE(mGridMap);

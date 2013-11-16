@@ -82,6 +82,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="include\Color.h" />
     <ClInclude Include="include\Debug.h" />
     <ClInclude Include="include\Globals.h" />
     <ClInclude Include="include\IniFile.h" />

@@ -106,6 +106,22 @@ public:
 
 //////////////////////////////////////////////////////////////////////////
 
+#pragma region ColorEffect
+class ColorEffect : public Effect
+{
+public:
+	ColorEffect(ID3D11Device* device, const std::wstring& filename);
+	~ColorEffect();
+
+	HRESULT SetWorldViewProj(CXMMATRIX M)	{ return WorldViewProj->SetMatrix(reinterpret_cast<const float*>(&M)); }
+
+	ID3DX11EffectTechnique*			ColorTech;
+	ID3DX11EffectMatrixVariable*	WorldViewProj;
+};
+#pragma endregion
+
+//////////////////////////////////////////////////////////////////////////
+
 #pragma region Effects
 class DX11Effects
 {
@@ -114,6 +130,7 @@ public:
 	static void DestroyAll();
 
 	static BasicEffect*  BasicFX;
+	static ColorEffect*  ColorFX;
 	static SpriteEffect* SpriteFX;
 };
 #pragma endregion

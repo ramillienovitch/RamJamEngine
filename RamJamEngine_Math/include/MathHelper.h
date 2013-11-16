@@ -19,6 +19,7 @@ namespace RJE
 #define RJE_HALF_PI_F	(RJE_PI_F * 0.5f)
 
 #define RJE_EPSILON(Type)	std::numeric_limits<Type>::epsilon()
+#define RJE_NAN(Type)		std::numeric_limits<Type>::quiet_NaN()
 
 #define DegreesToRadian(X)   X * (RJE_PI   / 180.0)
 #define DegreesToRadian_F(X) X * (RJE_PI_F / 180.0f)

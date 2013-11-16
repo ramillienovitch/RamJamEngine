@@ -5,8 +5,8 @@
 class InputLayoutDesc
 {
 public:
-	// Init like const int A::a[4] = {0, 1, 2, 3}; in .cpp file.
 	static const D3D11_INPUT_ELEMENT_DESC PosNormalTex[3];
+	static const D3D11_INPUT_ELEMENT_DESC PosColor[2];
 };
 
 class DX11InputLayouts
@@ -16,4 +16,5 @@ public:
 	static void DestroyAll();
 
 	static ID3D11InputLayout* PosNormalTex;
+	static ID3D11InputLayout* PosColor;
 };

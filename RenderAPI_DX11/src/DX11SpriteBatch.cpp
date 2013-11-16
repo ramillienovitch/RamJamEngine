@@ -426,7 +426,7 @@ void DX11SpriteBatch::DrawInfoText(DX11FontSheet& fs, const char* text, const PO
 	int posX = pos.x;
 	int posY = pos.y;
 
-	XMCOLOR color = 0xffffffff;
+	XMCOLOR color = Color::Black;
 
 	UINT i = 0;
 	while( true )
@@ -440,15 +440,15 @@ void DX11SpriteBatch::DrawInfoText(DX11FontSheet& fs, const char* text, const PO
 			posX  = pos.x;
 			posY += fs.GetCharHeight();
 		}
-		else if(character == SCREEN_WHITE)		color = 0xffffffff;
-		else if(character == SCREEN_RED)		color = 0xffff0000;
-		else if(character == SCREEN_GREEN)		color = 0xff00ff00;
-		else if(character == SCREEN_BLUE)		color = 0xff0000ff;
-		else if(character == SCREEN_YELLOW)		color = 0xffffff00;
-		else if(character == SCREEN_ORANGE)		color = 0xffff8800;
-		else if(character == SCREEN_ROSE)		color = 0xffff00ff;
-		else if(character == SCREEN_GRAY)		color = 0xffa9a9a9;
-		else if(character == SCREEN_BLACK)		color = 0xff0000ff;
+		else if(character == SCREEN_WHITE)		color = Color::White;
+		else if(character == SCREEN_RED)		color = Color::Red;
+		else if(character == SCREEN_GREEN)		color = Color::Lime;
+		else if(character == SCREEN_BLUE)		color = Color::Blue;
+		else if(character == SCREEN_YELLOW)		color = Color::Yellow;
+		else if(character == SCREEN_ORANGE)		color = Color::Orange;
+		else if(character == SCREEN_ROSE)		color = Color::Fuchsia;
+		else if(character == SCREEN_GRAY)		color = Color::Gray;
+		else if(character == SCREEN_BLACK)		color = Color::Black;
 		else if(character == nullchar)			break;
 		else
 		{
@@ -560,25 +560,25 @@ void DX11SpriteBatch::BuildSpriteQuad(const Sprite& sprite, MeshData::SpriteVert
 	const CD3D11_RECT& src  = sprite.SrcRect;
 
 	// Dest rect defines target in screen space.
-	v[0].Pos = PointToNdc(dest.left,  dest.bottom, sprite.Z);
-	v[1].Pos = PointToNdc(dest.left,  dest.top,    sprite.Z);
-	v[2].Pos = PointToNdc(dest.right, dest.top,    sprite.Z);
-	v[3].Pos = PointToNdc(dest.right, dest.bottom, sprite.Z);
+	v[0].pos = PointToNdc(dest.left,  dest.bottom, sprite.Z);
+	v[1].pos = PointToNdc(dest.left,  dest.top,    sprite.Z);
+	v[2].pos = PointToNdc(dest.right, dest.top,    sprite.Z);
+	v[3].pos = PointToNdc(dest.right, dest.bottom, sprite.Z);
 
 	// Source rect defines subset of texture to use from sprite sheet.
-	v[0].Tex = Vector2((float)src.left  / mTexWidth, (float)src.bottom / mTexHeight); 
-	v[1].Tex = Vector2((float)src.left  / mTexWidth, (float)src.top    / mTexHeight); 
-	v[2].Tex = Vector2((float)src.right / mTexWidth, (float)src.top    / mTexHeight); 
-	v[3].Tex = Vector2((float)src.right / mTexWidth, (float)src.bottom / mTexHeight); 
+	v[0].tex = Vector2((float)src.left  / mTexWidth, (float)src.bottom / mTexHeight); 
+	v[1].tex = Vector2((float)src.left  / mTexWidth, (float)src.top    / mTexHeight); 
+	v[2].tex = Vector2((float)src.right / mTexWidth, (float)src.top    / mTexHeight); 
+	v[3].tex = Vector2((float)src.right / mTexWidth, (float)src.bottom / mTexHeight); 
 
-	v[0].Color = sprite.Color;
-	v[1].Color = sprite.Color;
-	v[2].Color = sprite.Color;
-	v[3].Color = sprite.Color;
+	v[0].color = (ARGB)sprite.Color;
+	v[1].color = (ARGB)sprite.Color;
+	v[2].color = (ARGB)sprite.Color;
+	v[3].color = (ARGB)sprite.Color;
 
 	// Quad center point.
-	float tx = 0.5f*(v[0].Pos.x + v[3].Pos.x);
-	float ty = 0.5f*(v[0].Pos.y + v[1].Pos.y);
+	float tx = 0.5f*(v[0].pos.x + v[3].pos.x);
+	float ty = 0.5f*(v[0].pos.y + v[1].pos.y);
 
 	XMVECTOR scaling     = XMVectorSet(sprite.Scale, sprite.Scale, 1.0f, 0.0f);
 	XMVECTOR origin      = XMVectorSet(tx, ty, 0.0f, 0.0f);
@@ -588,10 +588,10 @@ void DX11SpriteBatch::BuildSpriteQuad(const Sprite& sprite, MeshData::SpriteVert
 	// Rotate and scale the quad in NDC space.
 	for(int i = 0; i < 4; ++i)
 	{
-		XMFLOAT3 vec = v[i].Pos;
+		XMFLOAT3 vec = v[i].pos;
 		XMVECTOR p = XMLoadFloat3(&vec);
 		p = XMVector3TransformCoord(p, T);
 		XMStoreFloat3(&vec, p);
-		v[i].Pos.Set(vec.x, vec.y, vec.z);
+		v[i].pos.Set(vec.x, vec.y, vec.z);
 	}
 }

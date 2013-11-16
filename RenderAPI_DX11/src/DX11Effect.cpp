@@ -70,9 +70,7 @@ BasicEffect::BasicEffect(ID3D11Device* device, const std::wstring& filename)
 	TextureSampler    = (ID3DX11EffectSamplerVariable*) mFX->GetVariableByName("gTextureSampler");
 }
 
-BasicEffect::~BasicEffect()
-{
-}
+BasicEffect::~BasicEffect(){}
 #pragma endregion
 
 //////////////////////////////////////////////////////////////////////////
@@ -85,9 +83,20 @@ SpriteEffect::SpriteEffect(ID3D11Device* device, const std::wstring& filename)
 	SpriteMap  = mFX->GetVariableByName("gSpriteTex")->AsShaderResource();
 }
 
-SpriteEffect::~SpriteEffect()
+SpriteEffect::~SpriteEffect(){}
+#pragma endregion
+
+//////////////////////////////////////////////////////////////////////////
+
+#pragma region ColorEffect
+ColorEffect::ColorEffect(ID3D11Device* device, const std::wstring& filename)
+	: Effect(device, filename)
 {
+	ColorTech		= mFX->GetTechniqueByName("ColorTech");
+	WorldViewProj	= mFX->GetVariableByName("gWorldViewProj")->AsMatrix();
 }
+
+ColorEffect::~ColorEffect(){}
 #pragma endregion
 
 //////////////////////////////////////////////////////////////////////////
@@ -95,6 +104,7 @@ SpriteEffect::~SpriteEffect()
 #pragma region Effects
 
 BasicEffect*  DX11Effects::BasicFX  = nullptr;
+ColorEffect*  DX11Effects::ColorFX  = nullptr;
 SpriteEffect* DX11Effects::SpriteFX = nullptr;
 
 void DX11Effects::InitAll(ID3D11Device* device)
@@ -106,11 +116,15 @@ void DX11Effects::InitAll(ID3D11Device* device)
 	//-------------
 	shaderPath = StringToWString(System::Instance()->mDataPath) + CIniFile::GetValueW("sprite", "shaders", System::Instance()->mResourcesPath);
 	SpriteFX = new SpriteEffect(device, shaderPath);
+	//-------------
+	shaderPath = StringToWString(System::Instance()->mDataPath) + CIniFile::GetValueW("color", "shaders", System::Instance()->mResourcesPath);
+	ColorFX = new ColorEffect(device, shaderPath);
 }
 
 void DX11Effects::DestroyAll()
 {
 	RJE_SAFE_DELETE(BasicFX);
 	RJE_SAFE_DELETE(SpriteFX);
+	RJE_SAFE_DELETE(ColorFX);
 }
 #pragma endregion

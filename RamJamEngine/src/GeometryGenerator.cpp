@@ -4,6 +4,7 @@
 
 #include "GeometryGenerator.h"
 
+//////////////////////////////////////////////////////////////////////////
 void GeometryGenerator::CreateBox(float width, float height, float depth, Data<PosNormTanTex>& meshData)
 {
 	//
@@ -87,6 +88,7 @@ void GeometryGenerator::CreateBox(float width, float height, float depth, Data<P
 	meshData.Indices.assign(&i[0], &i[36]);
 }
 
+//////////////////////////////////////////////////////////////////////////
 void GeometryGenerator::CreateSphere(float radius, UINT sliceCount, UINT stackCount, Data<PosNormTanTex>& meshData)
 {
 	meshData.Vertices.clear();
@@ -194,6 +196,7 @@ void GeometryGenerator::CreateSphere(float radius, UINT sliceCount, UINT stackCo
 	}
 }
  
+//////////////////////////////////////////////////////////////////////////
 void GeometryGenerator::Subdivide(Data<PosNormTanTex>& meshData)
 {
 	// Save a copy of the input geometry.
@@ -270,6 +273,7 @@ void GeometryGenerator::Subdivide(Data<PosNormTanTex>& meshData)
 	}
 }
 
+//////////////////////////////////////////////////////////////////////////
 void GeometryGenerator::CreateGeosphere(float radius, UINT numSubdivisions, Data<PosNormTanTex>& meshData)
 {
 	// Put a cap on the number of subdivisions.
@@ -339,6 +343,7 @@ void GeometryGenerator::CreateGeosphere(float radius, UINT numSubdivisions, Data
 	}
 }
 
+//////////////////////////////////////////////////////////////////////////
 void GeometryGenerator::CreateCylinder(float bottomRadius, float topRadius, float height, UINT sliceCount, UINT stackCount, Data<PosNormTanTex>& meshData)
 {
 	meshData.Vertices.clear();
@@ -428,6 +433,7 @@ void GeometryGenerator::CreateCylinder(float bottomRadius, float topRadius, floa
 	BuildCylinderBottomCap(bottomRadius, topRadius, height, sliceCount, stackCount, meshData);
 }
 
+//////////////////////////////////////////////////////////////////////////
 void GeometryGenerator::BuildCylinderTopCap(float bottomRadius, float topRadius, float height, 
 											UINT sliceCount, UINT stackCount, Data<PosNormTanTex>& meshData)
 {
@@ -464,6 +470,7 @@ void GeometryGenerator::BuildCylinderTopCap(float bottomRadius, float topRadius,
 	}
 }
 
+//////////////////////////////////////////////////////////////////////////
 void GeometryGenerator::BuildCylinderBottomCap(float bottomRadius, float topRadius, float height, 
 											   UINT sliceCount, UINT stackCount, Data<PosNormTanTex>& meshData)
 {
@@ -503,6 +510,7 @@ void GeometryGenerator::BuildCylinderBottomCap(float bottomRadius, float topRadi
 	}
 }
 
+//////////////////////////////////////////////////////////////////////////
 void GeometryGenerator::CreateGrid(float width, float depth, UINT m, UINT n, Data<PosNormTanTex>& meshData)
 {
 	UINT vertexCount = m*n;
@@ -564,6 +572,7 @@ void GeometryGenerator::CreateGrid(float width, float depth, UINT m, UINT n, Dat
 	}
 }
 
+//////////////////////////////////////////////////////////////////////////
 void GeometryGenerator::CreateFullscreenQuad(Data<PosNormTanTex>& meshData)
 {
 	meshData.Vertices.resize(4);
@@ -601,4 +610,155 @@ void GeometryGenerator::CreateFullscreenQuad(Data<PosNormTanTex>& meshData)
 	meshData.Indices[3] = 0;
 	meshData.Indices[4] = 2;
 	meshData.Indices[5] = 3;
+}
+
+//////////////////////////////////////////////////////////////////////////
+void GeometryGenerator::CreateWireBox(float width, float height, float depth, Data<ColorVertex>& meshData, Color color)
+{
+	float w2 = 0.5f*width;
+	float h2 = 0.5f*height;
+	float d2 = 0.5f*depth;
+
+	MeshData::ColorVertex v[8];
+	v[0] = MeshData::ColorVertex(+w2, +h2, -d2, color);
+	v[1] = MeshData::ColorVertex(-w2, +h2, -d2, color);
+	v[2] = MeshData::ColorVertex(-w2, -h2, -d2, color);
+	v[3] = MeshData::ColorVertex(+w2, -h2, -d2, color);
+	v[4] = MeshData::ColorVertex(+w2, +h2, +d2, color);
+	v[5] = MeshData::ColorVertex(-w2, +h2, +d2, color);
+	v[6] = MeshData::ColorVertex(-w2, -h2, +d2, color);
+	v[7] = MeshData::ColorVertex(+w2, -h2, +d2, color);
+	meshData.Vertices.assign(&v[0], &v[8]);
+
+	UINT i[24];
+	i[0]  = 0; i[1]  = 1;
+	i[2]  = 1; i[3]  = 2;
+	i[4]  = 2; i[5]  = 3;
+	i[6]  = 3; i[7]  = 0;
+	i[8]  = 0; i[9]  = 4;
+	i[10] = 3; i[11] = 7;
+	i[12] = 2; i[13] = 6;
+	i[14] = 1; i[15] = 5;
+	i[16] = 5; i[17] = 4;
+	i[18] = 4; i[19] = 7;
+	i[20] = 7; i[21] = 6;
+	i[22] = 6; i[23] = 5;
+	meshData.Indices.assign(&i[0], &i[24]);
+}
+//////////////////////////////////////////////////////////////////////////
+void GeometryGenerator::CreateWireSphere(float radius, Data<ColorVertex>& meshData, Color color)
+{
+	
+}
+
+//////////////////////////////////////////////////////////////////////////
+void GeometryGenerator::CreateAxisArrows(Data<ColorVertex>& meshData)
+{ CreateAxisArrows(Vector3::right, Vector3::up, Vector3::forward, meshData); }
+//-------------
+void GeometryGenerator::CreateAxisArrows(Quaternion rotation, Data<ColorVertex>& meshData)
+{
+	Vector3 right   = rotation.GetRightVector();
+	Vector3 up      = rotation.GetUpVector();
+	Vector3 forward = rotation.GetForwardVector();
+	CreateAxisArrows(right, up, forward, meshData);
+}
+//-------------
+void GeometryGenerator::CreateAxisArrows(Vector3 right, Vector3 up, Vector3 forward, Data<ColorVertex>& meshData)
+{
+	MeshData::ColorVertex v[6];
+	v[0] = MeshData::ColorVertex(0, 0, 0,                         Color::Red);
+	v[1] = MeshData::ColorVertex(right.x, right.y, right.z,       Color::Red);
+	v[2] = MeshData::ColorVertex(0, 0, 0,                         Color::Lime);
+	v[3] = MeshData::ColorVertex(up.x, up.y, up.z,                Color::Lime);
+	v[4] = MeshData::ColorVertex(0, 0, 0,                         Color::Blue);
+	v[5] = MeshData::ColorVertex(forward.x, forward.y, forward.z, Color::Blue);
+	meshData.Vertices.assign(&v[0], &v[6]);
+
+	UINT i[6];
+	i[0] = 0; i[1] = 1;
+	i[2] = 2; i[3] = 3;
+	i[4] = 4; i[5] = 5;
+	meshData.Indices.assign(&i[0], &i[6]);
+}
+
+//////////////////////////////////////////////////////////////////////////
+void GeometryGenerator::CreateLine(Vector3 orientation, Data<ColorVertex>& meshData, Color color)
+{
+	MeshData::ColorVertex v[2];
+	v[0] = MeshData::ColorVertex(0, 0, 0, color);
+	v[1] = MeshData::ColorVertex(orientation.x, orientation.y, orientation.z, color);
+	meshData.Vertices.assign(&v[0], &v[2]);
+
+	UINT i[2];
+	i[0] = 0; i[1] = 1;
+	meshData.Indices.assign(&i[0], &i[2]);
+}
+
+//////////////////////////////////////////////////////////////////////////
+void GeometryGenerator::CreateLine(Data<ColorVertex>& meshData, Color color)
+{ CreateLine(Vector3::forward, meshData, color); }
+
+//////////////////////////////////////////////////////////////////////////
+void GeometryGenerator::CreateRay(Data<ColorVertex>& meshData, Color color)
+{ CreateLine(10000*Vector3::forward, meshData, color); }
+//---------
+void GeometryGenerator::CreateRay(Vector3 orientation, Data<ColorVertex>& meshData, Color color)
+{ CreateLine(10000*orientation, meshData, color); }
+
+//////////////////////////////////////////////////////////////////////////
+void GeometryGenerator::CreateWireFrustum(float fov, float nearPlaneDepth, float farPlaneDepth, Data<ColorVertex>& meshData, Color color)
+{
+	
+}
+//---------
+void GeometryGenerator::CreateWireFrustum(float width, float height, float nearPlaneDepth, float farPlaneDepth, Data<ColorVertex>& meshData, Color color)
+{ CreateWireFrustum(Vector3::right, Vector3::up, Vector3::forward, width, height, nearPlaneDepth, farPlaneDepth, meshData, color); }
+//---------
+void GeometryGenerator::CreateWireFrustum(Quaternion orientation, float width, float height, float nearPlaneDepth, float farPlaneDepth, Data<ColorVertex>& meshData, Color color)
+{
+	Vector3 right   = orientation.GetRightVector();
+	Vector3 up      = orientation.GetUpVector();
+	Vector3 forward = orientation.GetForwardVector();
+	CreateWireFrustum(right, up, forward, width, height, nearPlaneDepth, farPlaneDepth, meshData, color);
+}
+//---------
+void GeometryGenerator::CreateWireFrustum(Vector3 right, Vector3 up, Vector3 forward, float width, float height, float nearPlaneDepth, float farPlaneDepth, Data<ColorVertex>& meshData, Color color)
+{
+	right.Normalize();
+	up.Normalize();
+	forward.Normalize();
+
+	float wFar2 = 0.5f*width;
+	float hFar2 = 0.5f*height;
+	float wNear2 = 0.5f*((nearPlaneDepth*width)/farPlaneDepth);
+	float hNear2 = 0.5f*((nearPlaneDepth*height)/farPlaneDepth);
+
+
+	UINT i[24];
+	i[0]  = 0; i[1]  = 1;
+	i[2]  = 1; i[3]  = 2;
+	i[4]  = 2; i[5]  = 3;
+	i[6]  = 3; i[7]  = 0;
+	i[8]  = 0; i[9]  = 4;
+	i[10] = 3; i[11] = 7;
+	i[12] = 2; i[13] = 6;
+	i[14] = 1; i[15] = 5;
+	i[16] = 5; i[17] = 4;
+	i[18] = 4; i[19] = 7;
+	i[20] = 7; i[21] = 6;
+	i[22] = 6; i[23] = 5;
+	meshData.Indices.assign(&i[0], &i[24]);
+
+	MeshData::ColorVertex v[8];
+	Vector3 fc = forward * farPlaneDepth;
+	Vector3 nc = forward * nearPlaneDepth;
+	v[0] = MeshData::ColorVertex(nc + (up * hNear2) + (right * wNear2), color);
+	v[1] = MeshData::ColorVertex(nc + (up * hNear2) - (right * wNear2), color);
+	v[2] = MeshData::ColorVertex(nc - (up * hNear2) - (right * wNear2), color);
+	v[3] = MeshData::ColorVertex(nc - (up * hNear2) + (right * wNear2), color);
+	v[4] = MeshData::ColorVertex(fc + (up * hFar2) + (right * wFar2), color);
+	v[5] = MeshData::ColorVertex(fc + (up * hFar2) - (right * wFar2), color);
+	v[6] = MeshData::ColorVertex(fc - (up * hFar2) - (right * wFar2), color);
+	v[7] = MeshData::ColorVertex(fc - (up * hFar2) + (right * wFar2), color);
+	meshData.Vertices.assign(&v[0], &v[8]);
 }

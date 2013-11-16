@@ -5,6 +5,9 @@
 #pragma once
 
 #include "MathHelper.h"
+#include "Color.h"
+
+using namespace RJE_COLOR;
 
 namespace MeshData
 {
@@ -14,13 +17,8 @@ namespace MeshData
 		PosNormTanTex(){}
 		PosNormTanTex(const Vector3& p, const Vector3& n, const Vector3& t, const Vector2& uv)
 			: Position(p), Normal(n), TangentU(t), TexC(uv){}
-		PosNormTanTex(
-			float px, float py, float pz, 
-			float nx, float ny, float nz,
-			float tx, float ty, float tz,
-			float u, float v)
-			: Position(px,py,pz), Normal(nx,ny,nz),
-			TangentU(tx, ty, tz), TexC(u,v){}
+		PosNormTanTex(float px, float py, float pz, float nx, float ny, float nz, float tx, float ty, float tz, float u, float v)
+			: Position(px,py,pz), Normal(nx,ny,nz), TangentU(tx, ty, tz), TexC(u,v){}
 
 		Vector3 Position;
 		Vector3 Normal;
@@ -36,10 +34,7 @@ namespace MeshData
 		PosNormalTex(){}
 		PosNormalTex(const Vector3& p, const Vector3& n, const Vector2& uv)
 			: Pos(p), Normal(n), Tex(uv){}
-		PosNormalTex(
-			float px, float py, float pz,
-			float nx, float ny, float nz,
-			float u, float v)
+		PosNormalTex(float px, float py, float pz, float nx, float ny, float nz, float u, float v)
 			: Pos(px,py,pz), Normal(nx,ny,nz), Tex(u,v){}
 
 		Vector3 Pos;
@@ -53,17 +48,14 @@ namespace MeshData
 	struct SpriteVertex
 	{
 		SpriteVertex(){}
-		SpriteVertex(const Vector3& p, const Vector2& t, const Vector4& c)
-			: Pos(p), Tex(t), Color(c){}
-		SpriteVertex(
-			float px, float py, float pz,
-			float u, float v,
-			float a, float r, float g, float b)
-			: Pos(px,py,pz), Tex(u,v), Color(a,r,g,b){}
+		SpriteVertex(const Vector3& p, const Vector2& t, const Color& c)
+			: pos(p), tex(t), color(c){}
+		SpriteVertex(float px, float py, float pz, float u, float v, BYTE a, BYTE r, BYTE g, BYTE b)
+			: pos(px,py,pz), tex(u,v), color(a,r,g,b){}
 
-		Vector3 Pos;
-		Vector2 Tex;
-		Vector4 Color;
+		Vector3 pos;
+		Vector2 tex;
+		Color	color;
 	};
 	//=========================================
 
@@ -72,15 +64,12 @@ namespace MeshData
 	struct ColorVertex
 	{
 		ColorVertex(){}
-		ColorVertex(const Vector3& p, const Vector4& c)
-			: Pos(p), Color(c){}
-		ColorVertex(
-			float px, float py, float pz,
-			float a, float r, float g, float b)
-			: Pos(px,py,pz), Color(a,r,g,b){}
+		ColorVertex(const Vector3& p, const Color& c)								: pos(p), color(c){}
+		ColorVertex(float px, float py, float pz, const Color& c)					: pos(px,py,pz), color(c){}
+		ColorVertex(float px, float py, float pz, BYTE a, BYTE r, BYTE g, BYTE b)	: pos(px,py,pz), color(a,r,g,b){}
 
-		Vector3 Pos;
-		Vector4 Color;
+		Vector3 pos;
+		Color	color;
 	};
 	//=========================================
 
@@ -89,6 +78,10 @@ namespace MeshData
 	template <typename VertexType>
 	struct Data
 	{
+		Data() {}
+		Data(UINT vertexCount) : Vertices(vertexCount){}
+		Data(UINT vertexCount, UINT indicesCount) : Vertices(vertexCount), Indices(indicesCount){}
+
 		std::vector<VertexType>		Vertices;
 		std::vector<UINT>			Indices;
 	};

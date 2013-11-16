@@ -32,6 +32,9 @@ struct DX11RenderingAPI : GraphicAPI
 	ID3D11Buffer*	mVertexBuffer;
 	ID3D11Buffer*	mIndexBuffer;
 
+	ID3D11Buffer*	mVertexBuffer_Gizmo;
+	ID3D11Buffer*	mIndexBuffer_Gizmo;
+
 	ID3D11ShaderResourceView* mBoxMap;
 	ID3D11ShaderResourceView* mGridMap;
 	ID3D11ShaderResourceView* mSphereMap;
@@ -63,6 +66,7 @@ struct DX11RenderingAPI : GraphicAPI
 	XMFLOAT4X4 mView;
 	XMFLOAT4X4 mProj;
 
+	//---------------
 	int mBoxVertexOffset;
 	int mGridVertexOffset;
 	int mSphereVertexOffset;
@@ -80,6 +84,25 @@ struct DX11RenderingAPI : GraphicAPI
 	UINT mSphereIndexCount;
 	UINT mCylinderIndexCount;
 	UINT mModelIndexCount;
+	//---------------
+
+	//---------------
+	Vector3    TEST_VEC_ROTATION;
+	Quaternion TEST_QUAT_ROTATION;
+	Matrix44   TEST_MAT_ROTATION;
+// 	Vector3		mWireBoxPosition;
+// 	Quaternion	mWireBoxRotation;
+// 	Vector3		mWireBoxScale;
+// 	Matrix44	mWireBoxWorld;
+	XMFLOAT4X4 mWireBoxWorld;
+	XMFLOAT4X4 mAxisWorld;
+	int  mWireBoxVertexOffset;
+	int  mAxisVertexOffset;
+	UINT mWireBoxIndexCount;
+	UINT mAxisIndexCount;
+	UINT mWireBoxIndexOffset;
+	UINT mAxisIndexOffset;
+	//---------------
 
 	XMFLOAT3 mEyePosW;
 
@@ -106,10 +129,11 @@ struct DX11RenderingAPI : GraphicAPI
 	//////////////////////////////////////////////////////////////////////////
 
 	void LoadTexture(string keyName, ID3D11ShaderResourceView** shaderResourceView);
-	void Create2DTexture(i32 height, i32 width, float r, float g, float b, float a, ID3D11ShaderResourceView** textureSRV);
-	void Create2DTexture(i32 height, i32 width, const float color[4], ID3D11ShaderResourceView** textureSRV);
+	void Create2DTexture(i32 height, i32 width, RJE_COLOR::Color color, ID3D11ShaderResourceView** textureSRV);
 	void BuildGeometryBuffers();
+	void BuildGizmosBuffers();
 
+	void DrawGizmos();
 	void DrawConsole();
 	void DrawProfiler();
 	void Draw2dElements();
