@@ -73,10 +73,9 @@ public:
 	void CreateRay(Data<ColorVertex>& meshData, Color color = Color::White);
 	void CreateRay(Vector3 orientation, Data<ColorVertex>& meshData, Color color = Color::White);
 	//---------
-	void CreateWireFrustum(float fov, float nearPlaneDepth, float farPlaneDepth, Data<ColorVertex>& meshData, Color color = Color::White);
-	void CreateWireFrustum(float width, float height, float nearPlaneDepth, float farPlaneDepth, Data<ColorVertex>& meshData, Color color = Color::White);
-	void CreateWireFrustum(Quaternion orientation, float width, float height, float nearPlaneDepth, float farPlaneDepth, Data<ColorVertex>& meshData, Color color = Color::White);
-	void CreateWireFrustum(Vector3 right, Vector3 up, Vector3 forward, float width, float height, float nearPlaneDepth, float farPlaneDepth, Data<ColorVertex>& meshData, Color color = Color::White);
+	void CreateWireFrustum(float fovX, float ratio, float nearPlaneDepth, float farPlaneDepth, Data<ColorVertex>& meshData, Color color = Color::White);
+	void CreateWireFrustum(Quaternion orientation, float fovX, float ratio, float nearPlaneDepth, float farPlaneDepth, Data<ColorVertex>& meshData, Color color = Color::White);
+	void CreateWireFrustum(Vector3 right, Vector3 up, Vector3 forward, float fovX, float ratio, float nearPlaneDepth, float farPlaneDepth, Data<ColorVertex>& meshData, Color color = Color::White);
 	//////////////////////////////////////////////////////////////////////////
 
 private:

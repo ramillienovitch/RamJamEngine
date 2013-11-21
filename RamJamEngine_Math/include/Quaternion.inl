@@ -10,54 +10,25 @@ const Quaternion_T<Real> Quaternion_T<Real>::identity = Quaternion_T<Real>();
 template<typename Real>
 Quaternion_T<Real>::Quaternion_T(Real pitch, Real yaw, Real roll)
 {
-	// TODO: Fix this function => Do Not Use A Matrix !!
+	const Real DegToRad = static_cast<Real>(RJE::Math::Pi / 180.0);
+	const Real radX = pitch * DegToRad;
+	const Real radY = yaw   * DegToRad;
+	const Real radZ = roll  * DegToRad;
 
-	//Real DegToRad = static_cast<Real>(3.1415926535f / 180.0f);
-// 	Real radX = pitch * DegToRad;
-// 	Real radY = yaw   * DegToRad;
-// 	Real radZ = roll  * DegToRad;
-
-	Matrix44_T<Real> m;
-	const Real fSinPitch(sin(pitch));
-	const Real fCosPitch(cos(pitch));
-	const Real fSinYaw(  sin(yaw));
-	const Real fCosYaw(  cos(yaw));
-	const Real fSinRoll( sin(roll));
-	const Real fCosRoll( cos(roll));
-	const Real fCosPitchSinYaw(fCosPitch * fSinYaw);
-	const Real fSinPitchSinYaw(fSinPitch * fSinYaw);
-
-	m.m11 = fCosYaw  * fCosRoll;
-	m.m12 = -fCosYaw * fSinRoll;
-	m.m13 = -fSinYaw;
-	m.m21 = -fSinPitchSinYaw * fCosRoll + fCosPitch * fSinRoll;
-	m.m22 = fSinPitchSinYaw  * fSinRoll + fCosPitch * fCosRoll;
-	m.m23 = -fSinPitch * fCosYaw;
-	m.m31 =  fCosPitchSinYaw * fCosRoll + fSinPitch * fSinRoll;
-	m.m32 = -fCosPitchSinYaw * fSinRoll + fSinPitch * fCosRoll;
-	m.m33 = fCosPitch * fCosYaw;
-
-	m.m14 = m.m24 = m.m34 = m.m41 = m.m42 = m.m43 = static_cast<Real>(0.0);
-	m.m44 = static_cast<Real>(1.0);
-
-	Quaternion_T<Real> qr(m);
-	w = qr.w;
-	x = qr.x;
-	y = qr.y;
-	z = qr.z;
-
-// 	const Real fSinPitch(sin(radX*static_cast<Real>(0.5)));
-// 	const Real fCosPitch(cos(radX*static_cast<Real>(0.5)));
-// 	const Real fSinYaw(  sin(radY*static_cast<Real>(0.5)));
-// 	const Real fCosYaw(  cos(radY*static_cast<Real>(0.5)));
-// 	const Real fSinRoll( sin(radZ*static_cast<Real>(0.5)));
-// 	const Real fCosRoll( cos(radZ*static_cast<Real>(0.5)));
-// 	const Real fCosPitchCosYaw(fCosPitch*fCosYaw);
-// 	const Real fSinPitchSinYaw(fSinPitch*fSinYaw);
-// 	w = fCosRoll * fCosPitchCosYaw     + fSinRoll * fSinPitchSinYaw;
-// 	x = fSinRoll * fCosPitchCosYaw     - fCosRoll * fSinPitchSinYaw;
-// 	y = fCosRoll * fSinPitch * fCosYaw + fSinRoll * fCosPitch * fSinYaw;
-// 	z = fCosRoll * fCosPitch * fSinYaw - fSinRoll * fSinPitch * fCosYaw;
+	const Real c1=cos(radX*static_cast<Real>(0.5));
+	const Real s1=sin(radX*static_cast<Real>(0.5));
+	const Real c2=cos(radY*static_cast<Real>(0.5));
+	const Real s2=sin(radY*static_cast<Real>(0.5));
+	const Real c3=cos(radZ*static_cast<Real>(0.5));
+	const Real s3=sin(radZ*static_cast<Real>(0.5));
+	const Real c3c2=c3*c2;
+	const Real s3s2=s3*s2;
+	const Real s3c2=s3*c2;
+	const Real c3s2=c3*s2;
+	w = c3c2*c1-s3s2*s1;
+	x = c3c2*s1+s3s2*c1;
+	y = c3s2*c1-s3c2*s1;
+	z = s3c2*c1+c3s2*s1;
 }
 
 //-----------------------------
@@ -66,7 +37,7 @@ Quaternion_T<Real>::Quaternion_T(Vector3_T<Real> axis, Real degrees)
 {
 	axis.Normalize();
 
-	Real rad = degrees * static_cast<Real>(3.1415926535f / 180.0f);
+	Real rad = degrees * static_cast<Real>(RJE::Math::Pi / 180.0);
 	const Real sin_a = sin( rad / 2 );
 	const Real cos_a = cos( rad / 2 );
 	x    = axis.x * sin_a;
@@ -180,7 +151,7 @@ FORCEINLINE Real Quaternion_T<Real>::SqrMagnitude()
 //----------------------------------------------------------------------
 template<typename Real>
 FORCEINLINE BOOL Quaternion_T<Real>::IsNormalized()
-{ return (IsOne(x*x + y*y + z*z + w*w)) }
+{ return (RJE::Math::IsOne(x*x + y*y + z*z + w*w)); }
 
 //----------------------------------------------------------------------
 template<typename Real>
@@ -201,16 +172,63 @@ template<typename Real>
 FORCEINLINE Quaternion_T<Real>& Quaternion_T<Real>::Inverse()
 {
 	if (this->IsNormalized())
+	{
 		this->Conjugate();
+		return *this;
+	}
 	else
 	{
 		Quaternion_T<Real> q(w, x, y, z);
-		q.Conjugate;
+		q.Conjugate();
 		Real mag = this->SqrMagnitude();
 		if (mag)	return q/mag;
 		else		return *this;
 	}
 }
+
+//----------------------------------------------------------------------
+template<typename Real>
+FORCEINLINE Quaternion_T<Real>& Quaternion_T<Real>::LookAt(Vector3_T<Real>& lookAt, Vector3_T<Real>& upDirection)
+{
+	Vector3_T<Real> forward = lookAt;
+	Vector3_T<Real> up      = upDirection;
+	forward.Normalize();
+	up.Normalize();
+	Vector3_T<Real>::OrthoNormalize(forward, up);
+
+	Vector3_T<Real> right = Vector3_T<Real>::Cross(up, forward);
+
+	Quaternion_T<Real> ret;
+	ret.w = sqrt(static_cast<Real>(1.0) + right.x + up.y + forward.z) * static_cast<Real>(0.5);
+	float w4_recip = -static_cast<Real>(1.0) / (static_cast<Real>(4.0) * ret.w);
+	ret.x = (up.z - forward.y)    * w4_recip;
+	ret.y = (forward.x - right.z) * w4_recip;
+	ret.z = (right.y - up.x)      * w4_recip;
+
+	*this = ret;
+	return *this;
+}
+
+
+//---------------------------------------------------------------------------
+template<typename Real>
+FORCEINLINE Vector3_T<Real> Quaternion_T<Real>::Rotate (IN const Real& x, IN  const Real& y, IN const Real& z)
+{
+	Quaternion_T<Real> q(*this);
+	Quaternion_T<Real> q2(	static_cast<Real>(0.0),
+							static_cast<Real>(RJE::Math::Pi/180)*x,
+							static_cast<Real>(RJE::Math::Pi/180)*y,
+							static_cast<Real>(RJE::Math::Pi/180)*z);
+	Quaternion_T<Real> qinv = q;
+	q.Conjugate();
+
+	q = q*q2*qinv;
+	return Vector3_T<Real>(q.x,q.y,q.z) * static_cast<Real>(180/RJE::Math::Pi);
+}
+//---------------------------------------------------------------------------
+template<typename Real>
+FORCEINLINE Vector3_T<Real> Quaternion_T<Real>::Rotate (IN const Vector3_T<Real>& v)
+{ return this->Rotate(v.x, v.y, v.z); }
 
 //----------------------------------------------------------------------
 template<typename Real>
@@ -241,68 +259,38 @@ FORCEINLINE Quaternion_T<Real>::operator Matrix44_T<Real>()
 template<typename Real>
 FORCEINLINE Vector3_T<Real> Quaternion_T<Real>::ToEulerAngles()
 {
-	// TODO: Fix this function => Do Not Use A Matrix !!
-
 	Vector3_T<Real> euler;
-	Matrix44_T<Real> mat = this->ToMatrix();
-	Real t  = cos(euler.y);
-	euler.y = -asin(mat.m13);
+	Real One = static_cast<Real>(1);
+	euler.y=RJE::Math::Clamp(static_cast<Real>(2*(w*y+x*z)), -One, One);
+	if(euler.y==One||euler.y==-One)
+	{
+		euler.x=2*atan2(x,w);
+		euler.y*=static_cast<Real>(RJE::Math::Pi_Half);
+		euler.z=0;
+	}
+	euler.x=atan2(2*(w*x-y*z), 1-2*(x*x+y*y));
+	euler.y=asin(euler.y);
+	euler.z=atan2(2*(w*z-x*y), 1-2*(y*y+z*z));
 
-	if (RJE::Math::Abs(t) > static_cast<Real>(0.4999))
-	{
-		euler.x = atan2(-mat.m23/t, mat.m33/t);
-		euler.z = atan2(-mat.m12/t, mat.m11/t);
-	}
-	else 
-	{
-		euler.x = 0;
-		euler.z = atan2(mat.m21, mat.m22);
-	}
-	Real RadToDeg = static_cast<Real>(180.0 * 3.1415926535);
-	//return euler*RadToDeg;
+	euler *= static_cast<Real>(180.0 / RJE::Math::Pi);
 	return euler;
-
-// 	Real RadToDeg = static_cast<Real>(180.0 * 3.1415926535);
-// 
-// 	Vector3_T<Real> euler;
-// 	Real unit = x*x + y*y + z*z + w*w; // if normalized is one, otherwise correction factor
-// 	Real test = x*y + z*w;
-// 	if (test > static_cast<Real>(0.4999*unit)) // singularity at north pole
-// 	{
-// 		euler.x = static_cast<Real>(0);
-// 		euler.y = static_cast<Real>(2) * atan2(x,w);
-// 		euler.z = static_cast<Real>(3.141592653589793238462643383279*0.5);
-// 	}
-// 	else if (test < static_cast<Real>(-0.4999*unit)) // singularity at south pole
-// 	{
-// 		euler.x = static_cast<Real>(0);
-// 		euler.y = static_cast<Real>(-2) * atan2(x,w);
-// 		euler.z = static_cast<Real>(-3.141592653589793238462643383279*0.5);
-// 	}
-// 	else
-// 	{
-// 		euler.x = atan2(2*(w*x+y*z), 1-2*(x*x+y*y));
-// 		euler.y = asin(2*(w*y-z*x));
-// 		euler.z = atan2(2*(w*z+x*y), 1-2*(y*y+z*z));
-// 	}
-// 	euler*=RadToDeg;
-// 	return euler;
 }
 
 //--------------------------------------------------------------------
+	// TODO
 template<typename Real>
 FORCEINLINE Vector3_T<Real> Quaternion_T<Real>::GetRightVector() const
-{ return Vector3_T<Real>( 1 - 2*(y*y + z*z), 2*(x*y + w*z), 2*(x*z - w*y)); }
+{ Quaternion_T<Real> q(*this); return q.Rotate(Vector3_T<Real>(1,0,0)); }
 
 //--------------------------------------------------------------------
 template<typename Real>
 FORCEINLINE Vector3_T<Real> Quaternion_T<Real>::GetUpVector() const
-{ return Vector3_T<Real>( 2*(x*y - w*z), 1 - 2*(x*x + z*z), 2*(y*z + w*x)); }
+{ Quaternion_T<Real> q(*this); return q.Rotate(Vector3_T<Real>(0,1,0)); }
 
 //----------------------------------------------------------------------
 template<typename Real>
 FORCEINLINE Vector3_T<Real> Quaternion_T<Real>::GetForwardVector() const
-{ return Vector3_T<Real>( 2*(x*z + w*y), 2*(y*x - w*x), 1 - 2*(x*x + y*y)); }
+{ Quaternion_T<Real> q(*this); return q.Rotate(Vector3_T<Real>(0,0,1)); }
 
 //----------------------------------------------------------------------
 template<typename Real>

@@ -9,17 +9,20 @@ Transform::Transform()
 //////////////////////////////////////////////////////////////////////////
 Matrix44 Transform::WorldMatrix()
 {
-	Matrix44 world;
-	Matrix44 rotation = Matrix44::identity;
-	Matrix44 rotationX = Matrix44::RotationX(EulerAngles.x);
-	Matrix44 rotationY = Matrix44::RotationY(EulerAngles.y);
-	Matrix44 rotationZ = Matrix44::RotationZ(EulerAngles.z);
-	Matrix44 scale     = Matrix44::Scaling(Scale);
 	Matrix44 position  = Matrix44::Translation(Position);
-	world = scale;
-	rotation = rotationX * rotationY * rotationZ;
-	world *= rotation;
-	world *= position;
+	Matrix44 scale     = Matrix44::Scaling(Scale);
+	Matrix44 rotation  = Rotation.ToMatrix();
+	Matrix44 world = scale * rotation * position;
 
 	return world;
 }
+
+//////////////////////////////////////////////////////////////////////////
+Vector3 Transform::Right()
+{ return Rotation.GetRightVector(); }
+//----------------------------------------
+Vector3 Transform::Up()
+{ return Rotation.GetUpVector(); }
+//----------------------------------------
+Vector3 Transform::Forward()
+{ return Rotation.GetForwardVector(); }

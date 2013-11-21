@@ -51,8 +51,8 @@ System::System()
 
 	mLastMousePos.x  = 0;
 	mLastMousePos.y  = 0;
-	mCameraTheta	 = 1.5f*RJE::Math::Pi;
-	mCameraPhi		 = 0.25f*RJE::Math::Pi;
+	mCameraTheta	 = 1.5f*RJE::Math::Pi_f;
+	mCameraPhi		 = 0.25f*RJE::Math::Pi_f;
 	mCameraRadius	 = 10.0f;
 	mCameraFOV		 = 80;
 	mCameraOrthoZoom = 0.01f;
@@ -563,7 +563,7 @@ void System::HandleInputs()
 					mCameraTheta -= dx;
 
 				mCameraPhi -= dy;
-				mCameraPhi = RJE::Math::Clamp(mCameraPhi, 0.1f, RJE::Math::Pi-0.1f);
+				mCameraPhi = RJE::Math::Clamp(mCameraPhi, 0.1f, RJE::Math::Pi_f-0.1f);
 			}
 			else if( Input::Instance()->GetMouseButton(RButton) )
 			{

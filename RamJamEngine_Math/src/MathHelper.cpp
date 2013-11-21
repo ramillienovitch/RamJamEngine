@@ -6,24 +6,12 @@
 
 namespace RJE
 {
-	const float Math::Infinity = FLT_MAX;
-	const float Math::Pi       = RJE_PI_F;
-
-	float Math::AngleFromXY(float x, float y)
-	{
-		float theta = 0.0f;
-
-		if(x >= 0.0f)	// Quadrant I or IV
-		{
-			// If x = 0, then atanf(y/x) = +pi/2 if y > 0
-			//                atanf(y/x) = -pi/2 if y < 0
-			theta = atanf(y / x); // in [-pi/2, +pi/2]
-
-			if(theta < 0.0f)
-				theta += 2.0f*Pi; // in [0, 2*pi[.
-		}
-		else	theta = atanf(y/x) + Pi; // in [0, 2*pi[.
-
-		return theta;
-	}
+	const double Math::Infinity   = DBL_MAX;
+	const double Math::Pi         = RJE_PI;
+	const double Math::Pi_Half    = RJE_HALF_PI;
+	const double Math::Pi_Two     = RJE_TWO_PI;
+	const float  Math::Infinity_f = FLT_MAX;
+	const float  Math::Pi_f       = RJE_PI_F;
+	const float  Math::Pi_Half_f  = RJE_HALF_PI_F;
+	const float  Math::Pi_Two_f   = RJE_TWO_PI_F;
 }

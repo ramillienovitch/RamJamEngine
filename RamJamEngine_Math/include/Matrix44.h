@@ -22,6 +22,7 @@ struct Matrix44_T
 				Real m31, Real m32, Real m33, Real m34,
 				Real m41, Real m42, Real m43, Real m44);
 	Matrix44_T(const Matrix44_T&);
+	Matrix44_T(const DirectX::XMMATRIX&);
 	//------------
 	static const Matrix44_T identity;
 	//------------

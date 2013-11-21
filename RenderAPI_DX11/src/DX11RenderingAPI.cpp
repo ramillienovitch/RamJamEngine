@@ -36,12 +36,6 @@ DX11RenderingAPI::DX11RenderingAPI()
 	mbUseBlending    = true;
 	mbWireframe      = false;
 
-	//---------
-	TEST_VEC_ROTATION  = Vector3::zero;
-	TEST_QUAT_ROTATION = Quaternion::identity;
-	TEST_MAT_ROTATION  = Matrix44::identity;
-	//---------
-
 	DirectX::XMMATRIX Id = DirectX::XMMatrixIdentity();
 	XMStoreFloat4x4(&mGridWorld, Id);
 
@@ -74,12 +68,12 @@ DX11RenderingAPI::DX11RenderingAPI()
 	Transform t;
 	//t.EulerAngles	= Vector3(45,45,45);
 	//t.Scale			= Vector3(2.5f, 5.0f, 0.5f);
-	t.Position		= Vector3(5.0f, 5.0f, -5.0f);
+	t.Position		= Vector3(0.0f, 5.0f, 0.0f);
 	Matrix44 tempworld = t.WorldMatrix();
 
 	//XMStoreFloat4x4(&mWireBoxWorld, wireBoxWorld);
 	XMStoreFloat4x4(&mWireBoxWorld, tempworld);
-	XMStoreFloat4x4(&mAxisWorld, wireBoxWorld);
+	XMStoreFloat4x4(&mAxisWorld, tempworld);
 
 	//-------------
 
@@ -517,11 +511,8 @@ void DX11RenderingAPI::BuildGizmosBuffers()
 	MeshData::Data<ColorVertex> axis;
 
 	GeometryGenerator geoGen;
-	//geoGen.CreateLine(up, wireBox, Color::Blue);
 	geoGen.CreateWireBox(1.0f,1.0f,1.0f, wireBox, Color::Red);
-	geoGen.CreateAxisArrows(axis);
-	//geoGen.CreateWireFrustum(rot.GetRightVector(),rot.GetUpVector(),rot.GetForwardVector(), 10, 10, 3, 30, wireBox, Color::Red);
-
+	geoGen.CreateWireSphere(0.5f, axis, Color::Green);
 
 	UINT totalVertexCount = (UINT) wireBox.Vertices.size() + (UINT) axis.Vertices.size();
 	UINT totalIndexCount  = (UINT) wireBox.Indices.size()  + (UINT) axis.Indices.size();
@@ -610,33 +601,17 @@ void DX11RenderingAPI::UpdateScene( float dt )
 		if (Input::Instance()->GetKeyboardDown(O))			DX11CommonStates::sCurrentBlendState      = DX11CommonStates::sBlendState_Transparent;
 		if (Input::Instance()->GetKeyboardDown(P))			DX11CommonStates::sCurrentBlendState      = DX11CommonStates::sBlendState_Opaque;
 		if (Input::Instance()->GetKeyboardUp(W))			SetWireframe(!mbWireframe);
-
-		//-----------
-		Transform t;
-		if (Input::Instance()->GetKeyboard(RightArrow))	TEST_VEC_ROTATION.x += 50*Timer::Instance()->DeltaTime();
-		if (Input::Instance()->GetKeyboard(LeftArrow))	TEST_VEC_ROTATION.x -= 50*Timer::Instance()->DeltaTime();
-		if (Input::Instance()->GetKeyboard(UpArrow))	TEST_VEC_ROTATION.y += 50*Timer::Instance()->DeltaTime();
-		if (Input::Instance()->GetKeyboard(DownArrow))	TEST_VEC_ROTATION.y -= 50*Timer::Instance()->DeltaTime();
-		if (Input::Instance()->GetKeyboard(Numpad6))	TEST_VEC_ROTATION.z += 50*Timer::Instance()->DeltaTime();
-		if (Input::Instance()->GetKeyboard(Numpad4))	TEST_VEC_ROTATION.z -= 50*Timer::Instance()->DeltaTime();
-		if (Input::Instance()->GetKeyboardUp(Numpad5))	TEST_VEC_ROTATION = Vector3::zero;
-		t.EulerAngles	= TEST_VEC_ROTATION;
-		//t.Scale			= Vector3(2.5f, 5.0f, 0.5f);
-		t.Position		= Vector3(0.0f, 5.0f, 0.0f);
-		Matrix44 tempworld = t.WorldMatrix();
-
-		XMStoreFloat4x4(&mWireBoxWorld, tempworld);
 	}
 
 	static float timer = 0.0f;
 	timer += dt*0.5f;
 
-	mPointLights[0].Position.x = 3.0f*cosf(2*RJE::Math::Pi/3 + timer );
-	mPointLights[0].Position.z = 3.0f*sinf(2*RJE::Math::Pi/3 + timer );
+	mPointLights[0].Position.x = 3.0f*cosf(2*RJE::Math::Pi_f/3 + timer );
+	mPointLights[0].Position.z = 3.0f*sinf(2*RJE::Math::Pi_f/3 + timer );
 	mPointLights[0].Position.y = 2.0f + cosf( timer );
 
-	mPointLights[1].Position.x = 3.0f*cosf(-2*RJE::Math::Pi/3 + timer );
-	mPointLights[1].Position.z = 3.0f*sinf(-2*RJE::Math::Pi/3 + timer );
+	mPointLights[1].Position.x = 3.0f*cosf(-2*RJE::Math::Pi_f/3 + timer );
+	mPointLights[1].Position.z = 3.0f*sinf(-2*RJE::Math::Pi_f/3 + timer );
 	mPointLights[1].Position.y = 2.0f + cosf( timer );
 
 	mPointLights[2].Position.x = 3.0f*cosf( timer );
@@ -656,11 +631,11 @@ void DX11RenderingAPI::DrawScene()
 	mDX11Device->md3dImmediateContext->ClearRenderTargetView(mRenderTargetView, DirectX::Colors::LightSteelBlue);
 	mDX11Device->md3dImmediateContext->ClearDepthStencilView(mDX11DepthBuffer->mDepthStencilView, D3D11_CLEAR_DEPTH|D3D11_CLEAR_STENCIL, 1.0f, 0);
 
-	//////////////////////////////////////////////////////////////////////////
+	//-------------------------------------------------------------------------
 
 	DrawGizmos();
 
-	//////////////////////////////////////////////////////////////////////////
+	//-------------------------------------------------------------------------
 	mDX11Device->md3dImmediateContext->IASetInputLayout(DX11InputLayouts::PosNormalTex);
 	mDX11Device->md3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
@@ -733,7 +708,7 @@ void DX11RenderingAPI::DrawScene()
 			if (mbUseTexture)	activeTech = DX11Effects::BasicFX->Light1_2TexTech;
 			else				activeTech = DX11Effects::BasicFX->Light1_2NoTexTech;
 			break;
-		case 3:	// this is the basic lighting we're gonna use most of the time (one directionnal and three point lights)
+		case 3:	// this is the basic lighting we're gonna use most of the time (one directional and three point lights)
 			if (mbUseTexture)
 			{
 				if (mbUseBlending)
@@ -1076,13 +1051,13 @@ void DX11RenderingAPI::DrawScene()
 	else if (!mbWireframe)
 		Draw2dElements();
 
-	//////////////////////////////////////////////////////////////////////////
+	//-------------------------------------------------------------------------
 
 	PROFILE_GPU_END(L"Render Scene");
 	PROFILE_GPU_END_DEEP(L"DEEP Scene");
 	PROFILE_GPU_END_FRAME();
 
-	//////////////////////////////////////////////////////////////////////////
+	//-------------------------------------------------------------------------
 
 	if (RJE_GLOBALS::gVsyncEnabled)
 	{
@@ -1097,6 +1072,8 @@ void DX11RenderingAPI::DrawScene()
 //////////////////////////////////////////////////////////////////////////
 void DX11RenderingAPI::DrawGizmos()
 {
+	PROFILE_CPU("Draw Gizmos");
+
 	mDX11Device->md3dImmediateContext->IASetInputLayout(DX11InputLayouts::PosColor);
 	mDX11Device->md3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
 
@@ -1115,16 +1092,11 @@ void DX11RenderingAPI::DrawGizmos()
 	DirectX::XMMATRIX proj     = *(mCamera->mCurrentProjectionMatrix);
 	DirectX::XMMATRIX viewProj = view*proj;
 
-	D3DX11_TECHNIQUE_DESC techDesc;
 	XMMATRIX world;
-	XMMATRIX worldInvTranspose;
 	XMMATRIX worldViewProj;
-	
-	DX11Effects::ColorFX->ColorTech->GetDesc(&techDesc);
 	
 	// Draw the wireBox.
 	world             = XMLoadFloat4x4(&mWireBoxWorld);
-	worldInvTranspose = DX11Math::InverseTranspose(world);
 	worldViewProj     = world*view*proj;
 
 	DX11Effects::ColorFX->SetWorldViewProj(worldViewProj);
@@ -1134,7 +1106,6 @@ void DX11RenderingAPI::DrawGizmos()
 
 	// Draw the Axis.
 	world             = XMLoadFloat4x4(&mWireBoxWorld);
-	worldInvTranspose = DX11Math::InverseTranspose(world);
 	worldViewProj     = world*view*proj;
 
 	DX11Effects::ColorFX->SetWorldViewProj(worldViewProj);
@@ -1215,7 +1186,8 @@ void DX11RenderingAPI::DrawProfiler()
 void DX11RenderingAPI::Draw2dElements()
 {
 	POINT textPos = {10, 10};
-	//mSpriteBatch->DrawString(mDX11Device->md3dImmediateContext, *mProfilerFont, L"RamJam Engine", textPos, XMCOLOR(0xffffffff));
+
+	//mSpriteBatch->DrawString(*mProfilerFont, L"RamJam Engine", textPos, XMCOLOR(0xffffffff));
 }
 
 //////////////////////////////////////////////////////////////////////////

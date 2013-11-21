@@ -648,7 +648,85 @@ void GeometryGenerator::CreateWireBox(float width, float height, float depth, Da
 //////////////////////////////////////////////////////////////////////////
 void GeometryGenerator::CreateWireSphere(float radius, Data<ColorVertex>& meshData, Color color)
 {
-	
+	meshData.Vertices.clear();
+	meshData.Indices.clear();
+
+	MeshData::ColorVertex topVertex   (0.0f, +radius, 0.0f, color);
+	MeshData::ColorVertex bottomVertex(0.0f, -radius, 0.0f, color);
+
+	meshData.Vertices.push_back( topVertex );
+
+	const UINT stackCount = 12, sliceCount = 12;
+
+	float phiStep   = RJE_PI_F/stackCount;
+	float thetaStep = 2.0f*RJE_PI_F/sliceCount;
+
+	// Compute vertices for each stack ring (do not count the poles as rings).
+	for(UINT i = 1; i <= stackCount-1; ++i)
+	{
+		float phi = i*phiStep;
+
+		// Vertices of ring.
+		for(UINT j = 0; j <= sliceCount; ++j)
+		{
+			float theta = j*thetaStep;
+
+			MeshData::ColorVertex v;
+
+			// spherical to cartesian
+			v.pos.x = radius*sinf(phi)*cosf(theta);
+			v.pos.y = radius*cosf(phi);
+			v.pos.z = radius*sinf(phi)*sinf(theta);
+			v.color = color;
+			meshData.Vertices.push_back( v );
+		}
+	}
+	meshData.Vertices.push_back( bottomVertex );
+
+	// Compute indices for top stack
+	for(UINT i = 1; i <= sliceCount; ++i)
+	{
+		meshData.Indices.push_back(0);
+		meshData.Indices.push_back(i);
+
+		meshData.Indices.push_back(i);
+		meshData.Indices.push_back(i+1);
+	}
+
+	// Compute indices for inner stacks (not connected to poles).
+
+	// Offset the indices to the index of the first vertex in the first ring.
+	// This is just skipping the top pole vertex.
+	UINT baseIndex = 1;
+	UINT ringVertexCount = sliceCount+1;
+	for(UINT i = 0; i < stackCount-2; ++i)
+	{
+		for(UINT j = 0; j < sliceCount; ++j)
+		{
+			meshData.Indices.push_back(baseIndex + i*ringVertexCount + j);
+			meshData.Indices.push_back(baseIndex + (i+1)*ringVertexCount + j);
+
+			meshData.Indices.push_back(baseIndex + (i+1)*ringVertexCount + j);
+			meshData.Indices.push_back(baseIndex + (i+1)*ringVertexCount + j+1);
+		}
+	}
+
+	// Compute indices for bottom stack
+
+	// South pole vertex was added last.
+	UINT southPoleIndex = (UINT)meshData.Vertices.size()-1;
+
+	// Offset the indices to the index of the first vertex in the last ring.
+	baseIndex = southPoleIndex - ringVertexCount;
+
+	for(UINT i = 0; i < sliceCount; ++i)
+	{
+		meshData.Indices.push_back(southPoleIndex);
+		meshData.Indices.push_back(baseIndex+i);
+
+		meshData.Indices.push_back(baseIndex+i);
+		meshData.Indices.push_back(baseIndex+i+1);
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -706,33 +784,30 @@ void GeometryGenerator::CreateRay(Vector3 orientation, Data<ColorVertex>& meshDa
 { CreateLine(10000*orientation, meshData, color); }
 
 //////////////////////////////////////////////////////////////////////////
-void GeometryGenerator::CreateWireFrustum(float fov, float nearPlaneDepth, float farPlaneDepth, Data<ColorVertex>& meshData, Color color)
-{
-	
-}
+void GeometryGenerator::CreateWireFrustum(float fovX, float ratio, float nearPlaneDepth, float farPlaneDepth, Data<ColorVertex>& meshData, Color color)
+{ CreateWireFrustum(Vector3::right, Vector3::up, Vector3::forward, fovX, ratio, nearPlaneDepth, farPlaneDepth, meshData, color); }
 //---------
-void GeometryGenerator::CreateWireFrustum(float width, float height, float nearPlaneDepth, float farPlaneDepth, Data<ColorVertex>& meshData, Color color)
-{ CreateWireFrustum(Vector3::right, Vector3::up, Vector3::forward, width, height, nearPlaneDepth, farPlaneDepth, meshData, color); }
-//---------
-void GeometryGenerator::CreateWireFrustum(Quaternion orientation, float width, float height, float nearPlaneDepth, float farPlaneDepth, Data<ColorVertex>& meshData, Color color)
+void GeometryGenerator::CreateWireFrustum(Quaternion orientation, float fovX, float ratio, float nearPlaneDepth, float farPlaneDepth, Data<ColorVertex>& meshData, Color color)
 {
 	Vector3 right   = orientation.GetRightVector();
 	Vector3 up      = orientation.GetUpVector();
 	Vector3 forward = orientation.GetForwardVector();
-	CreateWireFrustum(right, up, forward, width, height, nearPlaneDepth, farPlaneDepth, meshData, color);
+	CreateWireFrustum(right, up, forward, fovX, ratio, nearPlaneDepth, farPlaneDepth, meshData, color);
 }
 //---------
-void GeometryGenerator::CreateWireFrustum(Vector3 right, Vector3 up, Vector3 forward, float width, float height, float nearPlaneDepth, float farPlaneDepth, Data<ColorVertex>& meshData, Color color)
+void GeometryGenerator::CreateWireFrustum(Vector3 right, Vector3 up, Vector3 forward, float fovX, float ratio, float nearPlaneDepth, float farPlaneDepth, Data<ColorVertex>& meshData, Color color)
 {
 	right.Normalize();
 	up.Normalize();
 	forward.Normalize();
 
-	float wFar2 = 0.5f*width;
-	float hFar2 = 0.5f*height;
+	float angle = fovX * (3.1415926535f / 180.0f);
+	float width  = 2*tan(angle/2)*farPlaneDepth;
+	float height = width/ratio;
+	float wFar2  = 0.5f*width;
+	float hFar2  = 0.5f*height;
 	float wNear2 = 0.5f*((nearPlaneDepth*width)/farPlaneDepth);
 	float hNear2 = 0.5f*((nearPlaneDepth*height)/farPlaneDepth);
-
 
 	UINT i[24];
 	i[0]  = 0; i[1]  = 1;

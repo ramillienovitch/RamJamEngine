@@ -87,9 +87,6 @@ struct DX11RenderingAPI : GraphicAPI
 	//---------------
 
 	//---------------
-	Vector3    TEST_VEC_ROTATION;
-	Quaternion TEST_QUAT_ROTATION;
-	Matrix44   TEST_MAT_ROTATION;
 // 	Vector3		mWireBoxPosition;
 // 	Quaternion	mWireBoxRotation;
 // 	Vector3		mWireBoxScale;

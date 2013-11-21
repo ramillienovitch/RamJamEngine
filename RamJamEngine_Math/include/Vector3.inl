@@ -164,8 +164,43 @@ FORCEINLINE Vector3_T<Real>& Vector3_T<Real>::Scale(const Vector3_T& v)
 
 //----------------------------------------------------------------------
 template <typename Real>
+FORCEINLINE Vector3_T<Real> Vector3_T<Real>::ProjectToNorm(const Vector3_T& direction) const
+{
+	Vector3_T<Real> dir = direction;
+	dir.Normalize();
+	return dir * Vector3_T<Real>::Dot(*this, dir);
+}
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+template <typename Real>
+FORCEINLINE void Vector3_T<Real>::OrthoNormalize(Vector3_T &v1, Vector3_T &v2)
+{
+	if (v1 == Vector3_T<Real>::zero || v2 == Vector3_T<Real>::zero)
+		return;
+
+	v1.Normalize();
+	v2 -= v2.ProjectToNorm(v1);
+	v2.Normalize();
+}
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+template <typename Real>
 FORCEINLINE Vector3_T<Real> Vector3_T<Real>::Cross(const Vector3_T& v1, const Vector3_T& v2)
 { return Vector3_T<Real>( v1.y*v2.z - v1.z*v2.y, v1.z*v2.x - v1.x*v2.z, v1.x*v2.y - v1.y*v2.x); }
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+template <typename Real>
+FORCEINLINE Real Vector3_T<Real>::AngleBetween(const Vector3_T& v1, const Vector3_T& v2)
+{
+	Vector3_T<Real> a = v1;		a.Normalize();
+	Vector3_T<Real> b = v2;		b.Normalize();
+	
+	Real angle = static_cast<Real>(180.0 / RJE::Math::Pi)*acos(Vector3_T<Real>::Dot(a,b));
+	return angle;
+}
 //----------------------------------------------------------------------
 
 //----------------------------------------------------------------------

@@ -46,9 +46,12 @@ struct Vector3_T
 	//---------------
 	Vector3_T&	Normalize();
 	Vector3_T&	Scale(const Vector3_T& v);
+	Vector3_T	ProjectToNorm(const Vector3_T& direction) const;
 	//---------------
-	static Vector3_T	Cross(const Vector3_T& v1, const Vector3_T& v2);
-	static Real			Dot  (const Vector3_T& v1, const Vector3_T& v2);
+	static void			OrthoNormalize(Vector3_T &v1, Vector3_T &v2);
+	static Vector3_T	Cross         (const Vector3_T& v1, const Vector3_T& v2);
+	static Real			Dot           (const Vector3_T& v1, const Vector3_T& v2);
+	static Real			AngleBetween  (const Vector3_T& v1, const Vector3_T& v2);
 };
 
 typedef Vector3_T<f32> Vector3;

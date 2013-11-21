@@ -29,6 +29,17 @@ Matrix44_T<Real>::Matrix44_T( const Matrix44_T& matIn )
 
 //----------------------------------------------------------------------
 template <typename Real>
+Matrix44_T<Real>::Matrix44_T( const DirectX::XMMATRIX& matIn )
+{
+	m11 = matIn.r[0].m128_f32[0];	m12 = matIn.r[0].m128_f32[1];	m13 = matIn.r[0].m128_f32[2];	m14 = matIn.r[0].m128_f32[3];
+	m21 = matIn.r[1].m128_f32[0];	m22 = matIn.r[1].m128_f32[1];	m23 = matIn.r[1].m128_f32[2];	m24 = matIn.r[1].m128_f32[3];
+	m31 = matIn.r[2].m128_f32[0];	m32 = matIn.r[2].m128_f32[1];	m33 = matIn.r[2].m128_f32[2];	m34 = matIn.r[2].m128_f32[3];
+	m41 = matIn.r[3].m128_f32[0];	m42 = matIn.r[3].m128_f32[1];	m43 = matIn.r[3].m128_f32[2];	m44 = matIn.r[3].m128_f32[3];
+}
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+template <typename Real>
 Matrix44_T<Real>::Matrix44_T( Real _m11, Real _m12, Real _m13, Real _m14, Real _m21, Real _m22, Real _m23, Real _m24, Real _m31, Real _m32, Real _m33, Real _m34, Real _m41, Real _m42, Real _m43, Real _m44 )
 {
 	m11 = _m11;		m12 = _m12;		m13 = _m13;		m14 = _m14;
@@ -188,6 +199,7 @@ FORCEINLINE Matrix44_T<Real>& Matrix44_T<Real>::Transpose()
 	std::swap(m41, m14);
 	std::swap(m42, m24);
 	std::swap(m43, m34);
+	return *this;
 }
 //----------------------------------------------------------------------
 
@@ -322,12 +334,13 @@ FORCEINLINE void Matrix44_T<Real>::DecomposeNoScale(OUT Vector3_T<Real>& positio
 template <typename Real>
 FORCEINLINE Matrix44_T<Real>& Matrix44_T<Real>::FromEulerAngles(Matrix44_T<Real>& m, Real x, Real y, Real z)
 {
-	Real cr = cos( x );
-	Real sr = sin( x );
-	Real cp = cos( y );
-	Real sp = sin( y );
-	Real cy = cos( z );
-	Real sy = sin( z );
+	Real DegToRad = static_cast<Real>(3.1415926535f / 180.0f);
+	Real cr = cos( x * DegToRad );
+	Real sr = sin( x * DegToRad );
+	Real cp = cos( y * DegToRad );
+	Real sp = sin( y * DegToRad );
+	Real cy = cos( z * DegToRad );
+	Real sy = sin( z * DegToRad );
 
 	m.m11 = cp*cy ;
 	m.m12 = cp*sy;
@@ -336,20 +349,23 @@ FORCEINLINE Matrix44_T<Real>& Matrix44_T<Real>::FromEulerAngles(Matrix44_T<Real>
 	Real srsp = sr*sp;
 	Real crsp = cr*sp;
 
-	m.m21 = srsp*cy-cr*sy ;
-	m.m22 = srsp*sy+cr*cy ;
-	m.m23 = sr*cp ;
+	m.m21 = srsp*cy-cr*sy;
+	m.m22 = srsp*sy+cr*cy;
+	m.m23 = sr*cp;
 
-	m.m31 = crsp*cy+sr*sy ;
-	m.m32 = crsp*sy-sr*cy ;
+	m.m31 = crsp*cy+sr*sy;
+	m.m32 = crsp*sy-sr*cy;
 	m.m33 = cr*cp ;
+
+	m.m14 = m.m24 = m.m34 = m.m41 = m.m42 = m.m43 = 0.0f;
+	m.m44 = 1.0f;
 
 	return m;
 }
 //----------------------------------------------------------------------
 template <typename Real>
 FORCEINLINE Matrix44_T<Real>& Matrix44_T<Real>::FromEulerAngles(Matrix44_T<Real>& m, Vector3_T<Real> euler)
-{ return FromEulerAnglesXYZ(m, euler.x, euler.y, euler.z); }
+{ return FromEulerAngles(m, euler.x, euler.y, euler.z); }
 //----------------------------------------------------------------------
 
 //----------------------------------------------------------------------

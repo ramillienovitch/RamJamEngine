@@ -29,83 +29,92 @@ namespace RJE
 	class Math
 	{
 	public:
+		//--------------------------------------------------
 		template<typename T>
-		inline static T Abs(T number)
-		{
-			return (number > 0 ? number : -number);
-		}
+		FORCEINLINE static T Abs(T number)
+		{ return (number > 0 ? number : -number); }
+		//--------------------------------------------------
 
-		// Returns random int in [0, 1[.
-		inline static int Rand()
-		{
-			return (rand()) / RAND_MAX;
-		}
-		// Returns random int in [a, b[.
-		inline static int Rand(int a, int b)
-		{
-			return a + Rand()*(b-a);
-		}
+		//--------------------------------------------------
+		FORCEINLINE static int Rand()					// Returns random int in [0, 1[.
+		{ return (rand()) / RAND_MAX; }
+		//------------------------
+		FORCEINLINE static int Rand(int a, int b)		// Returns random int in [a, b[.
+		{ return a + Rand()*(b-a); }
+		//------------------------
+		FORCEINLINE static float RandF()					// Returns random float in [0, 1[.
+		{ return (float)(rand()) / (float)RAND_MAX; }
+		//------------------------
+		FORCEINLINE static float RandF(float a, float b)	// Returns random float in [a, b[.
+		{ return a + RandF()*(b-a); }
+		//--------------------------------------------------
 
-		// Returns random float in [0, 1[.
-		inline static float RandF()
-		{
-			return (float)(rand()) / (float)RAND_MAX;
-		}
-		// Returns random float in [a, b[.
-		inline static float RandF(float a, float b)
-		{
-			return a + RandF()*(b-a);
-		}
-
+		//--------------------------------------------------
 		template<typename T>
-		inline static BOOL IsZero(T number)
-		{
-			return (Abs(number) < std::numeric_limits<T>::epsilon());
-		}
-
+		FORCEINLINE static BOOL IsZero(T number)
+		{ return (Abs(number) < std::numeric_limits<T>::epsilon()); }
+		//------------------------
 		template<typename T>
-		inline static BOOL IsOne(T number)
-		{
-			return ( number < 0 ? false : IsZero(number-1));
-		}
+		FORCEINLINE static BOOL IsOne(T number)
+		{ return ( number < 0 ? false : IsZero(number-1)); }
+		//--------------------------------------------------
 
+		//--------------------------------------------------
 		template<typename T>
-		inline static T Min(const T& a, const T& b)
-		{
-			return a < b ? a : b;
-		}
-
+		FORCEINLINE static T Min(const T& a, const T& b)
+		{ return a < b ? a : b; }
+		//------------------------
 		template<typename T>
-		inline static T Max(const T& a, const T& b)
-		{
-			return a > b ? a : b;
-		}
+		FORCEINLINE static T Max(const T& a, const T& b)
+		{ return a > b ? a : b; }
+		//--------------------------------------------------
 
+		//--------------------------------------------------
 		template<typename T>
-		inline static T Clamp(const T& x, const T& low, const T& high)
-		{
-			return x < low ? low : (x > high ? high : x);
-		}
-
+		FORCEINLINE static T Clamp(const T& x, const T& low, const T& high)
+		{ return x < low ? low : (x > high ? high : x); }
+		//------------------------
 		template<typename T>
-		inline static T Clamp01(const T& x)
-		{
-			return x < 0 ? 0 : (x > 1 ? 1 : x);
-		}
+		FORCEINLINE static T Clamp01(const T& x)
+		{ return x < 0 ? 0 : (x > 1 ? 1 : x); }
+		//--------------------------------------------------
 
+		//--------------------------------------------------
 		template<typename T>
-		inline static T Lerp(const T& a, const T& b, float t)
-		{
-			return t <= 0 ? a : (t >= 1 ? b : (a + (b-a)*t));
-		}
+		FORCEINLINE static T Lerp(const T& a, const T& b, float t)
+		{ return t <= 0 ? a : (t >= 1 ? b : (a + (b-a)*t)); }
+		//--------------------------------------------------
 
-
+		//--------------------------------------------------
 		// Returns the polar angle of the point (x,y) in [0, 2*PI[.
-		static float AngleFromXY(float x, float y);
+		template <typename Real>
+		FORCEINLINE static Real AngleFromXY(Real x, Real y)
+		{
+			Real theta = static_cast<Real>(0.0);
 
-		static const float Infinity;
-		static const float Pi;
-		static const float Pi_Half;
-		static const float Pi_Two;
+			if(x >= static_cast<Real>(0.0))	// Quadrant I or IV
+			{
+				// If x = 0, then atanf(y/x) = +pi/2 if y > 0
+				//                atanf(y/x) = -pi/2 if y < 0
+				theta = atan(y / x); // in [-pi/2, +pi/2]
+
+				if(theta < static_cast<Real>(0.0))
+					theta += Pi_Two_f; // in [0, 2*pi[.
+			}
+			else	theta = atan(y/x) + Pi_f; // in [0, 2*pi[.
+
+			return theta;
+		}
+		//--------------------------------------------------
+
+		//--------------------------------------------------
+		static const double Infinity;
+		static const float  Infinity_f;
+		static const double Pi;
+		static const float  Pi_f;
+		static const double Pi_Half;
+		static const float  Pi_Half_f;
+		static const double Pi_Two;
+		static const float  Pi_Two_f;
 	};
 }
