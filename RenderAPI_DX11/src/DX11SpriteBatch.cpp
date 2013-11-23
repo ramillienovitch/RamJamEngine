@@ -268,9 +268,11 @@ void DX11SpriteBatch::DrawString(DX11FontSheet& fs, const std::wstring& text, co
 
 	UINT length = (UINT)text.length();
 
-	int posX       = 0;
-	int posY       = pos.y;
-	int totalWidth = 0;
+	int posX         = 0;
+	int posY         = pos.y;
+	int totalWidth   = 0;
+	int tabIdx       = 0;
+	int maxCharWidth = fs.GetMaxCharWidth();
 	
 	if (alignment == LeftAligned)
 	{
@@ -285,7 +287,7 @@ void DX11SpriteBatch::DrawString(DX11FontSheet& fs, const std::wstring& text, co
 		
 			if(character == ' ')
 			{
-				totalWidth += fs.GetMaxCharWidth();
+				totalWidth += maxCharWidth;
 			}
 			else
 			{
@@ -296,7 +298,7 @@ void DX11SpriteBatch::DrawString(DX11FontSheet& fs, const std::wstring& text, co
 				const CD3D11_RECT& charRect = fs.GetCharBoundingRect(character);
 
 				int width  = charRect.right - charRect.left;
-				totalWidth += width+1;
+				totalWidth += width;
 			}
 		}
 
@@ -307,16 +309,22 @@ void DX11SpriteBatch::DrawString(DX11FontSheet& fs, const std::wstring& text, co
 	for(UINT i = 0; i < length; ++i)
 	{
 		WCHAR character = text[i];
-
 		if(character == ' ')
 		{
-			posX += fs.GetMaxCharWidth();
+			posX   += maxCharWidth;
+			tabIdx += maxCharWidth;
+		}
+		else if(character == '\t')
+		{
+			posX += (4*maxCharWidth - tabIdx%(4*maxCharWidth));
+			tabIdx = 0;
 		}
 		else if(character == '\n')
 		{
 			if (alignment == LeftAligned)
 				posX = pos.x;
-			posY += fs.GetCharHeight();
+			posY += fs.GetCharHeight();;
+			tabIdx = 0;
 		}
 		else
 		{
@@ -328,12 +336,14 @@ void DX11SpriteBatch::DrawString(DX11FontSheet& fs, const std::wstring& text, co
 
 			int width  = charRect.right - charRect.left;
 			int height = charRect.bottom - charRect.top;
+			int delta = maxCharWidth - width;
 
 			// Draw the character sprite.
 			Draw(CD3D11_RECT(posX, posY, posX + width, posY + height), charRect, color);
 
 			// Move to the next character position.
-			posX += width + 1;
+			posX   += width + delta;
+			tabIdx += width + delta;
 		}
 	}
 
@@ -347,9 +357,11 @@ void DX11SpriteBatch::DrawString(DX11FontSheet& fs, const char text[], const POI
 
 	UINT length = (UINT)strlen(text);
 
-	int posX       = 0;
-	int posY       = pos.y;
-	int totalWidth = 0;
+	int posX         = 0;
+	int posY         = pos.y;
+	int totalWidth   = 0;
+	int tabIdx       = 0;
+	int maxCharWidth = fs.GetMaxCharWidth();
 
 	if (alignment == LeftAligned)
 	{
@@ -364,7 +376,7 @@ void DX11SpriteBatch::DrawString(DX11FontSheet& fs, const char text[], const POI
 
 			if(character == ' ')
 			{
-				totalWidth += fs.GetMaxCharWidth();
+				totalWidth += maxCharWidth;
 			}
 			else
 			{
@@ -375,7 +387,7 @@ void DX11SpriteBatch::DrawString(DX11FontSheet& fs, const char text[], const POI
 				const CD3D11_RECT& charRect = fs.GetCharBoundingRect(character);
 
 				int width  = charRect.right - charRect.left;
-				totalWidth += width+1;
+				totalWidth += width;
 			}
 		}
 
@@ -389,12 +401,19 @@ void DX11SpriteBatch::DrawString(DX11FontSheet& fs, const char text[], const POI
 
 		if(character == ' ') 
 		{
-			posX += fs.GetMaxCharWidth();
+			posX   += maxCharWidth;
+			tabIdx += maxCharWidth;
+		}
+		else if(character == '\t')
+		{
+			posX += (4*maxCharWidth - posX%(4*maxCharWidth));
+			tabIdx = 0;
 		}
 		else if(character == '\n')
 		{
-			posX  = pos.x;
-			posY += fs.GetCharHeight();
+			posX   = pos.x;
+			posY  += fs.GetCharHeight();;
+			tabIdx = 0;
 		}
 		else
 		{
@@ -406,12 +425,14 @@ void DX11SpriteBatch::DrawString(DX11FontSheet& fs, const char text[], const POI
 
 			int width  = charRect.right - charRect.left;
 			int height = charRect.bottom - charRect.top;
+			int delta = maxCharWidth - width;
 
 			// Draw the character sprite.
 			Draw(CD3D11_RECT(posX, posY, posX + width, posY + height), charRect, color);
 
 			// Move to the next character position.
-			posX += width + 1;
+			posX   += width + delta;
+			tabIdx += width + delta;
 		}
 	}
 
@@ -423,8 +444,10 @@ void DX11SpriteBatch::DrawInfoText(DX11FontSheet& fs, const char* text, const PO
 {
 	BeginBatch(fs.GetFontSheetSRV());
 
-	int posX = pos.x;
-	int posY = pos.y;
+	int posX         = pos.x;
+	int posY         = pos.y;
+	int tabIdx       = 0;
+	int maxCharWidth = fs.GetMaxCharWidth();
 
 	XMCOLOR color = Color::Black;
 
@@ -433,12 +456,21 @@ void DX11SpriteBatch::DrawInfoText(DX11FontSheet& fs, const char* text, const PO
 	{
 		WCHAR character = text[i];
 
-		if(character == ' ') 
-			posX += fs.GetSpaceWidth();
+		if(character == ' ')
+		{
+			posX   += maxCharWidth;
+			tabIdx += maxCharWidth;
+		}
+		else if(character == '\t')
+		{
+			posX += (4*maxCharWidth - tabIdx%(4*maxCharWidth));
+			tabIdx = 0;
+		}
 		else if(character == '\n')
 		{
 			posX  = pos.x;
 			posY += fs.GetCharHeight();
+			tabIdx = 0;
 		}
 		else if(character == SCREEN_WHITE)		color = Color::White;
 		else if(character == SCREEN_RED)		color = Color::Red;
@@ -460,12 +492,14 @@ void DX11SpriteBatch::DrawInfoText(DX11FontSheet& fs, const char* text, const PO
 
 			int width  = charRect.right - charRect.left;
 			int height = charRect.bottom - charRect.top;
+			int delta = maxCharWidth - width;
 
 			// Draw the character sprite.
 			Draw(CD3D11_RECT(posX, posY, posX + width, posY + height), charRect, color);
 
 			// Move to the next character position.
-			posX += width + 1;
+			posX   += width + delta;
+			tabIdx += width + delta;
 		}
 		++i;
 	}
@@ -489,6 +523,8 @@ void DX11SpriteBatch::DrawConsoleCommand(DX11FontSheet& fs, char (&text)[COMMAND
 
 		if(character == ' ')
 			posX += fs.GetSpaceWidth();
+		else if(character == '\t')
+			posX += (4*fs.GetMaxCharWidth() - posX%(4*fs.GetMaxCharWidth()));
 		else if(character == '\n')
 		{
 			posX  = pos.x;

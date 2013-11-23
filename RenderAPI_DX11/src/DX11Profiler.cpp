@@ -226,16 +226,16 @@ void DX11Profiler::GetProfilerInfo()
 	char buf[32];
 	ConcatText("  - Profiler GPU Mode - \n", SCREEN_ROSE);
 	ConcatText("Time waiting for GPU queries : ");
-	dtoa(buf, 32, mTimeWaitingForQueries, 10);
+	sprintf_s(buf, "%.4f", mTimeWaitingForQueries);
 	ConcatText(buf);
 	ConcatText("ms\n\n");
 	for (ProfileMap::iterator it=mProfiles.begin() ; it!=mProfiles.end() ; ++it)
 	{
 		ProfileData& profile = (*it).second;
 		wstring name = (*it).first;
-		ConcatText(WStringToString(name).c_str());
+		ConcatTextAndAlign(WStringToString(name).c_str());
 		ConcatText(" : ");
-		dtoa(buf, 32, profile.mElaspedTime, 10);
+		sprintf_s(buf, "%.4f", profile.mElaspedTime);
 		ConcatText(buf);
 		ConcatText("ms\n");
 	}
@@ -246,15 +246,50 @@ void DX11Profiler::GetProfilerInfo()
 		ProfileDataDeep& profile = (*it).second;
 // 		wstring name = (*it).first;
 // 		ConcatText(WStringToString(name).c_str());
-		//ConcatText("Input Assembler Primitives : ", SCREEN_WHITE, true);	itoa((int)profile.mInfos.Info_Rendering.IAPrimitives		, buf, 32, 10);		ConcatText(buf, SCREEN_WHITE, true);
-		//ConcatText("\nRasterized Primitives : ",   SCREEN_WHITE, true);	itoa((int)profile.mInfos.Info_Rendering.rasterizerPrimitives, buf, 32, 10);		ConcatText(buf, SCREEN_WHITE, true);
-		ConcatText("Rendered Primitives : ",    SCREEN_WHITE, true);	itoa((int)profile.mInfos.Info_Rendering.renderedPrimitives	, buf, 32, 10);		ConcatText(buf, SCREEN_WHITE, true);
-		ConcatText("\nVertex Shader Call : ",   SCREEN_WHITE, true);	itoa((int)profile.mInfos.Info_Rendering.VSInvoc				, buf, 32, 10);		ConcatText(buf, SCREEN_WHITE, true);
-		ConcatText("\nPixel Shader Call : ",    SCREEN_WHITE, true);	itoa((int)profile.mInfos.Info_Rendering.PSInvoc				, buf, 32, 10);		ConcatText(buf, SCREEN_WHITE, true);
-		ConcatText("\nGeometry Shader Call : ", SCREEN_WHITE, true);	itoa((int)profile.mInfos.Info_Rendering.GSInvoc				, buf, 32, 10);		ConcatText(buf, SCREEN_WHITE, true);
-		ConcatText("\nHull Shader Call : ",     SCREEN_WHITE, true);	itoa((int)profile.mInfos.Info_Rendering.HSInvoc				, buf, 32, 10);		ConcatText(buf, SCREEN_WHITE, true);
-		ConcatText("\nDomain Shader Call : ",   SCREEN_WHITE, true);	itoa((int)profile.mInfos.Info_Rendering.DSInvoc				, buf, 32, 10);		ConcatText(buf, SCREEN_WHITE, true);
-		ConcatText("\nCompute Shader Call : ",  SCREEN_WHITE, true);	itoa((int)profile.mInfos.Info_Rendering.CSInvoc				, buf, 32, 10);		ConcatText(buf, SCREEN_WHITE, true);
+// 		ConcatTextAndAlign("Input Assembler Primitives", SCREEN_WHITE, true);	itoa((int)profile.mInfos.Info_Rendering.IAPrimitives		, buf, 32, 10);		ConcatText(buf, SCREEN_WHITE, true);
+// 		ConcatTextAndAlign("Rasterized Primitives",      SCREEN_WHITE, true);	itoa((int)profile.mInfos.Info_Rendering.rasterizerPrimitives, buf, 32, 10);		ConcatText(buf, SCREEN_WHITE, true);
+		//---------------
+		ConcatTextAndAlign("Rendered Primitives", 5, SCREEN_WHITE, true);
+		itoa((int)profile.mInfos.Info_Rendering.renderedPrimitives , buf, 32, 10);
+		ConcatText(" : ", SCREEN_WHITE, true);
+		ConcatText(buf, SCREEN_WHITE, true);
+		ConcatText("\n", SCREEN_WHITE, true);
+		//---------------
+		ConcatTextAndAlign("Vertex Shader Call", 5, SCREEN_WHITE, true);
+		itoa((int)profile.mInfos.Info_Rendering.VSInvoc, buf, 32, 10);
+		ConcatText(" : ", SCREEN_WHITE, true);
+		ConcatText(buf, SCREEN_WHITE, true);
+		ConcatText("\n", SCREEN_WHITE, true);
+		//---------------
+		ConcatTextAndAlign("Pixel Shader Call", 5, SCREEN_WHITE, true);
+		itoa((int)profile.mInfos.Info_Rendering.PSInvoc, buf, 32, 10);
+		ConcatText(" : ", SCREEN_WHITE, true);
+		ConcatText(buf, SCREEN_WHITE, true);
+		ConcatText("\n", SCREEN_WHITE, true);
+		//---------------
+		ConcatTextAndAlign("Geometry Shader Call", 5, SCREEN_WHITE, true);
+		itoa((int)profile.mInfos.Info_Rendering.GSInvoc, buf, 32, 10);
+		ConcatText(" : ", SCREEN_WHITE, true);
+		ConcatText(buf, SCREEN_WHITE, true);
+		ConcatText("\n", SCREEN_WHITE, true);
+		//---------------
+		ConcatTextAndAlign("Hull Shader Call", 5, SCREEN_WHITE, true);
+		itoa((int)profile.mInfos.Info_Rendering.HSInvoc, buf, 32, 10);
+		ConcatText(" : ", SCREEN_WHITE, true);
+		ConcatText(buf, SCREEN_WHITE, true);
+		ConcatText("\n", SCREEN_WHITE, true);
+		//---------------
+		ConcatTextAndAlign("Domain Shader Call", 5, SCREEN_WHITE, true);
+		itoa((int)profile.mInfos.Info_Rendering.DSInvoc, buf, 32, 10);
+		ConcatText(" : ", SCREEN_WHITE, true);
+		ConcatText(buf, SCREEN_WHITE, true);
+		ConcatText("\n", SCREEN_WHITE, true);
+		//---------------
+		ConcatTextAndAlign("Compute Shader Call", 5, SCREEN_WHITE, true);
+		itoa((int)profile.mInfos.Info_Rendering.CSInvoc, buf, 32, 10);
+		ConcatText(" : ", SCREEN_WHITE, true);
+		ConcatText(buf, SCREEN_WHITE, true);
+		ConcatText("\n", SCREEN_WHITE, true);
 	}
 }
 
@@ -295,6 +330,30 @@ void DX11Profiler::ConcatText(const char* text, u8 color /* = SCREEN_WHITE */, B
 			mProfileInfoString[mProfileInfoStringSize+newSize+1] = (char)SCREEN_WHITE;
 			mProfileInfoString[mProfileInfoStringSize+newSize+2] = nullchar;
 			mProfileInfoStringSize += newSize+2;
+		}
+	}
+}
+
+//////////////////////////////////////////////////////////////////////////
+void DX11Profiler::ConcatTextAndAlign(const char* text, int tabs /* = 4 */, u8 color /* = SCREEN_WHITE */, BOOL deepProfile /* = false */)
+{
+	ConcatText(text, color, deepProfile);
+	int numTabs = tabs - (int)strlen(text)/4;
+
+	if (deepProfile)
+	{
+		for(int i=0 ; i<numTabs ; ++i)
+		{
+			mProfileDeepInfoString[mProfileDeepInfoStringSize++] = '\t';
+			mProfileDeepInfoString[mProfileDeepInfoStringSize]   = nullchar;
+		}
+	}
+	else
+	{
+		for(int i=0 ; i<numTabs ; ++i)
+		{
+			mProfileInfoString[mProfileInfoStringSize++] = '\t';
+			mProfileInfoString[mProfileInfoStringSize]   = nullchar;
 		}
 	}
 }

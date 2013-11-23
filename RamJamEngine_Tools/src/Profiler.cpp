@@ -239,23 +239,23 @@ void Profiler::DisplaySimpleState()
 {
 	ConcatText("  - Profiler Simple Mode - \n", SCREEN_ROSE);
 	//-------------
-	ConcatText("CPU Usage : ");
+	ConcatText("CPU Usage :");
 	char buf[32];
 	itoa(mProfilerInfos->ProcessCpuUsage, buf, 32, 10);
 	ConcatText(buf); 
 	ConcatText("%\n");
 	//-------------
-	ConcatText("RAM Usage : ");
+	ConcatText("RAM Usage :");
 	ZeroMemory(buf, 32);
 	itoa(mProfilerInfos->ProcessPeakWorkingSet, buf, 32, 10);
 	ConcatText(buf); 
-	ConcatText("MB\n");
+	ConcatText("MB\n\n");
 	//-------------
-	ConcatText("\nPhysics : ");		ConcatText("Not Yet Available", SCREEN_GRAY);
-	ConcatText("\nAnimation : ");	ConcatText("Not Yet Available", SCREEN_GRAY);
-	ConcatText("\nAI : ");			ConcatText("Not Yet Available", SCREEN_GRAY);
-	ConcatText("\nScripts : ");		ConcatText("Not Yet Available", SCREEN_GRAY);
-	ConcatText("\nSound : ");		ConcatText("Not Yet Available", SCREEN_GRAY);
+	ConcatTextAndAlign("Physics");		ConcatText(": Not Yet Available\n", SCREEN_GRAY);
+	ConcatTextAndAlign("Animation");	ConcatText(": Not Yet Available\n", SCREEN_GRAY);
+	ConcatTextAndAlign("AI");			ConcatText(": Not Yet Available\n", SCREEN_GRAY);
+	ConcatTextAndAlign("Scripts");		ConcatText(": Not Yet Available\n", SCREEN_GRAY);
+	ConcatTextAndAlign("Sound");		ConcatText(": Not Yet Available\n", SCREEN_GRAY);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -278,14 +278,22 @@ void Profiler::DisplayCpuState()
 	std::sort(profiles.rbegin(), profiles.rend());	// reverse sort the profiles (using totalTimes)
 	for (std::vector<Profile>::iterator it=profiles.begin()+1 ; it<profiles.end(); ++it)
 	{
-		ConcatText(it->name);
-		dtoa(buf, 32, (float)((it->totalTime/totalFrames)/countsPerMs), 10);
-		ConcatText(" : ");
-		ConcatText(buf);
-		ConcatText("ms (");
-		dtoa(buf, 32, (float)(((float)it->totalTime/profiles[0].totalTime) * 100.0f), 10);
-		ConcatText(buf);
-		ConcatText("%)\n");
+		ConcatTextAndAlign(it->name, 6);
+		//---------------
+		float ms      = ((float)((it->totalTime/totalFrames)/countsPerMs));
+		float percent = (float)(((float)it->totalTime/profiles[0].totalTime) * 100.0f);
+		//---------------
+		if (ms < 0.01f)
+			ConcatText("~0 ms\n");
+		else
+		{
+			sprintf_s(buf, "%.4f", ms);
+			ConcatText(buf);
+			ConcatText("ms\t(");
+			sprintf_s(buf, "%.1f", percent);
+			ConcatText(buf);
+			ConcatText("%)\n");
+		}
 	}
 }
 
@@ -345,6 +353,19 @@ void Profiler::ConcatText(const char* text, u8 color)
 		mProfileInfoStringSize += newSize+2;
 	}
 
+}
+
+//////////////////////////////////////////////////////////////////////////
+void Profiler::ConcatTextAndAlign(const char* text, int tabs, u8 color)
+{
+	ConcatText(text, color);
+	int numTabs = tabs - (int)strlen(text)/4;
+
+	for(int i=0 ; i<numTabs ; ++i)
+	{
+		mProfileInfoString[mProfileInfoStringSize++] = '\t';
+		mProfileInfoString[mProfileInfoStringSize]   = nullchar;
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////

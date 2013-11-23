@@ -55,7 +55,7 @@ typedef				long double			f80;
 #define itoa _itoa_s
 
 // Converts an ANSI string to a std::wstring
-inline std::wstring AnsiToWString(const char* ansiString)
+FORCEINLINE std::wstring AnsiToWString(const char* ansiString)
 {
 	WCHAR buffer[512];
 	if (MultiByteToWideChar(CP_ACP, 0, ansiString, -1, buffer, 512))
@@ -65,7 +65,7 @@ inline std::wstring AnsiToWString(const char* ansiString)
 }
 
 // Converts an ANSI string to a std::wstring
-inline std::wstring StringToWString(const std::string &s)
+FORCEINLINE std::wstring StringToWString(const std::string &s)
 {
 	std::wstring wsTmp(s.begin(), s.end());
 
@@ -73,7 +73,7 @@ inline std::wstring StringToWString(const std::string &s)
 }
 
 // Converts a wstring to an ANSI string
-inline std::string WStringToString(const std::wstring &ws)
+FORCEINLINE std::string WStringToString(const std::wstring &ws)
 {
 	std::string sTmp(ws.begin(), ws.end());
 
@@ -82,7 +82,7 @@ inline std::string WStringToString(const std::wstring &ws)
 
 // Converts a number to a string
 template<typename T>
-inline std::wstring ToString(const T& val)
+FORCEINLINE std::wstring ToString(const T& val)
 {
 	std::wostringstream stream;
 	stream << val;
@@ -91,7 +91,7 @@ inline std::wstring ToString(const T& val)
 
 // Converts a number to an ansi string
 template<typename T>
-inline std::string ToAnsiString(const T& val)
+FORCEINLINE std::string ToAnsiString(const T& val)
 {
 	std::ostringstream stream;
 	stream << val;

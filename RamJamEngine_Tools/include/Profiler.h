@@ -38,7 +38,7 @@ struct ProfilerInfos
 	i16		ProcessWorkingSet;
 };
 
-#define PROFILE_INFO_MAX_LENGTH 2048
+#define PROFILE_INFO_MAX_LENGTH 4096
 
 //////////////////////////////////////////////////////////////////////////
 struct Profiler
@@ -95,6 +95,7 @@ struct Profiler
 	void DisplaySoundState();
 	//-----------
 	void ConcatText(const char* text, u8 color = SCREEN_WHITE);
+	void ConcatTextAndAlign(const char* text, int tabs = 4, u8 color = SCREEN_WHITE);
 	void ResetProfilerInfo();
 
 private:

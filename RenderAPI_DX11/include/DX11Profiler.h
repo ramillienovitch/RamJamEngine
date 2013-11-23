@@ -117,7 +117,8 @@ struct DX11Profiler
 	void Exit();
 
 	void GetProfilerInfo();
-	void ConcatText(const char* text, u8 color = SCREEN_WHITE, BOOL deepProfile  = false);
+	void ConcatText        (const char* text, u8 color = SCREEN_WHITE, BOOL deepProfile  = false);
+	void ConcatTextAndAlign(const char* text, int tabs = 4, u8 color = SCREEN_WHITE, BOOL deepProfile  = false);
 	void ResetProfilerInfo();
 };
 

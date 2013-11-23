@@ -1074,6 +1074,8 @@ void DX11RenderingAPI::DrawGizmos()
 {
 	PROFILE_CPU("Draw Gizmos");
 
+	PROFILE_GPU_START(L"Render Gizmos");
+
 	mDX11Device->md3dImmediateContext->IASetInputLayout(DX11InputLayouts::PosColor);
 	mDX11Device->md3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
 
@@ -1112,6 +1114,8 @@ void DX11RenderingAPI::DrawGizmos()
 
 	DX11Effects::ColorFX->ColorTech->GetPassByIndex(0)->Apply(0, mDX11Device->md3dImmediateContext);
 	mDX11Device->md3dImmediateContext->DrawIndexed(mAxisIndexCount, mAxisIndexOffset, mAxisVertexOffset);
+
+	PROFILE_GPU_END(L"Render Gizmos");
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -1139,15 +1143,15 @@ void DX11RenderingAPI::DrawConsole()
 //////////////////////////////////////////////////////////////////////////
 void DX11RenderingAPI::DrawProfiler()
 {
-	PROFILE_CPU ("Draw Profiler");
+	PROFILE_CPU("Draw Profiler");
 
-	POINT profileStatsPos = {System::Instance()->mScreenWidth - 500, 20};
+	POINT profileStatsPos = {System::Instance()->mScreenWidth - 550, 20};
 	POINT profileInfoPos  = {20, 70};
 
 	std::wstring stats;
-	stats =  L"CPU : "  + AnsiToWString(System::Instance()->mCpuDescription) + L"\n";
-	stats += L"GPU : "  + wstring(System::Instance()->mGpuDescription)       + L"\n";
-	stats += L"RAM : "  + ToString(System::Instance()->mTotalSystemRAM)      + L" MB\n";
+	stats =  L" CPU : " + AnsiToWString(System::Instance()->mCpuDescription) + L"\n";
+	stats += L" GPU : " + wstring(System::Instance()->mGpuDescription)       + L"\n";
+	stats += L" RAM : " + ToString(System::Instance()->mTotalSystemRAM)      + L" MB\n";
 	stats += L"VRAM : " + ToString(System::Instance()->mGpuDedicatedVRAM)    + L" MB (Dedicated)\n";
 	stats += L"VRAM : " + ToString(System::Instance()->mGpuSharedVRAM)       + L" MB (Shared)";
 	mSpriteBatch->DrawString(*mProfilerFont, stats, profileStatsPos, XMCOLOR(0xffffff00));
@@ -1165,7 +1169,8 @@ void DX11RenderingAPI::DrawProfiler()
 #if RJE_PROFILE_GPU
 		DX11Profiler::sInstance.GetProfilerInfo();
 		mSpriteBatch->DrawInfoText(*mProfilerFont, DX11Profiler::sInstance.mProfileInfoString, profileInfoPos);
-		profileInfoPos.x += 600;
+		profileInfoPos.x += 350;
+		profileInfoPos.y = 125;
 		mSpriteBatch->DrawInfoText(*mProfilerFont, DX11Profiler::sInstance.mProfileDeepInfoString, profileInfoPos);
 #else
 		mSpriteBatch->DrawInfoText(*mProfilerFont, "GPU Profiling Not Enabled", profileInfoPos);
