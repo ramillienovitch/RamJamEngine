@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+
+<SCENE>
+	<OBJECT>
+		<NAME>cube</NAME>
+		<TRANSFORM>
+			<POSITION_X>5</POSITION_X>
+			<POSITION_Y>10</POSITION_Y>
+			<POSITION_Z>15</POSITION_Z>
+		</TRANSFORM>
+	</OBJECT>
+</SCENE>

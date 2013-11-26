@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Header Files\RapidXML">
+      <UniqueIdentifier>{6b2a0350-727b-438e-884e-9926f77c0cf8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Debug.h">
@@ -44,6 +47,18 @@
     </ClInclude>
     <ClInclude Include="include\Color.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\rapidxml.hpp">
+      <Filter>Header Files\RapidXML</Filter>
+    </ClInclude>
+    <ClInclude Include="include\rapidxml_iterators.hpp">
+      <Filter>Header Files\RapidXML</Filter>
+    </ClInclude>
+    <ClInclude Include="include\rapidxml_print.hpp">
+      <Filter>Header Files\RapidXML</Filter>
+    </ClInclude>
+    <ClInclude Include="include\rapidxml_utils.hpp">
+      <Filter>Header Files\RapidXML</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

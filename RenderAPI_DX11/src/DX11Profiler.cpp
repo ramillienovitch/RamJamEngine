@@ -15,8 +15,8 @@ void DX11Profiler::Initialize( ID3D11Device* device, ID3D11DeviceContext* immCon
 	mDevice  = device;
 	mContext = immContext;
 
-	mProfileInfoString       = new char[PROFILE_INFO_MAX_LENGTH];
-	mProfileDeepInfoString   = new char[PROFILE_INFO_MAX_LENGTH];
+	mProfileInfoString       = rje_new char[PROFILE_INFO_MAX_LENGTH];
+	mProfileDeepInfoString   = rje_new char[PROFILE_INFO_MAX_LENGTH];
 	mProfilerRefreshRate     = -1.0f;
 	ResetProfilerInfo();
 }

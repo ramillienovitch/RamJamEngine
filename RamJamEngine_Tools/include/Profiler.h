@@ -3,6 +3,7 @@
 #include "Types.h"
 #include "Debug.h"
 #include "Globals.h"
+#include "Memory.h"
 
 //////////////////////////////////////////////////////////////////////////
 typedef enum PROFILER_STATES
@@ -46,7 +47,7 @@ struct Profiler
 	static Profiler* Instance()
 	{
 		if(!sInstance)
-			sInstance = new Profiler();
+			sInstance = rje_new Profiler();
 
 		return sInstance;
 	}

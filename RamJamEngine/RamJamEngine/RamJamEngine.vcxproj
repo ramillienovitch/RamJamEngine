@@ -180,6 +180,9 @@
   <ItemGroup>
     <ResourceCompile Include="..\include\RamJamEngine.rc" />
   </ItemGroup>
+  <ItemGroup>
+    <Xml Include="..\data\scenes\simple.xml" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

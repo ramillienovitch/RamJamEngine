@@ -80,7 +80,7 @@ HRESULT DX11FontSheet::Initialize( ID3D11Device* device, const std::wstring& fon
 		CLSID clsid;
 		GetEncoderClsid(L"image/bmp", &clsid);
 		int szSize = (int)fontName.size();
-		WCHAR* filename = new WCHAR[szSize+5];
+		WCHAR* filename = rje_new WCHAR[szSize+5];
 		for (int i = 0 ; i<szSize ; ++i)
 			filename[i] = fontName[i];
 		filename[szSize]   = '.';

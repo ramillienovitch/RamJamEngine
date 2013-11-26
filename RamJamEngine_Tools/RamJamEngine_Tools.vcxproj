@@ -89,6 +89,10 @@
     <ClInclude Include="include\Input.h" />
     <ClInclude Include="include\Memory.h" />
     <ClInclude Include="include\Profiler.h" />
+    <ClInclude Include="include\rapidxml.hpp" />
+    <ClInclude Include="include\rapidxml_iterators.hpp" />
+    <ClInclude Include="include\rapidxml_print.hpp" />
+    <ClInclude Include="include\rapidxml_utils.hpp" />
     <ClInclude Include="include\Singleton.h" />
     <ClInclude Include="include\Timer.h" />
     <ClInclude Include="include\Types.h" />

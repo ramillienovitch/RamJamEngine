@@ -67,7 +67,7 @@ public:
 	static System* Instance()
 	{
 		if(!sInstance)
-			sInstance = new System();
+			sInstance = rje_new System();
 
 		return sInstance;
 	}

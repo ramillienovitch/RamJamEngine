@@ -154,9 +154,9 @@ DX11RenderingAPI::DX11RenderingAPI()
 //////////////////////////////////////////////////////////////////////////
 void DX11RenderingAPI::Initialize(HWND hMainWnd, int windowWidth, int windowHeight)
 {
-	mDX11Device       = new DX11Device;
-	mDX11DepthBuffer  = new DX11DepthBuffer;
-	mDX11CommonStates = new DX11CommonStates;
+	mDX11Device       = rje_new DX11Device;
+	mDX11DepthBuffer  = rje_new DX11DepthBuffer;
+	mDX11CommonStates = rje_new DX11CommonStates;
 
 	// Create the device and device context.
 	UINT createDeviceFlags = 0;
@@ -288,9 +288,9 @@ void DX11RenderingAPI::Initialize(HWND hMainWnd, int windowWidth, int windowHeig
 	DX11CommonStates::InitAll(mDX11Device->md3dDevice);
 
 	// Init the 2d elements
-	mProfilerFont = new DX11FontSheet();
-	mConsoleFont  = new DX11FontSheet();
-	mSpriteBatch  = new DX11SpriteBatch();
+	mProfilerFont = rje_new DX11FontSheet();
+	mConsoleFont  = rje_new DX11FontSheet();
+	mSpriteBatch  = rje_new DX11SpriteBatch();
 	RJE_CHECK_FOR_SUCCESS(mConsoleFont-> Initialize(mDX11Device->md3dDevice, L"Consolas", 16.0f, FontSheet::FontStyleRegular, true));
 	RJE_CHECK_FOR_SUCCESS(mProfilerFont->Initialize(mDX11Device->md3dDevice, L"Consolas", 16.0f, FontSheet::FontStyleBold,    true));
 	RJE_CHECK_FOR_SUCCESS(mSpriteBatch-> Initialize(mDX11Device->md3dDevice, mDX11Device->md3dImmediateContext));
@@ -319,7 +319,7 @@ void DX11RenderingAPI::LoadTexture(string keyName, ID3D11ShaderResourceView** sh
 void DX11RenderingAPI::Create2DTexture(i32 height, i32 width, RJE_COLOR::Color color, ID3D11ShaderResourceView** textureSRV)
 {
 	UINT textureSize = height * width;
-	u8* texArray = new u8[textureSize*4];
+	u8* texArray = rje_new u8[textureSize*4];
 
 	for (UINT i=0; i<textureSize*4; i+=4)
 	{	// Unsigned Normalized 8-bits values

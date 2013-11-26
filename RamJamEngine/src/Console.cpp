@@ -13,7 +13,7 @@ Console::~Console() { delete mConsoleBuffer; }
 Console::Console()
 {
 	mIsActive      = false;
-	mConsoleBuffer = new char[COMMAND_MAX_LENGTH*LINE_MAX];
+	mConsoleBuffer = rje_new char[COMMAND_MAX_LENGTH*LINE_MAX];
 
 	mConsoleElevation = CONSOLE_HEIGHT;
 	mConsoleState     = E_CONSOLE_IDLE;
@@ -88,7 +88,7 @@ void Console::GetParams(char*& params)
 		return;
 
 	paramLength = (int)strlen(mCurrentCmd.Cmd) - currentChar;
-	params = new char[paramLength];
+	params = rje_new char[paramLength];
 	for (int i=0; i<paramLength-1; ++i)
 		params[i] = mCurrentCmd.Cmd[++currentChar];
 	params[paramLength-1]=nullchar;
@@ -261,7 +261,7 @@ f_ptr Console::IsValidCommand()
 	int cmdSize = (int)strlen(mCurrentCmd.Cmd);
 	RJE_ASSERT(cmdSize > 3);
 
-	char* cmd = new char[cmdSize+1];
+	char* cmd = rje_new char[cmdSize+1];
 
 	int i=3;	// we ignore the 3 characters ">: "
 	while( true )

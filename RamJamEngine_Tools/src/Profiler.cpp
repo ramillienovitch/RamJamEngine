@@ -27,8 +27,8 @@ Profiler::Profiler()
 	QueryPerformanceFrequency(&frequencyCount);
 	countsPerMs = double(frequencyCount.QuadPart)/1000;
 
-	mProfileInfoString	 = new char[PROFILE_INFO_MAX_LENGTH];
-	mProfilerInfos		 = new ProfilerInfos;
+	mProfileInfoString	 = rje_new char[PROFILE_INFO_MAX_LENGTH];
+	mProfilerInfos		 = rje_new ProfilerInfos;
 	mProfilerRefreshRate = -1.0f;
 	ResetProfilerInfo();
 

@@ -3,6 +3,7 @@
 #include "Types.h"
 #include "Debug.h"
 #include "Globals.h"
+#include "Memory.h"
 
 typedef enum CONSOLE_STATE
 {
@@ -33,7 +34,7 @@ struct Console
 	static Console* Instance()
 	{
 		if(!sInstance)
-			sInstance = new Console();
+			sInstance = rje_new Console();
 
 		return sInstance;
 	}

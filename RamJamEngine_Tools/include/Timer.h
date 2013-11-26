@@ -8,6 +8,7 @@
 #pragma once
 
 #include "Types.h"
+#include "Memory.h"
 
 struct Timer
 {
@@ -26,7 +27,7 @@ struct Timer
 	static Timer* Instance()
 	{
 		if(!sInstance)
-			sInstance = new Timer();
+			sInstance = rje_new Timer();
 		
 		return sInstance;
 	}

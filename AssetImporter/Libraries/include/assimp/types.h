@@ -63,7 +63,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "quaternion.h"
 
 #ifdef __cplusplus
-#include <new>		// for std::nothrow_t
+//#include <new>		// for std::nothrow_t
 #include <string>	// for aiString::Set(const std::string&)
 
 namespace Assimp	{

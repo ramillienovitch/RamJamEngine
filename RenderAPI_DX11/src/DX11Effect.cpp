@@ -112,13 +112,13 @@ void DX11Effects::InitAll(ID3D11Device* device)
 	wstring shaderPath = StringToWString(System::Instance()->mDataPath);
 
 	shaderPath += CIniFile::GetValueW("basic",  "shaders", System::Instance()->mResourcesPath);
-	BasicFX  = new BasicEffect( device, shaderPath);
+	BasicFX  = rje_new BasicEffect( device, shaderPath);
 	//-------------
 	shaderPath = StringToWString(System::Instance()->mDataPath) + CIniFile::GetValueW("sprite", "shaders", System::Instance()->mResourcesPath);
-	SpriteFX = new SpriteEffect(device, shaderPath);
+	SpriteFX = rje_new SpriteEffect(device, shaderPath);
 	//-------------
 	shaderPath = StringToWString(System::Instance()->mDataPath) + CIniFile::GetValueW("color", "shaders", System::Instance()->mResourcesPath);
-	ColorFX = new ColorEffect(device, shaderPath);
+	ColorFX = rje_new ColorEffect(device, shaderPath);
 }
 
 void DX11Effects::DestroyAll()

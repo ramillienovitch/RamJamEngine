@@ -28,6 +28,9 @@
     <Filter Include="Source Files\RJE_Graphic">
       <UniqueIdentifier>{2cba0184-916b-44e7-a671-b1e71522e4b1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource Files\Scenes">
+      <UniqueIdentifier>{50a7876d-2a01-4553-9f00-f31ae7792d57}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -179,5 +182,10 @@
     <ResourceCompile Include="..\include\RamJamEngine.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="..\data\scenes\simple.xml">
+      <Filter>Resource Files\Scenes</Filter>
+    </Xml>
   </ItemGroup>
 </Project>

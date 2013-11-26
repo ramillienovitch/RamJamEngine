@@ -64,11 +64,11 @@ System::System()
 
 
 #if (RJE_GRAPHIC_API == DIRECTX_11)
-	mGraphicAPI = new DX11RenderingAPI();
-	mGraphicAPI->mCamera = new DX11Camera();
+	mGraphicAPI = rje_new DX11RenderingAPI();
+	mGraphicAPI->mCamera = rje_new DX11Camera();
 #else
-	mGraphicAPI = new OglWrapper();
-	mGraphicAPI->mCamera = new OglCamera();
+	mGraphicAPI = rje_new OglWrapper();
+	mGraphicAPI->mCamera = rje_new OglCamera();
 #endif
 }
 System::~System(){}

@@ -2,6 +2,7 @@
 
 #include "Types.h"
 #include "Globals.h"
+#include "Memory.h"
 
 #define KEYBOARD_INPUTS		96
 #define MOUSE_INPUTS		5
@@ -95,7 +96,7 @@ struct Input
 	static Input* Instance()
 	{
 		if(!sInstance)
-			sInstance = new Input();
+			sInstance = rje_new Input();
 
 		return sInstance;
 	}
