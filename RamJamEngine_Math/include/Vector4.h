@@ -26,6 +26,7 @@ struct Vector4_T
 	Vector4_T	operator /  (const Vector4_T&);
 	Vector4_T	operator /  (const Real&);
 	Vector4_T	operator *  (const Real&);
+	Vector4_T	operator *  (const Vector4_T&);
 	Vector4_T&	operator =  (const Vector4_T&);
 	Vector4_T&	operator =  (const DirectX::XMFLOAT4&);
 	Vector4_T&	operator =  (const DirectX::PackedVector::XMCOLOR&);

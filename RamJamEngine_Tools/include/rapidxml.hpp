@@ -417,7 +417,7 @@ namespace rapidxml
 									std::size_t name_size = 0, std::size_t value_size = 0)
 		{
 			void *memory = allocate_aligned(sizeof(xml_node<Ch>));
-			xml_node<Ch> *node = new(memory, __FILE__, __LINE__) xml_node<Ch>(type);
+			xml_node<Ch> *node = new(memory) xml_node<Ch>(type);
 			if (name)
 			{
 				if (name_size > 0)
@@ -448,7 +448,7 @@ namespace rapidxml
 											  std::size_t name_size = 0, std::size_t value_size = 0)
 		{
 			void *memory = allocate_aligned(sizeof(xml_attribute<Ch>));
-			xml_attribute<Ch> *attribute = new(memory, __FILE__, __LINE__) xml_attribute<Ch>;
+			xml_attribute<Ch> *attribute = new(memory) xml_attribute<Ch>;
 			if (name)
 			{
 				if (name_size > 0)

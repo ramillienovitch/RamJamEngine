@@ -56,6 +56,7 @@ public:
 	float		mAnimationSpeed;
 
 	GraphicAPI* mGraphicAPI;
+	Scene		mScene;
 	
 	BOOL				Initialize(int);
 	void				Shutdown();

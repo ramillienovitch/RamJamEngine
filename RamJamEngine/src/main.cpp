@@ -59,71 +59,6 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstanc
 	SetConsoleTitle(L"RamJam Engine Debug Console");
 #endif
 
-	//////////////////////////////////////////////////////////////////////////
-
-
-
-	System::Instance()->mHInst = hInstance;
-	RJE_ASSERT(System::Instance()->Initialize(nCmdShow));
-
-	FILE * pFile;
-	long lSize;
-	char * buffer;
-	size_t result;
-
-	std::string file = (System::Instance()->mDataPath + CIniFile::GetValue("simple", "scenes", System::Instance()->mResourcesPath));
-	fopen_s( &pFile, file.c_str() , "r" );
-	if (pFile==NULL) {fputs ("File error",stderr); exit (1);}
-
-	// obtain file size:
-	fseek (pFile , 0 , SEEK_END);
-	lSize = ftell (pFile);
-	rewind (pFile);
-
-	// allocate memory to contain the whole file:
-	buffer = (char*) malloc (sizeof(char)*lSize + 1);
-	if (buffer == NULL) {fputs ("Memory error",stderr); exit (2);}
-
-	// copy the file into the buffer:
-	result = fread (buffer,1,lSize,pFile);
-	if (result != lSize) {fputs ("Reading error",stderr); exit (3);}
-
-	buffer[lSize] = '\0';
-
-	/* the whole file is now loaded in the memory buffer. */
-
-	// terminate
-	fclose (pFile);
-
-
-	rapidxml::xml_document<> doc;    // character type defaults to char
-	doc.parse<0>(buffer);    // 0 means default parse flags
-
-	std::cout << "Name of my first node is: " << doc.first_node()->name() << "\n";
-	rapidxml::xml_node<> *node = doc.first_node("SCENE");
-	for (rapidxml::xml_node<> *attr = node->first_node();
-		attr; attr = attr->next_sibling())
-	{
-		std::cout << "Node foobar has node " << attr->name() << " ";
-		std::cout << "with value " << attr->value() << "\n";
-	}
-
-	std::ofstream myfile;
-	myfile.open ("sceneout.xml");
-
-	myfile << doc;
-
-	myfile.close();
-
-	free(buffer);
-	System::Instance()->Shutdown();
-	System::DeleteInstance();
-
-
-
-	//////////////////////////////////////////////////////////////////////////
-
-	/*
 	System::Instance()->mHInst = hInstance;
 	RJE_ASSERT(System::Instance()->Initialize(nCmdShow));
 	System::Instance()->OnResize();
@@ -132,7 +67,6 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstanc
 
 	System::Instance()->Shutdown();
 	System::DeleteInstance();
-	*/
 
 #ifdef RJE_MEMORY_PROFILE
 	MemoryReport();

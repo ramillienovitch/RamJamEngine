@@ -38,10 +38,12 @@ struct Matrix44_T
 	//---------------------------
 	operator DirectX::XMMATRIX();
 	//---------------------------
-	Real		Trace();
-	Real		Determinant();
-	Matrix44_T&	Transpose();
-	Matrix44_T&	Inverse();
+	Real			Trace();
+	Real			Determinant();
+	Matrix44_T&		Transpose();
+	Matrix44_T&		Inverse();
+	Matrix44_T&		InverseTranspose();
+	Vector3_T<Real>	TransformVector(Vector3_T<Real>);
 	//---------------------------
 	BOOL IsIdentity() const;
 	//---------------------------
@@ -52,10 +54,16 @@ struct Matrix44_T
 	static Matrix44_T&	FromEulerAngles(Matrix44_T<Real>& m, Vector3_T<Real> euler);
 	//---------------------------
 	static Matrix44_T	Translation(Vector3_T<Real>);
+	static Matrix44_T	Translation(Real x, Real y, Real z);
 	static Matrix44_T	Scaling(Vector3_T<Real>);
+	static Matrix44_T	Scaling(Real x, Real y, Real z);
 	static Matrix44_T	RotationX(Real degrees);
 	static Matrix44_T	RotationY(Real degrees);
 	static Matrix44_T	RotationZ(Real degrees);
+	//---------------------------
+	// Transformation Matrix for the reflection with the plane equation Ax+By+Cz+D=0.
+	static Matrix44_T	Reflection(Vector4_T<Real> planeEquation);
+	static Matrix44_T	Reflection(Real a, Real b, Real c, Real d);
 };
 
 typedef Matrix44_T<f32> Matrix44;

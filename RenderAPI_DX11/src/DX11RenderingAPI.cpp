@@ -51,24 +51,10 @@ DX11RenderingAPI::DX11RenderingAPI()
 
 	// Meshes transforms
 	
-	XMMATRIX wireBoxWorld;
-	XMMATRIX wireBoxRotation = XMMatrixIdentity();
-	XMMATRIX wireBoxRotationXY = XMMatrixIdentity();
-	XMMATRIX wireBoxRotationX = XMMatrixRotationX(20);
-	XMMATRIX wireBoxRotationY = XMMatrixRotationY(60);
-	XMMATRIX wireBoxRotationZ = XMMatrixRotationZ(100);
-	XMMATRIX wireBoxScale    = XMMatrixScaling(0.5f, 5.0f, 0.5f);
-	XMMATRIX wireBoxOffset   = XMMatrixTranslation(5.0f, 5.0f, -5.0f);
-	wireBoxWorld = wireBoxScale;
-	wireBoxRotationXY = XMMatrixMultiply(wireBoxRotationX, wireBoxRotationY);
-	wireBoxRotation = XMMatrixMultiply(wireBoxRotationXY, wireBoxRotationZ);
-	wireBoxWorld = XMMatrixMultiply(wireBoxWorld, wireBoxRotation);
-	wireBoxWorld = XMMatrixMultiply(wireBoxWorld, wireBoxOffset);
-
 	Transform t;
 	//t.EulerAngles	= Vector3(45,45,45);
 	//t.Scale			= Vector3(2.5f, 5.0f, 0.5f);
-	t.Position		= Vector3(0.0f, 5.0f, 0.0f);
+	//t.Position		= Vector3(0.0f, 5.0f, 0.0f);
 	Matrix44 tempworld = t.WorldMatrix();
 
 	//XMStoreFloat4x4(&mWireBoxWorld, wireBoxWorld);
@@ -1107,7 +1093,7 @@ void DX11RenderingAPI::DrawGizmos()
 	mDX11Device->md3dImmediateContext->DrawIndexed(mWireBoxIndexCount, mWireBoxIndexOffset, mWireBoxVertexOffset);
 
 	// Draw the Axis.
-	world             = XMLoadFloat4x4(&mWireBoxWorld);
+	world             = XMLoadFloat4x4(&mAxisWorld);
 	worldViewProj     = world*view*proj;
 
 	DX11Effects::ColorFX->SetWorldViewProj(worldViewProj);

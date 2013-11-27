@@ -72,6 +72,15 @@
     <ClInclude Include="..\include\MeshData.h">
       <Filter>Header Files\RJE_Graphic</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\Scene.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\SceneLoader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Light.h">
+      <Filter>Header Files\RJE_Graphic</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\System.cpp">
@@ -94,6 +103,12 @@
     </ClCompile>
     <ClCompile Include="..\src\GeometryGenerator.cpp">
       <Filter>Source Files\RJE_Graphic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Scene.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\SceneLoader.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

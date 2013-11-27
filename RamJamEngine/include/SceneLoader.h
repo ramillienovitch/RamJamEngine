@@ -1,0 +1,16 @@
+#pragma once
+
+//////////////////////////////////////////////////////////////////////////
+// RapidXML
+#include "rapidxml.hpp"
+#include "rapidxml_print.hpp"
+#include "rapidxml_utils.hpp"
+
+#include "Types.h"
+
+//////////////////////////////////////////////////////////////////////////
+struct SceneLoader
+{
+	void LoadFromFile(const char* pFile);
+	void ExtractGameObjects();
+};

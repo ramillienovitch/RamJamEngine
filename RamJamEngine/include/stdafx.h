@@ -68,6 +68,7 @@
 #endif
 //////////////////////////////////////////////////////////////////////////
 // RamJam Engine SubCores
+#include "Scene.h"
 #include "System.h"
 #include "Console.h"
 #include "Transform.h"

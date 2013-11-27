@@ -36,6 +36,9 @@ namespace RJE_COLOR
 		ARGB GetValue() const		{ return Argb; }
 		//-----------------
 		void SetValue(IN ARGB argb)	{ Argb = argb; }
+		//-----------------
+		Vector4 GetVector4RGBANorm()	{ return Vector4(GetRedNorm(), GetGreenNorm(), GetBlueNorm(), GetAlphaNorm()); }
+		Vector4 GetVector4ARGBNorm()	{ return Vector4(GetAlphaNorm(), GetRedNorm(), GetGreenNorm(), GetBlueNorm()); }
 	
 		//////////////////////////////////////////////////////////////////////////
 

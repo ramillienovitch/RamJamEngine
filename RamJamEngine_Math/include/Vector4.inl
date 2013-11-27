@@ -46,6 +46,12 @@ FORCEINLINE Vector4_T<Real> Vector4_T<Real>::operator * (const Real& f)
 
 //----------------------------------------------------------------------
 template <typename Real>
+FORCEINLINE Vector4_T<Real> Vector4_T<Real>::operator * (const Vector4_T<Real>&v)
+{ return Vector4_T<Real>(this->w*v.w, this->x*v.x, this->y*v.y, this->z*v.z); }
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+template <typename Real>
 FORCEINLINE Vector4_T<Real> operator * (const Real& f, const Vector4_T<Real>&v)
 { return Vector4_T<Real>(v.w*f, v.x*f, v.y*f, v.z*f); }
 //----------------------------------------------------------------------
@@ -156,4 +162,10 @@ FORCEINLINE Vector4_T<Real>& Vector4_T<Real>::Normalize()
 		*this /= mag; 
 	return *this;
 }
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+template <typename Real>
+FORCEINLINE Vector4_T<Real>& Vector4_T<Real>::Scale(const Vector4_T& v)
+{ w *= v.w; x *= v.x; y *= v.y; z *= v.z; return *this; }
 //----------------------------------------------------------------------

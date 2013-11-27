@@ -193,6 +193,11 @@ FORCEINLINE Vector3_T<Real> Vector3_T<Real>::Cross(const Vector3_T& v1, const Ve
 
 //----------------------------------------------------------------------
 template <typename Real>
+FORCEINLINE Real Vector3_T<Real>::Dot(const Vector3_T& v1, const Vector3_T& v2)
+{ return v1.x*v2.x + v1.y*v2.y + v1.z*v2.z; }
+
+//----------------------------------------------------------------------
+template <typename Real>
 FORCEINLINE Real Vector3_T<Real>::AngleBetween(const Vector3_T& v1, const Vector3_T& v2)
 {
 	Vector3_T<Real> a = v1;		a.Normalize();
@@ -205,5 +210,60 @@ FORCEINLINE Real Vector3_T<Real>::AngleBetween(const Vector3_T& v1, const Vector
 
 //----------------------------------------------------------------------
 template <typename Real>
-FORCEINLINE Real Vector3_T<Real>::Dot(const Vector3_T& v1, const Vector3_T& v2)
-{ return v1.x*v2.x + v1.y*v2.y + v1.z*v2.z; }
+FORCEINLINE Vector3_T<Real> Vector3_T<Real>::ReflectRay(const Vector3_T<Real>& incident, const Vector3_T<Real>& normal)
+{
+	Vector3_T<Real> out;
+
+	Real s = static_cast<Real>(2.0f) * ( incident.x*normal.x + incident.y*normal.y + incident.z*normal.z );
+
+	out.x = incident.x - s * normal.x;
+	out.y = incident.y - s * normal.y;
+	out.z = incident.z - s * normal.z;
+
+	return out;
+}
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+template <typename Real>
+FORCEINLINE Vector3_T<Real> Vector3_T<Real>::RandUnitSphere()
+{
+	Real One = static_cast<1.0f>;
+	// Keep trying until we get a point on/in the sphere.
+	while(true)
+	{
+		// Generate random point in the cube [-1,1]^3.
+		Vector3_T<Real> v = Vector3_T<Real>(RJE::Math::Rand(-One, One), RJE::Math::Rand(-One, One), RJE::Math::Rand(-One, One));
+
+		// Ignore points outside the unit sphere in order to get an even distribution 
+		// over the unit sphere.  Otherwise points will clump more on the sphere near 
+		// the corners of the cube.
+
+		if( v.SqrMagnitude > One )
+			continue;
+
+		return v.Normalize();
+	}
+}
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+template <typename Real>
+FORCEINLINE Vector3_T<Real> Vector3_T<Real>::RandUnitHemisphere(Vector3_T<Real> normal)
+{
+	Real One  = static_cast<1.0f>;
+	Real Zero = static_cast<0.0f>;
+
+	// Keep trying until we get a point on/in the hemisphere.
+	while(true)
+	{
+		Vector3_T<Real> v = RandUnitSphere();
+
+		// Ignore points outside the hemisphere.
+		if( Dot(normal, v) < Zero )
+			continue;
+
+		return v.Normalize();
+	}
+}
+//----------------------------------------------------------------------

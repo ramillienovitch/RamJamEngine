@@ -112,9 +112,12 @@
     <ClInclude Include="..\include\FontSheet.h" />
     <ClInclude Include="..\include\GeometryGenerator.h" />
     <ClInclude Include="..\include\GraphicAPI.h" />
+    <ClInclude Include="..\include\Light.h" />
     <ClInclude Include="..\include\MeshData.h" />
     <ClInclude Include="..\include\Resource.h" />
     <ClInclude Include="..\include\RjeConfig.h" />
+    <ClInclude Include="..\include\Scene.h" />
+    <ClInclude Include="..\include\SceneLoader.h" />
     <ClInclude Include="..\include\stdafx.h" />
     <ClInclude Include="..\include\System.h" />
     <ClInclude Include="..\include\targetver.h" />
@@ -134,6 +137,14 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\src\main.cpp" />
+    <ClCompile Include="..\src\Scene.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\src\SceneLoader.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="..\src\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>

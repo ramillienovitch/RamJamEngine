@@ -18,17 +18,25 @@ namespace RJE
 #define RJE_HALF_PI		(RJE_PI   * 0.5)
 #define RJE_HALF_PI_F	(RJE_PI_F * 0.5f)
 
-#define RJE_EPSILON(Type)	std::numeric_limits<Type>::epsilon()
-#define RJE_NAN(Type)		std::numeric_limits<Type>::quiet_NaN()
-
 #define DegreesToRadian(X)   X * (RJE_PI   / 180.0)
 #define DegreesToRadian_F(X) X * (RJE_PI_F / 180.0f)
 #define RadianToDegrees(X)   X * (180.0  / RJE_PI)
 #define RadianToDegrees_F(X) X * (180.0f / RJE_PI_F)
 
-	class Math
+	struct Math
 	{
-	public:
+		//--------------------------------------------------
+		template<typename T>
+		FORCEINLINE static T Espilon()
+		{ return std::numeric_limits<T>::epsilon(); }
+		//--------------------------------------------------
+
+		//--------------------------------------------------
+		template<typename T>
+		FORCEINLINE static T NaN()
+		{ return std::numeric_limits<T>::quiet_NaN(); }
+		//--------------------------------------------------
+
 		//--------------------------------------------------
 		template<typename T>
 		FORCEINLINE static T Abs(T number)
@@ -36,18 +44,14 @@ namespace RJE
 		//--------------------------------------------------
 
 		//--------------------------------------------------
-		FORCEINLINE static int Rand()					// Returns random int in [0, 1[.
+		template<typename T>
+		FORCEINLINE static T Rand()					// Returns random value in [0, 1[.
 		{ return (rand()) / RAND_MAX; }
 		//------------------------
-		FORCEINLINE static int Rand(int a, int b)		// Returns random int in [a, b[.
-		{ return a + Rand()*(b-a); }
+		template<typename T>
+		FORCEINLINE static T Rand(T a, T b)		// Returns random value in [a, b[.
+		{ return a + static_cast<T>((rand()) / RAND_MAX)*(b-a); }
 		//------------------------
-		FORCEINLINE static float RandF()					// Returns random float in [0, 1[.
-		{ return (float)(rand()) / (float)RAND_MAX; }
-		//------------------------
-		FORCEINLINE static float RandF(float a, float b)	// Returns random float in [a, b[.
-		{ return a + RandF()*(b-a); }
-		//--------------------------------------------------
 
 		//--------------------------------------------------
 		template<typename T>
@@ -88,7 +92,7 @@ namespace RJE
 		//--------------------------------------------------
 		// Returns the polar angle of the point (x,y) in [0, 2*PI[.
 		template <typename Real>
-		FORCEINLINE static Real AngleFromXY(Real x, Real y)
+		static Real AngleFromXY(Real x, Real y)
 		{
 			Real theta = static_cast<Real>(0.0);
 

@@ -93,6 +93,10 @@ BOOL System::Initialize(int nCmdShow)
 	RegisterMyClass(mHInst);
 	RJE_ASSERT(InitializeWindows(nCmdShow));
 
+	// Load the Scene file
+	string scenePath = mDataPath + CIniFile::GetValue("simple", "scenes", mResourcesPath);
+	mScene.LoadFromFile(scenePath.c_str());
+
 	// We launch DirectX or OpenGL
 	mGraphicAPI->Initialize(mHWnd, RJE_GLOBALS::gScreenWidth, RJE_GLOBALS::gScreenHeight);
 

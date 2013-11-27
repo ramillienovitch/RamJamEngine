@@ -1,0 +1,7 @@
+#include "Scene.h"
+
+//////////////////////////////////////////////////////////////////////////
+void Scene::LoadFromFile( const char* pFile )
+{
+	mSceneLoader.LoadFromFile(pFile);
+}

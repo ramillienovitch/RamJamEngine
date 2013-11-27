@@ -52,6 +52,12 @@ struct Vector3_T
 	static Vector3_T	Cross         (const Vector3_T& v1, const Vector3_T& v2);
 	static Real			Dot           (const Vector3_T& v1, const Vector3_T& v2);
 	static Real			AngleBetween  (const Vector3_T& v1, const Vector3_T& v2);
+	//--------------------------------------------------
+	static Vector3_T	ReflectRay(const Vector3_T& incident, const Vector3_T& normal);
+	//--------------------------------------------------
+	static Vector3_T	RandUnitSphere();
+	static Vector3_T	RandUnitHemisphere(Vector3_T n);
+	//--------------------------------------------------
 };
 
 typedef Vector3_T<f32> Vector3;

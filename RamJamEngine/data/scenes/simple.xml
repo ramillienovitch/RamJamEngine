@@ -1,12 +1,33 @@
 <?xml version="1.0"?>
 
 <SCENE>
-	<OBJECT>
-		<NAME>cube</NAME>
+	<PRIMITIVES>
+		<SOLID>
+			<CUBE>
+				<TRANSFORM>
+					<POSITION X="5" Y="10" Z="0"></POSITION>
+					<ROTATION X="0" Y="0" Z="0"></ROTATION>
+					<SCALE X="1" Y="1" Z="1"></SCALE>
+				</TRANSFORM>
+			</CUBE>
+		</SOLID>
+		<WIRE>
+			<SPHERE>
+				<TRANSFORM>
+					<POSITION X="5" Y="10" Z="0"></POSITION>
+					<ROTATION X="0" Y="0" Z="0"></ROTATION>
+					<SCALE X="1" Y="1" Z="1"></SCALE>
+				</TRANSFORM>
+			</SPHERE>
+		</WIRE>
+	</PRIMITIVES>
+	<MESHES>
+		<NAME>dragon.mesh</NAME>
 		<TRANSFORM>
-			<POSITION_X>5</POSITION_X>
-			<POSITION_Y>10</POSITION_Y>
-			<POSITION_Z>15</POSITION_Z>
+			<POSITION X="0" Y="5" Z="0"></POSITION>
+			<ROTATION X="0" Y="0" Z="0"></ROTATION>
+			<SCALE X="1" Y="1" Z="1"></SCALE>
 		</TRANSFORM>
-	</OBJECT>
+	</MESHES>
+	<LIGHTS/>
 </SCENE>

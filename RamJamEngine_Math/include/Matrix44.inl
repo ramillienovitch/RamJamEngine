@@ -214,7 +214,7 @@ FORCEINLINE Matrix44_T<Real>& Matrix44_T<Real>::Inverse()
 		// Matrix not invertible. Setting all elements to nan is not really
 		// correct in a mathematical sense but it is easy to debug for the
 		// programmer.
-		const Real nan = RJE::RJE_NAN(Real);
+		const Real nan = RJE::Math::NaN<Real>();
 		*this = Matrix44_T<Real>(	nan,nan,nan,nan,
 									nan,nan,nan,nan,
 									nan,nan,nan,nan,
@@ -224,7 +224,7 @@ FORCEINLINE Matrix44_T<Real>& Matrix44_T<Real>::Inverse()
 
 	const Real invdet = static_cast<Real>(1.0) / det;
 
-	aiMatrix4x4t<Real> res;
+	Matrix44_T<Real> res;
 	res.m11 =  invdet * (m22 * (m33 * m44 - m34 * m43) + m23 * (m34 * m42 - m32 * m44) + m24 * (m32 * m43 - m33 * m42));
 	res.m12 = -invdet * (m12 * (m33 * m44 - m34 * m43) + m13 * (m34 * m42 - m32 * m44) + m14 * (m32 * m43 - m33 * m42));
 	res.m13 =  invdet * (m12 * (m23 * m44 - m24 * m43) + m13 * (m24 * m42 - m22 * m44) + m14 * (m22 * m43 - m23 * m42));
@@ -246,6 +246,28 @@ FORCEINLINE Matrix44_T<Real>& Matrix44_T<Real>::Inverse()
 	return *this;
 }
 //----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+template <typename Real>
+FORCEINLINE Matrix44_T<Real>& Matrix44_T<Real>::InverseTranspose()
+{
+	// Inverse-transpose is just applied to normals.  So zero out 
+	// translation row so that it doesn't get into our inverse-transpose
+	// calculation--we don't want the inverse-transpose of the translation.
+	m31 = m32 = m33 = 0.0f;
+	m34 = 1.0f;
+
+	Matrix44_T<Real> out = *(this);
+
+	out.Inverse();
+	return out.Transpose();
+}
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+template <typename Real>
+FORCEINLINE Vector3_T<Real> Matrix44_T<Real>::TransformVector(Vector3_T<Real> v)
+{ return (*this) * v; }
 
 //----------------------------------------------------------------------
 template <typename Real>
@@ -378,6 +400,16 @@ FORCEINLINE Matrix44_T<Real> Matrix44_T<Real>::Translation(Vector3_T<Real> posit
 	out.m43 = position.z;
 	return out;
 }
+//-------------
+template <typename Real>
+FORCEINLINE Matrix44_T<Real> Matrix44_T<Real>::Translation(Real x, Real y, Real z)
+{
+	Matrix44_T<Real> out;
+	out.m41 = x;
+	out.m42 = y;
+	out.m43 = z;
+	return out;
+}
 //----------------------------------------------------------------------
 
 //----------------------------------------------------------------------
@@ -388,6 +420,16 @@ FORCEINLINE Matrix44_T<Real> Matrix44_T<Real>::Scaling(Vector3_T<Real> scale)
 	out.m11 = scale.x;
 	out.m22 = scale.y;
 	out.m33 = scale.z;
+	return out;
+}
+//-------------
+template <typename Real>
+FORCEINLINE Matrix44_T<Real> Matrix44_T<Real>::Scaling(Real x, Real y, Real z)
+{
+	Matrix44_T<Real> out;
+	out.m11 = x;
+	out.m22 = y;
+	out.m33 = z;
 	return out;
 }
 //----------------------------------------------------------------------
@@ -444,4 +486,35 @@ FORCEINLINE Matrix44_T<Real> Matrix44_T<Real>::RotationZ(Real degrees)
 	out.m12 = -(out.m21 = sin(rad));
 	return out;
 }
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+template <typename Real>
+FORCEINLINE Matrix44_T<Real> Matrix44_T<Real>::Reflection(Vector4_T<Real> planeEquation)
+{
+	const Vector4_T<Real> NegativeTwo = Vector4_T<Real>(-2.0f, -2.0f, -2.0f, 0.0f);
+
+	planeEquation.Normalize();
+	Vector4_T<Real> S = planeEquation;
+	planeEquation.Scale(NegativeTwo);
+	Vector4_T<Real> A = Vector4_T<Real>(planeEquation.w, planeEquation.w, planeEquation.w, planeEquation.w);
+	Vector4_T<Real> B = Vector4_T<Real>(planeEquation.x, planeEquation.x, planeEquation.x, planeEquation.x);
+	Vector4_T<Real> C = Vector4_T<Real>(planeEquation.y, planeEquation.y, planeEquation.y, planeEquation.y);
+	Vector4_T<Real> D = Vector4_T<Real>(planeEquation.z, planeEquation.z, planeEquation.z, planeEquation.z);
+
+	Matrix44_T<Real> out;
+	Vector4_T<Real> row1 = (A*S) + Vector4_T<Real>(1.0f, 0.0f, 0.0f, 0.0f);
+	Vector4_T<Real> row2 = (B*S) + Vector4_T<Real>(0.0f, 1.0f, 0.0f, 0.0f);
+	Vector4_T<Real> row3 = (C*S) + Vector4_T<Real>(0.0f, 0.0f, 1.0f, 0.0f);
+	Vector4_T<Real> row4 = (D*S) + Vector4_T<Real>(0.0f, 0.0f, 0.0f, 1.0f);
+	out.m11 = row1.w;	out.m12 = row1.x;	out.m13 = row1.y;	out.m14 = row1.z;
+	out.m21 = row2.w;	out.m22 = row2.x;	out.m23 = row2.y;	out.m24 = row2.z;
+	out.m31 = row3.w;	out.m32 = row3.x;	out.m33 = row3.y;	out.m34 = row3.z;
+	out.m41 = row4.w;	out.m42 = row4.x;	out.m43 = row4.y;	out.m44 = row4.z;
+	return out;
+}
+//-------------
+template <typename Real>
+FORCEINLINE Matrix44_T<Real> Matrix44_T<Real>::Reflection(Real w, Real x, Real y, Real z)
+{ return Reflection(Vector4_T<Real>(w,x,y,z)); }
 //----------------------------------------------------------------------
