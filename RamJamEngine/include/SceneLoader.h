@@ -13,4 +13,9 @@ struct SceneLoader
 {
 	void LoadFromFile(const char* pFile);
 	void ExtractGameObjects();
+
+	//////////////////////////////////////////////////////////////////////////
+
+private:
+	void ExtractTransform(rapidxml::xml_node<> transformNode);
 };

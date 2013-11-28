@@ -29,64 +29,54 @@ public:
 	BasicEffect(ID3D11Device* device, const std::wstring& filename);
 	~BasicEffect();
 
-	HRESULT SetWorldViewProj(Matrix44& M)                  { return WorldViewProj->SetMatrix(reinterpret_cast<const float*>(&M)); }
-	HRESULT SetWorld(Matrix44& M)                          { return World->SetMatrix(reinterpret_cast<const float*>(&M)); }
-	HRESULT SetWorldInvTranspose(Matrix44& M)              { return WorldInvTranspose->SetMatrix(reinterpret_cast<const float*>(&M)); }
-	HRESULT SetTexTransform(Matrix44& M)                   { return TexTransform->SetMatrix(reinterpret_cast<const float*>(&M)); }
+	HRESULT SetWorldViewProj(Matrix44& M)                 { return WorldViewProj->SetMatrix(reinterpret_cast<const float*>(&M)); }
+	HRESULT SetWorld(Matrix44& M)                         { return World->SetMatrix(reinterpret_cast<const float*>(&M)); }
+	HRESULT SetWorldInvTranspose(Matrix44& M)             { return WorldInvTranspose->SetMatrix(reinterpret_cast<const float*>(&M)); }
+	HRESULT SetTexTransform(Matrix44& M)                  { return TexTransform->SetMatrix(reinterpret_cast<const float*>(&M)); }
 	HRESULT SetEyePosW(const Vector3& v)                  { return EyePosW->SetRawValue(&v, 0, sizeof(Vector3)); }
+	HRESULT SetFogState(BOOL state)                       { return FogEnabled->SetBool(state != 0); }
+	HRESULT SetAlphaClipState(BOOL state)                 { return AlphaClipEnabled->SetBool(state != 0); }
+	HRESULT SetTextureState(BOOL state)                   { return TextureEnabled->SetBool(state != 0); }
 	HRESULT SetFogColor(const Vector4& v)                 { return FogColor->SetFloatVector(reinterpret_cast<const float*>(&v)); }
-	HRESULT SetFogStart(float f)                           { return FogStart->SetFloat(f); }
-	HRESULT SetFogRange(float f)                           { return FogRange->SetFloat(f); }
-	HRESULT SetDirLights(const DirectionalLight* lights)   { return DirLights->SetRawValue(lights, 0, 3*sizeof(DirectionalLight)); }
-	HRESULT SetPointLights(const PointLight* lights)       { return PointLights->SetRawValue(lights, 0, 3*sizeof(PointLight)); }
-	HRESULT SetMaterial(const Material& mat)               { return Mat->SetRawValue(&mat, 0, sizeof(Material)); }
-	HRESULT SetDiffuseMap(ID3D11ShaderResourceView* tex)   { return DiffuseMap->SetResource(tex); }
-	HRESULT SetMaskMap(ID3D11ShaderResourceView* tex)      { return MaskMap->SetResource(tex); }
-	HRESULT SetSamplerState(ID3D11SamplerState* pSampler)  { return TextureSampler->SetSampler(0, pSampler); }
+	HRESULT SetFogStart(float f)                          { return FogStart->SetFloat(f); }
+	HRESULT SetFogRange(float f)                          { return FogRange->SetFloat(f); }
+	HRESULT SetDirLightCount(int val)                     { return DirLightCount->SetInt(val); }
+	HRESULT SetPointLightCount(int val)                   { return PointLightCount->SetInt(val); }
+	HRESULT SetDirLights(const DirectionalLight* lights)  { return DirLights->SetRawValue(lights, 0, 3*sizeof(DirectionalLight)); }
+	HRESULT SetPointLights(const PointLight* lights)      { return PointLights->SetRawValue(lights, 0, 3*sizeof(PointLight)); }
+	HRESULT SetMaterial(const Material& mat)              { return Mat->SetRawValue(&mat, 0, sizeof(Material)); }
+	HRESULT SetDiffuseMap(ID3D11ShaderResourceView* tex)  { return DiffuseMap->SetResource(tex); }
+	HRESULT SetMaskMap(ID3D11ShaderResourceView* tex)     { return MaskMap->SetResource(tex); }
+	HRESULT SetSamplerState(ID3D11SamplerState* pSampler) { return TextureSampler->SetSampler(0, pSampler); }
 
-	ID3DX11EffectTechnique* Light0_0NoTexTech;
-	ID3DX11EffectTechnique* Light0_1NoTexTech;
-	ID3DX11EffectTechnique* Light0_2NoTexTech;
-	ID3DX11EffectTechnique* Light0_3NoTexTech;
-	ID3DX11EffectTechnique* Light1_0NoTexTech;
-	ID3DX11EffectTechnique* Light1_1NoTexTech;
-	ID3DX11EffectTechnique* Light1_2NoTexTech;
-	ID3DX11EffectTechnique* Light1_3NoTexTech;
+	//-------------------------------------------
 
-	ID3DX11EffectTechnique* Light0_0TexTech;
-	ID3DX11EffectTechnique* Light0_1TexTech;
-	ID3DX11EffectTechnique* Light0_2TexTech;
-	ID3DX11EffectTechnique* Light0_3TexTech;
-	ID3DX11EffectTechnique* Light1_0TexTech;
-	ID3DX11EffectTechnique* Light1_1TexTech;
-	ID3DX11EffectTechnique* Light1_2TexTech;
-	ID3DX11EffectTechnique* Light1_3TexTech;
-
-	ID3DX11EffectTechnique* Light1_3FogTexTech;
-	ID3DX11EffectTechnique* Light1_3FogNoTexTech;
-
-	ID3DX11EffectTechnique* Light1_3AlphaClipTexTech;
-	ID3DX11EffectTechnique* Light1_3AlphaClipNoTexTech;
-
-	ID3DX11EffectTechnique* Light1_3FogAlphaClipTexTech;
-	ID3DX11EffectTechnique* Light1_3FogAlphaClipNoTexTech;
-
-	ID3DX11EffectMatrixVariable* WorldViewProj;
-	ID3DX11EffectMatrixVariable* World;
-	ID3DX11EffectMatrixVariable* WorldInvTranspose;
-	ID3DX11EffectMatrixVariable* TexTransform;
-	ID3DX11EffectVectorVariable* EyePosW;
-	ID3DX11EffectVectorVariable* FogColor;
-	ID3DX11EffectScalarVariable* FogStart;
-	ID3DX11EffectScalarVariable* FogRange;
-	ID3DX11EffectVariable* DirLights;
-	ID3DX11EffectVariable* PointLights;
-	ID3DX11EffectVariable* Mat;
-
-	ID3DX11EffectSamplerVariable* TextureSampler;
-
-	ID3DX11EffectShaderResourceVariable* DiffuseMap;
-	ID3DX11EffectShaderResourceVariable* MaskMap;
+	ID3DX11EffectTechnique*					BasicTech;
+	//-------
+	ID3DX11EffectMatrixVariable*			WorldViewProj;
+	ID3DX11EffectMatrixVariable*			World;
+	ID3DX11EffectMatrixVariable*			WorldInvTranspose;
+	ID3DX11EffectMatrixVariable*			TexTransform;
+	//-------
+	ID3DX11EffectVectorVariable*			EyePosW;
+	ID3DX11EffectVectorVariable*			FogColor;
+	//-------
+	ID3DX11EffectScalarVariable*			FogEnabled;
+	ID3DX11EffectScalarVariable*			AlphaClipEnabled;
+	ID3DX11EffectScalarVariable*			TextureEnabled;
+	ID3DX11EffectScalarVariable*			FogStart;
+	ID3DX11EffectScalarVariable*			FogRange;
+	ID3DX11EffectScalarVariable*			DirLightCount;
+	ID3DX11EffectScalarVariable*			PointLightCount;
+	//-------
+	ID3DX11EffectVariable*					DirLights;
+	ID3DX11EffectVariable*					PointLights;
+	ID3DX11EffectVariable*					Mat;
+	//-------
+	ID3DX11EffectSamplerVariable*			TextureSampler;
+	//-------
+	ID3DX11EffectShaderResourceVariable*	DiffuseMap;
+	ID3DX11EffectShaderResourceVariable*	MaskMap;
 };
 #pragma endregion
 

@@ -31,37 +31,20 @@ Effect::~Effect()
 BasicEffect::BasicEffect(ID3D11Device* device, const std::wstring& filename)
 	: Effect(device, filename)
 {
-	Light0_0NoTexTech             = mFX->GetTechniqueByName("Light0_0NoTex");
-	Light0_1NoTexTech             = mFX->GetTechniqueByName("Light0_1NoTex");
-	Light0_2NoTexTech             = mFX->GetTechniqueByName("Light0_2NoTex");
-	Light0_3NoTexTech             = mFX->GetTechniqueByName("Light0_3NoTex");
-	Light1_0NoTexTech             = mFX->GetTechniqueByName("Light1_0NoTex");
-	Light1_1NoTexTech             = mFX->GetTechniqueByName("Light1_1NoTex");
-	Light1_2NoTexTech             = mFX->GetTechniqueByName("Light1_2NoTex");
-	Light1_3NoTexTech             = mFX->GetTechniqueByName("Light1_3NoTex");
-	Light0_0TexTech               = mFX->GetTechniqueByName("Light0_0Tex");
-	Light0_1TexTech               = mFX->GetTechniqueByName("Light0_1Tex");
-	Light0_2TexTech               = mFX->GetTechniqueByName("Light0_2Tex");
-	Light0_3TexTech               = mFX->GetTechniqueByName("Light0_3Tex");
-	Light1_0TexTech               = mFX->GetTechniqueByName("Light1_0Tex");
-	Light1_1TexTech               = mFX->GetTechniqueByName("Light1_1Tex");
-	Light1_2TexTech               = mFX->GetTechniqueByName("Light1_2Tex");
-	Light1_3TexTech               = mFX->GetTechniqueByName("Light1_3Tex");
-	Light1_3FogTexTech            = mFX->GetTechniqueByName("Light1_3FogTex");
-	Light1_3FogNoTexTech          = mFX->GetTechniqueByName("Light1_3FogNoTex");
-	Light1_3AlphaClipTexTech      = mFX->GetTechniqueByName("Light1_3AlphaClipTex");
-	Light1_3AlphaClipNoTexTech    = mFX->GetTechniqueByName("Light1_3AlphaClipNoTex");
-	Light1_3FogAlphaClipTexTech   = mFX->GetTechniqueByName("Light1_3FogAlphaClipTex");
-	Light1_3FogAlphaClipNoTexTech = mFX->GetTechniqueByName("Light1_3FogAlphaClipNoTex");
-
+	BasicTech         = mFX->GetTechniqueByName("Basic");
 	WorldViewProj     = mFX->GetVariableByName("gWorldViewProj")->AsMatrix();
 	World             = mFX->GetVariableByName("gWorld")->AsMatrix();
 	WorldInvTranspose = mFX->GetVariableByName("gWorldInvTranspose")->AsMatrix();
 	TexTransform      = mFX->GetVariableByName("gTexTransform")->AsMatrix();
 	EyePosW           = mFX->GetVariableByName("gEyePosW")->AsVector();
 	FogColor          = mFX->GetVariableByName("gFogColor")->AsVector();
+	FogEnabled        = mFX->GetVariableByName("gUseFog")->AsScalar();
+	AlphaClipEnabled  = mFX->GetVariableByName("gUseAlphaClip")->AsScalar();
+	TextureEnabled    = mFX->GetVariableByName("gUseTexture")->AsScalar();
 	FogStart          = mFX->GetVariableByName("gFogStart")->AsScalar();
 	FogRange          = mFX->GetVariableByName("gFogRange")->AsScalar();
+	DirLightCount     = mFX->GetVariableByName("gDirLightCount")->AsScalar();
+	PointLightCount   = mFX->GetVariableByName("gPointLightCount")->AsScalar();
 	DirLights         = mFX->GetVariableByName("gDirLights");
 	PointLights       = mFX->GetVariableByName("gPointLights");
 	Mat               = mFX->GetVariableByName("gMaterial");

@@ -549,8 +549,8 @@ void DX11RenderingAPI::UpdateScene( float dt )
 	{
 		if (Input::Instance()->GetKeyboardDown(Keyboard0))	mDirLightCount = 0;
 		if (Input::Instance()->GetKeyboardDown(Keyboard1))	mDirLightCount = 1;
-		//if (Input::Instance()->GetKeyboardDown(Keyboard2))	mDirLightCount = 2;
-		//if (Input::Instance()->GetKeyboardDown(Keyboard3))	mDirLightCount = 3;
+		if (Input::Instance()->GetKeyboardDown(Keyboard2))	mDirLightCount = 2;
+		if (Input::Instance()->GetKeyboardDown(Keyboard3))	mDirLightCount = 3;
 		if (Input::Instance()->GetKeyboardDown(Numpad0))	mPointLightCount = 0;
 		if (Input::Instance()->GetKeyboardDown(Numpad1))	mPointLightCount = 1;
 		if (Input::Instance()->GetKeyboardDown(Numpad2))	mPointLightCount = 2;
@@ -630,82 +630,13 @@ void DX11RenderingAPI::DrawScene()
 	DX11Effects::BasicFX->SetFogStart(fogStart);
 	DX11Effects::BasicFX->SetFogRange(fogRange);
 	DX11Effects::BasicFX->SetSamplerState(DX11CommonStates::sCurrentSamplerState);
+	DX11Effects::BasicFX->SetPointLightCount(mPointLightCount);
+	DX11Effects::BasicFX->SetDirLightCount(mDirLightCount);
+	DX11Effects::BasicFX->SetFogState(mbUseFog);
+	DX11Effects::BasicFX->SetAlphaClipState(mbUseBlending);
+	DX11Effects::BasicFX->SetTextureState(mbUseTexture);
 
-	// Figure out which technique to use.
-	ID3DX11EffectTechnique* activeTech = DX11Effects::BasicFX->Light1_3TexTech;
-	
-	// WARNING : Max 1 Dir and 3 Point Lights
-	switch(mDirLightCount)
-	{
-	case 0:
-		switch (mPointLightCount)
-		{
-		case 0:
-			if (mbUseTexture)	activeTech = DX11Effects::BasicFX->Light0_0TexTech;
-			else				activeTech = DX11Effects::BasicFX->Light0_0NoTexTech;
-			break;
-		case 1:
-			if (mbUseTexture)	activeTech = DX11Effects::BasicFX->Light0_1TexTech;
-			else				activeTech = DX11Effects::BasicFX->Light0_1NoTexTech;
-			break;
-		case 2:
-			if (mbUseTexture)	activeTech = DX11Effects::BasicFX->Light0_2TexTech;
-			else				activeTech = DX11Effects::BasicFX->Light0_2NoTexTech;
-			break;
-		case 3:
-			if (mbUseTexture)	activeTech = DX11Effects::BasicFX->Light0_3TexTech;
-			else				activeTech = DX11Effects::BasicFX->Light0_3NoTexTech;
-			break;
-		}
-		break;
-	case 1:
-		switch (mPointLightCount)
-		{
-		case 0:
-			if (mbUseTexture)	activeTech = DX11Effects::BasicFX->Light1_0TexTech;
-			else				activeTech = DX11Effects::BasicFX->Light1_0NoTexTech;
-			break;
-		case 1:
-			if (mbUseTexture)	activeTech = DX11Effects::BasicFX->Light1_1TexTech;
-			else				activeTech = DX11Effects::BasicFX->Light1_1NoTexTech;
-			break;
-		case 2:
-			if (mbUseTexture)	activeTech = DX11Effects::BasicFX->Light1_2TexTech;
-			else				activeTech = DX11Effects::BasicFX->Light1_2NoTexTech;
-			break;
-		case 3:	// this is the basic lighting we're gonna use most of the time (one directional and three point lights)
-			if (mbUseTexture)
-			{
-				if (mbUseBlending)
-				{
-					if (mbUseFog)	activeTech = DX11Effects::BasicFX->Light1_3FogAlphaClipTexTech;
-					else			activeTech = DX11Effects::BasicFX->Light1_3AlphaClipTexTech;
-				}
-				else
-				{
-					if (mbUseFog)	activeTech = DX11Effects::BasicFX->Light1_3FogTexTech;
-					else			activeTech = DX11Effects::BasicFX->Light1_3TexTech;
-				}
-			}
-			else
-			{
-				if (mbUseBlending)
-				{
-					if (mbUseFog)	activeTech = DX11Effects::BasicFX->Light1_3FogAlphaClipNoTexTech;
-					else			activeTech = DX11Effects::BasicFX->Light1_3AlphaClipNoTexTech;
-				}
-				else
-				{
-					if (mbUseFog)	activeTech = DX11Effects::BasicFX->Light1_3FogNoTexTech;
-					else			activeTech = DX11Effects::BasicFX->Light1_3NoTexTech;
-				}
-			}
-			break;
-		}
-		break;
-	default:
-		break;
-	}
+	ID3DX11EffectTechnique* activeTech = DX11Effects::BasicFX->BasicTech;
 
 	D3DX11_TECHNIQUE_DESC techDesc;
 	Matrix44 world;

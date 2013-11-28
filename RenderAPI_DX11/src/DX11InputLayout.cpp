@@ -29,7 +29,7 @@ void DX11InputLayouts::InitAll(ID3D11Device* device)
 	//////////////////////////////////////////////////////////////////////////
 	// PosNormal
 	D3DX11_PASS_DESC basicPassDesc;
-	DX11Effects::BasicFX->Light1_3FogAlphaClipTexTech->GetPassByIndex(0)->GetDesc(&basicPassDesc);
+	DX11Effects::BasicFX->BasicTech->GetPassByIndex(0)->GetDesc(&basicPassDesc);
 	RJE_CHECK_FOR_SUCCESS(device->CreateInputLayout(	InputLayoutDesc::PosNormalTex,
 														3,
 														basicPassDesc.pIAInputSignature,

@@ -8,15 +8,14 @@ void SceneLoader::LoadFromFile( const char* pFilename )
 	
 	xmlDoc.parse<0>(xmlFile.data());    // 0 means default parse flags
 
-	std::cout << "Name of my first node is: " << xmlDoc.first_node()->name() << "\n";
-	rapidxml::xml_node<> *node = xmlDoc.first_node();
-	for (rapidxml::xml_node<> *attr = node->first_node();
-		attr; attr = attr->next_sibling())
+	rapidxml::xml_node<> *rootNode = xmlDoc.first_node();
+	for (rapidxml::xml_node<> *node = rootNode->first_node(); node; node = node->next_sibling())
 	{
-		std::cout << "Node foobar has node " << attr->name() << " ";
-		std::cout << "with value " << attr->value() << "\n";
+		std::cout << "Node foobar has node " << node->name() << " and ";
+		std::cout << count_children(node)<< "nodes\n";
 	}
 
+	
 	std::ofstream myfile;
 	myfile.open ("sceneout.xml");
 
@@ -27,6 +26,12 @@ void SceneLoader::LoadFromFile( const char* pFilename )
 
 //////////////////////////////////////////////////////////////////////////
 void SceneLoader::ExtractGameObjects()
+{
+
+}
+
+//////////////////////////////////////////////////////////////////////////
+void SceneLoader::ExtractTransform(rapidxml::xml_node<> transformNode)
 {
 
 }
