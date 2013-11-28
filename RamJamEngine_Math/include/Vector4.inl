@@ -71,7 +71,7 @@ FORCEINLINE Vector4_T<Real>& Vector4_T<Real>::operator = (const Vector4_T<Real>&
 //----------------------------------------------------------------------
 template <typename Real>
 FORCEINLINE Vector4_T<Real>& Vector4_T<Real>::operator = (const DirectX::XMFLOAT4& vIn)
-{ w = vIn.w; x = vIn.x; y = vIn.y; z = vIn.z; return *this; }
+{ w = vIn.x; x = vIn.y; y = vIn.z; z = vIn.w; return *this; }
 //----------------------------------------------------------------------
 
 //----------------------------------------------------------------------

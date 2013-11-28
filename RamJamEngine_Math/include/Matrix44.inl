@@ -254,8 +254,8 @@ FORCEINLINE Matrix44_T<Real>& Matrix44_T<Real>::InverseTranspose()
 	// Inverse-transpose is just applied to normals.  So zero out 
 	// translation row so that it doesn't get into our inverse-transpose
 	// calculation--we don't want the inverse-transpose of the translation.
-	m31 = m32 = m33 = 0.0f;
-	m34 = 1.0f;
+	m41 = m42 = m43 = 0.0f;
+	m44 = 1.0f;
 
 	Matrix44_T<Real> out = *(this);
 

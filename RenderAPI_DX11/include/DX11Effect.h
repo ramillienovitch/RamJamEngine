@@ -2,6 +2,8 @@
 
 #include "DX11Helper.h"
 
+#include "../../RamJamEngine/include/Light.h"
+
 #pragma region Effect
 class Effect
 {
@@ -27,12 +29,12 @@ public:
 	BasicEffect(ID3D11Device* device, const std::wstring& filename);
 	~BasicEffect();
 
-	HRESULT SetWorldViewProj(CXMMATRIX M)                  { return WorldViewProj->SetMatrix(reinterpret_cast<const float*>(&M)); }
-	HRESULT SetWorld(CXMMATRIX M)                          { return World->SetMatrix(reinterpret_cast<const float*>(&M)); }
-	HRESULT SetWorldInvTranspose(CXMMATRIX M)              { return WorldInvTranspose->SetMatrix(reinterpret_cast<const float*>(&M)); }
-	HRESULT SetTexTransform(CXMMATRIX M)                   { return TexTransform->SetMatrix(reinterpret_cast<const float*>(&M)); }
-	HRESULT SetEyePosW(const XMFLOAT3& v)                  { return EyePosW->SetRawValue(&v, 0, sizeof(XMFLOAT3)); }
-	HRESULT SetFogColor(const FXMVECTOR v)                 { return FogColor->SetFloatVector(reinterpret_cast<const float*>(&v)); }
+	HRESULT SetWorldViewProj(Matrix44& M)                  { return WorldViewProj->SetMatrix(reinterpret_cast<const float*>(&M)); }
+	HRESULT SetWorld(Matrix44& M)                          { return World->SetMatrix(reinterpret_cast<const float*>(&M)); }
+	HRESULT SetWorldInvTranspose(Matrix44& M)              { return WorldInvTranspose->SetMatrix(reinterpret_cast<const float*>(&M)); }
+	HRESULT SetTexTransform(Matrix44& M)                   { return TexTransform->SetMatrix(reinterpret_cast<const float*>(&M)); }
+	HRESULT SetEyePosW(const Vector3& v)                  { return EyePosW->SetRawValue(&v, 0, sizeof(Vector3)); }
+	HRESULT SetFogColor(const Vector4& v)                 { return FogColor->SetFloatVector(reinterpret_cast<const float*>(&v)); }
 	HRESULT SetFogStart(float f)                           { return FogStart->SetFloat(f); }
 	HRESULT SetFogRange(float f)                           { return FogRange->SetFloat(f); }
 	HRESULT SetDirLights(const DirectionalLight* lights)   { return DirLights->SetRawValue(lights, 0, 3*sizeof(DirectionalLight)); }
@@ -113,7 +115,7 @@ public:
 	ColorEffect(ID3D11Device* device, const std::wstring& filename);
 	~ColorEffect();
 
-	HRESULT SetWorldViewProj(CXMMATRIX M)	{ return WorldViewProj->SetMatrix(reinterpret_cast<const float*>(&M)); }
+	HRESULT SetWorldViewProj(Matrix44& M)	{ return WorldViewProj->SetMatrix(reinterpret_cast<const float*>(&M)); }
 
 	ID3DX11EffectTechnique*			ColorTech;
 	ID3DX11EffectMatrixVariable*	WorldViewProj;

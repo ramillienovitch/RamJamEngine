@@ -27,7 +27,7 @@ DX11RenderingAPI::DX11RenderingAPI()
 	mConsoleBackground = nullptr;
 	mRjeLogo           = nullptr;
 	
-	mEyePosW = XMFLOAT3(0.0f, 0.0f, 0.0f);
+	mEyePosW = Vector3::zero;
 
 	mDirLightCount   = 1;
 	mPointLightCount = 3;
@@ -36,105 +36,84 @@ DX11RenderingAPI::DX11RenderingAPI()
 	mbUseBlending    = true;
 	mbWireframe      = false;
 
-	DirectX::XMMATRIX Id = DirectX::XMMatrixIdentity();
-	XMStoreFloat4x4(&mGridWorld, Id);
-
 	// Texture transforms
-	XMMATRIX gridTexScale   = XMMatrixScaling(5.0f, 5.0f, 0.0f);
-	XMMATRIX boxTexScale    = XMMatrixScaling(1.0f, 1.0f, 0.0f);
-	XMMATRIX cylTexScale    = boxTexScale;
-	XMMATRIX sphereTexScale = boxTexScale;
-	XMStoreFloat4x4(&mGridTexTransform,     gridTexScale);
-	XMStoreFloat4x4(&mBoxTexTransform,      boxTexScale);
-	XMStoreFloat4x4(&mCylinderTexTransform, cylTexScale);
-	XMStoreFloat4x4(&mSphereTexTransform,   sphereTexScale);
+	mGridTexTransform = Matrix44::Scaling(5.0f, 5.0f, 0.0f);
+	mBoxTexTransform  = mCylinderTexTransform = mSphereTexTransform = Matrix44::Scaling(1.0f, 1.0f, 0.0f);
 
 	// Meshes transforms
-	
-	Transform t;
-	//t.EulerAngles	= Vector3(45,45,45);
-	//t.Scale			= Vector3(2.5f, 5.0f, 0.5f);
-	//t.Position		= Vector3(0.0f, 5.0f, 0.0f);
-	Matrix44 tempworld = t.WorldMatrix();
-
-	//XMStoreFloat4x4(&mWireBoxWorld, wireBoxWorld);
-	XMStoreFloat4x4(&mWireBoxWorld, tempworld);
-	XMStoreFloat4x4(&mAxisWorld, tempworld);
-
-	//-------------
-
-	XMMATRIX boxScale  = XMMatrixScaling(2.0f, 1.0f, 2.0f);
-	XMMATRIX boxOffset = XMMatrixTranslation(0.0f, 0.51f, 0.0f);		//0.51 to avoid z-fight occurring with 0.5
-	XMStoreFloat4x4(&mBoxWorld, XMMatrixMultiply(boxScale, boxOffset));
-
-	XMMATRIX dragonScale    = XMMatrixScaling(0.2f, 0.2f, 0.2f);
-	XMMATRIX dragonOffset   = XMMatrixTranslation(0.0f, 1.0f, 0.0f);
-	XMMATRIX dragonRotation = XMMatrixRotationY(-45);
-	dragonScale = XMMatrixMultiply(dragonScale, dragonOffset);
-	XMStoreFloat4x4(&mModelWorld, XMMatrixMultiply(dragonScale, dragonRotation));
-
+	mGridWorld = Matrix44::identity;
+	Transform tempTrf;
+// 	tempTrf.Rotation	= Quaternion(45,45,45).ToMatrix();
+// 	tempTrf.Scale		= Vector3(2.5f, 5.0f, 0.5f);
+	tempTrf.Position	= Vector3(0.0f, 5.0f, 0.0f);
+	mWireBoxWorld		= mAxisWorld = tempTrf.WorldMatrix();
+	//-------
+	tempTrf.Scale		= Vector3(2.0f, 1.0f, 2.0f);
+	tempTrf.Position	= Vector3(0.0f, 0.51f, 0.0f);		//0.51 to avoid z-fight occurring with 0.5
+	mBoxWorld			= tempTrf.WorldMatrix();
+	//-------
+	tempTrf.Rotation	= Quaternion(0,45,0).ToMatrix();
+	tempTrf.Scale		= Vector3(0.2f, 0.2f, 0.2f);
+	tempTrf.Position	= Vector3(0.0f, 1.0f, 0.0f);
+	mModelWorld			= tempTrf.WorldMatrix();
+	//-------
 	for(int i = 0; i < 5; ++i)
 	{
-		XMStoreFloat4x4(&mCylWorld[i*2+0], XMMatrixTranslation(-5.0f, 1.5f, -10.0f + i*5.0f));
-		XMStoreFloat4x4(&mCylWorld[i*2+1], XMMatrixTranslation(+5.0f, 1.5f, -10.0f + i*5.0f));
-
-		XMStoreFloat4x4(&mSphereWorld[i*2+0], XMMatrixTranslation(-5.0f, 3.5f, -10.0f + i*5.0f));
-		XMStoreFloat4x4(&mSphereWorld[i*2+1], XMMatrixTranslation(+5.0f, 3.5f, -10.0f + i*5.0f));
+		mCylWorld[i*2+0] = Matrix44::Translation(-5.0f, 1.5f, -10.0f + i*5.0f);
+		mCylWorld[i*2+1] = Matrix44::Translation(+5.0f, 1.5f, -10.0f + i*5.0f);
+		//-------
+		mSphereWorld[i*2+0] = Matrix44::Translation(-5.0f, 3.5f, -10.0f + i*5.0f);
+		mSphereWorld[i*2+1] = Matrix44::Translation(+5.0f, 3.5f, -10.0f + i*5.0f);
 	}
 
-	mPointLights[0].Ambient  = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
-	mPointLights[0].Diffuse  = XMFLOAT4(0.1f, 0.1f, 0.75f, 1.0f);
-	mPointLights[0].Specular = XMFLOAT4(0.7f, 0.7f, 0.7f, 1.0f);
-	mPointLights[0].Att      = XMFLOAT3(0.175f, 0.175f, 0.175f);
-	mPointLights[0].Range    = 50.0f;
-
-	mPointLights[1].Ambient  = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
-	mPointLights[1].Diffuse  = XMFLOAT4(0.75f, 0.1f, 0.1f, 1.0f);
-	mPointLights[1].Specular = XMFLOAT4(0.7f, 0.7f, 0.7f, 1.0f);
-	mPointLights[1].Att      = XMFLOAT3(0.175f, 0.175f, 0.175f);
-	mPointLights[1].Range    = 50.0f;
-
-	mPointLights[2].Ambient  = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
-	mPointLights[2].Diffuse  = XMFLOAT4(0.1f, 0.75f, 0.1f, 1.0f);
-	mPointLights[2].Specular = XMFLOAT4(0.7f, 0.7f, 0.7f, 1.0f);
-	mPointLights[2].Att      = XMFLOAT3(0.175f, 0.175f, 0.175f);
-	mPointLights[2].Range    = 50.0f;
-
-	mDirLights[0].Ambient   = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
-	mDirLights[0].Diffuse   = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
-	mDirLights[0].Specular  = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
-	mDirLights[0].Direction = XMFLOAT3(0.57735f, -0.57735f, 0.57735f);
-
-	mDirLights[1].Ambient   = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
-	mDirLights[1].Diffuse   = XMFLOAT4(0.20f, 0.20f, 0.20f, 1.0f);
-	mDirLights[1].Specular  = XMFLOAT4(0.25f, 0.25f, 0.25f, 1.0f);
-	mDirLights[1].Direction = XMFLOAT3(-0.57735f, -0.57735f, 0.57735f);
-
-	mDirLights[2].Ambient   = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
-	mDirLights[2].Diffuse   = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
-	mDirLights[2].Specular  = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
-	mDirLights[2].Direction = XMFLOAT3(0.0f, -0.707f, -0.707f);
+	// Light Specs
+	Vector4 black = Color(Color::Black).GetVector4RGBANorm();
+	Vector4 red   = Color(Color::Red).GetVector4RGBANorm();
+	Vector4 green = Color(Color::Lime).GetVector4RGBANorm();
+	Vector4 blue  = Color(Color::Blue).GetVector4RGBANorm();
+	mPointLights[0].Diffuse = red;
+	mPointLights[1].Diffuse = green;
+	mPointLights[2].Diffuse = blue;
+	mPointLights[0].Ambient  = mPointLights[1].Ambient  = mPointLights[2].Ambient  = black;
+	mPointLights[0].Specular = mPointLights[1].Specular = mPointLights[2].Specular = Vector4(0.7f, 0.7f, 0.7f, 1.0f);
+	mPointLights[0].Att      = mPointLights[1].Att      = mPointLights[2].Att      = Vector3(0.175f, 0.175f, 0.175f);
+	mPointLights[0].Range    = mPointLights[1].Range    = mPointLights[2].Range    = 50.0f;
+	//--------
+	mDirLights[0].Ambient   = Vector4(0.2f, 0.2f, 0.2f, 1.0f);
+	mDirLights[0].Diffuse   = Vector4(0.5f, 0.5f, 0.5f, 1.0f);
+	mDirLights[0].Specular  = Vector4(0.5f, 0.5f, 0.5f, 1.0f);
+	mDirLights[0].Direction = Vector3(0.57735f, -0.57735f, 0.57735f);
+	//--------
+	mDirLights[1].Ambient   = Vector4(0.0f, 0.0f, 0.0f, 1.0f);
+	mDirLights[1].Diffuse   = Vector4(0.20f, 0.20f, 0.20f, 1.0f);
+	mDirLights[1].Specular  = Vector4(0.25f, 0.25f, 0.25f, 1.0f);
+	mDirLights[1].Direction = Vector3(-0.57735f, -0.57735f, 0.57735f);
+	//--------
+	mDirLights[2].Ambient   = Vector4(0.0f, 0.0f, 0.0f, 1.0f);
+	mDirLights[2].Diffuse   = Vector4(0.2f, 0.2f, 0.2f, 1.0f);
+	mDirLights[2].Specular  = Vector4(0.0f, 0.0f, 0.0f, 1.0f);
+	mDirLights[2].Direction = Vector3(0.0f, -0.707f, -0.707f);
 
 	// Material Specs
-	mGridMat.Ambient  = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
-	mGridMat.Diffuse  = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-	mGridMat.Specular = XMFLOAT4(0.2f, 0.2f, 0.2f, 16.0f);
-
-	mCylinderMat.Ambient  = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
-	mCylinderMat.Diffuse  = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-	mCylinderMat.Specular = XMFLOAT4(0.2f, 0.2f, 0.2f, 16.0f);
-
-	mSphereMat.Ambient  = XMFLOAT4(0.6f, 0.8f, 0.9f, 1.0f);
-	mSphereMat.Diffuse  = XMFLOAT4(0.6f, 0.8f, 0.9f, 1.0f);
-	mSphereMat.Specular = XMFLOAT4(0.9f, 0.9f, 0.9f, 16.0f);
-
-	mBoxMat.Ambient  = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
-	mBoxMat.Diffuse  = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-	mBoxMat.Specular = XMFLOAT4(0.2f, 0.2f, 0.2f, 16.0f);
-
-	mModelMat.Ambient  = XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f);
-	mModelMat.Diffuse  = XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f);
-	mModelMat.Specular = XMFLOAT4(0.8f, 0.8f, 0.8f, 16.0f);
+	mGridMat.Ambient  = Vector4(0.5f, 0.5f, 0.5f, 1.0f);
+	mGridMat.Diffuse  = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+	mGridMat.Specular = Vector4(0.2f, 0.2f, 0.2f, 16.0f);
+	//--------
+	mCylinderMat.Ambient  = Vector4(0.5f, 0.5f, 0.5f, 1.0f);
+	mCylinderMat.Diffuse  = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+	mCylinderMat.Specular = Vector4(0.2f, 0.2f, 0.2f, 16.0f);
+	//--------
+	mSphereMat.Ambient  = Vector4(0.6f, 0.8f, 0.9f, 1.0f);
+	mSphereMat.Diffuse  = Vector4(0.6f, 0.8f, 0.9f, 1.0f);
+	mSphereMat.Specular = Vector4(0.9f, 0.9f, 0.9f, 16.0f);
+	//--------
+	mBoxMat.Ambient  = Vector4(0.5f, 0.5f, 0.5f, 1.0f);
+	mBoxMat.Diffuse  = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+	mBoxMat.Specular = Vector4(0.2f, 0.2f, 0.2f, 16.0f);
+	//--------
+	mModelMat.Ambient  = Vector4(0.8f, 0.8f, 0.8f, 1.0f);
+	mModelMat.Diffuse  = Vector4(0.8f, 0.8f, 0.8f, 1.0f);
+	mModelMat.Specular = Vector4(0.8f, 0.8f, 0.8f, 16.0f);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -557,7 +536,7 @@ void DX11RenderingAPI::UpdateScene( float dt )
 	float z = System::Instance()->mCameraRadius*sinf(System::Instance()->mCameraPhi)*sinf(System::Instance()->mCameraTheta);
 	float y = System::Instance()->mCameraRadius*cosf(System::Instance()->mCameraPhi);
 
-	mEyePosW = XMFLOAT3(x, y, z);
+	mEyePosW = Vector3(x, y, z);
 
 	// Build the view matrix.
 	mCamera->mPosition = Vector3(x, y, z);
@@ -647,7 +626,7 @@ void DX11RenderingAPI::DrawScene()
 	DX11Effects::BasicFX->SetDirLights(mDirLights);
 	DX11Effects::BasicFX->SetPointLights(mPointLights);
 	DX11Effects::BasicFX->SetEyePosW(mEyePosW);
-	DX11Effects::BasicFX->SetFogColor(Colors::Silver);
+	DX11Effects::BasicFX->SetFogColor(Color(Color::Silver).GetVector4RGBANorm());
 	DX11Effects::BasicFX->SetFogStart(fogStart);
 	DX11Effects::BasicFX->SetFogRange(fogRange);
 	DX11Effects::BasicFX->SetSamplerState(DX11CommonStates::sCurrentSamplerState);
@@ -729,22 +708,23 @@ void DX11RenderingAPI::DrawScene()
 	}
 
 	D3DX11_TECHNIQUE_DESC techDesc;
-	XMMATRIX world;
-	XMMATRIX worldInvTranspose;
-	XMMATRIX worldViewProj;
+	Matrix44 world;
+	Matrix44 worldInvTranspose;
+	Matrix44 worldViewProj;
 
 	activeTech->GetDesc( &techDesc );
 	for(UINT p = 0; p < techDesc.Passes; ++p)
 	{
 		// Draw the box.
-		world             = XMLoadFloat4x4(&mBoxWorld);
-		worldInvTranspose = DX11Math::InverseTranspose(world);
+		world             = mBoxWorld;
+		worldInvTranspose = world;
+		worldInvTranspose.InverseTranspose();
 		worldViewProj     = world*view*proj;
 
 		DX11Effects::BasicFX->SetWorld(world);
 		DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
 		DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
-		DX11Effects::BasicFX->SetTexTransform(XMLoadFloat4x4(&mBoxTexTransform));
+		DX11Effects::BasicFX->SetTexTransform(mBoxTexTransform);
 		DX11Effects::BasicFX->SetMaterial(mBoxMat);
 		DX11Effects::BasicFX->SetDiffuseMap(mBoxMap);
 		DX11Effects::BasicFX->SetMaskMap(mWhiteSRV);
@@ -762,14 +742,15 @@ void DX11RenderingAPI::DrawScene()
 		// Draw the cylinders.
 		for(int i = 0; i < 10; ++i)
 		{
-			world             = XMLoadFloat4x4(&mCylWorld[i]);
-			worldInvTranspose = DX11Math::InverseTranspose(world);
+			world             = mCylWorld[i];
+			worldInvTranspose = world;
+			worldInvTranspose.InverseTranspose();
 			worldViewProj     = world*view*proj;
 
 			DX11Effects::BasicFX->SetWorld(world);
 			DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
 			DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
-			DX11Effects::BasicFX->SetTexTransform(XMLoadFloat4x4(&mCylinderTexTransform));
+			DX11Effects::BasicFX->SetTexTransform(mCylinderTexTransform);
 			DX11Effects::BasicFX->SetMaterial(mCylinderMat);
 			DX11Effects::BasicFX->SetDiffuseMap(mCylinderMap);
 			DX11Effects::BasicFX->SetMaskMap(mWhiteSRV);
@@ -779,8 +760,9 @@ void DX11RenderingAPI::DrawScene()
 		}
 
 		// Draw the model.
-		world             = XMLoadFloat4x4(&mModelWorld);
-		worldInvTranspose = DX11Math::InverseTranspose(world);
+		world             = mModelWorld;
+		worldInvTranspose = world;
+		worldInvTranspose.InverseTranspose();
 		worldViewProj     = world*view*proj;
 
 		DX11Effects::BasicFX->SetWorld(world);
@@ -796,14 +778,15 @@ void DX11RenderingAPI::DrawScene()
 		// Draw the spheres.
 		for(int i = 0; i < 10; ++i)
 		{
-			world             = XMLoadFloat4x4(&mSphereWorld[i]);
-			worldInvTranspose = DX11Math::InverseTranspose(world);
+			world             = mSphereWorld[i];
+			worldInvTranspose = world;
+			worldInvTranspose.InverseTranspose();
 			worldViewProj     = world*view*proj;
 
 			DX11Effects::BasicFX->SetWorld(world);
 			DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
 			DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
-			DX11Effects::BasicFX->SetTexTransform(XMLoadFloat4x4(&mSphereTexTransform));
+			DX11Effects::BasicFX->SetTexTransform(mSphereTexTransform);
 			DX11Effects::BasicFX->SetMaterial(mSphereMat);
 			DX11Effects::BasicFX->SetDiffuseMap(mSphereMap);
 			DX11Effects::BasicFX->SetMaskMap(mWhiteSRV);
@@ -820,19 +803,20 @@ void DX11RenderingAPI::DrawScene()
 		}
 
 		//////////////////////////////////////////////////////////////////////////
-
+		
 		// if we're in wireframe then we don't need to render the reflections
 		if (mbWireframe)
 		{
 			// Draw the grid.
-			world             = XMLoadFloat4x4(&mGridWorld);
-			worldInvTranspose = DX11Math::InverseTranspose(world);
+			world             = mGridWorld;
+			worldInvTranspose = world;
+			worldInvTranspose.InverseTranspose();
 			worldViewProj     = world*view*proj;
 
 			DX11Effects::BasicFX->SetWorld(world);
 			DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
 			DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
-			DX11Effects::BasicFX->SetTexTransform(XMLoadFloat4x4(&mGridTexTransform));
+			DX11Effects::BasicFX->SetTexTransform(mGridTexTransform);
 			DX11Effects::BasicFX->SetMaterial(mGridMat);
 			DX11Effects::BasicFX->SetDiffuseMap(mGridMap);
 			DX11Effects::BasicFX->SetMaskMap(mMaskMap);
@@ -843,14 +827,15 @@ void DX11RenderingAPI::DrawScene()
 		else
 		{
 			// Draw the grid (mirror)
-			world             = XMLoadFloat4x4(&mGridWorld);
-			worldInvTranspose = DX11Math::InverseTranspose(world);
+			world             = mGridWorld;
+			worldInvTranspose = world;
+			worldInvTranspose.InverseTranspose();
 			worldViewProj     = world*view*proj;
 
 			DX11Effects::BasicFX->SetWorld(world);
 			DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
 			DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
-			DX11Effects::BasicFX->SetTexTransform(XMLoadFloat4x4(&mGridTexTransform));
+			DX11Effects::BasicFX->SetTexTransform(mGridTexTransform);
 			DX11Effects::BasicFX->SetMaterial(mGridMat);
 			DX11Effects::BasicFX->SetDiffuseMap(mGridMap);
 			DX11Effects::BasicFX->SetMaskMap(mMaskMap);
@@ -872,38 +857,34 @@ void DX11RenderingAPI::DrawScene()
 			//////////////////////////////////////////////////////////////////////////
 
 			// Draw the reflected meshes
-			XMVECTOR mirrorPlane = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);		// xz plane
-			XMMATRIX R           = XMMatrixReflect(mirrorPlane);
+			Vector4 mirrorPlane       = Vector4(0.0f, 1.0f, 0.0f, 0.0f);		// xz plane
+			Matrix44 reflectionMatrix = Matrix44::Reflection(mirrorPlane);
 
 			// Cache the old light directions, and reflect the light directions and position.
-			XMFLOAT3 oldDirLightDirections[3];
-			XMFLOAT3 oldPointLightPositions[3];
+			Vector3 oldDirLightDirections[3];
+			Vector3 oldPointLightPositions[3];
 			for(int i = 0; i < 3; ++i)
 			{
 				oldDirLightDirections[i]  = mDirLights[i].Direction;
 				oldPointLightPositions[i] = mPointLights[i].Position;
 
-				XMVECTOR lightDir = XMLoadFloat3(&mDirLights[i].Direction);
-				XMVECTOR reflectedLightDir = XMVector3TransformNormal(lightDir, R);
-				XMStoreFloat3(&mDirLights[i].Direction, reflectedLightDir);
-
-				XMVECTOR lightPos = XMLoadFloat3(&mPointLights[i].Position);
-				XMVECTOR reflectedLightPos =XMVector3Reflect(lightPos, mirrorPlane);
-				XMStoreFloat3(&mPointLights[i].Position, reflectedLightPos);
+				mDirLights[i].Direction  = Vector3::ReflectRay(mDirLights[i].Direction, Vector3::up);
+				mPointLights[i].Position = reflectionMatrix * mPointLights[i].Position;
 			}
 
 			DX11Effects::BasicFX->SetPointLights(mPointLights);
 			DX11Effects::BasicFX->SetDirLights(mDirLights);
 
 			// Draw the box.
-			world             = XMLoadFloat4x4(&mBoxWorld) * R;
-			worldInvTranspose = DX11Math::InverseTranspose(world);
+			world             = mBoxWorld * reflectionMatrix;
+			worldInvTranspose = world;
+			worldInvTranspose.InverseTranspose();
 			worldViewProj     = world*view*proj;
 
 			DX11Effects::BasicFX->SetWorld(world);
 			DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
 			DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
-			DX11Effects::BasicFX->SetTexTransform(XMLoadFloat4x4(&mBoxTexTransform));
+			DX11Effects::BasicFX->SetTexTransform(mBoxTexTransform);
 			DX11Effects::BasicFX->SetMaterial(mBoxMat);
 			DX11Effects::BasicFX->SetDiffuseMap(mBoxMap);
 			DX11Effects::BasicFX->SetMaskMap(mWhiteSRV);
@@ -924,14 +905,15 @@ void DX11RenderingAPI::DrawScene()
 			// Draw the cylinders.
 			for(int i = 0; i < 10; ++i)
 			{
-				world             = XMLoadFloat4x4(&mCylWorld[i]) * R;
-				worldInvTranspose = DX11Math::InverseTranspose(world);
+				world             = mCylWorld[i] * reflectionMatrix;
+				worldInvTranspose = world;
+				worldInvTranspose.InverseTranspose();
 				worldViewProj     = world*view*proj;
 
 				DX11Effects::BasicFX->SetWorld(world);
 				DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
 				DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
-				DX11Effects::BasicFX->SetTexTransform(XMLoadFloat4x4(&mCylinderTexTransform));
+				DX11Effects::BasicFX->SetTexTransform(mCylinderTexTransform);
 				DX11Effects::BasicFX->SetMaterial(mCylinderMat);
 				DX11Effects::BasicFX->SetDiffuseMap(mCylinderMap);
 				DX11Effects::BasicFX->SetMaskMap(mWhiteSRV);
@@ -951,14 +933,15 @@ void DX11RenderingAPI::DrawScene()
 			// Draw the spheres.
 			for(int i = 0; i < 10; ++i)
 			{
-				world             = XMLoadFloat4x4(&mSphereWorld[i]) * R;
-				worldInvTranspose = DX11Math::InverseTranspose(world);
+				world             = mSphereWorld[i] * reflectionMatrix;
+				worldInvTranspose = world;
+				worldInvTranspose.InverseTranspose();
 				worldViewProj     = world*view*proj;
 
 				DX11Effects::BasicFX->SetWorld(world);
 				DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
 				DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
-				DX11Effects::BasicFX->SetTexTransform(XMLoadFloat4x4(&mSphereTexTransform));
+				DX11Effects::BasicFX->SetTexTransform(mSphereTexTransform);
 				DX11Effects::BasicFX->SetMaterial(mSphereMat);
 				DX11Effects::BasicFX->SetDiffuseMap(mSphereMap);
 				DX11Effects::BasicFX->SetMaskMap(mWhiteSRV);
@@ -974,8 +957,9 @@ void DX11RenderingAPI::DrawScene()
 			mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_CullClockwise);
 
 			// Draw the model reflection
-			world                = XMLoadFloat4x4(&mModelWorld) * R;
-			worldInvTranspose    = DX11Math::InverseTranspose(world);
+			world             = mModelWorld * reflectionMatrix;
+			worldInvTranspose = world;
+			worldInvTranspose.InverseTranspose();
 			worldViewProj        = world*view*proj;
 
 			DX11Effects::BasicFX->SetWorld(world);
@@ -1005,14 +989,15 @@ void DX11RenderingAPI::DrawScene()
 
 			// Draw the mirror to the back buffer as usual but with transparency
 			// blending so the reflection shows through.
-			world             = XMLoadFloat4x4(&mGridWorld);
-			worldInvTranspose = DX11Math::InverseTranspose(world);
+			world             = mGridWorld;
+			worldInvTranspose = world;
+			worldInvTranspose.InverseTranspose();
 			worldViewProj     = world*view*proj;
 
 			DX11Effects::BasicFX->SetWorld(world);
 			DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
 			DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
-			DX11Effects::BasicFX->SetTexTransform(XMLoadFloat4x4(&mGridTexTransform));
+			DX11Effects::BasicFX->SetTexTransform(mGridTexTransform);
 			DX11Effects::BasicFX->SetMaterial(mGridMat);
 			DX11Effects::BasicFX->SetDiffuseMap(mGridMap);
 			DX11Effects::BasicFX->SetMaskMap(mMaskMap);
@@ -1024,6 +1009,7 @@ void DX11RenderingAPI::DrawScene()
 			// Restore default states.
 			mDX11Device->md3dImmediateContext->OMSetBlendState(0, blendFactor, 0xffffffff);
 			mDX11Device->md3dImmediateContext->OMSetDepthStencilState(0, 0);
+			
 		}
 	}
 	
@@ -1076,16 +1062,16 @@ void DX11RenderingAPI::DrawGizmos()
 	mDX11Device->md3dImmediateContext->OMSetBlendState(DX11CommonStates::sBlendState_Opaque, blendFactor, 0xffffffff);
 
 	// Set constants
-	DirectX::XMMATRIX view     = mCamera->mView;
-	DirectX::XMMATRIX proj     = *(mCamera->mCurrentProjectionMatrix);
-	DirectX::XMMATRIX viewProj = view*proj;
+	Matrix44 view     = mCamera->mView;
+	Matrix44 proj     = *(mCamera->mCurrentProjectionMatrix);
+	Matrix44 viewProj = view*proj;
 
-	XMMATRIX world;
-	XMMATRIX worldViewProj;
+	Matrix44 world;
+	Matrix44 worldViewProj;
 	
 	// Draw the wireBox.
-	world             = XMLoadFloat4x4(&mWireBoxWorld);
-	worldViewProj     = world*view*proj;
+	world         = mWireBoxWorld;
+	worldViewProj = world*view*proj;
 
 	DX11Effects::ColorFX->SetWorldViewProj(worldViewProj);
 
@@ -1093,8 +1079,8 @@ void DX11RenderingAPI::DrawGizmos()
 	mDX11Device->md3dImmediateContext->DrawIndexed(mWireBoxIndexCount, mWireBoxIndexOffset, mWireBoxVertexOffset);
 
 	// Draw the Axis.
-	world             = XMLoadFloat4x4(&mAxisWorld);
-	worldViewProj     = world*view*proj;
+	world         = mAxisWorld;
+	worldViewProj = world*view*proj;
 
 	DX11Effects::ColorFX->SetWorldViewProj(worldViewProj);
 

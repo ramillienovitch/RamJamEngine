@@ -52,19 +52,19 @@ struct DX11RenderingAPI : GraphicAPI
 	Material mSphereMat;
 	Material mModelMat;
 
-	XMFLOAT4X4 mBoxTexTransform;
-	XMFLOAT4X4 mGridTexTransform;
-	XMFLOAT4X4 mSphereTexTransform;
-	XMFLOAT4X4 mCylinderTexTransform;
+	Matrix44 mBoxTexTransform;
+	Matrix44 mGridTexTransform;
+	Matrix44 mSphereTexTransform;
+	Matrix44 mCylinderTexTransform;
 	
-	XMFLOAT4X4 mBoxWorld;
-	XMFLOAT4X4 mGridWorld;
-	XMFLOAT4X4 mSphereWorld[10];
-	XMFLOAT4X4 mCylWorld[10];
-	XMFLOAT4X4 mModelWorld;
+	Matrix44 mBoxWorld;
+	Matrix44 mGridWorld;
+	Matrix44 mSphereWorld[10];
+	Matrix44 mCylWorld[10];
+	Matrix44 mModelWorld;
 
-	XMFLOAT4X4 mView;
-	XMFLOAT4X4 mProj;
+	Matrix44 mView;
+	Matrix44 mProj;
 
 	//---------------
 	int mBoxVertexOffset;
@@ -91,8 +91,8 @@ struct DX11RenderingAPI : GraphicAPI
 // 	Quaternion	mWireBoxRotation;
 // 	Vector3		mWireBoxScale;
 // 	Matrix44	mWireBoxWorld;
-	XMFLOAT4X4 mWireBoxWorld;
-	XMFLOAT4X4 mAxisWorld;
+	Matrix44 mWireBoxWorld;
+	Matrix44 mAxisWorld;
 	int  mWireBoxVertexOffset;
 	int  mAxisVertexOffset;
 	UINT mWireBoxIndexCount;
@@ -101,7 +101,7 @@ struct DX11RenderingAPI : GraphicAPI
 	UINT mAxisIndexOffset;
 	//---------------
 
-	XMFLOAT3 mEyePosW;
+	Vector3 mEyePosW;
 
 	// Scene Parameters : TODO: Get these out of DX11RenderingAPI !
 	UINT mDirLightCount;
