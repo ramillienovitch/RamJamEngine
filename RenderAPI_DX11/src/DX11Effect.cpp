@@ -46,7 +46,7 @@ BasicEffect::BasicEffect(ID3D11Device* device, const std::wstring& filename)
 	DirLightCount     = mFX->GetVariableByName("gDirLightCount")->AsScalar();
 	PointLightCount   = mFX->GetVariableByName("gPointLightCount")->AsScalar();
 	DirLights         = mFX->GetVariableByName("gDirLights");
-	PointLights       = mFX->GetVariableByName("gPointLights");
+	PointLights       = mFX->GetVariableByName("gPointLights")->AsShaderResource();
 	Mat               = mFX->GetVariableByName("gMaterial");
 	DiffuseMap        = mFX->GetVariableByName("gDiffuseMap")->AsShaderResource();
 	MaskMap           = mFX->GetVariableByName("gMaskMap")->AsShaderResource();

@@ -9,6 +9,9 @@
 #include "MeshData.h"
 #include "GeometryGenerator.h"
 
+#define MAX_LIGHTS_POWER 10
+#define MAX_LIGHTS (1<<MAX_LIGHTS_POWER)
+
 struct GraphicAPI
 {
 	Camera* mCamera;

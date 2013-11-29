@@ -39,6 +39,8 @@ namespace RJE_COLOR
 		//-----------------
 		Vector4 GetVector4RGBANorm()	{ return Vector4(GetRedNorm(), GetGreenNorm(), GetBlueNorm(), GetAlphaNorm()); }
 		Vector4 GetVector4ARGBNorm()	{ return Vector4(GetAlphaNorm(), GetRedNorm(), GetGreenNorm(), GetBlueNorm()); }
+		//-----------------
+		static Vector4 GetRandomRGBNorm()		{ return Vector4(RJE::Math::Rand(0.0f, 256.0f)/255.0f, RJE::Math::Rand(0.0f, 256.0f)/255.0f, RJE::Math::Rand(0.0f, 256.0f)/255.0f, 1.0f); }
 	
 		//////////////////////////////////////////////////////////////////////////
 

@@ -46,11 +46,11 @@ namespace RJE
 		//--------------------------------------------------
 		template<typename T>
 		FORCEINLINE static T Rand()					// Returns random value in [0, 1[.
-		{ return (rand()) / RAND_MAX; }
+		{ return static_cast<T>(rand()) / static_cast<T>(RAND_MAX); }
 		//------------------------
 		template<typename T>
 		FORCEINLINE static T Rand(T a, T b)		// Returns random value in [a, b[.
-		{ return a + static_cast<T>((rand()) / RAND_MAX)*(b-a); }
+		{ return a + static_cast<T>((rand()) / static_cast<T>(RAND_MAX))*(b-a); }
 		//------------------------
 
 		//--------------------------------------------------

@@ -8,8 +8,6 @@
  
 cbuffer cbPerFrame
 {
-	DirectionalLight	gDirLights[MAX_LIGHT_DIR];
-	PointLight			gPointLights[MAX_POINT_DIR];
 	float3 gEyePosW;
 	//-----------
 	float  gFogStart;
@@ -123,20 +121,22 @@ float4 PS(VertexOut pin) : SV_Target
 
 	// Sum the light contribution from each light source.  
 	float4 A, D, S;
-	[unroll]
-	for(int i = 0; i < gDirLightCount; ++i)
+	for (uint dirLightIdx = 0; dirLightIdx < (uint)gDirLightCount; ++dirLightIdx)
 	{
-		ComputeDirectionalLight(gMaterial, gDirLights[i], pin.NormalW, toEye, A, D, S);
+		DirectionalLight light = gDirLights[dirLightIdx];
+		ComputeDirectionalLight(gMaterial, light, pin.NormalW, toEye, A, D, S);
 
 		ambient += A;
 		diffuse += D;
 		spec    += S;
 	}
 
-	[unroll]
-	for(int j = 0; j < gPointLightCount; ++j)
+	uint totalLights, dummy;
+	gPointLights.GetDimensions(totalLights, dummy);
+	for (uint pointLightIdx = 0; pointLightIdx < totalLights; ++pointLightIdx)
 	{
-		ComputePointLight(gMaterial, gPointLights[j], pin.PosW, pin.NormalW, toEye, A, D, S);
+		PointLight light = gPointLights[pointLightIdx];
+		ComputePointLight(gMaterial, light, pin.PosW, pin.NormalW, toEye, A, D, S);
 
 		ambient += A;
 		diffuse += D;

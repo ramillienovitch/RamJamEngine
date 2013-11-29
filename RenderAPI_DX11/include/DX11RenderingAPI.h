@@ -44,8 +44,13 @@ struct DX11RenderingAPI : GraphicAPI
 	ID3D11ShaderResourceView* mConsoleBackground;
 	ID3D11ShaderResourceView* mRjeLogo;
 
-	PointLight       mPointLights[3];
+	StructuredBuffer<PointLight>*	mPointLights;
+	PointLight						mOldPointLights[MAX_LIGHTS];		// Used for reflections
+	PointLight						mWorkingPointLights[MAX_LIGHTS];
 	DirectionalLight mDirLights[3];
+	UINT mDirLightCount;
+	UINT mPointLightCount;
+
 	Material mBoxMat;
 	Material mGridMat;
 	Material mCylinderMat;
@@ -87,10 +92,6 @@ struct DX11RenderingAPI : GraphicAPI
 	//---------------
 
 	//---------------
-// 	Vector3		mWireBoxPosition;
-// 	Quaternion	mWireBoxRotation;
-// 	Vector3		mWireBoxScale;
-// 	Matrix44	mWireBoxWorld;
 	Matrix44 mWireBoxWorld;
 	Matrix44 mAxisWorld;
 	int  mWireBoxVertexOffset;
@@ -104,8 +105,7 @@ struct DX11RenderingAPI : GraphicAPI
 	Vector3 mEyePosW;
 
 	// Scene Parameters : TODO: Get these out of DX11RenderingAPI !
-	UINT mDirLightCount;
-	UINT mPointLightCount;
+	BOOL mbDrawReflections;
 	BOOL mbUseTexture;
 	BOOL mbUseBlending;
 	BOOL mbUseFog;
@@ -129,9 +129,11 @@ struct DX11RenderingAPI : GraphicAPI
 	void Create2DTexture(i32 height, i32 width, RJE_COLOR::Color color, ID3D11ShaderResourceView** textureSRV);
 	void BuildGeometryBuffers();
 	void BuildGizmosBuffers();
-
+	//---------------
 	void DrawGizmos();
 	void DrawConsole();
 	void DrawProfiler();
 	void Draw2dElements();
+	//---------------
+	void SetActivePointLights(UINT activeLights);
 };

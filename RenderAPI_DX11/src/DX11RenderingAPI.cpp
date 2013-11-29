@@ -29,15 +29,15 @@ DX11RenderingAPI::DX11RenderingAPI()
 	
 	mEyePosW = Vector3::zero;
 
-	mDirLightCount   = 1;
-	mPointLightCount = 3;
-	mbUseFog         = false;
-	mbUseTexture     = true;
-	mbUseBlending    = true;
-	mbWireframe      = false;
+	mDirLightCount    = 1;
+	mbDrawReflections = true;
+	mbUseFog          = false;
+	mbUseTexture      = true;
+	mbUseBlending     = true;
+	mbWireframe       = false;
 
 	// Texture transforms
-	mGridTexTransform = Matrix44::Scaling(5.0f, 5.0f, 0.0f);
+	mGridTexTransform = Matrix44::Scaling(30.0f, 30.0f, 0.0f);
 	mBoxTexTransform  = mCylinderTexTransform = mSphereTexTransform = Matrix44::Scaling(1.0f, 1.0f, 0.0f);
 
 	// Meshes transforms
@@ -67,18 +67,16 @@ DX11RenderingAPI::DX11RenderingAPI()
 	}
 
 	// Light Specs
+	mPointLights = nullptr;
 	Vector4 black = Color(Color::Black).GetVector4RGBANorm();
-	Vector4 red   = Color(Color::Red).GetVector4RGBANorm();
-	Vector4 green = Color(Color::Lime).GetVector4RGBANorm();
-	Vector4 blue  = Color(Color::Blue).GetVector4RGBANorm();
-	mPointLights[0].Diffuse = red;
-	mPointLights[1].Diffuse = green;
-	mPointLights[2].Diffuse = blue;
-	mPointLights[0].Ambient  = mPointLights[1].Ambient  = mPointLights[2].Ambient  = black;
-	mPointLights[0].Specular = mPointLights[1].Specular = mPointLights[2].Specular = Vector4(0.7f, 0.7f, 0.7f, 1.0f);
-	mPointLights[0].Att      = mPointLights[1].Att      = mPointLights[2].Att      = Vector3(0.175f, 0.175f, 0.175f);
-	mPointLights[0].Range    = mPointLights[1].Range    = mPointLights[2].Range    = 50.0f;
-	//--------
+	for (int i = 0; i < MAX_LIGHTS; i++)
+	{
+		mWorkingPointLights[i].Diffuse  = Color::GetRandomRGBNorm();
+		mWorkingPointLights[i].Ambient  = black;
+		mWorkingPointLights[i].Specular = Vector4(0.7f, 0.7f, 0.7f, 1.0f);
+		mWorkingPointLights[i].Att      = Vector3(0.175f, 0.175f, 0.175f);
+		mWorkingPointLights[i].Range    = 50.0f;
+	}
 	mDirLights[0].Ambient   = Vector4(0.2f, 0.2f, 0.2f, 1.0f);
 	mDirLights[0].Diffuse   = Vector4(0.5f, 0.5f, 0.5f, 1.0f);
 	mDirLights[0].Specular  = Vector4(0.5f, 0.5f, 0.5f, 1.0f);
@@ -271,6 +269,8 @@ void DX11RenderingAPI::Initialize(HWND hMainWnd, int windowWidth, int windowHeig
 
 	BuildGeometryBuffers();
 	BuildGizmosBuffers();
+
+	SetActivePointLights(3);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -350,7 +350,7 @@ void DX11RenderingAPI::BuildGeometryBuffers()
 
 	GeometryGenerator geoGen;
 	geoGen.CreateBox(1.0f, 1.0f, 1.0f, box);
-	geoGen.CreateGrid(20.0f, 30.0f, 2, 2, grid);
+	geoGen.CreateGrid(100.0f, 100.0f, 2, 2, grid);
 	//geoGen.CreateSphere(0.5f, 20, 20, sphere);
 	geoGen.CreateGeosphere(0.5f, 3, sphere);
 	geoGen.CreateCylinder(0.5f, 0.3f, 3.0f, 20, 20, cylinder);
@@ -551,10 +551,9 @@ void DX11RenderingAPI::UpdateScene( float dt )
 		if (Input::Instance()->GetKeyboardDown(Keyboard1))	mDirLightCount = 1;
 		if (Input::Instance()->GetKeyboardDown(Keyboard2))	mDirLightCount = 2;
 		if (Input::Instance()->GetKeyboardDown(Keyboard3))	mDirLightCount = 3;
-		if (Input::Instance()->GetKeyboardDown(Numpad0))	mPointLightCount = 0;
-		if (Input::Instance()->GetKeyboardDown(Numpad1))	mPointLightCount = 1;
-		if (Input::Instance()->GetKeyboardDown(Numpad2))	mPointLightCount = 2;
-		if (Input::Instance()->GetKeyboardDown(Numpad3))	mPointLightCount = 3;
+		if (Input::Instance()->GetKeyboardDown(Add))		if (mPointLightCount < MAX_LIGHTS)	SetActivePointLights(mPointLightCount + 1);
+		if (Input::Instance()->GetKeyboardDown(Subtract))	if (mPointLightCount > 0)			SetActivePointLights(mPointLightCount - 1);
+		if (Input::Instance()->GetKeyboardDown(R))			mbDrawReflections = !mbDrawReflections;
 		if (Input::Instance()->GetKeyboardDown(T))			mbUseTexture  = !mbUseTexture;
 		if (Input::Instance()->GetKeyboardDown(B))			mbUseBlending = !mbUseBlending;
 		if (Input::Instance()->GetKeyboardDown(F))			mbUseFog      = !mbUseFog;
@@ -571,17 +570,21 @@ void DX11RenderingAPI::UpdateScene( float dt )
 	static float timer = 0.0f;
 	timer += dt*0.5f;
 
-	mPointLights[0].Position.x = 3.0f*cosf(2*RJE::Math::Pi_f/3 + timer );
-	mPointLights[0].Position.z = 3.0f*sinf(2*RJE::Math::Pi_f/3 + timer );
-	mPointLights[0].Position.y = 2.0f + cosf( timer );
-
-	mPointLights[1].Position.x = 3.0f*cosf(-2*RJE::Math::Pi_f/3 + timer );
-	mPointLights[1].Position.z = 3.0f*sinf(-2*RJE::Math::Pi_f/3 + timer );
-	mPointLights[1].Position.y = 2.0f + cosf( timer );
-
-	mPointLights[2].Position.x = 3.0f*cosf( timer );
-	mPointLights[2].Position.z = 3.0f*sinf( timer );
-	mPointLights[2].Position.y = 2.0f + cosf( timer );
+	// Copy light list into shader buffer
+	if (mPointLightCount > 0)
+	{
+		PointLight* light = mPointLights->MapDiscard(mDX11Device->md3dImmediateContext);
+		Vector4 black = Color(Color::Black).GetVector4RGBANorm();
+		Vector4 blue = Color(Color::Blue).GetVector4RGBANorm();
+		for (UINT i = 0; i < mPointLightCount; ++i)
+		{
+			mWorkingPointLights[i].Position.x = (i+1)*cosf(2*i + RJE::Math::Pi_f + timer );
+			mWorkingPointLights[i].Position.y = 2.0f + cosf( timer );
+			mWorkingPointLights[i].Position.z = (i+1)*sinf(2*i + RJE::Math::Pi_f + timer );
+			light[i] = mWorkingPointLights[i];
+		}
+		mPointLights->Unmap(mDX11Device->md3dImmediateContext);
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -624,7 +627,7 @@ void DX11RenderingAPI::DrawScene()
 
 	// Set per frame constants.
 	DX11Effects::BasicFX->SetDirLights(mDirLights);
-	DX11Effects::BasicFX->SetPointLights(mPointLights);
+	DX11Effects::BasicFX->SetPointLights(mPointLights->GetShaderResource());
 	DX11Effects::BasicFX->SetEyePosW(mEyePosW);
 	DX11Effects::BasicFX->SetFogColor(Color(Color::Silver).GetVector4RGBANorm());
 	DX11Effects::BasicFX->SetFogStart(fogStart);
@@ -735,42 +738,28 @@ void DX11RenderingAPI::DrawScene()
 
 		//////////////////////////////////////////////////////////////////////////
 		
+		// Draw the grid.
+		world             = mGridWorld;
+		worldInvTranspose = world;
+		worldInvTranspose.InverseTranspose();
+		worldViewProj     = world*view*proj;
+
+		DX11Effects::BasicFX->SetWorld(world);
+		DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
+		DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
+		DX11Effects::BasicFX->SetTexTransform(mGridTexTransform);
+		DX11Effects::BasicFX->SetMaterial(mGridMat);
+		DX11Effects::BasicFX->SetDiffuseMap(mGridMap);
+		DX11Effects::BasicFX->SetMaskMap(mMaskMap);
+
 		// if we're in wireframe then we don't need to render the reflections
-		if (mbWireframe)
+		if (mbWireframe || !mbDrawReflections )
 		{
-			// Draw the grid.
-			world             = mGridWorld;
-			worldInvTranspose = world;
-			worldInvTranspose.InverseTranspose();
-			worldViewProj     = world*view*proj;
-
-			DX11Effects::BasicFX->SetWorld(world);
-			DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
-			DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
-			DX11Effects::BasicFX->SetTexTransform(mGridTexTransform);
-			DX11Effects::BasicFX->SetMaterial(mGridMat);
-			DX11Effects::BasicFX->SetDiffuseMap(mGridMap);
-			DX11Effects::BasicFX->SetMaskMap(mMaskMap);
-
 			activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
 			mDX11Device->md3dImmediateContext->DrawIndexed(mGridIndexCount, mGridIndexOffset, mGridVertexOffset);
 		}
 		else
 		{
-			// Draw the grid (mirror)
-			world             = mGridWorld;
-			worldInvTranspose = world;
-			worldInvTranspose.InverseTranspose();
-			worldViewProj     = world*view*proj;
-
-			DX11Effects::BasicFX->SetWorld(world);
-			DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
-			DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
-			DX11Effects::BasicFX->SetTexTransform(mGridTexTransform);
-			DX11Effects::BasicFX->SetMaterial(mGridMat);
-			DX11Effects::BasicFX->SetDiffuseMap(mGridMap);
-			DX11Effects::BasicFX->SetMaskMap(mMaskMap);
-
 			// Do not write to render target.
 			mDX11Device->md3dImmediateContext->OMSetBlendState(DX11CommonStates::sBlendState_NoRenderTargetWrites, blendFactor, 0xffffffff);
 
@@ -793,17 +782,24 @@ void DX11RenderingAPI::DrawScene()
 
 			// Cache the old light directions, and reflect the light directions and position.
 			Vector3 oldDirLightDirections[3];
-			Vector3 oldPointLightPositions[3];
 			for(int i = 0; i < 3; ++i)
 			{
 				oldDirLightDirections[i]  = mDirLights[i].Direction;
-				oldPointLightPositions[i] = mPointLights[i].Position;
-
 				mDirLights[i].Direction  = Vector3::ReflectRay(mDirLights[i].Direction, Vector3::up);
-				mPointLights[i].Position = reflectionMatrix * mPointLights[i].Position;
+			}
+			if (mPointLightCount > 0)
+			{
+				PointLight* light = mPointLights->MapDiscard(mDX11Device->md3dImmediateContext);
+				for (unsigned int i = 0; i < mPointLightCount; ++i)
+				{
+					mOldPointLights[i] = mWorkingPointLights[i];
+					light[i] = mWorkingPointLights[i];
+					light[i].Position = reflectionMatrix * mWorkingPointLights[i].Position;
+				}
+				mPointLights->Unmap(mDX11Device->md3dImmediateContext);
 			}
 
-			DX11Effects::BasicFX->SetPointLights(mPointLights);
+			DX11Effects::BasicFX->SetPointLights(mPointLights->GetShaderResource());
 			DX11Effects::BasicFX->SetDirLights(mDirLights);
 
 			// Draw the box.
@@ -848,7 +844,6 @@ void DX11RenderingAPI::DrawScene()
 				DX11Effects::BasicFX->SetMaterial(mCylinderMat);
 				DX11Effects::BasicFX->SetDiffuseMap(mCylinderMap);
 				DX11Effects::BasicFX->SetMaskMap(mWhiteSRV);
-
 
 				// Only draw reflection into visible mirror pixels as marked by the stencil buffer. 
 				mDX11Device->md3dImmediateContext->OMSetDepthStencilState(DX11CommonStates::sDepthStencilState_DrawStenciled, 1);
@@ -913,9 +908,17 @@ void DX11RenderingAPI::DrawScene()
 			for(int i = 0; i < 3; ++i)
 			{
 				mDirLights[i].Direction  = oldDirLightDirections[i];
-				mPointLights[i].Position = oldPointLightPositions[i];
 			}
-			DX11Effects::BasicFX->SetPointLights(mPointLights);
+			if (mPointLightCount > 0)
+			{
+				PointLight* light = mPointLights->MapDiscard(mDX11Device->md3dImmediateContext);
+				for (unsigned int i = 0; i < mPointLightCount; ++i)
+				{
+					light[i] = mOldPointLights[i];
+				}
+				mPointLights->Unmap(mDX11Device->md3dImmediateContext);
+			}
+			DX11Effects::BasicFX->SetPointLights(mPointLights->GetShaderResource());
 			DX11Effects::BasicFX->SetDirLights(mDirLights);
 
 			// Draw the mirror to the back buffer as usual but with transparency
@@ -940,7 +943,6 @@ void DX11RenderingAPI::DrawScene()
 			// Restore default states.
 			mDX11Device->md3dImmediateContext->OMSetBlendState(0, blendFactor, 0xffffffff);
 			mDX11Device->md3dImmediateContext->OMSetDepthStencilState(0, 0);
-			
 		}
 	}
 	
@@ -1095,7 +1097,17 @@ void DX11RenderingAPI::Draw2dElements()
 {
 	POINT textPos = {10, 10};
 
-	//mSpriteBatch->DrawString(*mProfilerFont, L"RamJam Engine", textPos, XMCOLOR(0xffffffff));
+	std::wstring lightStat;
+	lightStat =  L" Number of point lights : " + ToString(mPointLightCount);
+	mSpriteBatch->DrawString(*mProfilerFont, lightStat, textPos, XMCOLOR(0xffffffff));
+}
+
+//////////////////////////////////////////////////////////////////////////
+void DX11RenderingAPI::SetActivePointLights(UINT activeLights)
+{
+	mPointLightCount = activeLights;
+	RJE_SAFE_DELETE(mPointLights);
+	mPointLights = rje_new StructuredBuffer<PointLight>(mDX11Device->md3dDevice, activeLights, D3D11_BIND_SHADER_RESOURCE, true);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -1120,6 +1132,8 @@ void DX11RenderingAPI::Shutdown()
 	DX11Effects     ::DestroyAll();
 	DX11InputLayouts::DestroyAll();
 	DX11CommonStates::DestroyAll();
+
+	RJE_SAFE_DELETE(mPointLights);
 
 	RJE_SAFE_DELETE(mSpriteBatch);
 	RJE_SAFE_DELETE(mConsoleFont);

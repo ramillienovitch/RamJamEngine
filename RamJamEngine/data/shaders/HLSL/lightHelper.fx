@@ -4,10 +4,6 @@
 // Structures and functions for lighting calculations.
 //***************************************************************************************
 
-#define MAX_LIGHT_DIR 3
-#define MAX_POINT_DIR 3
-#define MAX_SPOT_DIR 3
-
 struct DirectionalLight
 {
 	float4 Ambient;
@@ -45,6 +41,11 @@ struct SpotLight
 	float3 Att;
 	float pad;
 };
+
+//StructuredBuffer<DirectionalLight>	gDirLights;
+DirectionalLight gDirLights[3];
+StructuredBuffer<PointLight>		gPointLights;
+SpotLight			gSpotLights[3];
 
 struct Material
 {

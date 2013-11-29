@@ -90,6 +90,7 @@
     <ClInclude Include="include\DX11Profiler.h" />
     <ClInclude Include="include\DX11SpriteBatch.h" />
     <ClInclude Include="include\DX11RenderingAPI.h" />
+    <ClInclude Include="include\DX11StructuredBuffer.h" />
     <ClInclude Include="include\DxErr.h" />
   </ItemGroup>
   <ItemGroup>
