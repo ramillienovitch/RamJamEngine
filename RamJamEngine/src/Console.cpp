@@ -34,6 +34,7 @@ Console::Console()
 	CommandList["shutdown"] = Exit;
 	// ----- Rendering -----
 	CommandList["wireframe"] = SetWireframe;
+	CommandList["msaa"] = SetMSAA;
 	// ------- Time -------
 	CommandList["time"] = Time;
 }
@@ -391,6 +392,24 @@ void SetWireframe(char* command /* = nullptr */)
 		System::Instance()->mGraphicAPI->SetWireframe( !bState );
 	}
 	else Console::Instance()->ConcatText(" -> Bad Parameter. Command usage : wireframe [0|1]");
+}
+//-----------------------------
+void SetMSAA(char* command /* = nullptr */)
+{
+	if (command == nullptr)
+	{
+		Console::Instance()->ConcatText(" -> Bad Parameter. Command usage : msaa [1|2|4|8]");
+		return;
+	}
+
+	if (strlen(command) == 1)
+	{
+		if (command[0] == '1')			System::Instance()->mGraphicAPI->SetMSAA(1);
+		else if (command[0] == '2')		System::Instance()->mGraphicAPI->SetMSAA(2);
+		else if (command[0] == '4')		System::Instance()->mGraphicAPI->SetMSAA(4);
+		else if (command[0] == '8')		System::Instance()->mGraphicAPI->SetMSAA(8);
+	}
+	else Console::Instance()->ConcatText(" -> Bad Parameter. Command usage : msaa [1|2|4|8]");
 }
 
 

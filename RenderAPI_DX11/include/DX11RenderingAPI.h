@@ -27,6 +27,10 @@ struct DX11RenderingAPI : GraphicAPI
 	DX11FontSheet*		mProfilerFont;
 	DX11SpriteBatch*	mSpriteBatch;
 
+	UINT mWindowWidth;
+	UINT mWindowHeight;
+	UINT MSAA_Samples;
+
 	//////////////////////////////////////////////////////////////////////////
 
 	ID3D11Buffer*	mVertexBuffer;
@@ -113,7 +117,7 @@ struct DX11RenderingAPI : GraphicAPI
 	
 	//////////////////////////////////////////////////////////////////////////
 
-	virtual void Initialize(HWND hMainWnd, int windowWidth, int windowHeight);
+	virtual void Initialize(int windowWidth, int windowHeight);
 	virtual void UpdateScene( float dt );
 	virtual void DrawScene();
 	virtual void Shutdown();
@@ -122,9 +126,13 @@ struct DX11RenderingAPI : GraphicAPI
 	//------------
 
 	virtual void SetWireframe(BOOL state);
+	virtual void SetMSAA(UINT MSAAsamples);
 
 	//////////////////////////////////////////////////////////////////////////
 
+	void InitSwapChain(UINT msaaSamples = 4);
+	void ResizeWindow();
+	//---------------
 	void LoadTexture(string keyName, ID3D11ShaderResourceView** shaderResourceView);
 	void Create2DTexture(i32 height, i32 width, RJE_COLOR::Color color, ID3D11ShaderResourceView** textureSRV);
 	void BuildGeometryBuffers();

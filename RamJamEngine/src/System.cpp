@@ -98,7 +98,7 @@ BOOL System::Initialize(int nCmdShow)
 	mScene.LoadFromFile(scenePath.c_str());
 
 	// We launch DirectX or OpenGL
-	mGraphicAPI->Initialize(mHWnd, RJE_GLOBALS::gScreenWidth, RJE_GLOBALS::gScreenHeight);
+	mGraphicAPI->Initialize(RJE_GLOBALS::gScreenWidth, RJE_GLOBALS::gScreenHeight);
 
 	return true;
 }

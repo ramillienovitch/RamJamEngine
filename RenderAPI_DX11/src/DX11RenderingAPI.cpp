@@ -5,6 +5,7 @@ DX11RenderingAPI::DX11RenderingAPI()
 {
 	mDX11Device			= nullptr;
 	mDX11DepthBuffer	= nullptr;
+	mSwapChain			= nullptr;
 	mRenderTargetView	= nullptr;
 	md3dDriverType		= D3D_DRIVER_TYPE_HARDWARE;
 	ZeroMemory(&mScreenViewport, sizeof(D3D11_VIEWPORT));
@@ -26,7 +27,7 @@ DX11RenderingAPI::DX11RenderingAPI()
 	mWhiteSRV          = nullptr;
 	mConsoleBackground = nullptr;
 	mRjeLogo           = nullptr;
-	
+
 	mEyePosW = Vector3::zero;
 
 	mDirLightCount    = 1;
@@ -115,11 +116,14 @@ DX11RenderingAPI::DX11RenderingAPI()
 }
 
 //////////////////////////////////////////////////////////////////////////
-void DX11RenderingAPI::Initialize(HWND hMainWnd, int windowWidth, int windowHeight)
+void DX11RenderingAPI::Initialize(int windowWidth, int windowHeight)
 {
 	mDX11Device       = rje_new DX11Device;
 	mDX11DepthBuffer  = rje_new DX11DepthBuffer;
 	mDX11CommonStates = rje_new DX11CommonStates;
+
+	mWindowWidth  = windowWidth;
+	mWindowHeight = windowHeight;
 
 	// Create the device and device context.
 	UINT createDeviceFlags = 0;
@@ -176,55 +180,15 @@ void DX11RenderingAPI::Initialize(HWND hMainWnd, int windowWidth, int windowHeig
 // 	}
 // #endif
 
-	// Check 4X MSAA quality support for our back buffer format.
-	// All Direct3D 11 capable devices support 4X MSAA for all render 
-	// target formats, so we only need to check quality support.
-	RJE_CHECK_FOR_SUCCESS(mDX11Device->md3dDevice->CheckMultisampleQualityLevels( DXGI_FORMAT_R8G8B8A8_UNORM, CIniFile::GetValueInt("multisamplingcount", "rendering", "../data/Config.ini"), &RJE_GLOBALS::g4xMsaaQuality));
-	RJE_ASSERT( RJE_GLOBALS::g4xMsaaQuality > 0 );
+	//--------------------
+	InitSwapChain();
+	//--------------------
 
-	// Fill out a DXGI_SWAP_CHAIN_DESC to describe our swap chain.
-	DXGI_SWAP_CHAIN_DESC sd;
-	sd.BufferDesc.Width						= windowWidth;
-	sd.BufferDesc.Height					= windowHeight;
-	sd.BufferDesc.RefreshRate.Numerator		= 60;
-	sd.BufferDesc.RefreshRate.Denominator	= 1;
-	//sd.BufferDesc.Format					= DXGI_FORMAT_R8G8B8A8_UNORM;
-	sd.BufferDesc.Format					= DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
-	sd.BufferDesc.ScanlineOrdering			= DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
-	sd.BufferDesc.Scaling					= DXGI_MODE_SCALING_UNSPECIFIED;
-
-	// Use 4X MSAA? 
-	if( RJE_GLOBALS::gUse4xMsaa )
-	{
-		sd.SampleDesc.Count   = CIniFile::GetValueInt("multisamplingcount", "rendering", "../data/Config.ini");
-		sd.SampleDesc.Quality = RJE_GLOBALS::g4xMsaaQuality-1;
-	}
-	else // No MSAA
-	{
-		sd.SampleDesc.Count   = 1;
-		sd.SampleDesc.Quality = 0;
-	}
-
-	sd.BufferUsage  = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-	sd.BufferCount  = 1;
-	sd.OutputWindow = hMainWnd;
-	sd.Windowed     = true;
-	sd.SwapEffect   = DXGI_SWAP_EFFECT_DISCARD;
-	sd.Flags        = 0;
-
-	// To correctly create the swap chain, we must use the IDXGIFactory that was
-	// used to create the device.  If we tried to use a different IDXGIFactory instance
-	// (by calling CreateDXGIFactory), we get an error: "IDXGIFactory::CreateSwapChain: 
-	// This function is being called with a device from a different IDXGIFactory."
-	IDXGIDevice* dxgiDevice   = nullptr;
+	IDXGIDevice*  dxgiDevice  = nullptr;
 	IDXGIAdapter* dxgiAdapter = nullptr;
-	IDXGIFactory* dxgiFactory = nullptr;
 
 	RJE_CHECK_FOR_SUCCESS(mDX11Device->md3dDevice->QueryInterface(__uuidof(IDXGIDevice), (void**)&dxgiDevice));
 	RJE_CHECK_FOR_SUCCESS(dxgiDevice->GetParent(__uuidof(IDXGIAdapter), (void**)&dxgiAdapter));
-	RJE_CHECK_FOR_SUCCESS(dxgiAdapter->GetParent(__uuidof(IDXGIFactory), (void**)&dxgiFactory));
-	RJE_CHECK_FOR_SUCCESS(dxgiFactory->CreateSwapChain(mDX11Device->md3dDevice, &sd, &mSwapChain));
-	RJE_CHECK_FOR_SUCCESS(dxgiFactory->MakeWindowAssociation(hMainWnd, DXGI_MWA_NO_WINDOW_CHANGES));
 
 	DXGI_ADAPTER_DESC adapterDesc;
 	dxgiAdapter->GetDesc(&adapterDesc);
@@ -241,9 +205,10 @@ void DX11RenderingAPI::Initialize(HWND hMainWnd, int windowWidth, int windowHeig
 
 	RJE_SAFE_RELEASE(dxgiDevice);
 	RJE_SAFE_RELEASE(dxgiAdapter);
-	RJE_SAFE_RELEASE(dxgiFactory);
 
-	ResizeWindow(windowWidth, windowHeight);	// we call the ResizeWindow method here to avoid code duplication.
+	//---------------------
+	ResizeWindow();	// we call the ResizeWindow method here to avoid code duplication.
+	//---------------------
 
 	// We init the effect first and then the input layouts
 	DX11Effects     ::InitAll(mDX11Device->md3dDevice);
@@ -271,6 +236,58 @@ void DX11RenderingAPI::Initialize(HWND hMainWnd, int windowWidth, int windowHeig
 	BuildGizmosBuffers();
 
 	SetActivePointLights(3);
+}
+
+//////////////////////////////////////////////////////////////////////////
+void DX11RenderingAPI::InitSwapChain(UINT msaaSamples)
+{
+	HWND hMainWnd = System::Instance()->mHWnd;
+	MSAA_Samples = msaaSamples;
+	// Check 4X MSAA quality support for our back buffer format.
+	// All Direct3D 11 capable devices support 4X MSAA for all render 
+	// target formats, so we only need to check quality support.
+// 	RJE_CHECK_FOR_SUCCESS(mDX11Device->md3dDevice->CheckMultisampleQualityLevels( DXGI_FORMAT_R8G8B8A8_UNORM, CIniFile::GetValueInt("multisamplingcount", "rendering", "../data/Config.ini"), &RJE_GLOBALS::g4xMsaaQuality));
+// 	RJE_ASSERT( RJE_GLOBALS::g4xMsaaQuality > 0 );
+
+	RJE_SAFE_RELEASE(mSwapChain);
+
+	// Fill out a DXGI_SWAP_CHAIN_DESC to describe our swap chain.
+	DXGI_SWAP_CHAIN_DESC sd;
+	sd.BufferDesc.Width						= mWindowWidth;
+	sd.BufferDesc.Height					= mWindowHeight;
+	sd.BufferDesc.RefreshRate.Numerator		= 60;
+	sd.BufferDesc.RefreshRate.Denominator	= 1;
+	//sd.BufferDesc.Format					= DXGI_FORMAT_R8G8B8A8_UNORM;
+	sd.BufferDesc.Format					= DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+	sd.BufferDesc.ScanlineOrdering			= DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+	sd.BufferDesc.Scaling					= DXGI_MODE_SCALING_UNSPECIFIED;
+	sd.SampleDesc.Count						= MSAA_Samples;
+	sd.SampleDesc.Quality					= 0;
+
+	sd.BufferUsage  = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+	sd.BufferCount  = 1;
+	sd.OutputWindow = hMainWnd;
+	sd.Windowed     = true;
+	sd.SwapEffect   = DXGI_SWAP_EFFECT_DISCARD;
+	sd.Flags        = 0;
+
+	// To correctly create the swap chain, we must use the IDXGIFactory that was
+	// used to create the device.  If we tried to use a different IDXGIFactory instance
+	// (by calling CreateDXGIFactory), we get an error: "IDXGIFactory::CreateSwapChain:
+	// This function is being called with a device from a different IDXGIFactory."
+	IDXGIDevice*  dxgiDevice  = nullptr;
+	IDXGIAdapter* dxgiAdapter = nullptr;
+	IDXGIFactory* dxgiFactory = nullptr;
+
+	RJE_CHECK_FOR_SUCCESS(mDX11Device->md3dDevice->QueryInterface(__uuidof(IDXGIDevice), (void**)&dxgiDevice));
+	RJE_CHECK_FOR_SUCCESS(dxgiDevice->GetParent(__uuidof(IDXGIAdapter), (void**)&dxgiAdapter));
+	RJE_CHECK_FOR_SUCCESS(dxgiAdapter->GetParent(__uuidof(IDXGIFactory), (void**)&dxgiFactory));
+	RJE_CHECK_FOR_SUCCESS(dxgiFactory->CreateSwapChain(mDX11Device->md3dDevice, &sd, &mSwapChain));
+	RJE_CHECK_FOR_SUCCESS(dxgiFactory->MakeWindowAssociation(hMainWnd, DXGI_MWA_NO_WINDOW_CHANGES));
+
+	RJE_SAFE_RELEASE(dxgiDevice);
+	RJE_SAFE_RELEASE(dxgiAdapter);
+	RJE_SAFE_RELEASE(dxgiFactory);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -1159,8 +1176,13 @@ void DX11RenderingAPI::Shutdown()
 }
 
 //////////////////////////////////////////////////////////////////////////
+void DX11RenderingAPI::ResizeWindow() {ResizeWindow(mWindowWidth, mWindowHeight);}
+//-------------------------------------------
 void DX11RenderingAPI::ResizeWindow(int newSizeWidth, int newSizeHeight)
 {
+	mWindowWidth  = newSizeWidth;
+	mWindowHeight = newSizeHeight;
+
 	RJE_ASSERT(mDX11Device->md3dImmediateContext);
 	RJE_ASSERT(mDX11Device->md3dDevice);
 	RJE_ASSERT(mSwapChain);
@@ -1187,17 +1209,8 @@ void DX11RenderingAPI::ResizeWindow(int newSizeWidth, int newSizeHeight)
 	depthStencilDesc.ArraySize = 1;
 	depthStencilDesc.Format    = DXGI_FORMAT_D24_UNORM_S8_UINT;
 
-	// Use 4X MSAA? --must match swap chain MSAA values.
-	if( RJE_GLOBALS::gUse4xMsaa )
-	{
-		depthStencilDesc.SampleDesc.Count   = CIniFile::GetValueInt("multisamplingcount", "rendering", "../data/Config.ini");
-		depthStencilDesc.SampleDesc.Quality = RJE_GLOBALS::g4xMsaaQuality-1;
-	}
-	else // No MSAA
-	{
-		depthStencilDesc.SampleDesc.Count   = 1;
-		depthStencilDesc.SampleDesc.Quality = 0;
-	}
+	depthStencilDesc.SampleDesc.Count   = MSAA_Samples;
+	depthStencilDesc.SampleDesc.Quality = 0;
 
 	depthStencilDesc.Usage          = D3D11_USAGE_DEFAULT;
 	depthStencilDesc.BindFlags      = D3D11_BIND_DEPTH_STENCIL;
@@ -1246,4 +1259,11 @@ void DX11RenderingAPI::SetWireframe(BOOL state)
 		mbWireframe = false;
 		DX11CommonStates::sCurrentRasterizerState = DX11CommonStates::sRasterizerState_Solid;
 	}
+}
+
+//////////////////////////////////////////////////////////////////////////
+void DX11RenderingAPI::SetMSAA(UINT MSAASamples)
+{
+	InitSwapChain(MSAASamples);
+	System::Instance()->OnResize();
 }

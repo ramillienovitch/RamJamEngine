@@ -114,5 +114,6 @@ void CleanConsole(char* command = nullptr);
 void Exit        (char* command = nullptr);
 // ----- Rendering -----
 void SetWireframe(char* command = nullptr);
+void SetMSAA     (char* command = nullptr);
 // ------- Time -------
 void Time        (char* command = nullptr);

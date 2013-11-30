@@ -16,7 +16,7 @@ struct GraphicAPI
 {
 	Camera* mCamera;
 
-	virtual void Initialize(HWND hMainWnd, int windowWidth, int windowHeight) = 0;
+	virtual void Initialize(int windowWidth, int windowHeight) = 0;
 	virtual void UpdateScene( float dt ) = 0;
 	virtual void DrawScene() = 0;
 	virtual void Shutdown() = 0;
@@ -25,4 +25,5 @@ struct GraphicAPI
 	//-----------
 
 	virtual void SetWireframe(BOOL state) = 0;
+	virtual void SetMSAA(UINT MSAA_Samples) = 0;
 };
