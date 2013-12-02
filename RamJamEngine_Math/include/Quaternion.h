@@ -75,4 +75,15 @@ struct Quaternion_T
 
 typedef Quaternion_T<f32> Quaternion;
 
+//--------------------------------------------------
+// Use to cast a quaternion from AntTweak GUI to our quaternion system
+struct TwQuaternion
+{
+	float q[4];
+	//-----------
+	TwQuaternion() { q[0] = 0.0f; q[1] = 0.0f; q[2] = 0.0f; q[3] = 1.0f; }
+	operator Quaternion() { return Quaternion(q[3], q[0], q[1], -q[2]); }
+	Matrix44 ToMatrix() {Quaternion quat = *this; return quat.ToMatrix();}
+};
+
 #include "Quaternion.inl"

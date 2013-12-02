@@ -42,6 +42,7 @@ DX11RenderingAPI::DX11RenderingAPI()
 	mBoxTexTransform  = mCylinderTexTransform = mSphereTexTransform = Matrix44::Scaling(1.0f, 1.0f, 0.0f);
 
 	// Meshes transforms
+	mModelRot = TwQuaternion();
 	mGridWorld = Matrix44::identity;
 	Transform tempTrf;
 // 	tempTrf.Rotation	= Quaternion(45,45,45).ToMatrix();
@@ -236,6 +237,22 @@ void DX11RenderingAPI::Initialize(int windowWidth, int windowHeight)
 	BuildGizmosBuffers();
 
 	SetActivePointLights(3);
+
+	//////////////////////////////////////////////////////////////////////////
+
+	if (!TwInit(TW_DIRECT3D11, mDX11Device->md3dDevice))
+	{
+		MessageBoxA(System::Instance()->mHWnd, TwGetLastError(), "AntTweakBar initialization failed", MB_OK|MB_ICONERROR);
+	}
+
+	// Create a tweak bar
+	TwBar *bar = TwNewBar("TweakBar");
+	TwDefine(" TweakBar iconified=true ");
+	int barSize[2] = {224, 320};
+	TwSetParam(bar, NULL, "size", TW_PARAM_INT32, 2, barSize);
+
+	// Add variables to the tweak bar
+	TwAddVarRW(bar, "Rotation", TW_TYPE_QUAT4F, &mModelRot, "opened=true");
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -548,6 +565,14 @@ void DX11RenderingAPI::BuildGizmosBuffers()
 //////////////////////////////////////////////////////////////////////////
 void DX11RenderingAPI::UpdateScene( float dt )
 {
+	//-------------------------------------
+	Transform tempTrf;
+	tempTrf.Rotation	= mModelRot.ToMatrix();
+	tempTrf.Scale		= Vector3(0.2f, 0.2f, 0.2f);
+	tempTrf.Position	= Vector3(0.0f, 1.0f, 0.0f);
+	mModelWorld			= tempTrf.WorldMatrix();
+	//-------------------------------------
+
 	// Convert Spherical to Cartesian coordinates.
 	float x = System::Instance()->mCameraRadius*sinf(System::Instance()->mCameraPhi)*cosf(System::Instance()->mCameraTheta);
 	float z = System::Instance()->mCameraRadius*sinf(System::Instance()->mCameraPhi)*sinf(System::Instance()->mCameraTheta);
@@ -981,6 +1006,11 @@ void DX11RenderingAPI::DrawScene()
 
 	//-------------------------------------------------------------------------
 
+	// Draw the AntTweak GUI
+	TwDraw();
+
+	//-------------------------------------------------------------------------
+
 	if (RJE_GLOBALS::gVsyncEnabled)
 	{
 		RJE_CHECK_FOR_SUCCESS(mSwapChain->Present(1, 0));
@@ -1130,6 +1160,11 @@ void DX11RenderingAPI::SetActivePointLights(UINT activeLights)
 //////////////////////////////////////////////////////////////////////////
 void DX11RenderingAPI::Shutdown()
 {
+	//-----------
+	// Terminate AntTweak GUI
+	TwTerminate();
+	//-----------
+
 	PROFILE_GPU_EXIT();
 
 	RJE_SAFE_RELEASE(mVertexBuffer);

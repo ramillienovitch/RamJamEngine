@@ -71,6 +71,7 @@ struct DX11RenderingAPI : GraphicAPI
 	Matrix44 mSphereWorld[10];
 	Matrix44 mCylWorld[10];
 	Matrix44 mModelWorld;
+	TwQuaternion mModelRot;
 
 	Matrix44 mView;
 	Matrix44 mProj;
