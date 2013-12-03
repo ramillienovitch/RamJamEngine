@@ -61,6 +61,12 @@ struct Matrix44_T
 	static Matrix44_T	RotationY(Real degrees);
 	static Matrix44_T	RotationZ(Real degrees);
 	//---------------------------
+	static Matrix44_T	LookAt(Vector3_T<Real> pos, Vector3_T<Real> dir, Vector3_T<Real> up);
+	static Matrix44_T	LookAt(Vector3_T<Real> pos, Vector3_T<Real> dir);
+	//---------------------------
+	static Matrix44_T	PerspectiveFov(Real Fov, Real AspectRatio, Real NearZ, Real FarZ);
+	static Matrix44_T	Orthographic(Real ViewWidth, Real ViewHeight, Real NearZ, Real FarZ);
+	//---------------------------
 	// Transformation Matrix for the reflection with the plane equation Ax+By+Cz+D=0.
 	static Matrix44_T	Reflection(Vector4_T<Real> planeEquation);
 	static Matrix44_T	Reflection(Real a, Real b, Real c, Real d);

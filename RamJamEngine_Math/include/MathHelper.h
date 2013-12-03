@@ -18,11 +18,6 @@ namespace RJE
 #define RJE_HALF_PI		(RJE_PI   * 0.5)
 #define RJE_HALF_PI_F	(RJE_PI_F * 0.5f)
 
-#define DegreesToRadian(X)   X * (RJE_PI   / 180.0)
-#define DegreesToRadian_F(X) X * (RJE_PI_F / 180.0f)
-#define RadianToDegrees(X)   X * (180.0  / RJE_PI)
-#define RadianToDegrees_F(X) X * (180.0f / RJE_PI_F)
-
 	struct Math
 	{
 		//--------------------------------------------------
@@ -120,5 +115,9 @@ namespace RJE
 		static const float  Pi_Half_f;
 		static const double Pi_Two;
 		static const float  Pi_Two_f;
+		static const double Deg2Rad;
+		static const float  Deg2Rad_f;
+		static const double Rad2Deg;
+		static const float  Rad2Deg_f;
 	};
 }

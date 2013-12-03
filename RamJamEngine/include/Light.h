@@ -6,6 +6,7 @@
 //   Elements are packed into 4D vectors with the restriction that an element
 //   cannot straddle a 4D vector boundary.
 
+//////////////////////////////////////////////////////////////////////////
 struct DirectionalLight
 {
 	DirectionalLight()
@@ -20,6 +21,7 @@ struct DirectionalLight
 	float Pad; // Pad the last float so we can set an array of lights if we wanted.
 };
 
+//////////////////////////////////////////////////////////////////////////
 struct PointLight
 {
 	PointLight()
@@ -40,6 +42,7 @@ struct PointLight
 	float Pad; // Pad the last float so we can set an array of lights if we wanted.
 };
 
+//////////////////////////////////////////////////////////////////////////
 struct SpotLight
 {
 	SpotLight()
@@ -62,17 +65,4 @@ struct SpotLight
 	// Packed into 4D vector: (Att, Pad)
 	Vector3 Att;
 	float Pad; // Pad the last float so we can set an array of lights if we wanted.
-};
-
-struct Material
-{
-	Material()
-	{ 
-		ZeroMemory(this, sizeof(this));
-	}
-
-	Vector4 Ambient;
-	Vector4 Diffuse;
-	Vector4 Specular; // w = SpecPower
-	Vector4 Reflect;
 };

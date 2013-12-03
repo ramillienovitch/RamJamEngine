@@ -107,12 +107,14 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\include\AntTweakBar.h" />
     <ClInclude Include="..\include\Camera.h" />
     <ClInclude Include="..\include\Console.h" />
     <ClInclude Include="..\include\FontSheet.h" />
     <ClInclude Include="..\include\GeometryGenerator.h" />
     <ClInclude Include="..\include\GraphicAPI.h" />
     <ClInclude Include="..\include\Light.h" />
+    <ClInclude Include="..\include\Material.h" />
     <ClInclude Include="..\include\MeshData.h" />
     <ClInclude Include="..\include\Resource.h" />
     <ClInclude Include="..\include\RjeConfig.h" />
@@ -124,6 +126,10 @@
     <ClInclude Include="..\include\Transform.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\Camera.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="..\src\Console.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
@@ -192,7 +198,9 @@
     <ResourceCompile Include="..\include\RamJamEngine.rc" />
   </ItemGroup>
   <ItemGroup>
-    <Xml Include="..\data\scenes\simple.xml" />
+    <Xml Include="..\data\scenes\simple.xml">
+      <SubType>Designer</SubType>
+    </Xml>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

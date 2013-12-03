@@ -60,5 +60,4 @@ namespace RJE_GLOBALS
 	//	Misc
 	//************************************************************************
 	extern BOOL		gRunInBackground;
-	extern BOOL		gUpdateSceneRuntime;
 }

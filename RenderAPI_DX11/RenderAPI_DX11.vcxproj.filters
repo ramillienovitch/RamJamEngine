@@ -45,9 +45,6 @@
     <ClInclude Include="include\DX11CommonStates.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\DX11Camera.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="include\DX11FontSheet.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -81,9 +78,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\DX11CommonStates.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\DX11Camera.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\DX11FontSheet.cpp">

@@ -54,10 +54,6 @@ System::System()
 	mCameraTheta	 = 1.5f*RJE::Math::Pi_f;
 	mCameraPhi		 = 0.25f*RJE::Math::Pi_f;
 	mCameraRadius	 = 10.0f;
-	mCameraFOV		 = 80;
-	mCameraOrthoZoom = 0.01f;
-	mCameraNearZ     = 0.01f;
-	mCameraFarZ      = 1000.0f;
 
 	mCameraAnimated = false;
 	mAnimationSpeed = 10.0f;
@@ -65,11 +61,10 @@ System::System()
 
 #if (RJE_GRAPHIC_API == DIRECTX_11)
 	mGraphicAPI = rje_new DX11RenderingAPI();
-	mGraphicAPI->mCamera = rje_new DX11Camera();
 #else
 	mGraphicAPI = rje_new OglWrapper();
-	mGraphicAPI->mCamera = rje_new OglCamera();
 #endif
+	mGraphicAPI->mCamera = rje_new Camera();
 }
 System::~System(){}
 
@@ -83,7 +78,6 @@ BOOL System::Initialize(int nCmdShow)
 
 	// Initialize all the globals defined in the .ini files
 	LoadConfigFile();
-	LoadCameraSettings();
 
 	// Initialize global strings
 	LoadString(mHInst, IDS_APP_TITLE, mSzTitle, 100);
@@ -155,13 +149,6 @@ void System::Run()
 			if (!Console::Instance()->IsActive())
 				HandleInputs();
 
-			if (RJE_GLOBALS::gUpdateSceneRuntime)
-			{
-				LoadCameraSettings();
-				mGraphicAPI->mCamera->SetCameraSettings(mCameraFOV, mCameraOrthoZoom, (float)mScreenWidth, (float)mScreenHeight, mCameraNearZ, mCameraFarZ);
-				mGraphicAPI->mCamera->UpdateProjMatrix((float)mScreenWidth, (float)mScreenHeight);
-			}
-
 			if(mAppPaused)
 				Sleep(50);
 			else
@@ -183,7 +170,7 @@ void System::Run()
 void System::OnResize()
 {
 	mGraphicAPI->ResizeWindow(mScreenWidth, mScreenHeight);
-	mGraphicAPI->mCamera->SetCameraSettings(mCameraFOV, mCameraOrthoZoom, (float)mScreenWidth, (float)mScreenHeight, mCameraNearZ, mCameraFarZ);
+	mGraphicAPI->mCamera->mSettings.AspectRatio = (float)mScreenWidth / (float)mScreenHeight;
 	mGraphicAPI->mCamera->UpdateProjMatrix((float)mScreenWidth, (float)mScreenHeight);
 }
 
@@ -477,26 +464,18 @@ void System::HandleInputs()
 {
 	int x = Input::Instance()->GetMousePosX();
 	int y = Input::Instance()->GetMousePosY();
-
-	if  (Input::Instance()->GetKeyboardDown(F5))
-	{
-		LoadCameraSettings();
-		mGraphicAPI->mCamera->SetCameraSettings(mCameraFOV, mCameraOrthoZoom, (float)mScreenWidth, (float)mScreenHeight, mCameraNearZ, mCameraFarZ);
-		mGraphicAPI->mCamera->UpdateProjMatrix((float)mScreenWidth, (float)mScreenHeight);
-	}
-
+	
 	if (Input::Instance()->GetKeyboardDown(Spacebar))
 		mCameraAnimated = !mCameraAnimated;
 
 	if (Input::Instance()->GetKeyboardDown(Return))
 	{
 		mGraphicAPI->mCamera->SetCameraOrtho(!mGraphicAPI->mCamera->IsOrtho());
-		mGraphicAPI->mCamera->SetCameraSettings(mCameraFOV, mCameraOrthoZoom, (float)mScreenWidth, (float)mScreenHeight, mCameraNearZ, mCameraFarZ);
 		mGraphicAPI->mCamera->UpdateProjMatrix((float)mScreenWidth, (float)mScreenHeight);
 	}
 
 	if (mCameraAnimated)
-		mCameraTheta = DegreesToRadian_F(mAnimationSpeed*Timer::Instance()->Time());
+		mCameraTheta = RJE::Math::Deg2Rad_f*mAnimationSpeed*Timer::Instance()->Time();
 
 	// Wheel Scroll
 	if (Input::Instance()->GetMouseButtonDown(WheelUp))
@@ -525,19 +504,13 @@ void System::HandleInputs()
 		{
 			if( Input::Instance()->GetMouseButton(RButton) )
 			{
-				// Make each pixel correspond to 0.05 unit in the scene.
-				float dx = 0.005f*static_cast<float>(x - mLastMousePos.x);
-
 				if (mGraphicAPI->mCamera->IsOrtho())
 				{
 					// Make each pixel correspond to 0.001 unit in the scene.
 					float dx = 0.001f*static_cast<float>(x - mLastMousePos.x);
 
-					// Update the camera radius based on input.
-					mCameraOrthoZoom += dx;
-					mCameraOrthoZoom = RJE::Math::Clamp(mCameraOrthoZoom, 0.0001f, 10000.0f);
-
-					mGraphicAPI->mCamera->SetCameraSettings(mCameraFOV, mCameraOrthoZoom, (float)mScreenWidth, (float)mScreenHeight, mCameraNearZ, mCameraFarZ);
+					mGraphicAPI->mCamera->mSettings.OrthoZoom += dx;
+					mGraphicAPI->mCamera->mSettings.OrthoZoom = RJE::Math::Clamp(mGraphicAPI->mCamera->mSettings.OrthoZoom, 0.0001f, 10000.0f);
 					mGraphicAPI->mCamera->UpdateProjMatrix((float)mScreenWidth, (float)mScreenHeight);
 				}
 				else
@@ -545,11 +518,8 @@ void System::HandleInputs()
 					// Make each pixel correspond to 0.05 unit in the scene.
 					float dx = 0.05f*static_cast<float>(x - mLastMousePos.x);
 
-					// Update the camera radius based on input.
-					mCameraFOV += dx;
-					mCameraFOV = RJE::Math::Clamp(mCameraFOV, 1.0f, 179.0f);
-
-					mGraphicAPI->mCamera->SetCameraSettings(mCameraFOV, mCameraOrthoZoom, (float)mScreenWidth, (float)mScreenHeight, mCameraNearZ, mCameraFarZ);
+					mGraphicAPI->mCamera->mSettings.FOV += dx;
+					mGraphicAPI->mCamera->mSettings.FOV = RJE::Math::Clamp(mGraphicAPI->mCamera->mSettings.FOV, 1.0f, 179.0f);
 					mGraphicAPI->mCamera->UpdateProjMatrix((float)mScreenWidth, (float)mScreenHeight);
 				}
 			}
@@ -559,8 +529,8 @@ void System::HandleInputs()
 			if( Input::Instance()->GetMouseButton(LButton) )
 			{
 				// Make each pixel correspond to a quarter of a degree.
-				float dx = DegreesToRadian_F(0.25f*static_cast<float>(x - mLastMousePos.x));
-				float dy = DegreesToRadian_F(0.25f*static_cast<float>(y - mLastMousePos.y));
+				float dx = RJE::Math::Deg2Rad_f*0.25f*static_cast<float>(x - mLastMousePos.x);
+				float dy = RJE::Math::Deg2Rad_f*0.25f*static_cast<float>(y - mLastMousePos.y);
 
 				// Update angles based on input to orbit camera around box.
 				if (!mCameraAnimated)
@@ -586,19 +556,6 @@ void System::HandleInputs()
 }
 
 //////////////////////////////////////////////////////////////////////////
-void System::LoadCameraSettings()
-{
-	mCameraFOV       = CIniFile::GetValueFloat("fov",        "camera", "../data/Scene.ini");
-	mCameraOrthoZoom = CIniFile::GetValueFloat("ortho_zoom", "camera", "../data/Scene.ini");
-	mCameraNearZ     = CIniFile::GetValueFloat("nearz",      "camera", "../data/Scene.ini");
-	mCameraFarZ      = CIniFile::GetValueFloat("farz",       "camera", "../data/Scene.ini");
-
-	RJE_ASSERT(mCameraFOV >= 1.0f && mCameraFOV < 180.0f);
-	RJE_ASSERT(mCameraOrthoZoom >= 0.0001f);
-	RJE_ASSERT(mCameraNearZ < mCameraFarZ);
-}
-
-//////////////////////////////////////////////////////////////////////////
 void System::LoadConfigFile()
 {
 	const char* filename = "../data/Config.ini";
@@ -616,10 +573,9 @@ void System::LoadConfigFile()
 		CIniFile::SetValue("multisamplingquality", "0",     "rendering", filename);
 		CIniFile::SetValue("use4xmsaa",            "true",  "rendering", filename);
 		CIniFile::SetValue("msaaquality",          "4",     "rendering", filename);
-
+		//---------------
 		CIniFile::SetValue("runinbackground",     "true", "misc", filename);
-		CIniFile::SetValue("updatesceneruntime", "true", "misc", filename);
-
+		//---------------
 		CIniFile::SetValue("debugverbosity", "0",    "debug", filename);
 		CIniFile::SetValue("showcursor",     "true", "debug", filename);
 	}
@@ -632,10 +588,9 @@ void System::LoadConfigFile()
 	RJE_GLOBALS::gMultisamplingQuality	= CIniFile::GetValueInt("multisamplingquality", "rendering", filename);
 	RJE_GLOBALS::gUse4xMsaa				= CIniFile::GetValueBool("use4xmsaa",           "rendering", filename);
 	RJE_GLOBALS::g4xMsaaQuality			= CIniFile::GetValueInt("msaaquality",          "rendering", filename);
-
+	//---------------
 	RJE_GLOBALS::gRunInBackground		= CIniFile::GetValueBool("runinbackground",    "misc", filename);
-	RJE_GLOBALS::gUpdateSceneRuntime	= CIniFile::GetValueBool("updatesceneruntime", "misc", filename);
-
+	//---------------
 	RJE_GLOBALS::gDebugVerbosity		= CIniFile::GetValueInt("debugverbosity",  "debug", filename);
 	RJE_GLOBALS::gShowCursor			= CIniFile::GetValueBool("showcursor",     "debug", filename);
 }

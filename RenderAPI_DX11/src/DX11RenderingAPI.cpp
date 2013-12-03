@@ -567,7 +567,7 @@ void DX11RenderingAPI::UpdateScene( float dt )
 {
 	//-------------------------------------
 	Transform tempTrf;
-	tempTrf.Rotation	= mModelRot.ToMatrix();
+	tempTrf.Rotation	= mModelRot;
 	tempTrf.Scale		= Vector3(0.2f, 0.2f, 0.2f);
 	tempTrf.Position	= Vector3(0.0f, 1.0f, 0.0f);
 	mModelWorld			= tempTrf.WorldMatrix();
@@ -653,8 +653,8 @@ void DX11RenderingAPI::DrawScene()
 
 	float rgb      = CIniFile::GetValueFloat("blend_rgb",   "blendfactor", "../data/Scene.ini");
 	float alpha    = CIniFile::GetValueFloat("blend_alpha", "blendfactor", "../data/Scene.ini");
-	float fogStart = CIniFile::GetValueFloat("fog_start",   "camera",      "../data/Scene.ini");
-	float fogRange = CIniFile::GetValueFloat("fog_range",   "camera",      "../data/Scene.ini");
+	float fogStart = CIniFile::GetValueFloat("fog_start",   "fog",      "../data/Scene.ini");
+	float fogRange = CIniFile::GetValueFloat("fog_range",   "fog",      "../data/Scene.ini");
 	float blendFactor[4] = {rgb, rgb, rgb, alpha};
 
 	UINT stride = sizeof(MeshData::PosNormalTex);
@@ -1270,12 +1270,7 @@ void DX11RenderingAPI::ResizeWindow(int newSizeWidth, int newSizeHeight)
 	mDX11Device->md3dImmediateContext->RSSetViewports(1, &mScreenViewport);
 
 	// The window resized, so update the aspect ratio and recompute the projection matrix.
-	mCamera->SetCameraSettings(	System::Instance()->mCameraFOV,
-								System::Instance()->mCameraOrthoZoom,
-								(float)newSizeWidth,
-								(float)newSizeWidth,
-								System::Instance()->mCameraNearZ,
-								System::Instance()->mCameraFarZ);
+	mCamera->mSettings.AspectRatio = (float)newSizeWidth / (float)newSizeWidth;
 	mCamera->UpdateProjMatrix((float)newSizeWidth, (float)newSizeHeight);
 }
 

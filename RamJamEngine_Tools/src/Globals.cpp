@@ -23,4 +23,3 @@ BOOL	RJE_GLOBALS::gShowCursor;
 //	Misc
 //************************************************************************
 BOOL	RJE_GLOBALS::gRunInBackground;
-BOOL	RJE_GLOBALS::gUpdateSceneRuntime;

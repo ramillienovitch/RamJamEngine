@@ -2,6 +2,15 @@
 
 #include "MathHelper.h"
 
+struct CameraSettings
+{
+	float FOV;
+	float OrthoZoom;
+	float AspectRatio;
+	float NearZ;
+	float FarZ;
+};
+
 struct Camera
 {
 	Vector3 mPosition;
@@ -15,20 +24,17 @@ struct Camera
 
 	BOOL bIsOrtho;
 
-	float mFOV;
-	float mOrthoZoom;
-	float mNearZ;
-	float mFarZ;
-	float mAspectRatio;
+	CameraSettings mSettings;
 
-	virtual BOOL IsOrtho() = 0;
+	Camera();
+	~Camera() {};
 
-	virtual void SetCameraOrtho(BOOL) = 0;
+	BOOL IsOrtho();
 
-	virtual void UpdateViewMatrix()              = 0;
-	virtual void UpdateProjMatrix(float, float)  = 0;
-	virtual void UpdateOrthoMatrix(float, float) = 0;
-	virtual void UpdatePerspMatrix()             = 0;
+	void SetCameraOrtho(BOOL);
 
-	virtual void SetCameraSettings(float, float, float, float, float, float) = 0;
+	void UpdateViewMatrix();
+	void UpdateProjMatrix(float, float);
+	void UpdateOrthoMatrix(float, float);
+	void UpdatePerspMatrix();
 };

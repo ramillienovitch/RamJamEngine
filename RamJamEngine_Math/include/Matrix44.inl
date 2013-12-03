@@ -1,6 +1,7 @@
 //////////////////////////////////////////////////////////////////////////
 
 #include "MathHelper.h"
+#include "Debug.h"
 
 //------------------------
 template <typename Real>
@@ -484,6 +485,82 @@ FORCEINLINE Matrix44_T<Real> Matrix44_T<Real>::RotationZ(Real degrees)
 	Matrix44_T<Real> out;
 	out.m11 = out.m22 = cos(rad);
 	out.m12 = -(out.m21 = sin(rad));
+	return out;
+}
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+template <typename Real>
+FORCEINLINE Matrix44_T<Real> Matrix44_T<Real>::LookAt(Vector3_T<Real> pos, Vector3_T<Real> dir, Vector3_T<Real> up)
+{
+	Vector3_T<Real> R2 = dir;
+	R2.Normalize();
+
+	Vector3_T<Real> R0 = Vector3_T<Real>::Cross(up, R2);
+	R0.Normalize();
+
+	Vector3_T<Real> R1 = Vector3_T<Real>::Cross(R2, R0);
+	Vector3_T<Real> negPos = -pos;
+
+	Real D0 = Vector3_T<Real>::Dot(R0, negPos);
+	Real D1 = Vector3_T<Real>::Dot(R1, negPos);
+	Real D2 = Vector3_T<Real>::Dot(R2, negPos);
+
+	Real One  = static_cast<Real>(1.0);
+	Real Zero = static_cast<Real>(0.0);
+
+	Matrix44_T<Real> out;
+	out.m11 = R0.x;		out.m12 = R0.y;		out.m13 = R0.z;		out.m14 = D0;
+	out.m21 = R1.x;		out.m22 = R1.y;		out.m23 = R1.z;		out.m24 = D1;
+	out.m31 = R2.x;		out.m32 = R2.y;		out.m33 = R2.z;		out.m34 = D2;
+	out.m41 = Zero;		out.m42 = Zero;		out.m43 = Zero;		out.m44 = One;
+	return out.Transpose();
+}
+//----------------------------------------------
+template <typename Real>
+FORCEINLINE Matrix44_T<Real> Matrix44_T<Real>::LookAt(Vector3_T<Real> pos, Vector3_T<Real> dir)
+{ return LookAt(pos, dir, Vector3_T<Real>(0,1,0)); }
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+template <typename Real>
+FORCEINLINE Matrix44_T<Real> Matrix44_T<Real>::PerspectiveFov(Real Fov, Real AspectRatio, Real NearZ, Real FarZ)
+{
+	Real fov = static_cast<Real>(0.5f)* Fov;
+	RJE_ASSERT(!RJE::Math::IsZero(fov));
+	
+	Real One  = static_cast<Real>(1.0);
+	Real Zero = static_cast<Real>(0.0);
+
+	Real Height = One/tan(fov);
+	Real Width  = Height / AspectRatio;
+	Real fRange = FarZ / (FarZ-NearZ);
+
+	Matrix44_T<Real> out;
+	out.m11 = Width;	out.m12 = Zero;		out.m13 = Zero;				out.m14 = Zero;
+	out.m21 = Zero;		out.m22 = Height;	out.m23 = Zero;				out.m24 = Zero;
+	out.m31 = Zero;		out.m32 = Zero;		out.m33 = fRange;			out.m34 = One;
+	out.m41 = Zero;		out.m42 = Zero;		out.m43 = -fRange * NearZ;	out.m44 = Zero;
+	return out;
+}
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+template <typename Real>
+FORCEINLINE Matrix44_T<Real> Matrix44_T<Real>::Orthographic(Real ViewWidth, Real ViewHeight, Real NearZ, Real FarZ)
+{
+	RJE_ASSERT(!RJE::Math::IsZero(ViewWidth));
+	RJE_ASSERT(!RJE::Math::IsZero(ViewHeight));
+
+	Real One    = static_cast<Real>(1.0);
+	Real Zero   = static_cast<Real>(0.0);
+	Real fRange = One / (FarZ-NearZ);
+
+	Matrix44_T<Real> out;
+	out.m11 = 2/ViewWidth;	out.m12 = Zero;				out.m13 = Zero;				out.m14 = Zero;
+	out.m21 = Zero;			out.m22 = 2/ViewHeight;		out.m23 = Zero;				out.m24 = Zero;
+	out.m31 = Zero;			out.m32 = Zero;				out.m33 = fRange;			out.m34 = Zero;
+	out.m41 = Zero;			out.m42 = Zero;				out.m43 = -fRange * NearZ;	out.m44 = One;
 	return out;
 }
 //----------------------------------------------------------------------

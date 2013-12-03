@@ -40,6 +40,11 @@
 #endif
 //////////////////////////////////////////////////////////////////////////
 
+#include "../../RamJamEngine/include/Light.h"
+#include "../../RamJamEngine/include/Material.h"
+
+//////////////////////////////////////////////////////////////////////////
+
 using namespace DirectX;
 
 //////////////////////////////////////////////////////////////////////////
@@ -47,7 +52,6 @@ using namespace DirectX;
 #include "DX11Device.h"
 #include "DX11DepthBuffer.h"
 #include "DX11CommonStates.h"
-#include "DX11Camera.h"
 #include "DX11Effect.h"
 #include "DX11FontSheet.h"
 #include "DX11SpriteBatch.h"

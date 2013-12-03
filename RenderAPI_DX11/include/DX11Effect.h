@@ -2,8 +2,6 @@
 
 #include "DX11Helper.h"
 
-#include "../../RamJamEngine/include/Light.h"
-
 #pragma region Effect
 class Effect
 {

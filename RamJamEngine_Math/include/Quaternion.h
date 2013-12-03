@@ -59,7 +59,9 @@ struct Quaternion_T
 	Quaternion_T&	Conjugate();
 	Quaternion_T&	Normalize();
 	Quaternion_T&	Inverse();
+	//-------------------------
 	Quaternion_T&	LookAt(Vector3_T<Real>& lookAt, Vector3_T<Real>& up);
+	Quaternion_T&	LookAt(Vector3_T<Real>& lookAt);
 	//-------------------------
 	Vector3_T<Real>		Rotate(const Real& x, const Real& y, const Real& z);
 	Vector3_T<Real>		Rotate(const Vector3_T<Real>&);

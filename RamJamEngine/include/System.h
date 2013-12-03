@@ -47,10 +47,6 @@ public:
 	float		mCameraTheta;
 	float		mCameraPhi;
 	float		mCameraRadius;
-	float		mCameraFOV;
-	float		mCameraOrthoZoom;
-	float		mCameraNearZ;
-	float		mCameraFarZ;
 
 	BOOL		mCameraAnimated;
 	float		mAnimationSpeed;
@@ -112,7 +108,6 @@ private:
 	void ShutdownWindows();
 
 	void HandleInputs();
-	void LoadCameraSettings();
 	void LoadConfigFile();
 
 	void FeedProfilerInfo();
