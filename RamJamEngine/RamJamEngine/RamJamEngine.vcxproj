@@ -192,7 +192,6 @@
     <None Include="..\data\models\dragon.mesh" />
     <None Include="..\data\models\sphere.mesh" />
     <None Include="..\data\Resources.ini" />
-    <None Include="..\data\Scene.ini" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\include\RamJamEngine.rc" />

@@ -60,7 +60,7 @@ System::System()
 
 
 #if (RJE_GRAPHIC_API == DIRECTX_11)
-	mGraphicAPI = rje_new DX11RenderingAPI();
+	mGraphicAPI = rje_new DX11RenderingAPI(mScene);
 #else
 	mGraphicAPI = rje_new OglWrapper();
 #endif
@@ -567,12 +567,6 @@ void System::LoadConfigFile()
 		CIniFile::SetValue("fullscreen",           "false", "rendering", filename);
 		CIniFile::SetValue("screenwidth",          "1280",  "rendering", filename);
 		CIniFile::SetValue("screenheight",         "720",   "rendering", filename);
-		CIniFile::SetValue("vsync",                "false", "rendering", filename);
-		CIniFile::SetValue("multisampling",        "true",  "rendering", filename);
-		CIniFile::SetValue("multisamplingcount",   "1",     "rendering", filename);
-		CIniFile::SetValue("multisamplingquality", "0",     "rendering", filename);
-		CIniFile::SetValue("use4xmsaa",            "true",  "rendering", filename);
-		CIniFile::SetValue("msaaquality",          "4",     "rendering", filename);
 		//---------------
 		CIniFile::SetValue("runinbackground",     "true", "misc", filename);
 		//---------------
@@ -582,12 +576,6 @@ void System::LoadConfigFile()
 	RJE_GLOBALS::gFullScreen			= CIniFile::GetValueBool("fullscreen",          "rendering", filename);
 	RJE_GLOBALS::gScreenWidth			= CIniFile::GetValueInt("screenwidth",          "rendering", filename);
 	RJE_GLOBALS::gScreenHeight			= CIniFile::GetValueInt("screenheight",         "rendering", filename);
-	RJE_GLOBALS::gVsyncEnabled			= CIniFile::GetValueBool("vsync",               "rendering", filename);
-	RJE_GLOBALS::gEnableMultiSampling	= CIniFile::GetValueBool("multisampling",       "rendering", filename);
-	RJE_GLOBALS::gMultiSamplingCount	= CIniFile::GetValueInt("multisamplingcount",   "rendering", filename);
-	RJE_GLOBALS::gMultisamplingQuality	= CIniFile::GetValueInt("multisamplingquality", "rendering", filename);
-	RJE_GLOBALS::gUse4xMsaa				= CIniFile::GetValueBool("use4xmsaa",           "rendering", filename);
-	RJE_GLOBALS::g4xMsaaQuality			= CIniFile::GetValueInt("msaaquality",          "rendering", filename);
 	//---------------
 	RJE_GLOBALS::gRunInBackground		= CIniFile::GetValueBool("runinbackground",    "misc", filename);
 	//---------------

@@ -1,7 +1,7 @@
 #include "DX11RenderingAPI.h"
 #include "../../RamJamEngine/include/System.h"
 
-DX11RenderingAPI::DX11RenderingAPI()
+DX11RenderingAPI::DX11RenderingAPI(Scene& scene) : mScene(scene)
 {
 	mDX11Device			= nullptr;
 	mDX11DepthBuffer	= nullptr;
@@ -9,16 +9,18 @@ DX11RenderingAPI::DX11RenderingAPI()
 	mRenderTargetView	= nullptr;
 	md3dDriverType		= D3D_DRIVER_TYPE_HARDWARE;
 	ZeroMemory(&mScreenViewport, sizeof(D3D11_VIEWPORT));
-
+	//-----------
+	VSyncEnabled = true;
+	//-----------
 	mConsoleFont  = nullptr;
 	mProfilerFont = nullptr;
 	mSpriteBatch  = nullptr;
-
+	//-----------
 	mVertexBuffer = nullptr;
 	mIndexBuffer  = nullptr;
 	mVertexBuffer_Gizmo = nullptr;
 	mIndexBuffer_Gizmo  = nullptr;
-	
+	//-----------
 	mBoxMap            = nullptr;
 	mGridMap           = nullptr;
 	mSphereMap         = nullptr;
@@ -27,15 +29,15 @@ DX11RenderingAPI::DX11RenderingAPI()
 	mWhiteSRV          = nullptr;
 	mConsoleBackground = nullptr;
 	mRjeLogo           = nullptr;
-
+	//-----------
 	mEyePosW = Vector3::zero;
-
+	//-----------
+	mBlendFactorR = 0.5f;
+	mBlendFactorG = 0.5f;
+	mBlendFactorB = 0.5f;
+	mBlendFactorA = 1.0f;
+	//-----------
 	mDirLightCount    = 1;
-	mbDrawReflections = true;
-	mbUseFog          = false;
-	mbUseTexture      = true;
-	mbUseBlending     = true;
-	mbWireframe       = false;
 
 	// Texture transforms
 	mGridTexTransform = Matrix44::Scaling(30.0f, 30.0f, 0.0f);
@@ -239,20 +241,36 @@ void DX11RenderingAPI::Initialize(int windowWidth, int windowHeight)
 	SetActivePointLights(3);
 
 	//////////////////////////////////////////////////////////////////////////
-
+	// AntTweak Bars
 	if (!TwInit(TW_DIRECT3D11, mDX11Device->md3dDevice))
-	{
 		MessageBoxA(System::Instance()->mHWnd, TwGetLastError(), "AntTweakBar initialization failed", MB_OK|MB_ICONERROR);
-	}
-
+	//-----------
 	// Create a tweak bar
-	TwBar *bar = TwNewBar("TweakBar");
-	TwDefine(" TweakBar iconified=true ");
+	TwBar *bar = TwNewBar("Scene");
+	TwDefine("Scene iconified=true ");
 	int barSize[2] = {224, 320};
 	TwSetParam(bar, NULL, "size", TW_PARAM_INT32, 2, barSize);
-
-	// Add variables to the tweak bar
+	TwAddVarRW(bar, "V-Sync Enabled", TW_TYPE_BOOLCPP, &VSyncEnabled, NULL);
+	TwAddSeparator(bar, NULL, NULL);
+	TwAddVarRW(bar, "Draw Reflections", TW_TYPE_BOOLCPP, &mScene.mbDrawReflections, NULL);
+	TwAddVarRW(bar, "Use Texture", TW_TYPE_BOOLCPP, &mScene.mbUseTexture, NULL);
+	TwAddVarRW(bar, "Use Blending", TW_TYPE_BOOLCPP, &mScene.mbUseBlending, NULL);
+	TwAddVarRW(bar, "Use Fog", TW_TYPE_BOOLCPP, &mScene.mbUseFog, NULL);
+	TwAddSeparator(bar, NULL, NULL);
+	TwAddVarRW(bar, "Blend Factor Red", TW_TYPE_FLOAT, &mBlendFactorR, "min=0 max=1 step=0.05");
+	TwAddVarRW(bar, "Blend Factor Green", TW_TYPE_FLOAT, &mBlendFactorG, "min=0 max=1 step=0.05");
+	TwAddVarRW(bar, "Blend Factor Blue", TW_TYPE_FLOAT, &mBlendFactorB, "min=0 max=1 step=0.05");
+	TwAddVarRW(bar, "Blend Factor Alpha", TW_TYPE_FLOAT, &mBlendFactorA, "min=0 max=1 step=0.05");
+	TwAddSeparator(bar, NULL, NULL);
+	TwAddButton(bar, "Toggle Wireframe", TwSetWireframe, this, NULL);
+	TwAddSeparator(bar, NULL, NULL);
 	TwAddVarRW(bar, "Rotation", TW_TYPE_QUAT4F, &mModelRot, "opened=true");
+	//-----------
+	TwBar *camBar = TwNewBar("Camera");
+	TwDefine("Camera iconified=true ");
+	TwSetParam(camBar, NULL, "size", TW_PARAM_INT32, 2, barSize);
+	TwAddVarRW(camBar, "Position", TW_TYPE_DIR3F, &mCamera->mPosition, "opened=false");
+	TwAddVarRW(camBar, "LookAt", TW_TYPE_DIR3F, &mCamera->mLookAt, "opened=false");
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -260,11 +278,6 @@ void DX11RenderingAPI::InitSwapChain(UINT msaaSamples)
 {
 	HWND hMainWnd = System::Instance()->mHWnd;
 	MSAA_Samples = msaaSamples;
-	// Check 4X MSAA quality support for our back buffer format.
-	// All Direct3D 11 capable devices support 4X MSAA for all render 
-	// target formats, so we only need to check quality support.
-// 	RJE_CHECK_FOR_SUCCESS(mDX11Device->md3dDevice->CheckMultisampleQualityLevels( DXGI_FORMAT_R8G8B8A8_UNORM, CIniFile::GetValueInt("multisamplingcount", "rendering", "../data/Config.ini"), &RJE_GLOBALS::g4xMsaaQuality));
-// 	RJE_ASSERT( RJE_GLOBALS::g4xMsaaQuality > 0 );
 
 	RJE_SAFE_RELEASE(mSwapChain);
 
@@ -595,10 +608,6 @@ void DX11RenderingAPI::UpdateScene( float dt )
 		if (Input::Instance()->GetKeyboardDown(Keyboard3))	mDirLightCount = 3;
 		if (Input::Instance()->GetKeyboardDown(Add))		if (mPointLightCount < MAX_LIGHTS)	SetActivePointLights(mPointLightCount + 1);
 		if (Input::Instance()->GetKeyboardDown(Subtract))	if (mPointLightCount > 0)			SetActivePointLights(mPointLightCount - 1);
-		if (Input::Instance()->GetKeyboardDown(R))			mbDrawReflections = !mbDrawReflections;
-		if (Input::Instance()->GetKeyboardDown(T))			mbUseTexture  = !mbUseTexture;
-		if (Input::Instance()->GetKeyboardDown(B))			mbUseBlending = !mbUseBlending;
-		if (Input::Instance()->GetKeyboardDown(F))			mbUseFog      = !mbUseFog;
 		if (Input::Instance()->GetKeyboardDown(S))			{DX11CommonStates::sCurrentRasterizerState = DX11CommonStates::sRasterizerState_Solid;}
 		if (Input::Instance()->GetKeyboardDown(A))			DX11CommonStates::sCurrentSamplerState    = DX11CommonStates::sSamplerState_Anisotropic;
 		if (Input::Instance()->GetKeyboardDown(L))			DX11CommonStates::sCurrentSamplerState    = DX11CommonStates::sSamplerState_Linear;
@@ -606,7 +615,6 @@ void DX11RenderingAPI::UpdateScene( float dt )
 		if (Input::Instance()->GetKeyboardDown(I))			DX11CommonStates::sCurrentBlendState      = DX11CommonStates::sBlendState_AlphaToCoverage;
 		if (Input::Instance()->GetKeyboardDown(O))			DX11CommonStates::sCurrentBlendState      = DX11CommonStates::sBlendState_Transparent;
 		if (Input::Instance()->GetKeyboardDown(P))			DX11CommonStates::sCurrentBlendState      = DX11CommonStates::sBlendState_Opaque;
-		if (Input::Instance()->GetKeyboardUp(W))			SetWireframe(!mbWireframe);
 	}
 
 	static float timer = 0.0f;
@@ -651,11 +659,7 @@ void DX11RenderingAPI::DrawScene()
 
 	mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sCurrentRasterizerState);
 
-	float rgb      = CIniFile::GetValueFloat("blend_rgb",   "blendfactor", "../data/Scene.ini");
-	float alpha    = CIniFile::GetValueFloat("blend_alpha", "blendfactor", "../data/Scene.ini");
-	float fogStart = CIniFile::GetValueFloat("fog_start",   "fog",      "../data/Scene.ini");
-	float fogRange = CIniFile::GetValueFloat("fog_range",   "fog",      "../data/Scene.ini");
-	float blendFactor[4] = {rgb, rgb, rgb, alpha};
+	float blendFactor[4] = {mBlendFactorR, mBlendFactorG, mBlendFactorB, mBlendFactorA};
 
 	UINT stride = sizeof(MeshData::PosNormalTex);
 	UINT offset = 0;
@@ -672,14 +676,14 @@ void DX11RenderingAPI::DrawScene()
 	DX11Effects::BasicFX->SetPointLights(mPointLights->GetShaderResource());
 	DX11Effects::BasicFX->SetEyePosW(mEyePosW);
 	DX11Effects::BasicFX->SetFogColor(Color(Color::Silver).GetVector4RGBANorm());
-	DX11Effects::BasicFX->SetFogStart(fogStart);
-	DX11Effects::BasicFX->SetFogRange(fogRange);
 	DX11Effects::BasicFX->SetSamplerState(DX11CommonStates::sCurrentSamplerState);
 	DX11Effects::BasicFX->SetPointLightCount(mPointLightCount);
 	DX11Effects::BasicFX->SetDirLightCount(mDirLightCount);
-	DX11Effects::BasicFX->SetFogState(mbUseFog);
-	DX11Effects::BasicFX->SetAlphaClipState(mbUseBlending);
-	DX11Effects::BasicFX->SetTextureState(mbUseTexture);
+	DX11Effects::BasicFX->SetFogStart(      mScene.mFogStart);
+	DX11Effects::BasicFX->SetFogRange(      mScene.mFogRange);
+	DX11Effects::BasicFX->SetFogState(      mScene.mbUseFog);
+	DX11Effects::BasicFX->SetAlphaClipState(mScene.mbUseBlending);
+	DX11Effects::BasicFX->SetTextureState(  mScene.mbUseTexture);
 
 	ID3DX11EffectTechnique* activeTech = DX11Effects::BasicFX->BasicTech;
 
@@ -705,7 +709,7 @@ void DX11RenderingAPI::DrawScene()
 		DX11Effects::BasicFX->SetDiffuseMap(mBoxMap);
 		DX11Effects::BasicFX->SetMaskMap(mWhiteSRV);
 
-		if (mbUseBlending)
+		if (mScene.mbUseBlending)
 			mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_CullNone);
 		mDX11Device->md3dImmediateContext->OMSetBlendState(DX11CommonStates::sCurrentBlendState, blendFactor, 0xffffffff);
 		activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
@@ -767,7 +771,7 @@ void DX11RenderingAPI::DrawScene()
 			DX11Effects::BasicFX->SetDiffuseMap(mSphereMap);
 			DX11Effects::BasicFX->SetMaskMap(mWhiteSRV);
 
-			if (mbUseBlending)
+			if (mScene.mbUseBlending)
 				mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_CullNone);
 			mDX11Device->md3dImmediateContext->OMSetBlendState(DX11CommonStates::sCurrentBlendState, blendFactor, 0xffffffff);
 			activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
@@ -795,7 +799,7 @@ void DX11RenderingAPI::DrawScene()
 		DX11Effects::BasicFX->SetMaskMap(mMaskMap);
 
 		// if we're in wireframe then we don't need to render the reflections
-		if (mbWireframe || !mbDrawReflections )
+		if (mScene.mbWireframe || !mScene.mbDrawReflections )
 		{
 			activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
 			mDX11Device->md3dImmediateContext->DrawIndexed(mGridIndexCount, mGridIndexOffset, mGridVertexOffset);
@@ -859,7 +863,7 @@ void DX11RenderingAPI::DrawScene()
 			DX11Effects::BasicFX->SetMaskMap(mWhiteSRV);
 
 			// Cull clockwise triangles for reflection.
-			if (mbUseBlending)
+			if (mScene.mbUseBlending)
 				mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_CullNone);
 			else
 				mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_CullClockwise);
@@ -893,7 +897,7 @@ void DX11RenderingAPI::DrawScene()
 				mDX11Device->md3dImmediateContext->DrawIndexed(mCylinderIndexCount, mCylinderIndexOffset, mCylinderVertexOffset);
 			}
 
-			if (mbUseBlending)
+			if (mScene.mbUseBlending)
 				mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_CullNone);
 			else
 				mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_CullClockwise);
@@ -911,7 +915,7 @@ void DX11RenderingAPI::DrawScene()
 				DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
 				DX11Effects::BasicFX->SetTexTransform(mSphereTexTransform);
 				DX11Effects::BasicFX->SetMaterial(mSphereMat);
-				DX11Effects::BasicFX->SetDiffuseMap(mSphereMap);
+				DX11Effects::BasicFX->SetDiffuseMap(mBoxMap);
 				DX11Effects::BasicFX->SetMaskMap(mWhiteSRV);
 
 				mDX11Device->md3dImmediateContext->OMSetBlendState(DX11CommonStates::sCurrentBlendState, blendFactor, 0xffffffff);
@@ -995,7 +999,7 @@ void DX11RenderingAPI::DrawScene()
 		DrawConsole();
 	else if (Profiler::Instance()->IsActive())
 		DrawProfiler();
-	else if (!mbWireframe)
+	else if (!mScene.mbWireframe)
 		Draw2dElements();
 
 	//-------------------------------------------------------------------------
@@ -1011,7 +1015,7 @@ void DX11RenderingAPI::DrawScene()
 
 	//-------------------------------------------------------------------------
 
-	if (RJE_GLOBALS::gVsyncEnabled)
+	if (VSyncEnabled)
 	{
 		RJE_CHECK_FOR_SUCCESS(mSwapChain->Present(1, 0));
 	}
@@ -1279,14 +1283,14 @@ void DX11RenderingAPI::SetWireframe(BOOL state)
 {
 	if (state)
 	{
-		mbUseBlending = false;
-		mbWireframe   = true;
+		mScene.mbUseBlending = false;
+		mScene.mbWireframe   = true;
 		DX11CommonStates::sCurrentRasterizerState = DX11CommonStates::sRasterizerState_Wireframe;
 		DX11CommonStates::sCurrentBlendState      = DX11CommonStates::sBlendState_Opaque;
 	}
 	else
 	{
-		mbWireframe = false;
+		mScene.mbWireframe = false;
 		DX11CommonStates::sCurrentRasterizerState = DX11CommonStates::sRasterizerState_Solid;
 	}
 }
@@ -1296,4 +1300,14 @@ void DX11RenderingAPI::SetMSAA(UINT MSAASamples)
 {
 	InitSwapChain(MSAASamples);
 	System::Instance()->OnResize();
+}
+
+
+//////////////////////////////////////////////////////////////////////////
+// AntTweak CallBacks
+//////////////////////////////////////////////////////////////////////////
+void TW_CALL TwSetWireframe(void *clientData)
+{
+	DX11RenderingAPI* api = static_cast<DX11RenderingAPI*>(clientData);
+	api->SetWireframe(!api->mScene.mbWireframe);
 }

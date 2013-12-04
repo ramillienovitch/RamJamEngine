@@ -16,6 +16,8 @@ struct GraphicAPI
 {
 	Camera* mCamera;
 
+	BOOL VSyncEnabled;
+
 	virtual void Initialize(int windowWidth, int windowHeight) = 0;
 	virtual void UpdateScene( float dt ) = 0;
 	virtual void DrawScene() = 0;

@@ -2,11 +2,13 @@
 
 #include "DX11Helper.h"
 #include "../../RamJamEngine/include/GraphicAPI.h"
+#include "../../RamJamEngine/include/Scene.h"
+#include "../../RamJamEngine/include/AntTweakBar.h"
 
 
 struct DX11RenderingAPI : GraphicAPI
 {
-	DX11RenderingAPI();
+	DX11RenderingAPI(Scene& scene);
 	~DX11RenderingAPI();
 
 	DX11Device*				mDX11Device;
@@ -30,6 +32,9 @@ struct DX11RenderingAPI : GraphicAPI
 	UINT mWindowWidth;
 	UINT mWindowHeight;
 	UINT MSAA_Samples;
+
+	// shortcut for System::Instance()->mScene
+	Scene& mScene;
 
 	//////////////////////////////////////////////////////////////////////////
 
@@ -107,14 +112,13 @@ struct DX11RenderingAPI : GraphicAPI
 	UINT mAxisIndexOffset;
 	//---------------
 
-	Vector3 mEyePosW;
+	float mBlendFactorR;
+	float mBlendFactorG;
+	float mBlendFactorB;
+	float mBlendFactorA;
 
-	// Scene Parameters : TODO: Get these out of DX11RenderingAPI !
-	BOOL mbDrawReflections;
-	BOOL mbUseTexture;
-	BOOL mbUseBlending;
-	BOOL mbUseFog;
-	BOOL mbWireframe;
+	//---------------
+	Vector3 mEyePosW;
 	
 	//////////////////////////////////////////////////////////////////////////
 
@@ -146,3 +150,7 @@ struct DX11RenderingAPI : GraphicAPI
 	//---------------
 	void SetActivePointLights(UINT activeLights);
 };
+
+//////////////////////////////////////////////////////////////////////////
+// AntTweak Bar CallBacks. TODO: find a way to avoid duplication :(
+void TW_CALL TwSetWireframe(void *clientData);

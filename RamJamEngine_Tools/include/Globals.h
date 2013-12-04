@@ -41,14 +41,8 @@ namespace RJE_GLOBALS
 	//	Rendering
 	//************************************************************************
 	extern BOOL		gFullScreen;
-	extern BOOL		gVsyncEnabled;
 	extern int		gScreenWidth;
 	extern int		gScreenHeight;
-	extern BOOL		gEnableMultiSampling;
-	extern int		gMultiSamplingCount;
-	extern int		gMultisamplingQuality;
-	extern BOOL		gUse4xMsaa;
-	extern u32		g4xMsaaQuality;
 
 	//************************************************************************
 	//	Debug

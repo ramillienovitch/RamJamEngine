@@ -198,9 +198,6 @@
     <None Include="..\data\Resources.ini">
       <Filter>Resource Files\Config Files</Filter>
     </None>
-    <None Include="..\data\Scene.ini">
-      <Filter>Resource Files\Config Files</Filter>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\include\RamJamEngine.rc">
