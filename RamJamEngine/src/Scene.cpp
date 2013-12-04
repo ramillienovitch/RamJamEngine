@@ -3,6 +3,7 @@
 //////////////////////////////////////////////////////////////////////////
 Scene::Scene()
 {
+	mFogColor = Color(Color::Silver).GetVector4RGBANorm();
 	mFogStart = 15.0f;
 	mFogRange = 175.0f;
 

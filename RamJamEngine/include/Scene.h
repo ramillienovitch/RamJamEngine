@@ -3,6 +3,9 @@
 #include "Types.h"
 #include "SceneLoader.h"
 #include "Transform.h"
+#include "Color.h"
+
+using namespace RJE_COLOR;
 
 //////////////////////////////////////////////////////////////////////////
 struct Scene
@@ -12,6 +15,7 @@ struct Scene
 
 	//-----------------------------------------------
 	// Scene parameters
+	Vector4	mFogColor;
 	float	mFogStart;
 	float	mFogRange;
 	BOOL	mbDrawReflections;

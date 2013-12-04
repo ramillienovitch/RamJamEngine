@@ -22,16 +22,16 @@ namespace RJE_COLOR
 		Color(IN ARGB argb)									{Argb = argb;}
 		//-----------------
 		BYTE GetAlpha() const		{ return (BYTE) (Argb >> AlphaShift); }
-		BYTE GetAlphaNorm() const	{ return GetAlpha()/255; }
+		f32  GetAlphaNorm() const	{ return GetAlpha()/255.0f; }
 		//-----------------
 		BYTE GetRed() const			{ return (BYTE) (Argb >> RedShift); }
-		BYTE GetRedNorm() const		{ return GetRed()/255; }
+		f32  GetRedNorm() const		{ return GetRed()/255.0f; }
 		//-----------------
 		BYTE GetGreen() const		{ return (BYTE) (Argb >> GreenShift); }
-		BYTE GetGreenNorm() const	{ return GetGreen()/255; }
+		f32  GetGreenNorm() const	{ return GetGreen()/255.0f; }
 		//-----------------
 		BYTE GetBlue() const		{ return (BYTE) (Argb >> BlueShift); }
-		BYTE GetBlueNorm() const	{ return GetBlue()/255; }
+		f32  GetBlueNorm() const	{ return GetBlue()/255.0f; }
 		//-----------------
 		ARGB GetValue() const		{ return Argb; }
 		//-----------------

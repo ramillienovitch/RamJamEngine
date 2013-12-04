@@ -253,13 +253,17 @@ void DX11RenderingAPI::Initialize(int windowWidth, int windowHeight)
 	TwAddVarRW(bar, "V-Sync Enabled", TW_TYPE_BOOLCPP, &VSyncEnabled, NULL);
 	TwAddSeparator(bar, NULL, NULL);
 	TwAddVarRW(bar, "Draw Reflections", TW_TYPE_BOOLCPP, &mScene.mbDrawReflections, NULL);
-	TwAddVarRW(bar, "Use Texture", TW_TYPE_BOOLCPP, &mScene.mbUseTexture, NULL);
-	TwAddVarRW(bar, "Use Blending", TW_TYPE_BOOLCPP, &mScene.mbUseBlending, NULL);
-	TwAddVarRW(bar, "Use Fog", TW_TYPE_BOOLCPP, &mScene.mbUseFog, NULL);
+	TwAddVarRW(bar, "Use Texture",      TW_TYPE_BOOLCPP, &mScene.mbUseTexture, NULL);
+	TwAddVarRW(bar, "Use Blending",     TW_TYPE_BOOLCPP, &mScene.mbUseBlending, NULL);
 	TwAddSeparator(bar, NULL, NULL);
-	TwAddVarRW(bar, "Blend Factor Red", TW_TYPE_FLOAT, &mBlendFactorR, "min=0 max=1 step=0.05");
+	TwAddVarRW(bar, "Use Fog", TW_TYPE_BOOLCPP,   &mScene.mbUseFog, NULL);
+	TwAddVarRW(bar, "Fog Color", TW_TYPE_COLOR4F, &mScene.mFogColor, NULL);
+	TwAddVarRW(bar, "Fog Start", TW_TYPE_FLOAT,   &mScene.mFogStart, "min=10 max=100");
+	TwAddVarRW(bar, "Fog Range", TW_TYPE_FLOAT,   &mScene.mFogRange, "min=20 max=500");
+	TwAddSeparator(bar, NULL, NULL);
+	TwAddVarRW(bar, "Blend Factor Red",   TW_TYPE_FLOAT, &mBlendFactorR, "min=0 max=1 step=0.05");
 	TwAddVarRW(bar, "Blend Factor Green", TW_TYPE_FLOAT, &mBlendFactorG, "min=0 max=1 step=0.05");
-	TwAddVarRW(bar, "Blend Factor Blue", TW_TYPE_FLOAT, &mBlendFactorB, "min=0 max=1 step=0.05");
+	TwAddVarRW(bar, "Blend Factor Blue",  TW_TYPE_FLOAT, &mBlendFactorB, "min=0 max=1 step=0.05");
 	TwAddVarRW(bar, "Blend Factor Alpha", TW_TYPE_FLOAT, &mBlendFactorA, "min=0 max=1 step=0.05");
 	TwAddSeparator(bar, NULL, NULL);
 	TwAddButton(bar, "Toggle Wireframe", TwSetWireframe, this, NULL);
@@ -436,7 +440,6 @@ void DX11RenderingAPI::BuildGeometryBuffers()
 
 
 	std::vector<MeshData::PosNormalTex> vertices(totalVertexCount);
-	XMFLOAT4 black(0.0f, 0.0f, 0.0f, 1.0f);
 	UINT k = 0;
 
 	for(size_t i = 0; i < box.Vertices.size(); ++i, ++k)
@@ -465,15 +468,11 @@ void DX11RenderingAPI::BuildGeometryBuffers()
 	}
 	for(size_t i = 0; i < modelVertexCount; ++i, ++k)
 	{
-		fread(&vertices[k].Pos.x, sizeof(float), 1, fIn);
-		fread(&vertices[k].Pos.y, sizeof(float), 1, fIn);
-		fread(&vertices[k].Pos.z, sizeof(float), 1, fIn);
-
-		//XMFLOAT4 rnd(RJE::Math::RandF(), RJE::Math::RandF(), RJE::Math::RandF(), 1.0f);
-		//vertices[k].Color = rnd;
-
-		fread(&vertices[k].Tex.x, sizeof(float), 1, fIn);
-		fread(&vertices[k].Tex.y, sizeof(float), 1, fIn);
+		fread(&vertices[k].Pos.x,    sizeof(float), 1, fIn);
+		fread(&vertices[k].Pos.y,    sizeof(float), 1, fIn);
+		fread(&vertices[k].Pos.z,    sizeof(float), 1, fIn);
+		fread(&vertices[k].Tex.x,    sizeof(float), 1, fIn);
+		fread(&vertices[k].Tex.y,    sizeof(float), 1, fIn);
 		fread(&vertices[k].Normal.x, sizeof(float), 1, fIn);
 		fread(&vertices[k].Normal.y, sizeof(float), 1, fIn);
 		fread(&vertices[k].Normal.z, sizeof(float), 1, fIn);
@@ -624,8 +623,6 @@ void DX11RenderingAPI::UpdateScene( float dt )
 	if (mPointLightCount > 0)
 	{
 		PointLight* light = mPointLights->MapDiscard(mDX11Device->md3dImmediateContext);
-		Vector4 black = Color(Color::Black).GetVector4RGBANorm();
-		Vector4 blue = Color(Color::Blue).GetVector4RGBANorm();
 		for (UINT i = 0; i < mPointLightCount; ++i)
 		{
 			mWorkingPointLights[i].Position.x = (i+1)*cosf(2*i + RJE::Math::Pi_f + timer );
@@ -675,10 +672,10 @@ void DX11RenderingAPI::DrawScene()
 	DX11Effects::BasicFX->SetDirLights(mDirLights);
 	DX11Effects::BasicFX->SetPointLights(mPointLights->GetShaderResource());
 	DX11Effects::BasicFX->SetEyePosW(mEyePosW);
-	DX11Effects::BasicFX->SetFogColor(Color(Color::Silver).GetVector4RGBANorm());
 	DX11Effects::BasicFX->SetSamplerState(DX11CommonStates::sCurrentSamplerState);
 	DX11Effects::BasicFX->SetPointLightCount(mPointLightCount);
 	DX11Effects::BasicFX->SetDirLightCount(mDirLightCount);
+	DX11Effects::BasicFX->SetFogColor(      mScene.mFogColor);
 	DX11Effects::BasicFX->SetFogStart(      mScene.mFogStart);
 	DX11Effects::BasicFX->SetFogRange(      mScene.mFogRange);
 	DX11Effects::BasicFX->SetFogState(      mScene.mbUseFog);
