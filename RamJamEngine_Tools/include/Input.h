@@ -71,7 +71,7 @@ enum Keycode		// Taken from the Virtual-Key codes from Microsoft
 	Subtract,
 	Tab,
 	UpArrow,
-	Windows
+	WindowsKey
 };
 
 enum MouseCode

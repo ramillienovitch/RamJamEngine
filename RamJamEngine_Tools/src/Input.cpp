@@ -99,7 +99,7 @@ void Input::HandleInputEvent(UINT umsg, WPARAM wparam, LPARAM lparam)
 				case VK_SUBTRACT :	mKeyboardState[Keycode::Subtract]     = true;	mKeyboardStateDown[Keycode::Subtract]     = true;		return;
 				case VK_TAB :		mKeyboardState[Keycode::Tab]          = true;	mKeyboardStateDown[Keycode::Tab]          = true;		return;
 				case VK_UP :		mKeyboardState[Keycode::UpArrow]      = true;	mKeyboardStateDown[Keycode::UpArrow]      = true;		return;
-				case VK_LWIN :		mKeyboardState[Keycode::Windows]      = true;	mKeyboardStateDown[Keycode::Windows]      = true;		return;
+				case VK_LWIN :		mKeyboardState[Keycode::WindowsKey]   = true;	mKeyboardStateDown[Keycode::WindowsKey]   = true;		return;
 				case VK_CONTROL :
 					if (extended)	{mKeyboardState[Keycode::RightCtrl]   = true;	mKeyboardStateDown[Keycode::RightCtrl]    = true;		return;}
 					else			{mKeyboardState[Keycode::LeftCtrl]    = true;	mKeyboardStateDown[Keycode::LeftCtrl]     = true;		return;}
@@ -181,7 +181,7 @@ void Input::HandleInputEvent(UINT umsg, WPARAM wparam, LPARAM lparam)
 				case VK_SUBTRACT :	mKeyboardState[Keycode::Subtract]     = false;	mKeyboardStateUp[Keycode::Subtract]     = true;		return;
 				case VK_TAB :		mKeyboardState[Keycode::Tab]          = false;	mKeyboardStateUp[Keycode::Tab]          = true;		return;
 				case VK_UP :		mKeyboardState[Keycode::UpArrow]      = false;	mKeyboardStateUp[Keycode::UpArrow]      = true;		return;
-				case VK_LWIN :		mKeyboardState[Keycode::Windows]      = false;	mKeyboardStateUp[Keycode::Windows]      = true;		return;
+				case VK_LWIN :		mKeyboardState[Keycode::WindowsKey]   = false;	mKeyboardStateUp[Keycode::WindowsKey]   = true;		return;
 				case VK_CONTROL :
 					if (extended)	{mKeyboardState[Keycode::RightCtrl]   = false;	mKeyboardStateUp[Keycode::RightCtrl]    = true;		return;}
 					else			{mKeyboardState[Keycode::LeftCtrl]    = false;	mKeyboardStateUp[Keycode::LeftCtrl]     = true;		return;}

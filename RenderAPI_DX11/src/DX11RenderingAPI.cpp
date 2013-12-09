@@ -291,8 +291,8 @@ void DX11RenderingAPI::InitSwapChain(UINT msaaSamples)
 	sd.BufferDesc.Height					= mWindowHeight;
 	sd.BufferDesc.RefreshRate.Numerator		= 60;
 	sd.BufferDesc.RefreshRate.Denominator	= 1;
-	//sd.BufferDesc.Format					= DXGI_FORMAT_R8G8B8A8_UNORM;
-	sd.BufferDesc.Format					= DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+	sd.BufferDesc.Format					= DXGI_FORMAT_R8G8B8A8_UNORM;
+	//sd.BufferDesc.Format					= DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
 	sd.BufferDesc.ScanlineOrdering			= DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
 	sd.BufferDesc.Scaling					= DXGI_MODE_SCALING_UNSPECIFIED;
 	sd.SampleDesc.Count						= MSAA_Samples;
@@ -328,7 +328,27 @@ void DX11RenderingAPI::InitSwapChain(UINT msaaSamples)
 void DX11RenderingAPI::LoadTexture(string keyName, ID3D11ShaderResourceView** shaderResourceView)
 {	
 	wstring texturePath = StringToWString(System::Instance()->mDataPath) + CIniFile::GetValueW(keyName, "textures", System::Instance()->mResourcesPath);
-	RJE_CHECK_FOR_SUCCESS(CreateDDSTextureFromFile( mDX11Device->md3dDevice, texturePath.c_str(), nullptr, shaderResourceView));
+	wstring textureExtension = texturePath.substr(texturePath.find('.'));
+	// lower the case so we can compare more easily
+	std::transform(textureExtension.begin(), textureExtension.end(), textureExtension.begin(), ::tolower);
+	
+	TexMetadata  metadata;
+	ScratchImage image;
+
+	if (textureExtension.compare(L".png") == 0 || textureExtension.compare(L".bmp") == 0 || textureExtension.compare(L".gif") == 0 ||
+		textureExtension.compare(L".jpg") == 0 || textureExtension.compare(L".jpeg") == 0)
+	{
+		RJE_CHECK_FOR_SUCCESS(LoadFromWICFile( texturePath.c_str(), WIC_FLAGS::WIC_FLAGS_NONE, &metadata, image ));
+	}
+	else if (textureExtension.compare(L".tga") == 0)
+	{
+		RJE_CHECK_FOR_SUCCESS(LoadFromTGAFile( texturePath.c_str(), &metadata, image ));
+	}
+	else if  (textureExtension.compare(L".dds") == 0)
+	{
+		RJE_CHECK_FOR_SUCCESS(LoadFromDDSFile( texturePath.c_str(), DDS_FLAGS::DDS_FLAGS_NONE, &metadata, image ));
+	}
+	RJE_CHECK_FOR_SUCCESS(CreateShaderResourceView( mDX11Device->md3dDevice, image.GetImages(), image.GetImageCount(), metadata, shaderResourceView ));
 }
 
 //////////////////////////////////////////////////////////////////////////
