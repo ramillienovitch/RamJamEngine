@@ -28,4 +28,8 @@ struct GraphicAPI
 
 	virtual void SetWireframe(BOOL state) = 0;
 	virtual void SetMSAA(UINT MSAA_Samples) = 0;
+
+	//-----------
+
+	virtual ~GraphicAPI() {};
 };

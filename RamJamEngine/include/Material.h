@@ -2,16 +2,89 @@
 
 #include "MathHelper.h"
 
+#if (RJE_GRAPHIC_API == DIRECTX_11)
+#	include <d3d11.h>
+	typedef ID3D11ShaderResourceView ShaderResource;
+#else
+#	define ShaderResource
+#endif
+
+enum MaterialPropertyType
+{
+	Int = 0x0,
+	Bool,
+	Float,
+	Vector,
+	Matrix,
+	Texture,
+	Cubemap,
+	
+	//  This value is not used. It forces the compiler to use at least 32 Bit integers to represent this enum.
+	Force32Bit  = 0x9fffffff
+};
+
+// enum TextureType
+// {
+// 	TextureType_NONE         = 0x0,
+// 	TextureType_DIFFUSE      = 0x1,
+// 	TextureType_SPECULAR     = 0x2,
+// 	TextureType_AMBIENT      = 0x3,
+// 	TextureType_EMISSIVE     = 0x4,
+// 	TextureType_HEIGHT       = 0x5,
+// 	TextureType_NORMALS      = 0x6,
+// 	TextureType_SHININESS    = 0x7,
+// 	TextureType_OPACITY      = 0x8,
+// 	TextureType_DISPLACEMENT = 0x9,
+// 	TextureType_LIGHTMAP     = 0xA,
+// 	TextureType_REFLECTION   = 0xB,
+// 	TextureType_UNKNOWN      = 0xC,
+// 
+// 	//  This value is not used. It forces the compiler to use at least 32 Bit integers to represent this enum.
+// 	TextureType_Force32Bit   = 0x9fffffff
+// };
+
+//////////////////////////////////////////////////////////////////////////
+struct MaterialProperty
+{
+	std::string				mName;
+	MaterialPropertyType	mType;
+
+	// For non-texture properties, these members are always 0 
+// 	u32	mTextureUsageSemantic;
+// 	u32	mTextureIndex;
+
+	void*			mData;
+	ShaderResource*	mShaderResource;
+
+	MaterialProperty()
+	{
+		mData = mShaderResource = nullptr;
+		//mTextureIndex = mTextureUsageSemantic = 0;
+	}
+
+	~MaterialProperty()
+	{
+		if (mData != nullptr)
+			free(mData);
+	}
+};
+
 //////////////////////////////////////////////////////////////////////////
 struct Material
 {
-	Material()
-	{ 
-		ZeroMemory(this, sizeof(this));
-	}
+	Material();
+	~Material();
 
-	Vector4 Ambient;
-	Vector4 Diffuse;
-	Vector4 Specular; // w = SpecPower
-	Vector4 Reflect;
+	u32 mPropertiesCount;
+	std::vector<MaterialProperty*> mProperties;
+
+	//----------------------------------
+
+	void ExtractPropertiesFromShader();
+
+	//----------------------------------
+
+	void AddProperty      (std::string propertyName, MaterialPropertyType propertyType, u64 propertyDataLength, void* propertyData);
+	void AddPropertyVector(std::string propertyName, Vector4 propertyData);
+	void AddPropertyTexture(std::string propertyName, ShaderResource* shaderResource);
 };

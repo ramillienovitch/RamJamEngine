@@ -13,7 +13,7 @@ namespace RJE
 #	else
 #		define RJE_ASSERT(x) (x)
 #	endif
-#	define RJE_C_ASSERT(x, y)	static_assert(x, y)
+#	define RJE_C_ASSERT(condition, message)	static_assert(condition, message)
 
 #	define RJE_ALIGNOF( X )		__declspec( align( X ) )
 

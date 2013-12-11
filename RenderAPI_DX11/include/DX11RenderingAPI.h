@@ -9,7 +9,7 @@
 struct DX11RenderingAPI : GraphicAPI
 {
 	DX11RenderingAPI(Scene& scene);
-	~DX11RenderingAPI();
+	virtual ~DX11RenderingAPI();
 
 	DX11Device*				mDX11Device;
 	DX11DepthBuffer*		mDX11DepthBuffer;
@@ -24,6 +24,8 @@ struct DX11RenderingAPI : GraphicAPI
 	IDXGIDebug*			md3dDebug;
 	ID3D11InfoQueue*	md3dInfoQueue;
 #endif
+
+	DX11TextureManager*	mTextureMgr;
 
 	DX11FontSheet*		mConsoleFont;
 	DX11FontSheet*		mProfilerFont;
@@ -138,8 +140,6 @@ struct DX11RenderingAPI : GraphicAPI
 	void InitSwapChain(UINT msaaSamples = 4);
 	void ResizeWindow();
 	//---------------
-	void LoadTexture(string keyName, ID3D11ShaderResourceView** shaderResourceView);
-	void Create2DTexture(i32 height, i32 width, RJE_COLOR::Color color, ID3D11ShaderResourceView** textureSRV);
 	void BuildGeometryBuffers();
 	void BuildGizmosBuffers();
 	//---------------

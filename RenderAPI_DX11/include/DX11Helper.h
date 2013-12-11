@@ -57,5 +57,6 @@ using namespace DirectX;
 #include "DX11SpriteBatch.h"
 #include "DX11InputLayout.h"
 #include "DX11StructuredBuffer.h"
+#include "DX11TextureManager.h"
 #include "../../DirectXTex/DirectXTex.h"
 //////////////////////////////////////////////////////////////////////////

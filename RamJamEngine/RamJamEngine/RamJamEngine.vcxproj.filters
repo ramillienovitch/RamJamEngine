@@ -119,6 +119,9 @@
     <ClCompile Include="..\src\Camera.cpp">
       <Filter>Source Files\RJE_Graphic</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\Material.cpp">
+      <Filter>Source Files\RJE_Graphic</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="small.ico">

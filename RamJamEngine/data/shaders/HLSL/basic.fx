@@ -5,6 +5,14 @@
 //=============================================================================
 
 #include "lightHelper.fx"
+
+// <Properties>
+// Ambient float4
+// Diffuse float4
+// Specular float4
+// Reflect float4
+// Texture_Diffuse Texture2D
+// </Properties>
  
 cbuffer cbPerFrame
 {
@@ -28,12 +36,15 @@ cbuffer cbPerObject
 	float4x4 gWorldInvTranspose;
 	float4x4 gWorldViewProj;
 	float4x4 gTexTransform;
-	Material gMaterial;
+	//-------
+	float4 gMatAmbient		: Ambient;
+	float4 gMatDiffuse		: Diffuse;
+	float4 gMatSpecular		: Specular;
+	float4 gMatReflect		: Reflect;
 }; 
 
 // Nonnumeric values cannot be added to a cbuffer.
-Texture2D gDiffuseMap;
-Texture2D gMaskMap;
+Texture2D gDiffuseMap		: Texture_Diffuse;
 
 SamplerState gTextureSampler;
 
@@ -97,7 +108,7 @@ float4 PS(VertexOut pin) : SV_Target
 	if(gUseTexture)
 	{
 		// Sample texture.
-		texColor = gDiffuseMap.Sample( gTextureSampler, pin.Tex ) * gMaskMap.Sample( gTextureSampler, pin.Tex );
+		texColor = gDiffuseMap.Sample( gTextureSampler, pin.Tex );
 
 		if(gUseAlphaClip)
 		{
@@ -121,10 +132,15 @@ float4 PS(VertexOut pin) : SV_Target
 
 	// Sum the light contribution from each light source.  
 	float4 A, D, S;
+	Material mat;
+	mat.Ambient = gMatAmbient;
+	mat.Diffuse = gMatDiffuse;
+	mat.Specular = gMatSpecular;
+	mat.Reflect = gMatReflect;
 	for (uint dirLightIdx = 0; dirLightIdx < (uint)gDirLightCount; ++dirLightIdx)
 	{
 		DirectionalLight light = gDirLights[dirLightIdx];
-		ComputeDirectionalLight(gMaterial, light, pin.NormalW, toEye, A, D, S);
+		ComputeDirectionalLight(mat, light, pin.NormalW, toEye, A, D, S);
 
 		ambient += A;
 		diffuse += D;
@@ -136,7 +152,7 @@ float4 PS(VertexOut pin) : SV_Target
 	for (uint pointLightIdx = 0; pointLightIdx < totalLights; ++pointLightIdx)
 	{
 		PointLight light = gPointLights[pointLightIdx];
-		ComputePointLight(gMaterial, light, pin.PosW, pin.NormalW, toEye, A, D, S);
+		ComputePointLight(mat, light, pin.PosW, pin.NormalW, toEye, A, D, S);
 
 		ambient += A;
 		diffuse += D;
@@ -159,7 +175,7 @@ float4 PS(VertexOut pin) : SV_Target
 	}
 
 	// Common to take alpha from diffuse material.
-	litColor.a = gMaterial.Diffuse.a * texColor.a;
+	litColor.a = gMatDiffuse.a * texColor.a;
 
 	return litColor;
 }

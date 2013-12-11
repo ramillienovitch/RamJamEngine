@@ -90,6 +90,7 @@
     <ClInclude Include="include\DX11RenderingAPI.h" />
     <ClInclude Include="include\DX11StructuredBuffer.h" />
     <ClInclude Include="include\DxErr.h" />
+    <ClInclude Include="include\DX11TextureManager.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\DX11CommonStates.cpp" />
@@ -101,6 +102,7 @@
     <ClCompile Include="src\DX11SpriteBatch.cpp" />
     <ClCompile Include="src\DX11RenderingAPI.cpp" />
     <ClCompile Include="src\DX11Profiler.cpp" />
+    <ClCompile Include="src\DX11TextureManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="..\RamJamEngine\data\shaders\HLSL\basic.fx">
