@@ -5,7 +5,10 @@
 //////////////////////////////////////////////////////////////////////////
 struct DX11TextureManager
 {
-	ID3D11Device*			mDevice;
+	ID3D11Device* mDevice;
+
+	u32										mTextureCount;
+	std::vector<ID3D11ShaderResourceView*>	mTextures;
 
 	//-----------------------------
 

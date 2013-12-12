@@ -29,15 +29,15 @@ void Material::AddProperty( std::string propertyName, MaterialPropertyType prope
 //------------------------------------------------------------
 void Material::AddPropertyVector( std::string propertyName, Vector4 propertyData )
 {
-	AddProperty(propertyName, MaterialPropertyType::Vector, sizeof(Vector4), reinterpret_cast<void*>(&propertyData));
+	AddProperty(propertyName, MaterialPropertyType::Type_Vector, sizeof(Vector4), reinterpret_cast<void*>(&propertyData));
 }
 //------------------------------------------------------------
 void Material::AddPropertyTexture( std::string propertyName, ShaderResource* shaderResource )
 {
-	MaterialProperty* property = rje_new MaterialProperty();
-	property->mName            = propertyName;
-	property->mType            = MaterialPropertyType::Texture;
-	property->mShaderResource  = shaderResource;
+	MaterialProperty* property         = rje_new MaterialProperty();
+	property->mName                    = propertyName;
+	property->mType                    = MaterialPropertyType::Type_Texture;
+	property->mShaderResource.mTexture = shaderResource;
 	++mPropertiesCount;
 	mProperties.push_back(property);
 }

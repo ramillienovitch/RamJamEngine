@@ -16,6 +16,7 @@
 #include "pchfx.h"
 
 #include "EffectStates11.h"
+#include "..\RamJamEngine\include\MaterialFactory.h"
 
 #define PRIVATENEW new(m_BulkHeap)
 
@@ -1274,6 +1275,11 @@ HRESULT CEffectLoader::LoadNumericVariable(_In_ SConstantBuffer *pParentCB)
     VHD( GetStringAndAddToReflection(psVar->oName, &pVar->pName), "Invalid pEffectBuffer: cannot read variable name." );
     VHD( GetStringAndAddToReflection(psVar->oSemantic, &pVar->pSemantic), "Invalid pEffectBuffer: cannot read variable semantic." );
 
+    if (pVar->pSemantic)
+        MaterialFactory::Instance()->RegisterProperty(pVar->pName, pVar->pSemantic, pVar->pType->pTypeName);
+    else
+        MaterialFactory::Instance()->RegisterProperty(pVar->pName, pVar->pType->pTypeName);
+
     // Ensure the variable fits in the CBuffer and doesn't overflow
     VBD( pType->TotalSize + psVar->Offset <= pParentCB->Size &&
          pType->TotalSize + psVar->Offset >= pType->TotalSize, "Invalid pEffectBuffer: variable does not fit in CB." );
@@ -1952,6 +1958,11 @@ HRESULT CEffectLoader::LoadObjectVariables()
         // Get name
         VHD( GetStringAndAddToReflection(psBlock->oName, &pVar->pName), "Invalid pEffectBuffer: cannot read object variable name." );
         VHD( GetStringAndAddToReflection(psBlock->oSemantic, &pVar->pSemantic), "Invalid pEffectBuffer: cannot read object variable semantic." );
+
+        if (pVar->pSemantic)
+            MaterialFactory::Instance()->RegisterProperty(pVar->pName, pVar->pSemantic, pVar->pType->pTypeName);
+        else
+            MaterialFactory::Instance()->RegisterProperty(pVar->pName, pVar->pType->pTypeName);
 
         m_pEffect->m_VariableCount++;
         elementsToRead = std::max<uint32_t>(1, pType->Elements);

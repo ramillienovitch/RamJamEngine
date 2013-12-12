@@ -33,5 +33,9 @@ struct Transform
 
 	Matrix44 WorldMatrix ();
 
+	//---------------------------
+
+	static Matrix44 MatrixFromTextureProperties(Vector2 tiling, Vector2 offset, f32 rotationAngle);
+
 	// TODO: add transform "everything" !
 };

@@ -75,3 +75,4 @@
 #include "System.h"
 #include "Console.h"
 #include "Transform.h"
+#include "MaterialFactory.h"

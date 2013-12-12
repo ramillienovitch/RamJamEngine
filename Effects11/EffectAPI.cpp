@@ -29,7 +29,7 @@ inline HANDLE safe_handle( HANDLE h ) { return (h == INVALID_HANDLE_VALUE) ? 0 :
 
 //-------------------------------------------------------------------------------------
 
-static HRESULT LoadBinaryFromFile( _In_z_ LPCWSTR pFileName, _Inout_ std::unique_ptr<uint8_t[]>& data, _Out_ uint32_t& size )
+static HRESULT LoadBinaryFromFile( _In_z_ LPCSTR pFileName, _Inout_ std::unique_ptr<uint8_t[]>& data, _Out_ uint32_t& size )
 {
 	// open the file
 #if (_WIN32_WINNT > 0x0602 /*_WIN32_WINNT_WIN8*/)
@@ -39,7 +39,7 @@ static HRESULT LoadBinaryFromFile( _In_z_ LPCWSTR pFileName, _Inout_ std::unique
 												  OPEN_EXISTING,
 												  nullptr ) ) );
 #else
-	ScopedHandle hFile( safe_handle( CreateFileW( pFileName,
+	ScopedHandle hFile( safe_handle( CreateFileA( pFileName,
 												  GENERIC_READ,
 												  FILE_SHARE_READ,
 												  nullptr,
@@ -134,7 +134,7 @@ lExit:
 //--------------------------------------------------------------------------------------
 
 _Use_decl_annotations_
-HRESULT WINAPI D3DX11CreateEffectFromFile( LPCWSTR pFileName, UINT FXFlags, ID3D11Device *pDevice, ID3DX11Effect **ppEffect )
+HRESULT WINAPI D3DX11CreateEffectFromFile( LPCSTR pFileName, UINT FXFlags, ID3D11Device *pDevice, ID3DX11Effect **ppEffect )
 {
 	if ( !pFileName || !pDevice || !ppEffect )
 		return E_INVALIDARG;
@@ -152,12 +152,12 @@ HRESULT WINAPI D3DX11CreateEffectFromFile( LPCWSTR pFileName, UINT FXFlags, ID3D
 	VH( ((CEffect*)(*ppEffect))->LoadEffect( fileData.get(), size ) );
 
 	// Create debug object name from input filename
-	CHAR strFileA[MAX_PATH];
-	WideCharToMultiByte( CP_ACP, WC_NO_BEST_FIT_CHARS, pFileName, -1, strFileA, MAX_PATH, nullptr, FALSE );
-	const CHAR* pstrName = strrchr( strFileA, '\\' );
+// 	CHAR strFileA[MAX_PATH];
+// 	WideCharToMultiByte( CP_ACP, WC_NO_BEST_FIT_CHARS, pFileName, -1, strFileA, MAX_PATH, nullptr, FALSE );
+	const CHAR* pstrName = strrchr( pFileName, '\\' );
 	if (!pstrName)
 	{
-		pstrName = strFileA;
+		pstrName = pFileName;
 	}
 	else
 	{

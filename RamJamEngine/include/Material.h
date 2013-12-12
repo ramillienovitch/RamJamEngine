@@ -1,26 +1,20 @@
 #pragma once
 
 #include "MathHelper.h"
-
-#if (RJE_GRAPHIC_API == DIRECTX_11)
-#	include <d3d11.h>
-	typedef ID3D11ShaderResourceView ShaderResource;
-#else
-#	define ShaderResource
-#endif
+#include "Texture.h"
 
 enum MaterialPropertyType
 {
-	Int = 0x0,
-	Bool,
-	Float,
-	Vector,
-	Matrix,
-	Texture,
-	Cubemap,
+	Type_Int = 0x0,
+	Type_Bool,
+	Type_Float,
+	Type_Vector,
+	Type_Matrix,
+	Type_Texture,
+	Type_Cubemap,
 	
 	//  This value is not used. It forces the compiler to use at least 32 Bit integers to represent this enum.
-	Force32Bit  = 0x9fffffff
+	Type_Force32Bit  = 0x9fffffff
 };
 
 // enum TextureType
@@ -54,11 +48,11 @@ struct MaterialProperty
 // 	u32	mTextureIndex;
 
 	void*			mData;
-	ShaderResource*	mShaderResource;
+	Texture			mShaderResource;
 
 	MaterialProperty()
 	{
-		mData = mShaderResource = nullptr;
+		mData = nullptr;
 		//mTextureIndex = mTextureUsageSemantic = 0;
 	}
 

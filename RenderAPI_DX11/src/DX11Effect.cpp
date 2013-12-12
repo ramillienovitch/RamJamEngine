@@ -1,22 +1,13 @@
 #include "DX11Effect.h"
 #include "../../RamJamEngine/include/System.h"
+#include "../../RamJamEngine/include/MaterialFactory.h"
 
 #pragma region Effect
-Effect::Effect(ID3D11Device* device, const std::wstring& filename)
+Effect::Effect(ID3D11Device* device, const std::string& filename)
 {
 	mFX = nullptr;
-
-	std::ifstream fin(filename, std::ios::binary);
-
-	fin.seekg(0, std::ios_base::end);
-	int size = (int)fin.tellg();
-	fin.seekg(0, std::ios_base::beg);
-	std::vector<char> compiledShader(size);
-
-	fin.read(&compiledShader[0], size);
-	fin.close();
-
-	RJE_CHECK_FOR_SUCCESS(D3DX11CreateEffectFromMemory(&compiledShader[0], size, 0, device, &mFX));
+	MaterialFactory::Instance()->RegisterShader(filename);
+	RJE_CHECK_FOR_SUCCESS(D3DX11CreateEffectFromFile(filename.c_str(), 0, device, &mFX));
 }
 
 Effect::~Effect()
@@ -28,14 +19,14 @@ Effect::~Effect()
 //////////////////////////////////////////////////////////////////////////
 
 #pragma region BasicEffect
-BasicEffect::BasicEffect(ID3D11Device* device, const std::wstring& filename)
+BasicEffect::BasicEffect(ID3D11Device* device, const std::string& filename)
 	: Effect(device, filename)
 {
 	BasicTech         = mFX->GetTechniqueByName("Basic");
 	WorldViewProj     = mFX->GetVariableByName("gWorldViewProj")->AsMatrix();
 	World             = mFX->GetVariableByName("gWorld")->AsMatrix();
 	WorldInvTranspose = mFX->GetVariableByName("gWorldInvTranspose")->AsMatrix();
-	TexTransform      = mFX->GetVariableByName("gTexTransform")->AsMatrix();
+	TexTransform      = mFX->GetVariableByName("gDiffuseMapTrf")->AsMatrix();
 	EyePosW           = mFX->GetVariableByName("gEyePosW")->AsVector();
 	FogColor          = mFX->GetVariableByName("gFogColor")->AsVector();
 	FogEnabled        = mFX->GetVariableByName("gUseFog")->AsScalar();
@@ -56,7 +47,7 @@ BasicEffect::~BasicEffect(){}
 //////////////////////////////////////////////////////////////////////////
 
 #pragma region SpriteEffect
-SpriteEffect::SpriteEffect(ID3D11Device* device, const std::wstring& filename)
+SpriteEffect::SpriteEffect(ID3D11Device* device, const std::string& filename)
 	: Effect(device, filename)
 {
 	SpriteTech = mFX->GetTechniqueByName("SpriteTech");
@@ -69,7 +60,7 @@ SpriteEffect::~SpriteEffect(){}
 //////////////////////////////////////////////////////////////////////////
 
 #pragma region ColorEffect
-ColorEffect::ColorEffect(ID3D11Device* device, const std::wstring& filename)
+ColorEffect::ColorEffect(ID3D11Device* device, const std::string& filename)
 	: Effect(device, filename)
 {
 	ColorTech		= mFX->GetTechniqueByName("ColorTech");
@@ -89,15 +80,15 @@ SpriteEffect* DX11Effects::SpriteFX = nullptr;
 
 void DX11Effects::InitAll(ID3D11Device* device)
 {
-	wstring shaderPath = StringToWString(System::Instance()->mDataPath);
+	string shaderPath = System::Instance()->mDataPath;
 
-	shaderPath += CIniFile::GetValueW("basic",  "shaders", System::Instance()->mResourcesPath);
+	shaderPath += CIniFile::GetValue("basic",  "shaders", System::Instance()->mResourcesPath);
 	BasicFX  = rje_new BasicEffect( device, shaderPath);
 	//-------------
-	shaderPath = StringToWString(System::Instance()->mDataPath) + CIniFile::GetValueW("sprite", "shaders", System::Instance()->mResourcesPath);
+	shaderPath = System::Instance()->mDataPath + CIniFile::GetValue("sprite", "shaders", System::Instance()->mResourcesPath);
 	SpriteFX = rje_new SpriteEffect(device, shaderPath);
 	//-------------
-	shaderPath = StringToWString(System::Instance()->mDataPath) + CIniFile::GetValueW("color", "shaders", System::Instance()->mResourcesPath);
+	shaderPath = System::Instance()->mDataPath + CIniFile::GetValue("color", "shaders", System::Instance()->mResourcesPath);
 	ColorFX = rje_new ColorEffect(device, shaderPath);
 }
 

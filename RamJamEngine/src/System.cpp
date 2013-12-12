@@ -106,6 +106,8 @@ void System::Shutdown()
 	mGraphicAPI->Shutdown();
 	RJE_SAFE_DELETE(mGraphicAPI);
 
+	MaterialFactory::DeleteInstance();
+
 	Timer::   DeleteInstance();
 	Input::   DeleteInstance();
 	Console:: DeleteInstance();

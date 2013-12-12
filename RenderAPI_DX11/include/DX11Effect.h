@@ -1,12 +1,13 @@
 #pragma once
 
 #include "DX11Helper.h"
+#include "..\..\RamJamEngine\include\Transform.h"
 
 #pragma region Effect
 class Effect
 {
 public:
-	Effect(ID3D11Device* device, const std::wstring& filename);
+	Effect(ID3D11Device* device, const std::string& filename);
 	virtual ~Effect();
 
 private:
@@ -24,7 +25,7 @@ protected:
 class BasicEffect : public Effect
 {
 public:
-	BasicEffect(ID3D11Device* device, const std::wstring& filename);
+	BasicEffect(ID3D11Device* device, const std::string& filename);
 	~BasicEffect();
 
 	HRESULT SetWorldViewProj(Matrix44& M)                    { return WorldViewProj->SetMatrix(reinterpret_cast<const float*>(&M)); }
@@ -51,33 +52,51 @@ public:
 			MaterialProperty& property = *(mat.mProperties[i]);
 			switch (property.mType)
 			{
-			case MaterialPropertyType::Int:
+			case MaterialPropertyType::Type_Int:
+			{
 				res = mFX->GetVariableBySemantic(property.mName.c_str())->AsScalar()->SetInt(*(reinterpret_cast<int*>(property.mData)));
 				if (res != S_OK) return res;
 				break;
-			case MaterialPropertyType::Bool:
+			}
+			case MaterialPropertyType::Type_Bool:
+			{
 				res = mFX->GetVariableBySemantic(property.mName.c_str())->AsScalar()->SetBool(*(reinterpret_cast<bool*>(property.mData)));
 				if (res != S_OK) return res;
 				break;
-			case MaterialPropertyType::Float:
+			}
+			case MaterialPropertyType::Type_Float:
+			{
 				res = mFX->GetVariableBySemantic(property.mName.c_str())->AsScalar()->SetFloat(*(reinterpret_cast<float*>(property.mData)));
 				if (res != S_OK) return res;
 				break;
-			case MaterialPropertyType::Vector:
+			}
+			case MaterialPropertyType::Type_Vector:
+			{
 				res = mFX->GetVariableBySemantic(property.mName.c_str())->AsVector()->SetFloatVector(reinterpret_cast<const float*>(property.mData));
 				if (res != S_OK) return res;
 				break;
-			case MaterialPropertyType::Matrix:
+			}
+			case MaterialPropertyType::Type_Matrix:
+			{
 				res = mFX->GetVariableBySemantic(property.mName.c_str())->AsMatrix()->SetMatrix(reinterpret_cast<const float*>(property.mData));
 				if (res != S_OK) return res;
 				break;
-			case MaterialPropertyType::Texture:
-				res = mFX->GetVariableBySemantic(property.mName.c_str())->AsShaderResource()->SetResource(property.mShaderResource);
+			}
+			case MaterialPropertyType::Type_Texture:
+			{
+				res = mFX->GetVariableBySemantic(property.mName.c_str())->AsShaderResource()->SetResource(property.mShaderResource.mTexture);
+				if (res != S_OK) return res;
+// 				std::string textureTrfName = property.mName + "_Trf";
+// 				Matrix44 textTrf = Transform::MatrixFromTextureProperties(property.mShaderResource.mOffset, property.mShaderResource.mTiling, property.mShaderResource.mRotationAngleInDegrees);
+// 				res = mFX->GetVariableBySemantic(textureTrfName.c_str())->AsMatrix()->SetMatrix(reinterpret_cast<const float*>(&textTrf));
 				if (res != S_OK) return res;
 				break;
-			case MaterialPropertyType::Cubemap:
+			}
+			case MaterialPropertyType::Type_Cubemap:
+			{
 				// TODO: RJE could use a cubemap :)
 				break;
+			}
 			default:
 				break;
 			}
@@ -119,7 +138,7 @@ public:
 class SpriteEffect : public Effect
 {
 public:
-	SpriteEffect(ID3D11Device* device, const std::wstring& filename);
+	SpriteEffect(ID3D11Device* device, const std::string& filename);
 	~SpriteEffect();
 
 	void SetSpriteMap(ID3D11ShaderResourceView* tex) { SpriteMap->SetResource(tex); }
@@ -135,7 +154,7 @@ public:
 class ColorEffect : public Effect
 {
 public:
-	ColorEffect(ID3D11Device* device, const std::wstring& filename);
+	ColorEffect(ID3D11Device* device, const std::string& filename);
 	~ColorEffect();
 
 	HRESULT SetWorldViewProj(Matrix44& M)	{ return WorldViewProj->SetMatrix(reinterpret_cast<const float*>(&M)); }

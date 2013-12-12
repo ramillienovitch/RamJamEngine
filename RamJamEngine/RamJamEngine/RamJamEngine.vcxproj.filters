@@ -87,6 +87,12 @@
     <ClInclude Include="..\include\Material.h">
       <Filter>Header Files\RJE_Graphic</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\Texture.h">
+      <Filter>Header Files\RJE_Graphic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\MaterialFactory.h">
+      <Filter>Header Files\RJE_Graphic</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\System.cpp">
@@ -120,6 +126,9 @@
       <Filter>Source Files\RJE_Graphic</Filter>
     </ClCompile>
     <ClCompile Include="..\src\Material.cpp">
+      <Filter>Source Files\RJE_Graphic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\MaterialFactory.cpp">
       <Filter>Source Files\RJE_Graphic</Filter>
     </ClCompile>
   </ItemGroup>

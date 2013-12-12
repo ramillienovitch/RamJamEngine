@@ -5,14 +5,6 @@
 //=============================================================================
 
 #include "lightHelper.fx"
-
-// <Properties>
-// Ambient float4
-// Diffuse float4
-// Specular float4
-// Reflect float4
-// Texture_Diffuse Texture2D
-// </Properties>
  
 cbuffer cbPerFrame
 {
@@ -35,7 +27,7 @@ cbuffer cbPerObject
 	float4x4 gWorld;
 	float4x4 gWorldInvTranspose;
 	float4x4 gWorldViewProj;
-	float4x4 gTexTransform;
+	float4x4 gDiffuseMapTrf	: Texture_Diffuse_Trf;
 	//-------
 	float4 gMatAmbient		: Ambient;
 	float4 gMatDiffuse		: Diffuse;
@@ -84,7 +76,7 @@ VertexOut VS(VertexIn vin)
 	vout.PosH = mul(float4(vin.PosL, 1.0f), gWorldViewProj);
 
 	// Output vertex attributes for interpolation across triangle.
-	vout.Tex = mul(float4(vin.Tex, 0.0f, 1.0f), gTexTransform).xy;
+	vout.Tex = mul(float4(vin.Tex, 0.0f, 1.0f), gDiffuseMapTrf).xy;
 	
 	return vout;
 }

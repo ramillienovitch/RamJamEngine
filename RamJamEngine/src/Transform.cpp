@@ -26,3 +26,14 @@ Vector3 Transform::Up()
 //----------------------------------------
 Vector3 Transform::Forward()
 { return Rotation.GetForwardVector(); }
+
+
+//////////////////////////////////////////////////////////////////////////
+Matrix44 Transform::MatrixFromTextureProperties( Vector2 tiling, Vector2 offset, f32 rotationAngle )
+{
+	Transform t;
+	t.Position = Vector3(offset.x, offset.y, 0.0f);
+	t.Scale    = Vector3(tiling.x, tiling.y, 1.0f);
+	t.Rotation = Quaternion(0,0,rotationAngle);
+	return t.WorldMatrix();
+}

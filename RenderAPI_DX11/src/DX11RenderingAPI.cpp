@@ -228,7 +228,7 @@ void DX11RenderingAPI::Initialize(int windowWidth, int windowHeight)
 	DX11InputLayouts::InitAll(mDX11Device->md3dDevice);
 	DX11CommonStates::InitAll(mDX11Device->md3dDevice);
 
-	mTextureMgr = rje_new DX11TextureManager;
+	mTextureMgr = rje_new DX11TextureManager();
 	mTextureMgr->Initialize(mDX11Device->md3dDevice);
 
 	// Init the 2d elements

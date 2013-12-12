@@ -1125,7 +1125,7 @@ HRESULT WINAPI D3DX11CreateEffectFromMemory( _In_reads_bytes_(DataLength) LPCVOI
 //
 //----------------------------------------------------------------------------
 
-HRESULT WINAPI D3DX11CreateEffectFromFile( _In_z_ LPCWSTR pFileName,
+HRESULT WINAPI D3DX11CreateEffectFromFile( _In_z_ LPCSTR pFileName,
                                            _In_ UINT FXFlags,
                                            _In_ ID3D11Device *pDevice,
                                            _Outptr_ ID3DX11Effect **ppEffect );
