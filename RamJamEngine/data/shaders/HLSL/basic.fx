@@ -32,7 +32,6 @@ cbuffer cbPerObject
 	float4 gMatAmbient		: Ambient;
 	float4 gMatDiffuse		: Diffuse;
 	float4 gMatSpecular		: Specular;
-	float4 gMatReflect		: Reflect;
 }; 
 
 // Nonnumeric values cannot be added to a cbuffer.
@@ -128,7 +127,6 @@ float4 PS(VertexOut pin) : SV_Target
 	mat.Ambient = gMatAmbient;
 	mat.Diffuse = gMatDiffuse;
 	mat.Specular = gMatSpecular;
-	mat.Reflect = gMatReflect;
 	for (uint dirLightIdx = 0; dirLightIdx < (uint)gDirLightCount; ++dirLightIdx)
 	{
 		DirectionalLight light = gDirLights[dirLightIdx];

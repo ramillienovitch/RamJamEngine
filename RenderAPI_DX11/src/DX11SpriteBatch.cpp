@@ -36,7 +36,7 @@ HRESULT DX11SpriteBatch::Initialize(ID3D11Device* device, ID3D11DeviceContext* c
 	mSpriteList.reserve(128);
 
 	vector<USHORT> indices(BatchSize*6);
-	for(UINT i = 0; i < BatchSize; ++i)
+	for(u32 i = 0; i < BatchSize; ++i)
 	{
 		indices[i*6+0] = i*4+0;
 		indices[i*6+1] = i*4+1;
@@ -122,15 +122,15 @@ void DX11SpriteBatch::EndBatch(ID3D11DeviceContext* dc)
 {
 	assert(mInitialized);
 
-	UINT viewportCount = 1;
+	u32 viewportCount = 1;
 	D3D11_VIEWPORT vp;
 	dc->RSGetViewports(&viewportCount, &vp);
 
 	mScreenWidth  = vp.Width;
 	mScreenHeight = vp.Height;
 
-	UINT stride = sizeof(MeshData::SpriteVertex);
-	UINT offset = 0;
+	u32 stride = sizeof(MeshData::SpriteVertex);
+	u32 offset = 0;
 	dc->IASetInputLayout(mInputLayout);
 	dc->IASetIndexBuffer(mIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
 	dc->IASetVertexBuffers(0, 1, &mVertexBuffer, &stride, &offset);
@@ -141,8 +141,8 @@ void DX11SpriteBatch::EndBatch(ID3D11DeviceContext* dc)
 	ID3DX11EffectPass* pass = DX11Effects::SpriteFX->SpriteTech->GetPassByIndex(0);
 	pass->Apply(0, dc);
 
-	UINT spritesToDraw = (UINT)mSpriteList.size();
-	UINT startIndex = 0;
+	u32 spritesToDraw = (u32)mSpriteList.size();
+	u32 startIndex = 0;
 
 	while( spritesToDraw > 0 )
 	{
@@ -266,7 +266,7 @@ void DX11SpriteBatch::DrawString(DX11FontSheet& fs, const std::wstring& text, co
 {
 	BeginBatch(fs.GetFontSheetSRV());
 
-	UINT length = (UINT)text.length();
+	u32 length = (u32)text.length();
 
 	int posX         = 0;
 	int posY         = pos.y;
@@ -281,7 +281,7 @@ void DX11SpriteBatch::DrawString(DX11FontSheet& fs, const std::wstring& text, co
 	else
 	{
 		// Calculate text total width to adjust with the alignment
-		for(UINT i = 0; i < length; ++i)
+		for(u32 i = 0; i < length; ++i)
 		{
 			WCHAR character = text[i];
 		
@@ -306,7 +306,7 @@ void DX11SpriteBatch::DrawString(DX11FontSheet& fs, const std::wstring& text, co
 		else								posX = pos.x - totalWidth/ 2;
 	}
 
-	for(UINT i = 0; i < length; ++i)
+	for(u32 i = 0; i < length; ++i)
 	{
 		WCHAR character = text[i];
 		if(character == ' ')
@@ -355,7 +355,7 @@ void DX11SpriteBatch::DrawString(DX11FontSheet& fs, const char text[], const POI
 {
 	BeginBatch(fs.GetFontSheetSRV());
 
-	UINT length = (UINT)strlen(text);
+	u32 length = (u32)strlen(text);
 
 	int posX         = 0;
 	int posY         = pos.y;
@@ -370,7 +370,7 @@ void DX11SpriteBatch::DrawString(DX11FontSheet& fs, const char text[], const POI
 	else
 	{
 		// Calculate text total width to adjust with the alignment
-		for(UINT i = 0; i < length; ++i)
+		for(u32 i = 0; i < length; ++i)
 		{
 			WCHAR character = text[i];
 
@@ -395,7 +395,7 @@ void DX11SpriteBatch::DrawString(DX11FontSheet& fs, const char text[], const POI
 		else								posX = pos.x - totalWidth/ 2;
 	}
 
-	for(UINT i = 0; i < length; ++i)
+	for(u32 i = 0; i < length; ++i)
 	{
 		WCHAR character = text[i];
 
@@ -451,7 +451,7 @@ void DX11SpriteBatch::DrawInfoText(DX11FontSheet& fs, const char* text, const PO
 
 	XMCOLOR color = Color::Black;
 
-	UINT i = 0;
+	u32 i = 0;
 	while( true )
 	{
 		WCHAR character = text[i];
@@ -517,7 +517,7 @@ void DX11SpriteBatch::DrawConsoleCommand(DX11FontSheet& fs, char (&text)[COMMAND
 
 	XMCOLOR color = 0xffffffff;
 	
-	for(UINT i = 0; i < COMMAND_MAX_LENGTH; ++i)
+	for(u32 i = 0; i < COMMAND_MAX_LENGTH; ++i)
 	{
 		WCHAR character = text[i];
 
@@ -560,14 +560,14 @@ void DX11SpriteBatch::DrawConsoleCommand(DX11FontSheet& fs, char (&text)[COMMAND
 }
 
 //////////////////////////////////////////////////////////////////////////
-void DX11SpriteBatch::DrawBatch(ID3D11DeviceContext* dc, UINT startSpriteIndex, UINT spriteCount)
+void DX11SpriteBatch::DrawBatch(ID3D11DeviceContext* dc, u32 startSpriteIndex, u32 spriteCount)
 {
 	// Write the quads to the vertex buffer.
 	D3D11_MAPPED_SUBRESOURCE mappedData;
 	dc->Map(mVertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedData);
 	MeshData::SpriteVertex* v = reinterpret_cast<MeshData::SpriteVertex*>(mappedData.pData);
 
-	for(UINT i = 0; i < spriteCount; ++i)
+	for(u32 i = 0; i < spriteCount; ++i)
 	{
 		const Sprite& sprite = mSpriteList[startSpriteIndex + i];
 

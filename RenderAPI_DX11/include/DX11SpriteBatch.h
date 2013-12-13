@@ -70,7 +70,7 @@ private:
 	};
 
 	/// Helper method for drawing a subset of sprites in the batch.
-	void DrawBatch(ID3D11DeviceContext* dc, UINT startSpriteIndex, UINT spriteCount);
+	void DrawBatch(ID3D11DeviceContext* dc, u32 startSpriteIndex, u32 spriteCount);
 
 	/// Convert screen space point to NDC space.
 	Vector3 PointToNdc(int x, int y, float z);
@@ -96,8 +96,8 @@ private:
 	// Texture to use for current batch.
 	ID3D11ShaderResourceView* mBatchTexSRV;
 
-	UINT mTexWidth;
-	UINT mTexHeight;
+	u32 mTexWidth;
+	u32 mTexHeight;
 
 	// List of sprites to draw using the current batch texture.
 	std::vector<Sprite> mSpriteList;

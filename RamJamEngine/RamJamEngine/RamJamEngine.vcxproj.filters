@@ -31,6 +31,9 @@
     <Filter Include="Resource Files\Scenes">
       <UniqueIdentifier>{50a7876d-2a01-4553-9f00-f31ae7792d57}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource Files\Materials">
+      <UniqueIdentifier>{7bb38276-a04e-48b6-b0ac-b99eb2b3b870}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -209,6 +212,9 @@
     </None>
     <None Include="..\data\Resources.ini">
       <Filter>Resource Files\Config Files</Filter>
+    </None>
+    <None Include="..\data\materials\grid.mat">
+      <Filter>Resource Files\Materials</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

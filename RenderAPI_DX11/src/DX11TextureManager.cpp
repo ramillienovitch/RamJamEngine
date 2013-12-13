@@ -1,11 +1,60 @@
 #include "DX11TextureManager.h"
 #include "../../RamJamEngine/include/System.h"
 
+DX11TextureManager* DX11TextureManager::sInstance = nullptr;
+
 //////////////////////////////////////////////////////////////////////////
 void DX11TextureManager::Initialize(ID3D11Device* device)
 {
 	mDevice       = device;
 	mTextureCount = 0;
+}
+
+//////////////////////////////////////////////////////////////////////////
+void DX11TextureManager::ReleaseTextures()
+{
+	for ( auto it = mTextures.begin(); it != mTextures.end(); ++it )
+	{
+		RJE_SAFE_RELEASE(it->second);
+	}
+}
+
+//////////////////////////////////////////////////////////////////////////
+BOOL DX11TextureManager::IsTextureLoaded( std::string shaderName )
+{
+	std::unordered_map<std::string,ID3D11ShaderResourceView*>::const_iterator texture = mTextures.find(shaderName);
+
+	return (texture != mTextures.end());
+}
+
+//////////////////////////////////////////////////////////////////////////
+void DX11TextureManager::LoadTexture(string texturePath, string textureName)
+{	
+	wstring texturePathW = StringToWString(texturePath);
+	wstring textureExtension = texturePathW.substr(texturePath.find('.'));
+	// lower the case so we can compare more easily
+	std::transform(textureExtension.begin(), textureExtension.end(), textureExtension.begin(), ::tolower);
+
+	TexMetadata  metadata;
+	ScratchImage image;
+
+	if (textureExtension.compare(L".png") == 0 || textureExtension.compare(L".bmp") == 0 || textureExtension.compare(L".gif") == 0 ||
+		textureExtension.compare(L".jpg") == 0 || textureExtension.compare(L".jpeg") == 0)
+	{
+		RJE_CHECK_FOR_SUCCESS(LoadFromWICFile( texturePathW.c_str(), WIC_FLAGS::WIC_FLAGS_NONE, &metadata, image ));
+	}
+	else if (textureExtension.compare(L".tga") == 0)
+	{
+		RJE_CHECK_FOR_SUCCESS(LoadFromTGAFile( texturePathW.c_str(), &metadata, image ));
+	}
+	else if  (textureExtension.compare(L".dds") == 0)
+	{
+		RJE_CHECK_FOR_SUCCESS(LoadFromDDSFile( texturePathW.c_str(), DDS_FLAGS::DDS_FLAGS_NONE, &metadata, image ));
+	}
+	ID3D11ShaderResourceView* textureSRV = nullptr;
+	RJE_CHECK_FOR_SUCCESS(CreateShaderResourceView( mDevice, image.GetImages(), image.GetImageCount(), metadata, &textureSRV ));
+	mTextures[textureName] = textureSRV;
+	++mTextureCount;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -36,14 +85,15 @@ void DX11TextureManager::LoadTexture(string keyName, ID3D11ShaderResourceView** 
 }
 
 //////////////////////////////////////////////////////////////////////////
-void DX11TextureManager::Create2DTextureFixedColor(i32 size, RJE_COLOR::Color color, ID3D11ShaderResourceView** textureSRV)
+void DX11TextureManager::Create2DTextureFixedColor(i32 size, RJE_COLOR::Color color, std::string textureName)
 {
 	RJE_ASSERT(size >=1);
+	RJE_ASSERT(!IsTextureLoaded(textureName));
 
-	UINT textureSize = size * size;
+	u32 textureSize = size * size;
 	u8* texArray = rje_new u8[textureSize*4];
 
-	for (UINT i=0; i<textureSize*4; i+=4)
+	for (u32 i=0; i<textureSize*4; i+=4)
 	{	// Unsigned Normalized 8-bits values
 		texArray[i+0] = color.GetRed();
 		texArray[i+1] = color.GetGreen();
@@ -71,10 +121,14 @@ void DX11TextureManager::Create2DTextureFixedColor(i32 size, RJE_COLOR::Color co
 	tex2dInitData.SysMemPitch = size * 4 * sizeof(u8);
 	//tex2dInitData.SysMemSlicePitch = size * size * 4 * sizeof(u8);	// Not used since this is a 2d texture
 
-	ID3D11Texture2D *tex2D = nullptr;
+	ID3D11Texture2D *tex2D               = nullptr;
+	ID3D11ShaderResourceView* textureSRV = nullptr;
 	RJE_CHECK_FOR_SUCCESS(mDevice->CreateTexture2D(&tex2dDesc, &tex2dInitData, &tex2D));
-	RJE_CHECK_FOR_SUCCESS(mDevice->CreateShaderResourceView(tex2D, NULL, textureSRV));
+	RJE_CHECK_FOR_SUCCESS(mDevice->CreateShaderResourceView(tex2D, NULL, &textureSRV));
 	RJE_SAFE_RELEASE(tex2D);
 
 	delete[] texArray;
+
+	mTextures[textureName] = textureSRV;
+	++mTextureCount;
 }

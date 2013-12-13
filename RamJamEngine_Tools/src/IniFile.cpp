@@ -305,6 +305,28 @@ Vector3 CIniFile::GetValueVector3(string KeyName, string SectionName, string Fil
 	return Vector3::zero;																// No value was found
 }
 
+// The vector is written in this format : x|y|z|w
+Vector4 CIniFile::GetValueVector4(string KeyName, string SectionName, string FileName)
+{
+	vector<Record> content = GetRecord(KeyName,SectionName, FileName);		// Get the Record
+
+	if(!content.empty())													// Make sure there is a value to return
+	{
+		std::string temp = content[0].Value;
+		int pipePos = (int)temp.find('|');
+		std::string CoordYZ = temp.substr(pipePos+1);
+		int pipePos2 = (int)CoordYZ.find('|');
+		int pipePos3 = (int)content[0].Value.rfind('|');
+		std::string CoordX = temp.substr(0, pipePos);				// retrieve [x]| y | z | w
+		std::string CoordY = CoordYZ.substr(0, pipePos2);			// retrieve  x |[y]| z | w
+		std::string CoordZ = CoordYZ.substr(pipePos2+1);			// retrieve  x | y |[z]| w
+		std::string CoordW = content[0].Value.substr(pipePos3+1);	// retrieve  x | y | z |[w]
+		return Vector4((float)atof(CoordX.c_str()), (float)atof(CoordY.c_str()), (float)atof(CoordZ.c_str()), (float)atof(CoordW.c_str()));
+	}
+
+	return Vector4::zero;																// No value was found
+}
+
 bool CIniFile::SetValue(string KeyName, string Value, string SectionName, string FileName)
 {
 	vector<Record> content;													// Holds the current record													// Holds the current record

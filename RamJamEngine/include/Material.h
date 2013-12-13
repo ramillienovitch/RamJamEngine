@@ -74,11 +74,38 @@ struct Material
 
 	//----------------------------------
 
-	void ExtractPropertiesFromShader();
-
-	//----------------------------------
-
-	void AddProperty      (std::string propertyName, MaterialPropertyType propertyType, u64 propertyDataLength, void* propertyData);
-	void AddPropertyVector(std::string propertyName, Vector4 propertyData);
-	void AddPropertyTexture(std::string propertyName, ShaderResource* shaderResource);
+	void LoadPropertiesFromFile  (std::string filename);
+	void SetPropertiesFromFactory(std::string shaderName);
+	//-------
+	template <typename T>
+	void SetProperty       (std::string propertyName, T propertyData);
+	template <typename T>
+	T    GetProperty       (std::string propertyName);
+	void AddProperty       (std::string propertyName, MaterialPropertyType propertyType, u64 propertyDataLength);
+	//-------
+	void AddPropertyInt    (std::string propertyName);
+	void AddPropertyBool   (std::string propertyName);
+	void AddPropertyFloat  (std::string propertyName);
+	void AddPropertyVector (std::string propertyName);
+	void AddPropertyMatrix (std::string propertyName);
+	//-------
+	void AddPropertyTexture(std::string propertyName);
+	void SetTexture        (std::string propertyName, ShaderResource* shaderResource);
+	void SetTexture        (MaterialProperty& property, ShaderResource* shaderResource);
 };
+
+template <typename T>
+void Material::SetProperty( std::string propertyName, T propertyData )
+{
+	for ( auto it = mProperties.begin(); it != mProperties.end(); ++it )
+	{
+		if ((*it)->mName == propertyName)
+			memcpy((*it)->mData, reinterpret_cast<void*>(&propertyData), sizeof(T));
+	}
+}
+
+// template <typename T>
+// T Material::GetProperty( std::string propertyName )
+// {
+// 
+// }

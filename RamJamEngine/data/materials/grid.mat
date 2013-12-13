@@ -1,0 +1,14 @@
+[shader]
+name=basic
+# ----------------------
+[properties]
+Ambient=0.5|0.5|0.5|1.0
+Diffuse=1.0|1.0|1.0|1.0
+Specular=0.2|0.2|0.2|16.0
+# ----------------------
+[textures]
+Texture_Diffuse=textures\floor.dds
+tiling=30.0|30.0
+offset=0.0|0.0
+rotation=0.0
+# ----------------------

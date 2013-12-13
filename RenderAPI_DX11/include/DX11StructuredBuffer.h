@@ -23,7 +23,7 @@ class StructuredBuffer
 public:
 	// Construct a structured buffer
 	StructuredBuffer(ID3D11Device* d3dDevice, int elements,
-					 UINT bindFlags = D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE,
+					 u32 bindFlags = D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE,
 					 bool dynamic = false);
 	
 	~StructuredBuffer();
@@ -51,7 +51,7 @@ private:
 
 template <typename T>
 StructuredBuffer<T>::StructuredBuffer(ID3D11Device* d3dDevice, int elements,
-									  UINT bindFlags, bool dynamic)
+									  u32 bindFlags, bool dynamic)
 	: mElements(elements), mShaderResource(0), mUnorderedAccess(0)
 {
 	CD3D11_BUFFER_DESC desc(sizeof(T) * elements, bindFlags,

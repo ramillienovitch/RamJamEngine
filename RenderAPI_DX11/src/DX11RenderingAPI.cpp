@@ -16,7 +16,6 @@ DX11RenderingAPI::DX11RenderingAPI(Scene& scene) : mScene(scene)
 	//-----------
 	VSyncEnabled = true;
 	//-----------
-	mTextureMgr   = nullptr;
 	mConsoleFont  = nullptr;
 	mProfilerFont = nullptr;
 	mSpriteBatch  = nullptr;
@@ -31,8 +30,6 @@ DX11RenderingAPI::DX11RenderingAPI(Scene& scene) : mScene(scene)
 	mSphereMap         = nullptr;
 	mCylinderMap       = nullptr;
 	mMaskMap           = nullptr;
-	mWhiteSRV          = nullptr;
-	mConsoleBackground = nullptr;
 	mRjeLogo           = nullptr;
 	//-----------
 	mEyePosW = Vector3::zero;
@@ -100,32 +97,6 @@ DX11RenderingAPI::DX11RenderingAPI(Scene& scene) : mScene(scene)
 	mDirLights[2].Diffuse   = Vector4(0.2f, 0.2f, 0.2f, 1.0f);
 	mDirLights[2].Specular  = Vector4(0.0f, 0.0f, 0.0f, 1.0f);
 	mDirLights[2].Direction = Vector3(0.0f, -0.707f, -0.707f);
-
-	// Material Specs
-	mGridMat.AddPropertyVector("Ambient",  Vector4(0.5f, 0.5f, 0.5f, 1.0f));
-	mGridMat.AddPropertyVector("Diffuse",  Vector4(1.0f, 1.0f, 1.0f, 1.0f));
-	mGridMat.AddPropertyVector("Specular", Vector4(0.2f, 0.2f, 0.2f, 16.0f));
-	mGridMat.AddPropertyVector("Reflect",  Vector4::zero);
-	//--------
-	mCylinderMat.AddPropertyVector("Ambient",  Vector4(0.5f, 0.5f, 0.5f, 1.0f));
-	mCylinderMat.AddPropertyVector("Diffuse",  Vector4(1.0f, 1.0f, 1.0f, 1.0f));
-	mCylinderMat.AddPropertyVector("Specular", Vector4(0.2f, 0.2f, 0.2f, 16.0f));
-	mCylinderMat.AddPropertyVector("Reflect",  Vector4::zero);
-	//--------
-	mSphereMat.AddPropertyVector("Ambient",  Vector4(0.6f, 0.8f, 0.9f, 1.0f));
-	mSphereMat.AddPropertyVector("Diffuse",  Vector4(0.6f, 0.8f, 0.9f, 1.0f));
-	mSphereMat.AddPropertyVector("Specular", Vector4(0.9f, 0.9f, 0.9f, 16.0f));
-	mSphereMat.AddPropertyVector("Reflect",  Vector4::zero);
-	//--------
-	mBoxMat.AddPropertyVector("Ambient",  Vector4(0.5f, 0.5f, 0.5f, 1.0f));
-	mBoxMat.AddPropertyVector("Diffuse",  Vector4(1.0f, 1.0f, 1.0f, 1.0f));
-	mBoxMat.AddPropertyVector("Specular", Vector4(0.2f, 0.2f, 0.2f, 16.0f));
-	mBoxMat.AddPropertyVector("Reflect",  Vector4::zero);
-	//--------
-	mModelMat.AddPropertyVector("Ambient",  Vector4(0.8f, 0.8f, 0.8f, 1.0f));
-	mModelMat.AddPropertyVector("Diffuse",  Vector4(0.8f, 0.8f, 0.8f, 1.0f));
-	mModelMat.AddPropertyVector("Specular", Vector4(0.8f, 0.8f, 0.8f, 16.0f));
-	mModelMat.AddPropertyVector("Reflect",  Vector4::zero);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -139,7 +110,7 @@ void DX11RenderingAPI::Initialize(int windowWidth, int windowHeight)
 	mWindowHeight = windowHeight;
 
 	// Create the device and device context.
-	UINT createDeviceFlags = 0;
+	u32 createDeviceFlags = 0;
 #ifdef RJE_DEBUG
 	createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
 #endif
@@ -228,8 +199,7 @@ void DX11RenderingAPI::Initialize(int windowWidth, int windowHeight)
 	DX11InputLayouts::InitAll(mDX11Device->md3dDevice);
 	DX11CommonStates::InitAll(mDX11Device->md3dDevice);
 
-	mTextureMgr = rje_new DX11TextureManager();
-	mTextureMgr->Initialize(mDX11Device->md3dDevice);
+	DX11TextureManager::Instance()->Initialize(mDX11Device->md3dDevice);
 
 	// Init the 2d elements
 	mProfilerFont = rje_new DX11FontSheet();
@@ -239,21 +209,56 @@ void DX11RenderingAPI::Initialize(int windowWidth, int windowHeight)
 	RJE_CHECK_FOR_SUCCESS(mProfilerFont->Initialize(mDX11Device->md3dDevice, L"Consolas", 16.0f, FontSheet::FontStyleBold,    true));
 	RJE_CHECK_FOR_SUCCESS(mSpriteBatch-> Initialize(mDX11Device->md3dDevice, mDX11Device->md3dImmediateContext));
 
-	mTextureMgr->LoadTexture("box",      &mBoxMap);
-	mTextureMgr->LoadTexture("grid",     &mGridMap);
-	mTextureMgr->LoadTexture("sphere",   &mSphereMap);
-	mTextureMgr->LoadTexture("cylinder", &mCylinderMap);
-	mTextureMgr->LoadTexture("mask",     &mMaskMap);
-	mTextureMgr->LoadTexture("rje_logo", &mRjeLogo);
-	mTextureMgr->Create2DTextureFixedColor(1, RJE_COLOR::Color::TransDarkGray, &mConsoleBackground);
-	mTextureMgr->Create2DTextureFixedColor(1, RJE_COLOR::Color::White,         &mWhiteSRV);
+	DX11TextureManager::Instance()->LoadTexture("box",      &mBoxMap);
+	DX11TextureManager::Instance()->LoadTexture("grid",     &mGridMap);
+	DX11TextureManager::Instance()->LoadTexture("sphere",   &mSphereMap);
+	DX11TextureManager::Instance()->LoadTexture("cylinder", &mCylinderMap);
+	DX11TextureManager::Instance()->LoadTexture("mask",     &mMaskMap);
+	DX11TextureManager::Instance()->LoadTexture("rje_logo", &mRjeLogo);
+	DX11TextureManager::Instance()->Create2DTextureFixedColor(1, RJE_COLOR::Color::TransDarkGray, "_transparentGray");
+	DX11TextureManager::Instance()->Create2DTextureFixedColor(1, RJE_COLOR::Color::White,         "_default");
 	//----------
-	mBoxMat.     AddPropertyTexture("Texture_Diffuse", mBoxMap);
-	mCylinderMat.AddPropertyTexture("Texture_Diffuse", mCylinderMap);
-	mGridMat.    AddPropertyTexture("Texture_Diffuse", mGridMap);
-	mCylinderMat.AddPropertyTexture("Texture_Diffuse", mCylinderMap);
-	mSphereMat.  AddPropertyTexture("Texture_Diffuse", mSphereMap);
-	mModelMat.   AddPropertyTexture("Texture_Diffuse", mWhiteSRV);
+	// Material Specs
+	mMaterialLoader.LoadFromFile(mGridMat, "grid.mat");
+	mGridMat.SetProperty("Ambient",  Vector4(0.5f, 0.5f, 0.5f, 1.0f));
+	mGridMat.SetProperty("Diffuse",  Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+	mGridMat.SetProperty("Specular", Vector4(0.2f, 0.2f, 0.2f, 16.0f));
+	//--------
+	mCylinderMat.AddPropertyVector("Ambient");
+	mCylinderMat.AddPropertyVector("Diffuse");
+	mCylinderMat.AddPropertyVector("Specular");
+	mCylinderMat.AddPropertyTexture("Texture_Diffuse");
+	mCylinderMat.SetProperty("Ambient",  Vector4(0.5f, 0.5f, 0.5f, 1.0f));
+	mCylinderMat.SetProperty("Diffuse",  Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+	mCylinderMat.SetProperty("Specular", Vector4(0.2f, 0.2f, 0.2f, 16.0f));
+	mCylinderMat.SetTexture("Texture_Diffuse", mCylinderMap);
+	//--------
+	mSphereMat.AddPropertyVector("Ambient");
+	mSphereMat.AddPropertyVector("Diffuse");
+	mSphereMat.AddPropertyVector("Specular");
+	mSphereMat.AddPropertyTexture("Texture_Diffuse");
+	mSphereMat.SetProperty("Ambient",  Vector4(0.6f, 0.8f, 0.9f, 1.0f));
+	mSphereMat.SetProperty("Diffuse",  Vector4(0.6f, 0.8f, 0.9f, 1.0f));
+	mSphereMat.SetProperty("Specular", Vector4(0.9f, 0.9f, 0.9f, 16.0f));
+	mSphereMat. SetTexture("Texture_Diffuse", mSphereMap);
+	//--------
+	mBoxMat.AddPropertyVector("Ambient");
+	mBoxMat.AddPropertyVector("Diffuse");
+	mBoxMat.AddPropertyVector("Specular");
+	mBoxMat.AddPropertyTexture("Texture_Diffuse");
+	mBoxMat.SetProperty("Ambient",  Vector4(0.5f, 0.5f, 0.5f, 1.0f));
+	mBoxMat.SetProperty("Diffuse",  Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+	mBoxMat.SetProperty("Specular", Vector4(0.2f, 0.2f, 0.2f, 16.0f));
+	mBoxMat.SetTexture("Texture_Diffuse", mBoxMap);
+	//--------
+	mModelMat.AddPropertyVector("Ambient");
+	mModelMat.AddPropertyVector("Diffuse");
+	mModelMat.AddPropertyVector("Specular");
+	mModelMat.AddPropertyTexture("Texture_Diffuse");
+	mModelMat.SetProperty("Ambient",  Vector4(0.8f, 0.8f, 0.8f, 1.0f));
+	mModelMat.SetProperty("Diffuse",  Vector4(0.8f, 0.8f, 0.8f, 1.0f));
+	mModelMat.SetProperty("Specular", Vector4(0.8f, 0.8f, 0.8f, 16.0f));
+	mModelMat.SetTexture("Texture_Diffuse", DX11TextureManager::Instance()->mTextures["_default"]);
 	//----------
 	BuildGeometryBuffers();
 	BuildGizmosBuffers();
@@ -298,7 +303,7 @@ void DX11RenderingAPI::Initialize(int windowWidth, int windowHeight)
 }
 
 //////////////////////////////////////////////////////////////////////////
-void DX11RenderingAPI::InitSwapChain(UINT msaaSamples)
+void DX11RenderingAPI::InitSwapChain(u32 msaaSamples)
 {
 	HWND hMainWnd = System::Instance()->mHWnd;
 	MSAA_Samples = msaaSamples;
@@ -357,11 +362,11 @@ void DX11RenderingAPI::BuildGeometryBuffers()
 		return;
 	}
 
-	UINT modelVertexCount = 0;
-	UINT modelTriangleCount = 0;
+	u32 modelVertexCount = 0;
+	u32 modelTriangleCount = 0;
 
-	fread(&modelVertexCount,   sizeof(UINT), 1, fIn);
-	fread(&modelTriangleCount, sizeof(UINT), 1, fIn);
+	fread(&modelVertexCount,   sizeof(u32), 1, fIn);
+	fread(&modelTriangleCount, sizeof(u32), 1, fIn);
 
 	mModelIndexCount = 3*modelTriangleCount;
 
@@ -385,10 +390,10 @@ void DX11RenderingAPI::BuildGeometryBuffers()
 	mModelVertexOffset    = (int) (mCylinderVertexOffset + cylinder.Vertices.size());
 
 	// Cache the index count of each object.
-	mBoxIndexCount      = (UINT) box.Indices.size();
-	mGridIndexCount     = (UINT) grid.Indices.size();
-	mSphereIndexCount   = (UINT) sphere.Indices.size();
-	mCylinderIndexCount = (UINT) cylinder.Indices.size();
+	mBoxIndexCount      = (u32) box.Indices.size();
+	mGridIndexCount     = (u32) grid.Indices.size();
+	mSphereIndexCount   = (u32) sphere.Indices.size();
+	mCylinderIndexCount = (u32) cylinder.Indices.size();
 
 	// Cache the starting index for each object in the concatenated index buffer.
 	mBoxIndexOffset      = 0;
@@ -397,13 +402,13 @@ void DX11RenderingAPI::BuildGeometryBuffers()
 	mCylinderIndexOffset = mSphereIndexOffset + mSphereIndexCount;
 	mModelIndexOffset    = mCylinderIndexOffset + mCylinderIndexCount;
 
-	UINT totalVertexCount = (UINT) box.Vertices.size() +
-							(UINT) grid.Vertices.size() +
-							(UINT) sphere.Vertices.size() +
-							(UINT) cylinder.Vertices.size() +
+	u32 totalVertexCount = (u32) box.Vertices.size() +
+							(u32) grid.Vertices.size() +
+							(u32) sphere.Vertices.size() +
+							(u32) cylinder.Vertices.size() +
 							modelVertexCount;
 
-	UINT totalIndexCount =  mBoxIndexCount +
+	u32 totalIndexCount =  mBoxIndexCount +
 							mGridIndexCount + 
 							mSphereIndexCount +
 							mCylinderIndexCount +
@@ -411,7 +416,7 @@ void DX11RenderingAPI::BuildGeometryBuffers()
 
 
 	std::vector<MeshData::PosNormalTex> vertices(totalVertexCount);
-	UINT k = 0;
+	u32 k = 0;
 
 	for(size_t i = 0; i < box.Vertices.size(); ++i, ++k)
 	{
@@ -448,19 +453,19 @@ void DX11RenderingAPI::BuildGeometryBuffers()
 		fread(&vertices[k].Normal.y, sizeof(float), 1, fIn);
 		fread(&vertices[k].Normal.z, sizeof(float), 1, fIn);
 	}
-	std::vector<UINT> dragonIndices(mModelIndexCount);
-	for(UINT i = 0; i < modelTriangleCount; ++i)
+	std::vector<u32> dragonIndices(mModelIndexCount);
+	for(u32 i = 0; i < modelTriangleCount; ++i)
 	{
-		fread(&dragonIndices[i*3+0], sizeof(UINT), 1, fIn);
-		fread(&dragonIndices[i*3+1], sizeof(UINT), 1, fIn);
-		fread(&dragonIndices[i*3+2], sizeof(UINT), 1, fIn);
+		fread(&dragonIndices[i*3+0], sizeof(u32), 1, fIn);
+		fread(&dragonIndices[i*3+1], sizeof(u32), 1, fIn);
+		fread(&dragonIndices[i*3+2], sizeof(u32), 1, fIn);
 	}
 
 	fclose(fIn);
 
 	D3D11_BUFFER_DESC vbd;
 	vbd.Usage          = D3D11_USAGE_IMMUTABLE;
-	vbd.ByteWidth      = (UINT) (sizeof(MeshData::PosNormalTex) * totalVertexCount);
+	vbd.ByteWidth      = (u32) (sizeof(MeshData::PosNormalTex) * totalVertexCount);
 	vbd.BindFlags      = D3D11_BIND_VERTEX_BUFFER;
 	vbd.CPUAccessFlags = 0;
 	vbd.MiscFlags      = 0;
@@ -468,7 +473,7 @@ void DX11RenderingAPI::BuildGeometryBuffers()
 	vinitData.pSysMem = &vertices[0];
 	RJE_CHECK_FOR_SUCCESS(mDX11Device->md3dDevice->CreateBuffer(&vbd, &vinitData, &mVertexBuffer));
 
-	std::vector<UINT> indices;
+	std::vector<u32> indices;
 	indices.insert(indices.end(), box.Indices.begin(), box.Indices.end());
 	indices.insert(indices.end(), grid.Indices.begin(), grid.Indices.end());
 	indices.insert(indices.end(), sphere.Indices.begin(), sphere.Indices.end());
@@ -477,7 +482,7 @@ void DX11RenderingAPI::BuildGeometryBuffers()
 
 	D3D11_BUFFER_DESC ibd;
 	ibd.Usage          = D3D11_USAGE_IMMUTABLE;
-	ibd.ByteWidth      = sizeof(UINT) * totalIndexCount;
+	ibd.ByteWidth      = sizeof(u32) * totalIndexCount;
 	ibd.BindFlags      = D3D11_BIND_INDEX_BUFFER;
 	ibd.CPUAccessFlags = 0;
 	ibd.MiscFlags      = 0;
@@ -496,11 +501,11 @@ void DX11RenderingAPI::BuildGizmosBuffers()
 	geoGen.CreateWireBox(1.0f,1.0f,1.0f, wireBox, Color::Red);
 	geoGen.CreateWireSphere(0.5f, axis, Color::Green);
 
-	UINT totalVertexCount = (UINT) wireBox.Vertices.size() + (UINT) axis.Vertices.size();
-	UINT totalIndexCount  = (UINT) wireBox.Indices.size()  + (UINT) axis.Indices.size();
+	u32 totalVertexCount = (u32) wireBox.Vertices.size() + (u32) axis.Vertices.size();
+	u32 totalIndexCount  = (u32) wireBox.Indices.size()  + (u32) axis.Indices.size();
 
 	MeshData::Data<ColorVertex> totalGeometry(totalVertexCount);
-	UINT k = 0;
+	u32 k = 0;
 	for(size_t i = 0; i < wireBox.Vertices.size(); ++i, ++k)
 	{
 		totalGeometry.Vertices[k].pos   = wireBox.Vertices[i].pos;
@@ -516,15 +521,15 @@ void DX11RenderingAPI::BuildGizmosBuffers()
 
 	mWireBoxVertexOffset = 0;
 	mWireBoxIndexOffset  = 0;
-	mWireBoxIndexCount   = (UINT)wireBox.Indices.size();
+	mWireBoxIndexCount   = (u32)wireBox.Indices.size();
 
 	mAxisVertexOffset = (int) wireBox.Vertices.size();
 	mAxisIndexOffset  = mWireBoxIndexCount;
-	mAxisIndexCount   = (UINT)axis.Indices.size();
+	mAxisIndexCount   = (u32)axis.Indices.size();
 
 	D3D11_BUFFER_DESC vbd;
 	vbd.Usage               = D3D11_USAGE_IMMUTABLE;
-	vbd.ByteWidth           = (UINT) (sizeof(MeshData::ColorVertex) * totalVertexCount);
+	vbd.ByteWidth           = (u32) (sizeof(MeshData::ColorVertex) * totalVertexCount);
 	vbd.BindFlags           = D3D11_BIND_VERTEX_BUFFER;
 	vbd.CPUAccessFlags      = 0;
 	vbd.MiscFlags           = 0;
@@ -535,7 +540,7 @@ void DX11RenderingAPI::BuildGizmosBuffers()
 
 	D3D11_BUFFER_DESC ibd;
 	ibd.Usage               = D3D11_USAGE_IMMUTABLE;
-	ibd.ByteWidth           = sizeof(UINT) * totalIndexCount;
+	ibd.ByteWidth           = sizeof(u32) * totalIndexCount;
 	ibd.BindFlags           = D3D11_BIND_INDEX_BUFFER;
 	ibd.CPUAccessFlags      = 0;
 	ibd.MiscFlags           = 0;
@@ -594,7 +599,7 @@ void DX11RenderingAPI::UpdateScene( float dt )
 	if (mPointLightCount > 0)
 	{
 		PointLight* light = mPointLights->MapDiscard(mDX11Device->md3dImmediateContext);
-		for (UINT i = 0; i < mPointLightCount; ++i)
+		for (u32 i = 0; i < mPointLightCount; ++i)
 		{
 			mWorkingPointLights[i].Position.x = (i+1)*cosf(2*i + RJE::Math::Pi_f + timer );
 			mWorkingPointLights[i].Position.y = 2.0f + cosf( timer );
@@ -629,8 +634,8 @@ void DX11RenderingAPI::DrawScene()
 
 	float blendFactor[4] = {mBlendFactorR, mBlendFactorG, mBlendFactorB, mBlendFactorA};
 
-	UINT stride = sizeof(MeshData::PosNormalTex);
-	UINT offset = 0;
+	u32 stride = sizeof(MeshData::PosNormalTex);
+	u32 offset = 0;
 	mDX11Device->md3dImmediateContext->IASetVertexBuffers(0, 1, &mVertexBuffer, &stride, &offset);
 	mDX11Device->md3dImmediateContext->IASetIndexBuffer(mIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
@@ -661,7 +666,7 @@ void DX11RenderingAPI::DrawScene()
 	Matrix44 worldViewProj;
 
 	activeTech->GetDesc( &techDesc );
-	for(UINT p = 0; p < techDesc.Passes; ++p)
+	for(u32 p = 0; p < techDesc.Passes; ++p)
 	{
 		// Draw the box.
 		world             = mBoxWorld;
@@ -672,8 +677,8 @@ void DX11RenderingAPI::DrawScene()
 		DX11Effects::BasicFX->SetWorld(world);
 		DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
 		DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
-		DX11Effects::BasicFX->SetTexTransform(mBoxTexTransform);
 		DX11Effects::BasicFX->SetMaterial(mBoxMat);
+		DX11Effects::BasicFX->SetTexTransform(mBoxTexTransform);
 
 		if (mScene.mbUseBlending)
 			mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_CullNone);
@@ -696,8 +701,8 @@ void DX11RenderingAPI::DrawScene()
 			DX11Effects::BasicFX->SetWorld(world);
 			DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
 			DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
-			DX11Effects::BasicFX->SetTexTransform(mCylinderTexTransform);
 			DX11Effects::BasicFX->SetMaterial(mCylinderMat);
+			DX11Effects::BasicFX->SetTexTransform(mCylinderTexTransform);
 
 			activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
 			mDX11Device->md3dImmediateContext->DrawIndexed(mCylinderIndexCount, mCylinderIndexOffset, mCylinderVertexOffset);
@@ -728,8 +733,8 @@ void DX11RenderingAPI::DrawScene()
 			DX11Effects::BasicFX->SetWorld(world);
 			DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
 			DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
-			DX11Effects::BasicFX->SetTexTransform(mSphereTexTransform);
 			DX11Effects::BasicFX->SetMaterial(mSphereMat);
+			DX11Effects::BasicFX->SetTexTransform(mSphereTexTransform);
 
 			if (mScene.mbUseBlending)
 				mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_CullNone);
@@ -750,11 +755,11 @@ void DX11RenderingAPI::DrawScene()
 		worldInvTranspose.InverseTranspose();
 		worldViewProj     = world*view*proj;
 
-		DX11Effects::BasicFX->SetWorld(world);
-		DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
-		DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
-		DX11Effects::BasicFX->SetTexTransform(mGridTexTransform);
-		DX11Effects::BasicFX->SetMaterial(mGridMat);
+		RJE_CHECK_FOR_SUCCESS(DX11Effects::BasicFX->SetWorld(world));
+		RJE_CHECK_FOR_SUCCESS(DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose));
+		RJE_CHECK_FOR_SUCCESS(DX11Effects::BasicFX->SetWorldViewProj(worldViewProj));
+		RJE_CHECK_FOR_SUCCESS(DX11Effects::BasicFX->SetMaterial(mGridMat));
+		//DX11Effects::BasicFX->SetTexTransform(mGridTexTransform);
 
 		// if we're in wireframe then we don't need to render the reflections
 		if (mScene.mbWireframe || !mScene.mbDrawReflections )
@@ -815,8 +820,8 @@ void DX11RenderingAPI::DrawScene()
 			DX11Effects::BasicFX->SetWorld(world);
 			DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
 			DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
-			DX11Effects::BasicFX->SetTexTransform(mBoxTexTransform);
 			DX11Effects::BasicFX->SetMaterial(mBoxMat);
+			DX11Effects::BasicFX->SetTexTransform(mBoxTexTransform);
 
 			// Cull clockwise triangles for reflection.
 			if (mScene.mbUseBlending)
@@ -842,8 +847,8 @@ void DX11RenderingAPI::DrawScene()
 				DX11Effects::BasicFX->SetWorld(world);
 				DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
 				DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
-				DX11Effects::BasicFX->SetTexTransform(mCylinderTexTransform);
 				DX11Effects::BasicFX->SetMaterial(mCylinderMat);
+				DX11Effects::BasicFX->SetTexTransform(mCylinderTexTransform);
 
 				// Only draw reflection into visible mirror pixels as marked by the stencil buffer. 
 				mDX11Device->md3dImmediateContext->OMSetDepthStencilState(DX11CommonStates::sDepthStencilState_DrawStenciled, 1);
@@ -867,8 +872,8 @@ void DX11RenderingAPI::DrawScene()
 				DX11Effects::BasicFX->SetWorld(world);
 				DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
 				DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
-				DX11Effects::BasicFX->SetTexTransform(mSphereTexTransform);
 				DX11Effects::BasicFX->SetMaterial(mSphereMat);
+				DX11Effects::BasicFX->SetTexTransform(mSphereTexTransform);
 
 				mDX11Device->md3dImmediateContext->OMSetBlendState(DX11CommonStates::sCurrentBlendState, blendFactor, 0xffffffff);
 				activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
@@ -927,8 +932,8 @@ void DX11RenderingAPI::DrawScene()
 			DX11Effects::BasicFX->SetWorld(world);
 			DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
 			DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
-			DX11Effects::BasicFX->SetTexTransform(mGridTexTransform);
 			DX11Effects::BasicFX->SetMaterial(mGridMat);
+			//DX11Effects::BasicFX->SetTexTransform(mGridTexTransform);
 
 			mDX11Device->md3dImmediateContext->OMSetBlendState(DX11CommonStates::sBlendState_Transparent, blendFactor, 0xffffffff);
 			activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
@@ -985,8 +990,8 @@ void DX11RenderingAPI::DrawGizmos()
 
 	//mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_CullNone);
 
-	UINT stride = sizeof(MeshData::ColorVertex);
-	UINT offset = 0;
+	u32 stride = sizeof(MeshData::ColorVertex);
+	u32 offset = 0;
 	mDX11Device->md3dImmediateContext->IASetVertexBuffers(0, 1, &mVertexBuffer_Gizmo, &stride, &offset);
 	mDX11Device->md3dImmediateContext->IASetIndexBuffer(mIndexBuffer_Gizmo, DXGI_FORMAT_R32_UINT, 0);
 
@@ -1040,8 +1045,8 @@ void DX11RenderingAPI::DrawConsole()
 	mSpriteBatch->DrawInfoText(      *mConsoleFont, Console::Instance()->mConsoleBuffer, textPos);
 	mSpriteBatch->DrawConsoleCommand(*mConsoleFont, cmd, cmdPos);
 
-	mSpriteBatch->DrawTexture2D(mRjeLogo,           mDX11Device->md3dImmediateContext, rectLogo, 0xffffffff);
-	mSpriteBatch->DrawTexture2D(mConsoleBackground, mDX11Device->md3dImmediateContext, rect,     0xffffffff);
+	mSpriteBatch->DrawTexture2D(mRjeLogo,                                   mDX11Device->md3dImmediateContext, rectLogo, 0xffffffff);
+	mSpriteBatch->DrawTexture2D(DX11TextureManager::Instance()->mTextures["_transparentGray"], mDX11Device->md3dImmediateContext, rect,     0xffffffff);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -1102,7 +1107,7 @@ void DX11RenderingAPI::Draw2dElements()
 }
 
 //////////////////////////////////////////////////////////////////////////
-void DX11RenderingAPI::SetActivePointLights(UINT activeLights)
+void DX11RenderingAPI::SetActivePointLights(u32 activeLights)
 {
 	mPointLightCount = activeLights;
 	RJE_SAFE_DELETE(mPointLights);
@@ -1124,13 +1129,12 @@ void DX11RenderingAPI::Shutdown()
 	RJE_SAFE_RELEASE(mIndexBuffer);
 	RJE_SAFE_RELEASE(mIndexBuffer_Gizmo);
 
+	DX11TextureManager::DeleteInstance();
 	RJE_SAFE_RELEASE(mBoxMap);
 	RJE_SAFE_RELEASE(mGridMap);
 	RJE_SAFE_RELEASE(mSphereMap);
 	RJE_SAFE_RELEASE(mCylinderMap);
 	RJE_SAFE_RELEASE(mMaskMap);
-	RJE_SAFE_RELEASE(mWhiteSRV);
-	RJE_SAFE_RELEASE(mConsoleBackground);
 	RJE_SAFE_RELEASE(mRjeLogo);
 
 	DX11Effects     ::DestroyAll();
@@ -1142,8 +1146,6 @@ void DX11RenderingAPI::Shutdown()
 	RJE_SAFE_DELETE(mSpriteBatch);
 	RJE_SAFE_DELETE(mConsoleFont);
 	RJE_SAFE_DELETE(mProfilerFont);
-
-	RJE_SAFE_DELETE(mTextureMgr);
 
 	RJE_SAFE_RELEASE(mRenderTargetView);
 	mDX11DepthBuffer->Release();
@@ -1246,7 +1248,7 @@ void DX11RenderingAPI::SetWireframe(BOOL state)
 }
 
 //////////////////////////////////////////////////////////////////////////
-void DX11RenderingAPI::SetMSAA(UINT MSAASamples)
+void DX11RenderingAPI::SetMSAA(u32 MSAASamples)
 {
 	InitSwapChain(MSAASamples);
 	System::Instance()->OnResize();

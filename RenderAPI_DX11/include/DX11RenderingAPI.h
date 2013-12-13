@@ -25,15 +25,14 @@ struct DX11RenderingAPI : GraphicAPI
 	ID3D11InfoQueue*	md3dInfoQueue;
 #endif
 
-	DX11TextureManager*	mTextureMgr;
-
+	DX11MaterialLoader  mMaterialLoader;
 	DX11FontSheet*		mConsoleFont;
 	DX11FontSheet*		mProfilerFont;
 	DX11SpriteBatch*	mSpriteBatch;
 
-	UINT mWindowWidth;
-	UINT mWindowHeight;
-	UINT MSAA_Samples;
+	u32 mWindowWidth;
+	u32 mWindowHeight;
+	u32 MSAA_Samples;
 
 	// shortcut for System::Instance()->mScene
 	Scene& mScene;
@@ -51,16 +50,14 @@ struct DX11RenderingAPI : GraphicAPI
 	ID3D11ShaderResourceView* mSphereMap;
 	ID3D11ShaderResourceView* mCylinderMap;
 	ID3D11ShaderResourceView* mMaskMap;
-	ID3D11ShaderResourceView* mWhiteSRV;
-	ID3D11ShaderResourceView* mConsoleBackground;
 	ID3D11ShaderResourceView* mRjeLogo;
 
 	StructuredBuffer<PointLight>*	mPointLights;
 	PointLight						mOldPointLights[MAX_LIGHTS];		// Used for reflections
 	PointLight						mWorkingPointLights[MAX_LIGHTS];
 	DirectionalLight mDirLights[3];
-	UINT mDirLightCount;
-	UINT mPointLightCount;
+	u32 mDirLightCount;
+	u32 mPointLightCount;
 
 	Material mBoxMat;
 	Material mGridMat;
@@ -90,17 +87,17 @@ struct DX11RenderingAPI : GraphicAPI
 	int mCylinderVertexOffset;
 	int mModelVertexOffset;
 
-	UINT mBoxIndexOffset;
-	UINT mGridIndexOffset;
-	UINT mSphereIndexOffset;
-	UINT mCylinderIndexOffset;
-	UINT mModelIndexOffset;
+	u32 mBoxIndexOffset;
+	u32 mGridIndexOffset;
+	u32 mSphereIndexOffset;
+	u32 mCylinderIndexOffset;
+	u32 mModelIndexOffset;
 
-	UINT mBoxIndexCount;
-	UINT mGridIndexCount;
-	UINT mSphereIndexCount;
-	UINT mCylinderIndexCount;
-	UINT mModelIndexCount;
+	u32 mBoxIndexCount;
+	u32 mGridIndexCount;
+	u32 mSphereIndexCount;
+	u32 mCylinderIndexCount;
+	u32 mModelIndexCount;
 	//---------------
 
 	//---------------
@@ -108,10 +105,10 @@ struct DX11RenderingAPI : GraphicAPI
 	Matrix44 mAxisWorld;
 	int  mWireBoxVertexOffset;
 	int  mAxisVertexOffset;
-	UINT mWireBoxIndexCount;
-	UINT mAxisIndexCount;
-	UINT mWireBoxIndexOffset;
-	UINT mAxisIndexOffset;
+	u32 mWireBoxIndexCount;
+	u32 mAxisIndexCount;
+	u32 mWireBoxIndexOffset;
+	u32 mAxisIndexOffset;
 	//---------------
 
 	float mBlendFactorR;
@@ -133,11 +130,11 @@ struct DX11RenderingAPI : GraphicAPI
 	//------------
 
 	virtual void SetWireframe(BOOL state);
-	virtual void SetMSAA(UINT MSAAsamples);
+	virtual void SetMSAA(u32 MSAAsamples);
 
 	//////////////////////////////////////////////////////////////////////////
 
-	void InitSwapChain(UINT msaaSamples = 4);
+	void InitSwapChain(u32 msaaSamples = 4);
 	void ResizeWindow();
 	//---------------
 	void BuildGeometryBuffers();
@@ -148,7 +145,7 @@ struct DX11RenderingAPI : GraphicAPI
 	void DrawProfiler();
 	void Draw2dElements();
 	//---------------
-	void SetActivePointLights(UINT activeLights);
+	void SetActivePointLights(u32 activeLights);
 };
 
 //////////////////////////////////////////////////////////////////////////

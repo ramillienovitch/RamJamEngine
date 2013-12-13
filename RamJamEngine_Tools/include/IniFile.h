@@ -51,6 +51,7 @@ public:
 	static bool    GetValueBool(   string KeyName, string SectionName, string FileName);
 	static Vector2 GetValueVector2(string KeyName, string SectionName, string FileName);
 	static Vector3 GetValueVector3(string KeyName, string SectionName, string FileName);
+	static Vector4 GetValueVector4(string KeyName, string SectionName, string FileName);
 	//-----------------------------------
 	static bool RecordExists(string KeyName, string SectionName, string FileName);
 	static bool RenameSection(string OldSectionName, string NewSectionName, string FileName);

@@ -31,7 +31,7 @@ public:
 	HRESULT SetWorldViewProj(Matrix44& M)                    { return WorldViewProj->SetMatrix(reinterpret_cast<const float*>(&M)); }
 	HRESULT SetWorld(Matrix44& M)                            { return World->SetMatrix(reinterpret_cast<const float*>(&M)); }
 	HRESULT SetWorldInvTranspose(Matrix44& M)                { return WorldInvTranspose->SetMatrix(reinterpret_cast<const float*>(&M)); }
-	HRESULT SetTexTransform(Matrix44& M)                     { return TexTransform->SetMatrix(reinterpret_cast<const float*>(&M)); }
+	HRESULT SetTexTransform(Matrix44& M)                     { return mFX->GetVariableBySemantic("Texture_Diffuse_Trf")->AsMatrix()->SetMatrix(reinterpret_cast<const float*>(&M)); }
 	HRESULT SetEyePosW(const Vector3& v)                     { return EyePosW->SetFloatVector(reinterpret_cast<const float*>(&v)); }
 	HRESULT SetFogState(BOOL state)                          { return FogEnabled->SetBool(state != 0); }
 	HRESULT SetAlphaClipState(BOOL state)                    { return AlphaClipEnabled->SetBool(state != 0); }
@@ -47,7 +47,7 @@ public:
 	HRESULT SetMaterial(Material& mat)
 	{
 		HRESULT res;
-		for (UINT i = 0; i < mat.mPropertiesCount; ++i)
+		for (u32 i = 0; i < mat.mPropertiesCount; ++i)
 		{
 			MaterialProperty& property = *(mat.mProperties[i]);
 			switch (property.mType)
@@ -86,9 +86,9 @@ public:
 			{
 				res = mFX->GetVariableBySemantic(property.mName.c_str())->AsShaderResource()->SetResource(property.mShaderResource.mTexture);
 				if (res != S_OK) return res;
-// 				std::string textureTrfName = property.mName + "_Trf";
-// 				Matrix44 textTrf = Transform::MatrixFromTextureProperties(property.mShaderResource.mOffset, property.mShaderResource.mTiling, property.mShaderResource.mRotationAngleInDegrees);
-// 				res = mFX->GetVariableBySemantic(textureTrfName.c_str())->AsMatrix()->SetMatrix(reinterpret_cast<const float*>(&textTrf));
+				std::string textureTrfName = property.mName + "_Trf";
+				Matrix44 textTrf = Transform::MatrixFromTextureProperties(property.mShaderResource.mTiling, property.mShaderResource.mOffset, property.mShaderResource.mRotationAngleInDegrees);
+				res = mFX->GetVariableBySemantic(textureTrfName.c_str())->AsMatrix()->SetMatrix(reinterpret_cast<const float*>(&textTrf));
 				if (res != S_OK) return res;
 				break;
 			}

@@ -17,13 +17,15 @@ struct MaterialFactory
 	std::string		mCurrentShader;
 	u32				mFactoriesCount;
 
-	//------------------------
+	//-------------------------------------------------
+
+	BOOL IsShaderLoaded(std::string shaderName);
 
 	void RegisterShader(std::string shaderName);
 	void RegisterProperty(std::string mName, std::string mType);
 	void RegisterProperty(std::string mName, std::string mSemantic, std::string mType);
 
-	//------------------------
+	//-------------------------------------------------
 
 	MaterialFactory() : mFactoriesCount(0) {}
 	//------

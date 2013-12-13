@@ -5,6 +5,14 @@
 MaterialFactory* MaterialFactory::sInstance = nullptr;
 
 //////////////////////////////////////////////////////////////////////////
+BOOL MaterialFactory::IsShaderLoaded( std::string shaderName )
+{
+	std::unordered_map<std::string,std::vector<MaterialProperty>>::const_iterator factory = mFactories.find(shaderName);
+
+	return (factory != mFactories.end());
+}
+
+//////////////////////////////////////////////////////////////////////////
 void MaterialFactory::RegisterShader( std::string shaderName )
 {
 	++mFactoriesCount;
@@ -14,9 +22,7 @@ void MaterialFactory::RegisterShader( std::string shaderName )
 	size_t len       = shaderName.find('.') - last - 1;
 	std::string file = shaderName.substr(shaderName.rfind('\\')+1, len);
 
-	std::unordered_map<std::string,std::vector<MaterialProperty>>::const_iterator factory = mFactories.find(file);
-
-	if ( factory == mFactories.end() )
+	if ( !IsShaderLoaded(file) )
 	{
 		// Adding shader in the factory
 		mCurrentShader = file;
@@ -26,7 +32,7 @@ void MaterialFactory::RegisterShader( std::string shaderName )
 	else
 	{
 		// The shader was already loaded, this is not supposed to happen
-		RJE_MESSAGE_BOX(NULL, L"Memory Leaks Found !\nCheck the console for details", L"Memory Manager", MB_ICONWARNING | MB_OK);
+		RJE_MESSAGE_BOX(NULL, L"A shader was already registered twice !", L"Material Factory", MB_ICONWARNING | MB_OK);
 	}
 }
 
