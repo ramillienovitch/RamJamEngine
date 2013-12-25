@@ -31,7 +31,6 @@ public:
 	HRESULT SetWorldViewProj(Matrix44& M)                    { return WorldViewProj->SetMatrix(reinterpret_cast<const float*>(&M)); }
 	HRESULT SetWorld(Matrix44& M)                            { return World->SetMatrix(reinterpret_cast<const float*>(&M)); }
 	HRESULT SetWorldInvTranspose(Matrix44& M)                { return WorldInvTranspose->SetMatrix(reinterpret_cast<const float*>(&M)); }
-	HRESULT SetTexTransform(Matrix44& M)                     { return mFX->GetVariableBySemantic("Texture_Diffuse_Trf")->AsMatrix()->SetMatrix(reinterpret_cast<const float*>(&M)); }
 	HRESULT SetEyePosW(const Vector3& v)                     { return EyePosW->SetFloatVector(reinterpret_cast<const float*>(&v)); }
 	HRESULT SetFogState(BOOL state)                          { return FogEnabled->SetBool(state != 0); }
 	HRESULT SetAlphaClipState(BOOL state)                    { return AlphaClipEnabled->SetBool(state != 0); }

@@ -25,11 +25,6 @@ DX11RenderingAPI::DX11RenderingAPI(Scene& scene) : mScene(scene)
 	mVertexBuffer_Gizmo = nullptr;
 	mIndexBuffer_Gizmo  = nullptr;
 	//-----------
-	mBoxMap            = nullptr;
-	mGridMap           = nullptr;
-	mSphereMap         = nullptr;
-	mCylinderMap       = nullptr;
-	mMaskMap           = nullptr;
 	mRjeLogo           = nullptr;
 	//-----------
 	mEyePosW = Vector3::zero;
@@ -40,11 +35,7 @@ DX11RenderingAPI::DX11RenderingAPI(Scene& scene) : mScene(scene)
 	mBlendFactorA = 1.0f;
 	//-----------
 	mDirLightCount    = 1;
-
-	// Texture transforms
-	mGridTexTransform = Matrix44::Scaling(30.0f, 30.0f, 0.0f);
-	mBoxTexTransform  = mCylinderTexTransform = mSphereTexTransform = Matrix44::Scaling(1.0f, 1.0f, 0.0f);
-
+	
 	// Meshes transforms
 	mModelRot = TwQuaternion();
 	mGridWorld = Matrix44::identity;
@@ -209,56 +200,16 @@ void DX11RenderingAPI::Initialize(int windowWidth, int windowHeight)
 	RJE_CHECK_FOR_SUCCESS(mProfilerFont->Initialize(mDX11Device->md3dDevice, L"Consolas", 16.0f, FontSheet::FontStyleBold,    true));
 	RJE_CHECK_FOR_SUCCESS(mSpriteBatch-> Initialize(mDX11Device->md3dDevice, mDX11Device->md3dImmediateContext));
 
-	DX11TextureManager::Instance()->LoadTexture("box",      &mBoxMap);
-	DX11TextureManager::Instance()->LoadTexture("grid",     &mGridMap);
-	DX11TextureManager::Instance()->LoadTexture("sphere",   &mSphereMap);
-	DX11TextureManager::Instance()->LoadTexture("cylinder", &mCylinderMap);
-	DX11TextureManager::Instance()->LoadTexture("mask",     &mMaskMap);
 	DX11TextureManager::Instance()->LoadTexture("rje_logo", &mRjeLogo);
 	DX11TextureManager::Instance()->Create2DTextureFixedColor(1, RJE_COLOR::Color::TransDarkGray, "_transparentGray");
 	DX11TextureManager::Instance()->Create2DTextureFixedColor(1, RJE_COLOR::Color::White,         "_default");
 	//----------
 	// Material Specs
-	mMaterialLoader.LoadFromFile(mGridMat, "grid.mat");
-	mGridMat.SetProperty("Ambient",  Vector4(0.5f, 0.5f, 0.5f, 1.0f));
-	mGridMat.SetProperty("Diffuse",  Vector4(1.0f, 1.0f, 1.0f, 1.0f));
-	mGridMat.SetProperty("Specular", Vector4(0.2f, 0.2f, 0.2f, 16.0f));
-	//--------
-	mCylinderMat.AddPropertyVector("Ambient");
-	mCylinderMat.AddPropertyVector("Diffuse");
-	mCylinderMat.AddPropertyVector("Specular");
-	mCylinderMat.AddPropertyTexture("Texture_Diffuse");
-	mCylinderMat.SetProperty("Ambient",  Vector4(0.5f, 0.5f, 0.5f, 1.0f));
-	mCylinderMat.SetProperty("Diffuse",  Vector4(1.0f, 1.0f, 1.0f, 1.0f));
-	mCylinderMat.SetProperty("Specular", Vector4(0.2f, 0.2f, 0.2f, 16.0f));
-	mCylinderMat.SetTexture("Texture_Diffuse", mCylinderMap);
-	//--------
-	mSphereMat.AddPropertyVector("Ambient");
-	mSphereMat.AddPropertyVector("Diffuse");
-	mSphereMat.AddPropertyVector("Specular");
-	mSphereMat.AddPropertyTexture("Texture_Diffuse");
-	mSphereMat.SetProperty("Ambient",  Vector4(0.6f, 0.8f, 0.9f, 1.0f));
-	mSphereMat.SetProperty("Diffuse",  Vector4(0.6f, 0.8f, 0.9f, 1.0f));
-	mSphereMat.SetProperty("Specular", Vector4(0.9f, 0.9f, 0.9f, 16.0f));
-	mSphereMat. SetTexture("Texture_Diffuse", mSphereMap);
-	//--------
-	mBoxMat.AddPropertyVector("Ambient");
-	mBoxMat.AddPropertyVector("Diffuse");
-	mBoxMat.AddPropertyVector("Specular");
-	mBoxMat.AddPropertyTexture("Texture_Diffuse");
-	mBoxMat.SetProperty("Ambient",  Vector4(0.5f, 0.5f, 0.5f, 1.0f));
-	mBoxMat.SetProperty("Diffuse",  Vector4(1.0f, 1.0f, 1.0f, 1.0f));
-	mBoxMat.SetProperty("Specular", Vector4(0.2f, 0.2f, 0.2f, 16.0f));
-	mBoxMat.SetTexture("Texture_Diffuse", mBoxMap);
-	//--------
-	mModelMat.AddPropertyVector("Ambient");
-	mModelMat.AddPropertyVector("Diffuse");
-	mModelMat.AddPropertyVector("Specular");
-	mModelMat.AddPropertyTexture("Texture_Diffuse");
-	mModelMat.SetProperty("Ambient",  Vector4(0.8f, 0.8f, 0.8f, 1.0f));
-	mModelMat.SetProperty("Diffuse",  Vector4(0.8f, 0.8f, 0.8f, 1.0f));
-	mModelMat.SetProperty("Specular", Vector4(0.8f, 0.8f, 0.8f, 16.0f));
-	mModelMat.SetTexture("Texture_Diffuse", DX11TextureManager::Instance()->mTextures["_default"]);
+	mMaterialLoader.LoadFromFile(mGridMat,     "grid.mat");
+	mMaterialLoader.LoadFromFile(mCylinderMat, "cylinder.mat");
+	mMaterialLoader.LoadFromFile(mSphereMat,   "sphere.mat");
+	mMaterialLoader.LoadFromFile(mBoxMat,      "box.mat");
+	mMaterialLoader.LoadFromFile(mModelMat,    "model.mat");
 	//----------
 	BuildGeometryBuffers();
 	BuildGizmosBuffers();
@@ -678,7 +629,6 @@ void DX11RenderingAPI::DrawScene()
 		DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
 		DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
 		DX11Effects::BasicFX->SetMaterial(mBoxMat);
-		DX11Effects::BasicFX->SetTexTransform(mBoxTexTransform);
 
 		if (mScene.mbUseBlending)
 			mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_CullNone);
@@ -702,7 +652,6 @@ void DX11RenderingAPI::DrawScene()
 			DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
 			DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
 			DX11Effects::BasicFX->SetMaterial(mCylinderMat);
-			DX11Effects::BasicFX->SetTexTransform(mCylinderTexTransform);
 
 			activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
 			mDX11Device->md3dImmediateContext->DrawIndexed(mCylinderIndexCount, mCylinderIndexOffset, mCylinderVertexOffset);
@@ -734,7 +683,6 @@ void DX11RenderingAPI::DrawScene()
 			DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
 			DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
 			DX11Effects::BasicFX->SetMaterial(mSphereMat);
-			DX11Effects::BasicFX->SetTexTransform(mSphereTexTransform);
 
 			if (mScene.mbUseBlending)
 				mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_CullNone);
@@ -821,7 +769,6 @@ void DX11RenderingAPI::DrawScene()
 			DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
 			DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
 			DX11Effects::BasicFX->SetMaterial(mBoxMat);
-			DX11Effects::BasicFX->SetTexTransform(mBoxTexTransform);
 
 			// Cull clockwise triangles for reflection.
 			if (mScene.mbUseBlending)
@@ -848,7 +795,6 @@ void DX11RenderingAPI::DrawScene()
 				DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
 				DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
 				DX11Effects::BasicFX->SetMaterial(mCylinderMat);
-				DX11Effects::BasicFX->SetTexTransform(mCylinderTexTransform);
 
 				// Only draw reflection into visible mirror pixels as marked by the stencil buffer. 
 				mDX11Device->md3dImmediateContext->OMSetDepthStencilState(DX11CommonStates::sDepthStencilState_DrawStenciled, 1);
@@ -873,7 +819,6 @@ void DX11RenderingAPI::DrawScene()
 				DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
 				DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
 				DX11Effects::BasicFX->SetMaterial(mSphereMat);
-				DX11Effects::BasicFX->SetTexTransform(mSphereTexTransform);
 
 				mDX11Device->md3dImmediateContext->OMSetBlendState(DX11CommonStates::sCurrentBlendState, blendFactor, 0xffffffff);
 				activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
@@ -1130,11 +1075,6 @@ void DX11RenderingAPI::Shutdown()
 	RJE_SAFE_RELEASE(mIndexBuffer_Gizmo);
 
 	DX11TextureManager::DeleteInstance();
-	RJE_SAFE_RELEASE(mBoxMap);
-	RJE_SAFE_RELEASE(mGridMap);
-	RJE_SAFE_RELEASE(mSphereMap);
-	RJE_SAFE_RELEASE(mCylinderMap);
-	RJE_SAFE_RELEASE(mMaskMap);
 	RJE_SAFE_RELEASE(mRjeLogo);
 
 	DX11Effects     ::DestroyAll();

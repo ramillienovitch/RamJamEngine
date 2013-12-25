@@ -75,7 +75,7 @@ struct Material
 	//----------------------------------
 
 	void LoadPropertiesFromFile  (std::string filename);
-	void SetPropertiesFromFactory(std::string shaderName);
+	void SetPropertiesFromFactory(std::string shaderName, std::string materialPath);
 	//-------
 	template <typename T>
 	void SetProperty       (std::string propertyName, T propertyData);
@@ -90,7 +90,7 @@ struct Material
 	void AddPropertyMatrix (std::string propertyName);
 	//-------
 	void AddPropertyTexture(std::string propertyName);
-	void SetTexture        (std::string propertyName, ShaderResource* shaderResource);
+	void SetTexture        (std::string propertyName, ShaderResource* shaderResource, Vector2& tiling = Vector2(1,1), Vector2& offset = Vector2(0,0), float rotation = 0.0f);
 	void SetTexture        (MaterialProperty& property, ShaderResource* shaderResource);
 };
 

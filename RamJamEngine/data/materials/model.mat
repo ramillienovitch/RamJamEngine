@@ -2,13 +2,13 @@
 Name=basic
 # ----------------------
 [properties]
-Ambient=0.5|0.5|0.5|1.0
-Diffuse=1.0|1.0|1.0|1.0
-Specular=0.2|0.2|0.2|16.0
+Ambient=0.8|0.8|0.8|1.0
+Diffuse=0.8|0.8|0.8|1.0
+Specular=0.8|0.8|0.8|16.0
 # ----------------------
 [textures]
-Texture_Diffuse=textures\floor.dds
-Tiling=30.0|30.0
+Texture_Diffuse=NONE
+Tiling=1.0|1.0
 Offset=0.0|0.0
 Rotation=0.0
 # ----------------------

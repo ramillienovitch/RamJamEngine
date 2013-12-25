@@ -18,17 +18,15 @@ Material::~Material()
 //////////////////////////////////////////////////////////////////////////
 void Material::LoadPropertiesFromFile( std::string filename )
 {
-	std::string texturePath = System::Instance()->mDataPath + "materials\\" + filename;
-	std::string shaderName  = CIniFile::GetValue("name", "shader", System::Instance()->mDataPath + "materials\\" + filename);
+	std::string materialPath = System::Instance()->mDataPath + "materials\\" + filename;
+	std::string shaderName   = CIniFile::GetValue("Name", "shader", materialPath);
 	
 	RJE_ASSERT(MaterialFactory::Instance()->IsShaderLoaded(shaderName));
-	SetPropertiesFromFactory(shaderName);
-
-	// LOAD FROM FILE
+	SetPropertiesFromFactory(shaderName, materialPath);
 }
 
 //////////////////////////////////////////////////////////////////////////
-void Material::SetPropertiesFromFactory( std::string shaderName )
+void Material::SetPropertiesFromFactory( std::string shaderName, std::string materialPath )
 {
 	std::vector<MaterialFactory::MaterialProperty>& properties = MaterialFactory::Instance()->mFactories[shaderName];
 
@@ -37,10 +35,26 @@ void Material::SetPropertiesFromFactory( std::string shaderName )
 		if (!it->mSemantic.empty())
 		{
 			std::string& type = it->mType;
-			if      ( type == "int")			AddPropertyInt(it->mSemantic);
-			else if ( type == "bool")			AddPropertyBool(it->mSemantic);
-			else if ( type == "float")			AddPropertyFloat(it->mSemantic);
-			else if ( type == "float4")			AddPropertyVector(it->mSemantic);
+			if ( type == "int")
+			{
+				AddPropertyInt(it->mSemantic);
+				SetProperty(it->mSemantic, CIniFile::GetValueInt(it->mSemantic, "properties", materialPath));
+			}
+			else if ( type == "bool")
+			{
+				AddPropertyBool(it->mSemantic);
+				SetProperty(it->mSemantic, CIniFile::GetValueBool(it->mSemantic, "properties", materialPath));
+			}
+			else if ( type == "float")
+			{
+				AddPropertyFloat(it->mSemantic);
+				SetProperty(it->mSemantic, CIniFile::GetValueFloat(it->mSemantic, "properties", materialPath));
+			}
+			else if ( type == "float4")
+			{
+				AddPropertyVector(it->mSemantic);
+				SetProperty(it->mSemantic, CIniFile::GetValueVector4(it->mSemantic, "properties", materialPath));
+			}
 			else if ( type == "float4x4")		AddPropertyMatrix(it->mSemantic);
 			else if ( type == "Texture2D")		AddPropertyTexture(it->mSemantic);
 		}
@@ -78,22 +92,25 @@ void Material::AddPropertyTexture( std::string propertyName )
 	MaterialProperty* property         = rje_new MaterialProperty();
 	property->mName                    = propertyName;
 	property->mType                    = MaterialPropertyType::Type_Texture;
-	property->mShaderResource.mTexture = nullptr;
+	property->mShaderResource.mTexture                = nullptr;
+	property->mShaderResource.mOffset                 = 0.0f;
+	property->mShaderResource.mTiling                 = 0.0f;
+	property->mShaderResource.mRotationAngleInDegrees = 0.0f;
 	++mPropertiesCount;
 	mProperties.push_back(property);
 }
 
 //////////////////////////////////////////////////////////////////////////
-void Material::SetTexture( std::string propertyName, ShaderResource* shaderResource )
+void Material::SetTexture( std::string propertyName, ShaderResource* shaderResource, Vector2& tiling, Vector2& offset, float rotation)
 {
 	for ( auto it = mProperties.begin(); it != mProperties.end(); ++it )
 	{
 		if ((*it)->mName == propertyName)
 		{
-			(*it)->mShaderResource.mTexture = shaderResource;
-			(*it)->mShaderResource.mTiling = Vector2(30.0f,30.0f);
-			(*it)->mShaderResource.mOffset = Vector2(0.0f,0.0f);
-			(*it)->mShaderResource.mRotationAngleInDegrees = 45.0f;
+			(*it)->mShaderResource.mTexture                = shaderResource;
+			(*it)->mShaderResource.mTiling                 = tiling;
+			(*it)->mShaderResource.mOffset                 = offset;
+			(*it)->mShaderResource.mRotationAngleInDegrees = rotation;
 			break;
 		}
 	}

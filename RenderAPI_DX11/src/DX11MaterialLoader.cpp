@@ -18,10 +18,20 @@ void DX11MaterialLoader::LoadFromFile( Material& material, std::string materialF
 			int point = (int)texturePathRel.find('.');
 			std::string textureName = texturePathRel.substr(slash, point-slash);
 
-			if (!DX11TextureManager::Instance()->IsTextureLoaded(textureName))
-				DX11TextureManager::Instance()->LoadTexture(texturePathAbs, textureName);
-				
-			material.SetTexture((*it)->mName, DX11TextureManager::Instance()->mTextures[textureName]);
+			if (textureName == "NONE")
+				material.SetTexture((*it)->mName, DX11TextureManager::Instance()->mTextures["_default"]);
+			else
+			{
+				if (!DX11TextureManager::Instance()->IsTextureLoaded(textureName))
+					DX11TextureManager::Instance()->LoadTexture(texturePathAbs, textureName);
+
+				// we load the texture properties
+				Vector2 tiling = CIniFile::GetValueVector2("Tiling", "textures", System::Instance()->mDataPath + "materials\\" + materialFile);
+				Vector2 offset = CIniFile::GetValueVector2("Offset", "textures", System::Instance()->mDataPath + "materials\\" + materialFile);
+				float rotation = CIniFile::GetValueFloat("Rotation", "textures", System::Instance()->mDataPath + "materials\\" + materialFile);
+			
+				material.SetTexture((*it)->mName, DX11TextureManager::Instance()->mTextures[textureName], tiling, offset, rotation);
+			}
 		}
 	}
 	

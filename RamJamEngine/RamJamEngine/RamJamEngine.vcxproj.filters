@@ -216,6 +216,18 @@
     <None Include="..\data\materials\grid.mat">
       <Filter>Resource Files\Materials</Filter>
     </None>
+    <None Include="..\data\materials\box.mat">
+      <Filter>Resource Files\Materials</Filter>
+    </None>
+    <None Include="..\data\materials\cylinder.mat">
+      <Filter>Resource Files\Materials</Filter>
+    </None>
+    <None Include="..\data\materials\model.mat">
+      <Filter>Resource Files\Materials</Filter>
+    </None>
+    <None Include="..\data\materials\sphere.mat">
+      <Filter>Resource Files\Materials</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\include\RamJamEngine.rc">

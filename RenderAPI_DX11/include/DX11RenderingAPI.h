@@ -45,11 +45,6 @@ struct DX11RenderingAPI : GraphicAPI
 	ID3D11Buffer*	mVertexBuffer_Gizmo;
 	ID3D11Buffer*	mIndexBuffer_Gizmo;
 
-	ID3D11ShaderResourceView* mBoxMap;
-	ID3D11ShaderResourceView* mGridMap;
-	ID3D11ShaderResourceView* mSphereMap;
-	ID3D11ShaderResourceView* mCylinderMap;
-	ID3D11ShaderResourceView* mMaskMap;
 	ID3D11ShaderResourceView* mRjeLogo;
 
 	StructuredBuffer<PointLight>*	mPointLights;
@@ -64,11 +59,6 @@ struct DX11RenderingAPI : GraphicAPI
 	Material mCylinderMat;
 	Material mSphereMat;
 	Material mModelMat;
-
-	Matrix44 mBoxTexTransform;
-	Matrix44 mGridTexTransform;
-	Matrix44 mSphereTexTransform;
-	Matrix44 mCylinderTexTransform;
 	
 	Matrix44 mBoxWorld;
 	Matrix44 mGridWorld;

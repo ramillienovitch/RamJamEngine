@@ -7,8 +7,8 @@ Diffuse=1.0|1.0|1.0|1.0
 Specular=0.2|0.2|0.2|16.0
 # ----------------------
 [textures]
-Texture_Diffuse=textures\floor.dds
-Tiling=30.0|30.0
+Texture_Diffuse=textures\WireFence.dds
+Tiling=1.0|1.0
 Offset=0.0|0.0
 Rotation=0.0
 # ----------------------
