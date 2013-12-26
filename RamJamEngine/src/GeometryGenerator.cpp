@@ -59,7 +59,7 @@ void GeometryGenerator::CreateBox(float width, float height, float depth, Data<P
 	// Create the indices.
 	//
 
-	UINT i[36];
+	u32 i[36];
 
 	// Fill in the front face index data
 	i[0] = 0; i[1] = 1; i[2] = 2;
@@ -89,7 +89,7 @@ void GeometryGenerator::CreateBox(float width, float height, float depth, Data<P
 }
 
 //////////////////////////////////////////////////////////////////////////
-void GeometryGenerator::CreateSphere(float radius, UINT sliceCount, UINT stackCount, Data<PosNormTanTex>& meshData)
+void GeometryGenerator::CreateSphere(float radius, u32 sliceCount, u32 stackCount, Data<PosNormTanTex>& meshData)
 {
 	meshData.Vertices.clear();
 	meshData.Indices.clear();
@@ -110,12 +110,12 @@ void GeometryGenerator::CreateSphere(float radius, UINT sliceCount, UINT stackCo
 	float thetaStep = 2.0f*RJE_PI_F/sliceCount;
 
 	// Compute vertices for each stack ring (do not count the poles as rings).
-	for(UINT i = 1; i <= stackCount-1; ++i)
+	for(u32 i = 1; i <= stackCount-1; ++i)
 	{
 		float phi = i*phiStep;
 
 		// Vertices of ring.
-		for(UINT j = 0; j <= sliceCount; ++j)
+		for(u32 j = 0; j <= sliceCount; ++j)
 		{
 			float theta = j*thetaStep;
 
@@ -148,7 +148,7 @@ void GeometryGenerator::CreateSphere(float radius, UINT sliceCount, UINT stackCo
 	// and connects the top pole to the first ring.
 	//
 
-	for(UINT i = 1; i <= sliceCount; ++i)
+	for(u32 i = 1; i <= sliceCount; ++i)
 	{
 		meshData.Indices.push_back(0);
 		meshData.Indices.push_back(i+1);
@@ -161,11 +161,11 @@ void GeometryGenerator::CreateSphere(float radius, UINT sliceCount, UINT stackCo
 
 	// Offset the indices to the index of the first vertex in the first ring.
 	// This is just skipping the top pole vertex.
-	UINT baseIndex = 1;
-	UINT ringVertexCount = sliceCount+1;
-	for(UINT i = 0; i < stackCount-2; ++i)
+	u32 baseIndex = 1;
+	u32 ringVertexCount = sliceCount+1;
+	for(u32 i = 0; i < stackCount-2; ++i)
 	{
-		for(UINT j = 0; j < sliceCount; ++j)
+		for(u32 j = 0; j < sliceCount; ++j)
 		{
 			meshData.Indices.push_back(baseIndex + i*ringVertexCount + j);
 			meshData.Indices.push_back(baseIndex + i*ringVertexCount + j+1);
@@ -183,12 +183,12 @@ void GeometryGenerator::CreateSphere(float radius, UINT sliceCount, UINT stackCo
 	//
 
 	// South pole vertex was added last.
-	UINT southPoleIndex = (UINT)meshData.Vertices.size()-1;
+	u32 southPoleIndex = (u32)meshData.Vertices.size()-1;
 
 	// Offset the indices to the index of the first vertex in the last ring.
 	baseIndex = southPoleIndex - ringVertexCount;
 	
-	for(UINT i = 0; i < sliceCount; ++i)
+	for(u32 i = 0; i < sliceCount; ++i)
 	{
 		meshData.Indices.push_back(southPoleIndex);
 		meshData.Indices.push_back(baseIndex+i);
@@ -217,7 +217,7 @@ void GeometryGenerator::Subdivide(Data<PosNormTanTex>& meshData)
 	// v0    m2     v2
 
 	size_t numTris = inputCopy.Indices.size()/3;
-	for(UINT i = 0; i < (UINT)numTris; ++i)
+	for(u32 i = 0; i < (u32)numTris; ++i)
 	{
 		MeshData::PosNormTanTex v0 = inputCopy.Vertices[ inputCopy.Indices[i*3+0] ];
 		MeshData::PosNormTanTex v1 = inputCopy.Vertices[ inputCopy.Indices[i*3+1] ];
@@ -274,7 +274,7 @@ void GeometryGenerator::Subdivide(Data<PosNormTanTex>& meshData)
 }
 
 //////////////////////////////////////////////////////////////////////////
-void GeometryGenerator::CreateGeosphere(float radius, UINT numSubdivisions, Data<PosNormTanTex>& meshData)
+void GeometryGenerator::CreateGeosphere(float radius, u32 numSubdivisions, Data<PosNormTanTex>& meshData)
 {
 	// Put a cap on the number of subdivisions.
 	numSubdivisions = RJE::Math::Min(numSubdivisions, 5u);
@@ -305,17 +305,17 @@ void GeometryGenerator::CreateGeosphere(float radius, UINT numSubdivisions, Data
 	meshData.Vertices.resize(12);
 	meshData.Indices.resize(60);
 
-	for(UINT i = 0; i < 12; ++i)
+	for(u32 i = 0; i < 12; ++i)
 		meshData.Vertices[i].Position = pos[i];
 
-	for(UINT i = 0; i < 60; ++i)
+	for(u32 i = 0; i < 60; ++i)
 		meshData.Indices[i] = k[i];
 
-	for(UINT i = 0; i < numSubdivisions; ++i)
+	for(u32 i = 0; i < numSubdivisions; ++i)
 		Subdivide(meshData);
 
 	// Project vertices onto sphere and scale.
-	for(UINT i = 0; i < meshData.Vertices.size(); ++i)
+	for(u32 i = 0; i < meshData.Vertices.size(); ++i)
 	{
 		// Project onto unit sphere.
 		Vector3 n = meshData.Vertices[i].Position;
@@ -344,7 +344,7 @@ void GeometryGenerator::CreateGeosphere(float radius, UINT numSubdivisions, Data
 }
 
 //////////////////////////////////////////////////////////////////////////
-void GeometryGenerator::CreateCylinder(float bottomRadius, float topRadius, float height, UINT sliceCount, UINT stackCount, Data<PosNormTanTex>& meshData)
+void GeometryGenerator::CreateCylinder(float bottomRadius, float topRadius, float height, u32 sliceCount, u32 stackCount, Data<PosNormTanTex>& meshData)
 {
 	meshData.Vertices.clear();
 	meshData.Indices.clear();
@@ -358,17 +358,17 @@ void GeometryGenerator::CreateCylinder(float bottomRadius, float topRadius, floa
 	// Amount to increment radius as we move up each stack level from bottom to top.
 	float radiusStep = (topRadius - bottomRadius) / stackCount;
 
-	UINT ringCount = stackCount+1;
+	u32 ringCount = stackCount+1;
 
 	// Compute vertices for each stack ring starting at the bottom and moving up.
-	for(UINT i = 0; i < ringCount; ++i)
+	for(u32 i = 0; i < ringCount; ++i)
 	{
 		float y = -0.5f*height + i*stackHeight;
 		float r = bottomRadius + i*radiusStep;
 
 		// vertices of ring
 		float dTheta = 2.0f*RJE_PI_F/sliceCount;
-		for(UINT j = 0; j <= sliceCount; ++j)
+		for(u32 j = 0; j <= sliceCount; ++j)
 		{
 			MeshData::PosNormTanTex vertex;
 
@@ -412,12 +412,12 @@ void GeometryGenerator::CreateCylinder(float bottomRadius, float topRadius, floa
 
 	// Add one because we duplicate the first and last vertex per ring
 	// since the texture coordinates are different.
-	UINT ringVertexCount = sliceCount+1;
+	u32 ringVertexCount = sliceCount+1;
 
 	// Compute indices for each stack.
-	for(UINT i = 0; i < stackCount; ++i)
+	for(u32 i = 0; i < stackCount; ++i)
 	{
-		for(UINT j = 0; j < sliceCount; ++j)
+		for(u32 j = 0; j < sliceCount; ++j)
 		{
 			meshData.Indices.push_back(i*ringVertexCount + j);
 			meshData.Indices.push_back((i+1)*ringVertexCount + j);
@@ -435,15 +435,15 @@ void GeometryGenerator::CreateCylinder(float bottomRadius, float topRadius, floa
 
 //////////////////////////////////////////////////////////////////////////
 void GeometryGenerator::BuildCylinderTopCap(float bottomRadius, float topRadius, float height, 
-											UINT sliceCount, UINT stackCount, Data<PosNormTanTex>& meshData)
+											u32 sliceCount, u32 stackCount, Data<PosNormTanTex>& meshData)
 {
-	UINT baseIndex = (UINT)meshData.Vertices.size();
+	u32 baseIndex = (u32)meshData.Vertices.size();
 
 	float y = 0.5f*height;
 	float dTheta = 2.0f*RJE_PI_F/sliceCount;
 
 	// Duplicate cap ring vertices because the texture coordinates and normals differ.
-	for(UINT i = 0; i <= sliceCount; ++i)
+	for(u32 i = 0; i <= sliceCount; ++i)
 	{
 		float x = topRadius*cosf(i*dTheta);
 		float z = topRadius*sinf(i*dTheta);
@@ -460,9 +460,9 @@ void GeometryGenerator::BuildCylinderTopCap(float bottomRadius, float topRadius,
 	meshData.Vertices.push_back( MeshData::PosNormTanTex(0.0f, y, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.5f, 0.5f) );
 
 	// Index of center vertex.
-	UINT centerIndex = (UINT)meshData.Vertices.size()-1;
+	u32 centerIndex = (u32)meshData.Vertices.size()-1;
 
-	for(UINT i = 0; i < sliceCount; ++i)
+	for(u32 i = 0; i < sliceCount; ++i)
 	{
 		meshData.Indices.push_back(centerIndex);
 		meshData.Indices.push_back(baseIndex + i+1);
@@ -472,18 +472,18 @@ void GeometryGenerator::BuildCylinderTopCap(float bottomRadius, float topRadius,
 
 //////////////////////////////////////////////////////////////////////////
 void GeometryGenerator::BuildCylinderBottomCap(float bottomRadius, float topRadius, float height, 
-											   UINT sliceCount, UINT stackCount, Data<PosNormTanTex>& meshData)
+											   u32 sliceCount, u32 stackCount, Data<PosNormTanTex>& meshData)
 {
 	// 
 	// Build bottom cap.
 	//
 
-	UINT baseIndex = (UINT)meshData.Vertices.size();
+	u32 baseIndex = (u32)meshData.Vertices.size();
 	float y = -0.5f*height;
 
 	// vertices of ring
 	float dTheta = 2.0f*RJE_PI_F/sliceCount;
-	for(UINT i = 0; i <= sliceCount; ++i)
+	for(u32 i = 0; i <= sliceCount; ++i)
 	{
 		float x = bottomRadius*cosf(i*dTheta);
 		float z = bottomRadius*sinf(i*dTheta);
@@ -500,9 +500,9 @@ void GeometryGenerator::BuildCylinderBottomCap(float bottomRadius, float topRadi
 	meshData.Vertices.push_back( MeshData::PosNormTanTex(0.0f, y, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.5f, 0.5f) );
 
 	// Cache the index of center vertex.
-	UINT centerIndex = (UINT)meshData.Vertices.size()-1;
+	u32 centerIndex = (u32)meshData.Vertices.size()-1;
 
-	for(UINT i = 0; i < sliceCount; ++i)
+	for(u32 i = 0; i < sliceCount; ++i)
 	{
 		meshData.Indices.push_back(centerIndex);
 		meshData.Indices.push_back(baseIndex + i);
@@ -511,10 +511,10 @@ void GeometryGenerator::BuildCylinderBottomCap(float bottomRadius, float topRadi
 }
 
 //////////////////////////////////////////////////////////////////////////
-void GeometryGenerator::CreateGrid(float width, float depth, UINT m, UINT n, Data<PosNormTanTex>& meshData)
+void GeometryGenerator::CreateGrid(float width, float depth, u32 m, u32 n, Data<PosNormTanTex>& meshData)
 {
-	UINT vertexCount = m*n;
-	UINT faceCount   = (m-1)*(n-1)*2;
+	u32 vertexCount = m*n;
+	u32 faceCount   = (m-1)*(n-1)*2;
 
 	//
 	// Create the vertices.
@@ -530,10 +530,10 @@ void GeometryGenerator::CreateGrid(float width, float depth, UINT m, UINT n, Dat
 	float dv = 1.0f / (m-1);
 
 	meshData.Vertices.resize(vertexCount);
-	for(UINT i = 0; i < m; ++i)
+	for(u32 i = 0; i < m; ++i)
 	{
 		float z = halfDepth - i*dz;
-		for(UINT j = 0; j < n; ++j)
+		for(u32 j = 0; j < n; ++j)
 		{
 			float x = -halfWidth + j*dx;
 
@@ -554,10 +554,10 @@ void GeometryGenerator::CreateGrid(float width, float depth, UINT m, UINT n, Dat
 	meshData.Indices.resize(faceCount*3); // 3 indices per face
 
 	// Iterate over each quad and compute indices.
-	UINT k = 0;
-	for(UINT i = 0; i < m-1; ++i)
+	u32 k = 0;
+	for(u32 i = 0; i < m-1; ++i)
 	{
-		for(UINT j = 0; j < n-1; ++j)
+		for(u32 j = 0; j < n-1; ++j)
 		{
 			meshData.Indices[k]   = i*n+j;
 			meshData.Indices[k+1] = i*n+j+1;
@@ -630,7 +630,7 @@ void GeometryGenerator::CreateWireBox(float width, float height, float depth, Da
 	v[7] = MeshData::ColorVertex(+w2, -h2, +d2, color);
 	meshData.Vertices.assign(&v[0], &v[8]);
 
-	UINT i[24];
+	u32 i[24];
 	i[0]  = 0; i[1]  = 1;
 	i[2]  = 1; i[3]  = 2;
 	i[4]  = 2; i[5]  = 3;
@@ -656,18 +656,18 @@ void GeometryGenerator::CreateWireSphere(float radius, Data<ColorVertex>& meshDa
 
 	meshData.Vertices.push_back( topVertex );
 
-	const UINT stackCount = 12, sliceCount = 12;
+	const u32 stackCount = 12, sliceCount = 12;
 
 	float phiStep   = RJE_PI_F/stackCount;
 	float thetaStep = 2.0f*RJE_PI_F/sliceCount;
 
 	// Compute vertices for each stack ring (do not count the poles as rings).
-	for(UINT i = 1; i <= stackCount-1; ++i)
+	for(u32 i = 1; i <= stackCount-1; ++i)
 	{
 		float phi = i*phiStep;
 
 		// Vertices of ring.
-		for(UINT j = 0; j <= sliceCount; ++j)
+		for(u32 j = 0; j <= sliceCount; ++j)
 		{
 			float theta = j*thetaStep;
 
@@ -684,7 +684,7 @@ void GeometryGenerator::CreateWireSphere(float radius, Data<ColorVertex>& meshDa
 	meshData.Vertices.push_back( bottomVertex );
 
 	// Compute indices for top stack
-	for(UINT i = 1; i <= sliceCount; ++i)
+	for(u32 i = 1; i <= sliceCount; ++i)
 	{
 		meshData.Indices.push_back(0);
 		meshData.Indices.push_back(i);
@@ -697,11 +697,11 @@ void GeometryGenerator::CreateWireSphere(float radius, Data<ColorVertex>& meshDa
 
 	// Offset the indices to the index of the first vertex in the first ring.
 	// This is just skipping the top pole vertex.
-	UINT baseIndex = 1;
-	UINT ringVertexCount = sliceCount+1;
-	for(UINT i = 0; i < stackCount-2; ++i)
+	u32 baseIndex = 1;
+	u32 ringVertexCount = sliceCount+1;
+	for(u32 i = 0; i < stackCount-2; ++i)
 	{
-		for(UINT j = 0; j < sliceCount; ++j)
+		for(u32 j = 0; j < sliceCount; ++j)
 		{
 			meshData.Indices.push_back(baseIndex + i*ringVertexCount + j);
 			meshData.Indices.push_back(baseIndex + (i+1)*ringVertexCount + j);
@@ -714,12 +714,12 @@ void GeometryGenerator::CreateWireSphere(float radius, Data<ColorVertex>& meshDa
 	// Compute indices for bottom stack
 
 	// South pole vertex was added last.
-	UINT southPoleIndex = (UINT)meshData.Vertices.size()-1;
+	u32 southPoleIndex = (u32)meshData.Vertices.size()-1;
 
 	// Offset the indices to the index of the first vertex in the last ring.
 	baseIndex = southPoleIndex - ringVertexCount;
 
-	for(UINT i = 0; i < sliceCount; ++i)
+	for(u32 i = 0; i < sliceCount; ++i)
 	{
 		meshData.Indices.push_back(southPoleIndex);
 		meshData.Indices.push_back(baseIndex+i);
@@ -752,7 +752,7 @@ void GeometryGenerator::CreateAxisArrows(Vector3 right, Vector3 up, Vector3 forw
 	v[5] = MeshData::ColorVertex(forward.x, forward.y, forward.z, Color::Blue);
 	meshData.Vertices.assign(&v[0], &v[6]);
 
-	UINT i[6];
+	u32 i[6];
 	i[0] = 0; i[1] = 1;
 	i[2] = 2; i[3] = 3;
 	i[4] = 4; i[5] = 5;
@@ -767,7 +767,7 @@ void GeometryGenerator::CreateLine(Vector3 orientation, Data<ColorVertex>& meshD
 	v[1] = MeshData::ColorVertex(orientation.x, orientation.y, orientation.z, color);
 	meshData.Vertices.assign(&v[0], &v[2]);
 
-	UINT i[2];
+	u32 i[2];
 	i[0] = 0; i[1] = 1;
 	meshData.Indices.assign(&i[0], &i[2]);
 }
@@ -782,6 +782,47 @@ void GeometryGenerator::CreateRay(Data<ColorVertex>& meshData, Color color)
 //---------
 void GeometryGenerator::CreateRay(Vector3 orientation, Data<ColorVertex>& meshData, Color color)
 { CreateLine(10000*orientation, meshData, color); }
+
+//////////////////////////////////////////////////////////////////////////
+void GeometryGenerator::CreateWireCone(float length, float angle, Data<ColorVertex>& meshData, Color color)
+{
+	meshData.Vertices.clear();
+	meshData.Indices.clear();
+
+	u32 sliceCount = 24;
+	float radius = tan(angle/2) * length;
+
+	MeshData::ColorVertex v;
+	// Vertices of ring.
+	for(u32 i = 0; i <= sliceCount; ++i)
+	{
+		// spherical to cartesian
+		v.pos.x = radius*cosf(i*2*RJE_PI_F/sliceCount);
+		v.pos.y = radius*sinf(i*2*RJE_PI_F/sliceCount);
+		v.pos.z = length;
+		v.color = color;
+		meshData.Vertices.push_back( v );
+	}
+	meshData.Vertices.push_back( MeshData::ColorVertex(0, 0, 0, color) );
+	meshData.Vertices.push_back( MeshData::ColorVertex(radius, 0, length, color) );
+	meshData.Vertices.push_back( MeshData::ColorVertex(0, radius, length, color) );
+	meshData.Vertices.push_back( MeshData::ColorVertex(-radius, 0, length, color) );
+	meshData.Vertices.push_back( MeshData::ColorVertex(0, -radius, length, color) );
+
+	for(u32 j = 0; j < sliceCount; ++j)
+	{
+		meshData.Indices.push_back(j);
+		meshData.Indices.push_back(j+1);
+	}
+	meshData.Indices.push_back(sliceCount);
+	meshData.Indices.push_back(sliceCount+1);
+	meshData.Indices.push_back(sliceCount+1);
+	meshData.Indices.push_back(sliceCount+3);
+	meshData.Indices.push_back(sliceCount+1);
+	meshData.Indices.push_back(sliceCount+4);
+	meshData.Indices.push_back(sliceCount+1);
+	meshData.Indices.push_back(sliceCount+5);
+}
 
 //////////////////////////////////////////////////////////////////////////
 void GeometryGenerator::CreateWireFrustum(float fovX, float ratio, float nearPlaneDepth, float farPlaneDepth, Data<ColorVertex>& meshData, Color color)
@@ -809,7 +850,7 @@ void GeometryGenerator::CreateWireFrustum(Vector3 right, Vector3 up, Vector3 for
 	float wNear2 = 0.5f*((nearPlaneDepth*width)/farPlaneDepth);
 	float hNear2 = 0.5f*((nearPlaneDepth*height)/farPlaneDepth);
 
-	UINT i[24];
+	u32 i[24];
 	i[0]  = 0; i[1]  = 1;
 	i[2]  = 1; i[3]  = 2;
 	i[4]  = 2; i[5]  = 3;

@@ -8,7 +8,7 @@ Scene::Scene()
 	mFogRange = 175.0f;
 
 	mbDrawReflections = true;
-	mbUseFog          = true;
+	mbUseFog          = false;
 	mbUseTexture      = true;
 	mbUseBlending     = true;
 	mbWireframe       = false;

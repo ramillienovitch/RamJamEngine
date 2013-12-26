@@ -40,8 +40,10 @@ public:
 	HRESULT SetFogRange(float f)                             { return FogRange->SetFloat(f); }
 	HRESULT SetDirLightCount(int val)                        { return DirLightCount->SetInt(val); }
 	HRESULT SetPointLightCount(int val)                      { return PointLightCount->SetInt(val); }
-	HRESULT SetDirLights(const DirectionalLight* lights)     { return DirLights->SetRawValue(lights, 0, 3*sizeof(DirectionalLight)); }
+	HRESULT SetSpotLightCount(int val)                       { return SpotLightCount->SetInt(val); }
+	HRESULT SetDirLights(ID3D11ShaderResourceView* lights)   { return DirLights->SetResource(lights); }
 	HRESULT SetPointLights(ID3D11ShaderResourceView* lights) { return PointLights->SetResource(lights); }
+	HRESULT SetSpotLights(ID3D11ShaderResourceView* lights)  { return SpotLights->SetResource(lights); }
 	HRESULT SetSamplerState(ID3D11SamplerState* pSampler)    { return TextureSampler->SetSampler(0, pSampler); }
 	HRESULT SetMaterial(Material& mat)
 	{
@@ -122,12 +124,13 @@ public:
 	ID3DX11EffectScalarVariable*			FogRange;
 	ID3DX11EffectScalarVariable*			DirLightCount;
 	ID3DX11EffectScalarVariable*			PointLightCount;
-	//-------
-	ID3DX11EffectVariable*					DirLights;
+	ID3DX11EffectScalarVariable*			SpotLightCount;
 	//-------
 	ID3DX11EffectSamplerVariable*			TextureSampler;
 	//-------
+	ID3DX11EffectShaderResourceVariable*	DirLights;
 	ID3DX11EffectShaderResourceVariable*	PointLights;
+	ID3DX11EffectShaderResourceVariable*	SpotLights;
 };
 #pragma endregion
 
@@ -156,9 +159,11 @@ public:
 	ColorEffect(ID3D11Device* device, const std::string& filename);
 	~ColorEffect();
 
+	HRESULT SetColor(const Vector4& v)		{ return Color->SetFloatVector(reinterpret_cast<const float*>(&v)); }
 	HRESULT SetWorldViewProj(Matrix44& M)	{ return WorldViewProj->SetMatrix(reinterpret_cast<const float*>(&M)); }
 
 	ID3DX11EffectTechnique*			ColorTech;
+	ID3DX11EffectVectorVariable*	Color;
 	ID3DX11EffectMatrixVariable*	WorldViewProj;
 };
 #pragma endregion

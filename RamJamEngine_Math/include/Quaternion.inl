@@ -211,7 +211,7 @@ FORCEINLINE Quaternion_T<Real>& Quaternion_T<Real>::LookAt(Vector3_T<Real>& look
 //-------------------
 template<typename Real>
 FORCEINLINE Quaternion_T<Real>& Quaternion_T<Real>::LookAt(Vector3_T<Real>& lookAt)
-{ this->LookAt(lookAt, Vector3_T<Real>(0,1,0)); }
+{ return this->LookAt(lookAt, Vector3_T<Real>(0,1,0)); }
 //----------------------------------------------------------------------
 
 //---------------------------------------------------------------------------

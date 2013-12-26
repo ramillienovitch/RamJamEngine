@@ -16,6 +16,7 @@ cbuffer cbPerFrame
 	//-----------
 	int    gDirLightCount;
 	int    gPointLightCount;
+	int    gSpotLightCount;
 	//-----------
 	bool   gUseFog;
 	bool   gUseTexture;
@@ -124,10 +125,14 @@ float4 PS(VertexOut pin) : SV_Target
 	// Sum the light contribution from each light source.  
 	float4 A, D, S;
 	Material mat;
-	mat.Ambient = gMatAmbient;
-	mat.Diffuse = gMatDiffuse;
+	mat.Ambient  = gMatAmbient;
+	mat.Diffuse  = gMatDiffuse;
 	mat.Specular = gMatSpecular;
-	for (uint dirLightIdx = 0; dirLightIdx < (uint)gDirLightCount; ++dirLightIdx)
+	uint totalLights, dummy;
+
+	// Directionnal Lighting
+	gDirLights.GetDimensions(totalLights, dummy);
+	for (uint dirLightIdx = 0; dirLightIdx < totalLights; ++dirLightIdx)
 	{
 		DirectionalLight light = gDirLights[dirLightIdx];
 		ComputeDirectionalLight(mat, light, pin.NormalW, toEye, A, D, S);
@@ -137,12 +142,24 @@ float4 PS(VertexOut pin) : SV_Target
 		spec    += S;
 	}
 
-	uint totalLights, dummy;
+	// Point Lighting
 	gPointLights.GetDimensions(totalLights, dummy);
 	for (uint pointLightIdx = 0; pointLightIdx < totalLights; ++pointLightIdx)
 	{
 		PointLight light = gPointLights[pointLightIdx];
 		ComputePointLight(mat, light, pin.PosW, pin.NormalW, toEye, A, D, S);
+
+		ambient += A;
+		diffuse += D;
+		spec    += S;
+	}
+
+	// Spot Lighting
+	gSpotLights.GetDimensions(totalLights, dummy);
+	for (uint spotLightIdx = 0; spotLightIdx < totalLights; ++spotLightIdx)
+	{
+		SpotLight light = gSpotLights[spotLightIdx];
+		ComputeSpotLight(mat, light, pin.PosW, pin.NormalW, toEye, A, D, S);
 
 		ambient += A;
 		diffuse += D;

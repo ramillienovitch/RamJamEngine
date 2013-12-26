@@ -35,19 +35,19 @@ public:
 
 	/// Creates a sphere with the given radius.
 	/// The slices and stacks parameters control the degree of tessellation.
-	void CreateSphere(float radius, UINT sliceCount, UINT stackCount, Data<PosNormTanTex>& meshData);
+	void CreateSphere(float radius, u32 sliceCount, u32 stackCount, Data<PosNormTanTex>& meshData);
 
 	/// Creates a geosphere with the given radius.
 	/// The depth controls the level of tessellation.
-	void CreateGeosphere(float radius, UINT numSubdivisions, Data<PosNormTanTex>& meshData);
+	void CreateGeosphere(float radius, u32 numSubdivisions, Data<PosNormTanTex>& meshData);
 
 	/// Creates a cylinder parallel to the y-axis
 	/// The bottom and top radius can vary to form various cone shapes rather than true cylinders.
 	/// The slices and stacks parameters control the degree of tessellation.
-	void CreateCylinder(float bottomRadius, float topRadius, float height, UINT sliceCount, UINT stackCount, Data<PosNormTanTex>& meshData);
+	void CreateCylinder(float bottomRadius, float topRadius, float height, u32 sliceCount, u32 stackCount, Data<PosNormTanTex>& meshData);
 
 	/// Creates an mxn grid in the xz-plane with m rows and n columns with the specified width and depth.
-	void CreateGrid(float width, float depth, UINT m, UINT n, Data<PosNormTanTex>& meshData);
+	void CreateGrid(float width, float depth, u32 m, u32 n, Data<PosNormTanTex>& meshData);
 
 	/// Creates a quad covering the screen in NDC coordinates.
 	/// This is useful for postprocessing effects.
@@ -73,6 +73,8 @@ public:
 	void CreateRay(Data<ColorVertex>& meshData, Color color = Color::White);
 	void CreateRay(Vector3 orientation, Data<ColorVertex>& meshData, Color color = Color::White);
 	//---------
+	void CreateWireCone( float length, float angle, Data<ColorVertex>& meshData, Color color = Color::White);
+	//---------
 	void CreateWireFrustum(float fovX, float ratio, float nearPlaneDepth, float farPlaneDepth, Data<ColorVertex>& meshData, Color color = Color::White);
 	void CreateWireFrustum(Quaternion orientation, float fovX, float ratio, float nearPlaneDepth, float farPlaneDepth, Data<ColorVertex>& meshData, Color color = Color::White);
 	void CreateWireFrustum(Vector3 right, Vector3 up, Vector3 forward, float fovX, float ratio, float nearPlaneDepth, float farPlaneDepth, Data<ColorVertex>& meshData, Color color = Color::White);
@@ -80,6 +82,6 @@ public:
 
 private:
 	void Subdivide(Data<PosNormTanTex>& meshData);
-	void BuildCylinderTopCap(   float bottomRadius, float topRadius, float height, UINT sliceCount, UINT stackCount, Data<PosNormTanTex>& meshData);
-	void BuildCylinderBottomCap(float bottomRadius, float topRadius, float height, UINT sliceCount, UINT stackCount, Data<PosNormTanTex>& meshData);
+	void BuildCylinderTopCap(   float bottomRadius, float topRadius, float height, u32 sliceCount, u32 stackCount, Data<PosNormTanTex>& meshData);
+	void BuildCylinderBottomCap(float bottomRadius, float topRadius, float height, u32 sliceCount, u32 stackCount, Data<PosNormTanTex>& meshData);
 };

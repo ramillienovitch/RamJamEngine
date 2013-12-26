@@ -42,10 +42,9 @@ struct SpotLight
 	float pad;
 };
 
-//StructuredBuffer<DirectionalLight>	gDirLights;
-DirectionalLight gDirLights[3];
+StructuredBuffer<DirectionalLight>	gDirLights;
 StructuredBuffer<PointLight>		gPointLights;
-SpotLight			gSpotLights[3];
+StructuredBuffer<SpotLight>			gSpotLights;
 
 struct Material
 {
@@ -74,7 +73,7 @@ void ComputeDirectionalLight(Material mat, DirectionalLight L,
 	float3 lightVec = -L.Direction;
 
 	// Add ambient term.
-	ambient = mat.Ambient * L.Ambient;	
+	ambient = mat.Ambient * L.Ambient;
 
 	// Add diffuse and specular term, provided the surface is in 
 	// the line of site of the light.
@@ -87,7 +86,7 @@ void ComputeDirectionalLight(Material mat, DirectionalLight L,
 	{
 		float3 v         = reflect(-lightVec, normal);
 		float specFactor = pow(max(dot(v, toEye), 0.0f), mat.Specular.w);
-					
+
 		diffuse = diffuseFactor * mat.Diffuse * L.Diffuse;
 		spec    = specFactor * mat.Specular * L.Specular;
 	}
@@ -120,7 +119,7 @@ void ComputePointLight(Material mat, PointLight L, float3 pos, float3 normal, fl
 	lightVec /= d; 
 	
 	// Ambient term.
-	ambient = mat.Ambient * L.Ambient;	
+	ambient = mat.Ambient * L.Ambient;
 
 	// Add diffuse and specular term, provided the surface is in 
 	// the line of site of the light.
@@ -133,7 +132,7 @@ void ComputePointLight(Material mat, PointLight L, float3 pos, float3 normal, fl
 	{
 		float3 v         = reflect(-lightVec, normal);
 		float specFactor = pow(max(dot(v, toEye), 0.0f), mat.Specular.w);
-					
+
 		diffuse = diffuseFactor * mat.Diffuse * L.Diffuse;
 		spec    = specFactor * mat.Specular * L.Specular;
 	}
@@ -172,7 +171,7 @@ void ComputeSpotLight(Material mat, SpotLight L, float3 pos, float3 normal, floa
 	lightVec /= d; 
 	
 	// Ambient term.
-	ambient = mat.Ambient * L.Ambient;	
+	ambient = mat.Ambient * L.Ambient;
 
 	// Add diffuse and specular term, provided the surface is in 
 	// the line of site of the light.
@@ -185,21 +184,17 @@ void ComputeSpotLight(Material mat, SpotLight L, float3 pos, float3 normal, floa
 	{
 		float3 v         = reflect(-lightVec, normal);
 		float specFactor = pow(max(dot(v, toEye), 0.0f), mat.Specular.w);
-					
+
 		diffuse = diffuseFactor * mat.Diffuse * L.Diffuse;
 		spec    = specFactor * mat.Specular * L.Specular;
 	}
 	
 	// Scale by spotlight factor and attenuate.
-	float spot = pow(max(dot(-lightVec, L.Direction), 0.0f), L.Spot);
-
-	// Scale by spotlight factor and attenuate.
-	float att = spot / dot(L.Att, float3(1.0f, d, d*d));
+	float3 lightDir = normalize(L.Direction);
+	float spot      = pow(max(dot(-lightVec, lightDir), 0.0f), L.Spot);
+	float att       = spot / dot(L.Att, float3(1.0f, d, d*d));
 
 	ambient *= spot;
 	diffuse *= att;
 	spec    *= att;
 }
-
- 
- 

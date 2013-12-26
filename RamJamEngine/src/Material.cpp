@@ -115,7 +115,3 @@ void Material::SetTexture( std::string propertyName, ShaderResource* shaderResou
 		}
 	}
 }
-
-//////////////////////////////////////////////////////////////////////////
-void Material::SetTexture(MaterialProperty& property, ShaderResource* shaderResource)
-{ property.mShaderResource.mTexture = shaderResource; }

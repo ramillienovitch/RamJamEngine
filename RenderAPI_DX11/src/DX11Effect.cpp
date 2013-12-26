@@ -36,8 +36,10 @@ BasicEffect::BasicEffect(ID3D11Device* device, const std::string& filename)
 	FogRange          = mFX->GetVariableByName("gFogRange")->AsScalar();
 	DirLightCount     = mFX->GetVariableByName("gDirLightCount")->AsScalar();
 	PointLightCount   = mFX->GetVariableByName("gPointLightCount")->AsScalar();
-	DirLights         = mFX->GetVariableByName("gDirLights");
+	SpotLightCount    = mFX->GetVariableByName("gSpotLightCount")->AsScalar();
+	DirLights         = mFX->GetVariableByName("gDirLights")->AsShaderResource();
 	PointLights       = mFX->GetVariableByName("gPointLights")->AsShaderResource();
+	SpotLights        = mFX->GetVariableByName("gSpotLights")->AsShaderResource();
 	TextureSampler    = (ID3DX11EffectSamplerVariable*) mFX->GetVariableByName("gTextureSampler");
 }
 
@@ -64,6 +66,7 @@ ColorEffect::ColorEffect(ID3D11Device* device, const std::string& filename)
 	: Effect(device, filename)
 {
 	ColorTech		= mFX->GetTechniqueByName("ColorTech");
+	Color			= mFX->GetVariableByName("gColor")->AsVector();
 	WorldViewProj	= mFX->GetVariableByName("gWorldViewProj")->AsMatrix();
 }
 

@@ -136,7 +136,7 @@ FORCEINLINE void Vector3_T<Real>::Set (Real fx, Real fy, Real fz)
 //----------------------------------------------------------------------
 template <typename Real>
 FORCEINLINE Real Vector3_T<Real>::SqrMagnitude()
-{ return x*x + y*y + z*z }
+{ return x*x + y*y + z*z; }
 //----------------------------------------------------------------------
 
 //----------------------------------------------------------------------
@@ -228,7 +228,7 @@ FORCEINLINE Vector3_T<Real> Vector3_T<Real>::ReflectRay(const Vector3_T<Real>& i
 template <typename Real>
 FORCEINLINE Vector3_T<Real> Vector3_T<Real>::RandUnitSphere()
 {
-	Real One = static_cast<1.0f>;
+	Real One = static_cast<Real>(1.0f);
 	// Keep trying until we get a point on/in the sphere.
 	while(true)
 	{
@@ -239,7 +239,7 @@ FORCEINLINE Vector3_T<Real> Vector3_T<Real>::RandUnitSphere()
 		// over the unit sphere.  Otherwise points will clump more on the sphere near 
 		// the corners of the cube.
 
-		if( v.SqrMagnitude > One )
+		if( v.SqrMagnitude() > One )
 			continue;
 
 		return v.Normalize();

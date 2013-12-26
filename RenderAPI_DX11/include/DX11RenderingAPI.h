@@ -5,7 +5,7 @@
 #include "../../RamJamEngine/include/Scene.h"
 #include "../../RamJamEngine/include/AntTweakBar.h"
 
-
+//////////////////////////////////////////////////////////////////////////
 struct DX11RenderingAPI : GraphicAPI
 {
 	DX11RenderingAPI(Scene& scene);
@@ -47,12 +47,25 @@ struct DX11RenderingAPI : GraphicAPI
 
 	ID3D11ShaderResourceView* mRjeLogo;
 
-	StructuredBuffer<PointLight>*	mPointLights;
-	PointLight						mOldPointLights[MAX_LIGHTS];		// Used for reflections
+	enum LightMode
+	{
+		Directional,
+		Point,
+		Spot
+	};
+
+	LightMode mLightMode;
+	StructuredBuffer<DirectionalLight>*		mDirLights;
+	StructuredBuffer<PointLight>*			mPointLights;
+	StructuredBuffer<SpotLight>*			mSpotLights;
+	DirectionalLight				mWorkingDirLights[MAX_LIGHTS];
 	PointLight						mWorkingPointLights[MAX_LIGHTS];
-	DirectionalLight mDirLights[3];
+	SpotLight						mWorkingSpotLights[MAX_LIGHTS];
+	DirectionalLight				mOldDirLights[MAX_LIGHTS];		// Used for reflections
+	PointLight						mOldPointLights[MAX_LIGHTS];
 	u32 mDirLightCount;
 	u32 mPointLightCount;
+	u32 mSpotLightCount;
 
 	Material mBoxMat;
 	Material mGridMat;
@@ -135,7 +148,9 @@ struct DX11RenderingAPI : GraphicAPI
 	void DrawProfiler();
 	void Draw2dElements();
 	//---------------
+	void SetActiveDirLights(u32 activeLights);
 	void SetActivePointLights(u32 activeLights);
+	void SetActiveSpotLights(u32 activeLights);
 };
 
 //////////////////////////////////////////////////////////////////////////

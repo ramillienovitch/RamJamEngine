@@ -91,7 +91,6 @@ struct Material
 	//-------
 	void AddPropertyTexture(std::string propertyName);
 	void SetTexture        (std::string propertyName, ShaderResource* shaderResource, Vector2& tiling = Vector2(1,1), Vector2& offset = Vector2(0,0), float rotation = 0.0f);
-	void SetTexture        (MaterialProperty& property, ShaderResource* shaderResource);
 };
 
 template <typename T>
