@@ -71,6 +71,7 @@ struct Material
 
 	u32 mPropertiesCount;
 	std::vector<MaterialProperty*> mProperties;
+	BOOL mIsOpaque;
 
 	//----------------------------------
 

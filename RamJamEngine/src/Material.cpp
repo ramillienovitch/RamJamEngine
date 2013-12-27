@@ -20,6 +20,7 @@ void Material::LoadPropertiesFromFile( std::string filename )
 {
 	std::string materialPath = System::Instance()->mDataPath + "materials\\" + filename;
 	std::string shaderName   = CIniFile::GetValue("Name", "shader", materialPath);
+	mIsOpaque = CIniFile::GetValueBool("IsOpaque", "transparency", materialPath);
 	
 	RJE_ASSERT(MaterialFactory::Instance()->IsShaderLoaded(shaderName));
 	SetPropertiesFromFactory(shaderName, materialPath);

@@ -14,10 +14,6 @@ cbuffer cbPerFrame
 	float  gFogRange;
 	float4 gFogColor;
 	//-----------
-	int    gDirLightCount;
-	int    gPointLightCount;
-	int    gSpotLightCount;
-	//-----------
 	bool   gUseFog;
 	bool   gUseTexture;
 	bool   gUseAlphaClip;

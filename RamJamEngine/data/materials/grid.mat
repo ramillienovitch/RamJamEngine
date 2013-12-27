@@ -1,6 +1,9 @@
 [shader]
 Name=basic
 # ----------------------
+[transparency]
+IsOpaque=true
+# ----------------------
 [properties]
 Ambient=0.5|0.5|0.5|1.0
 Diffuse=1.0|1.0|1.0|1.0

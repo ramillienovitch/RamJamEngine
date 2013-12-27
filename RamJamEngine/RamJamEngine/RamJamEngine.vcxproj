@@ -116,6 +116,7 @@
     <ClInclude Include="..\include\Light.h" />
     <ClInclude Include="..\include\Material.h" />
     <ClInclude Include="..\include\MaterialFactory.h" />
+    <ClInclude Include="..\include\Mesh.h" />
     <ClInclude Include="..\include\MeshData.h" />
     <ClInclude Include="..\include\Resource.h" />
     <ClInclude Include="..\include\RjeConfig.h" />
@@ -150,6 +151,10 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\src\MaterialFactory.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\src\Mesh.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
