@@ -1,0 +1,54 @@
+<SCENE>
+	<PRIMITIVES>
+		<SOLID>
+			<CUBE>
+				<TRANSFORM>
+					<POSITION X="5" Y="10" Z="0"/>
+					<ROTATION X="0" Y="0" Z="0"/>
+					<SCALE X="1" Y="1" Z="1"/>
+				</TRANSFORM>
+			</CUBE>
+		</SOLID>
+		<WIRE>
+			<SPHERE>
+				<TRANSFORM>
+					<POSITION X="5" Y="10" Z="0"/>
+					<ROTATION X="0" Y="0" Z="0"/>
+					<SCALE X="1" Y="1" Z="1"/>
+				</TRANSFORM>
+			</SPHERE>
+		</WIRE>
+	</PRIMITIVES>
+	<MESHES>
+		<NAME>dragon.mesh</NAME>
+		<TRANSFORM>
+			<POSITION X="0" Y="5" Z="0"/>
+			<ROTATION X="0" Y="0" Z="0"/>
+			<SCALE X="1" Y="1" Z="1"/>
+		</TRANSFORM>
+	</MESHES>
+	<LIGHTS>
+		<DIR>
+			<AMBIENT/>
+			<DIFFUSE/>
+			<SPECULAR/>
+			<DIRECTION/>
+		</DIR>
+		<POINT>
+			<AMBIENT/>
+			<DIFFUSE/>
+			<SPECULAR/>
+			<POSITION/>
+			<ATTENUATION/>
+		</POINT>
+		<SPOT>
+			<AMBIENT/>
+			<DIFFUSE/>
+			<SPECULAR/>
+			<POSITION/>
+			<DIRECTION/>
+			<ATTENUATION/>
+		</SPOT>
+	</LIGHTS>
+</SCENE>
+

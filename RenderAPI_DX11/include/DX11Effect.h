@@ -38,9 +38,6 @@ public:
 	HRESULT SetFogColor(const Vector4& v)                    { return FogColor->SetFloatVector(reinterpret_cast<const float*>(&v)); }
 	HRESULT SetFogStart(float f)                             { return FogStart->SetFloat(f); }
 	HRESULT SetFogRange(float f)                             { return FogRange->SetFloat(f); }
-	HRESULT SetDirLightCount(int val)                        { return DirLightCount->SetInt(val); }
-	HRESULT SetPointLightCount(int val)                      { return PointLightCount->SetInt(val); }
-	HRESULT SetSpotLightCount(int val)                       { return SpotLightCount->SetInt(val); }
 	HRESULT SetDirLights(ID3D11ShaderResourceView* lights)   { return DirLights->SetResource(lights); }
 	HRESULT SetPointLights(ID3D11ShaderResourceView* lights) { return PointLights->SetResource(lights); }
 	HRESULT SetSpotLights(ID3D11ShaderResourceView* lights)  { return SpotLights->SetResource(lights); }
@@ -122,9 +119,6 @@ public:
 	ID3DX11EffectScalarVariable*			TextureEnabled;
 	ID3DX11EffectScalarVariable*			FogStart;
 	ID3DX11EffectScalarVariable*			FogRange;
-	ID3DX11EffectScalarVariable*			DirLightCount;
-	ID3DX11EffectScalarVariable*			PointLightCount;
-	ID3DX11EffectScalarVariable*			SpotLightCount;
 	//-------
 	ID3DX11EffectSamplerVariable*			TextureSampler;
 	//-------

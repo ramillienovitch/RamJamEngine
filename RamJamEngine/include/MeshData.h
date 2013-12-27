@@ -12,6 +12,34 @@ using namespace RJE_COLOR;
 namespace MeshData
 {
 	//=========================================
+	enum RJE_InputLayout
+	{
+		RJE_IL_PosNormalTex  = 0,
+		RJE_IL_PosNormTanTex = 1,
+		RJE_IL_PosColor      = 2
+	};
+	//=========================================
+
+
+	//=========================================
+	enum RJE_PrimitiveTopology
+	{
+		RJE_PT_UNDEFINED					= 0,
+		RJE_PT_POINTLIST					= 1,
+		RJE_PT_LINELIST						= 2,
+		RJE_PT_LINESTRIP					= 3,
+		RJE_PT_TRIANGLELIST					= 4,
+		RJE_PT_TRIANGLESTRIP				= 5,
+		RJE_PT_LINELIST_ADJ					= 10,
+		RJE_PT_LINESTRIP_ADJ				= 11,
+		RJE_PT_TRIANGLELIST_ADJ				= 12,
+		RJE_PT_TRIANGLESTRIP_ADJ			= 13,
+		RJE_PT_1_CONTROL_POINT_PATCHLIST
+	};
+	//=========================================
+
+
+	//=========================================
 	struct PosNormTanTex
 	{
 		PosNormTanTex(){}
@@ -79,11 +107,11 @@ namespace MeshData
 	struct Data
 	{
 		Data() {}
-		Data(UINT vertexCount) : Vertices(vertexCount){}
-		Data(UINT vertexCount, UINT indicesCount) : Vertices(vertexCount), Indices(indicesCount){}
+		Data(u32 vertexCount) : Vertices(vertexCount){}
+		Data(u32 vertexCount, u32 indicesCount) : Vertices(vertexCount), Indices(indicesCount){}
 
 		std::vector<VertexType>		Vertices;
-		std::vector<UINT>			Indices;
+		std::vector<u32>			Indices;
 	};
 	//////////////////////////////////////////////////////////////////////////
 }

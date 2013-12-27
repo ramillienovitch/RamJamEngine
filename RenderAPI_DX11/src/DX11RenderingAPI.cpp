@@ -578,7 +578,7 @@ void DX11RenderingAPI::UpdateScene( float dt )
 	if (mDirLightCount > 0)
 	{
 		DirectionalLight* light = mDirLights->MapDiscard(mDX11Device->md3dImmediateContext);
-		for (u32 i = 0; i < mPointLightCount; ++i)
+		for (u32 i = 0; i < mDirLightCount; ++i)
 		{
 // 			mWorkingDirLights[i].Direction.x = (i+1)*cosf(2*i + RJE::Math::Pi_f - timer );
 // 			mWorkingDirLights[i].Direction.y = 2.0f + cosf( timer );
@@ -602,7 +602,7 @@ void DX11RenderingAPI::UpdateScene( float dt )
 	if (mSpotLightCount > 0)
 	{
 		SpotLight* light = mSpotLights->MapDiscard(mDX11Device->md3dImmediateContext);
-		for (u32 i = 0; i < mPointLightCount; ++i)
+		for (u32 i = 0; i < mSpotLightCount; ++i)
 		{
 			mWorkingSpotLights[i].Position.x = (i+1)*cosf(2*i + RJE::Math::Pi_f + timer );
 			mWorkingSpotLights[i].Position.y = 2.0f + cosf( timer );
@@ -653,9 +653,6 @@ void DX11RenderingAPI::DrawScene()
 	DX11Effects::BasicFX->SetSpotLights(mSpotLights->GetShaderResource());
 	DX11Effects::BasicFX->SetEyePosW(mEyePosW);
 	DX11Effects::BasicFX->SetSamplerState(DX11CommonStates::sCurrentSamplerState);
-	DX11Effects::BasicFX->SetDirLightCount(  mDirLightCount);
-	DX11Effects::BasicFX->SetPointLightCount(mPointLightCount);
-	DX11Effects::BasicFX->SetSpotLightCount( mSpotLightCount);
 	DX11Effects::BasicFX->SetFogColor(      mScene.mFogColor);
 	DX11Effects::BasicFX->SetFogStart(      mScene.mFogStart);
 	DX11Effects::BasicFX->SetFogRange(      mScene.mFogRange);
@@ -761,7 +758,6 @@ void DX11RenderingAPI::DrawScene()
 		RJE_CHECK_FOR_SUCCESS(DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose));
 		RJE_CHECK_FOR_SUCCESS(DX11Effects::BasicFX->SetWorldViewProj(worldViewProj));
 		RJE_CHECK_FOR_SUCCESS(DX11Effects::BasicFX->SetMaterial(mGridMat));
-		//DX11Effects::BasicFX->SetTexTransform(mGridTexTransform);
 
 		// if we're in wireframe then we don't need to render the reflections
 		if (mScene.mbWireframe || !mScene.mbDrawReflections )
@@ -795,7 +791,7 @@ void DX11RenderingAPI::DrawScene()
 			if (mDirLightCount > 0)
 			{
 				DirectionalLight* light = mDirLights->MapDiscard(mDX11Device->md3dImmediateContext);
-				for (u32 i = 0; i < mPointLightCount; ++i)
+				for (u32 i = 0; i < mDirLightCount; ++i)
 				{
 					mOldDirLights[i] = mWorkingDirLights[i];
 					light[i] = mWorkingDirLights[i];
@@ -1028,6 +1024,7 @@ void DX11RenderingAPI::DrawGizmos()
 	world         = mAxisWorld;
 	worldViewProj = world*view*proj;
 
+	DX11Effects::ColorFX->SetColor(Color(Color::Red).GetVector4RGBANorm());
 	DX11Effects::ColorFX->SetWorldViewProj(worldViewProj);
 
 	DX11Effects::ColorFX->ColorTech->GetPassByIndex(0)->Apply(0, mDX11Device->md3dImmediateContext);
@@ -1054,7 +1051,7 @@ void DX11RenderingAPI::DrawConsole()
 	mSpriteBatch->DrawInfoText(      *mConsoleFont, Console::Instance()->mConsoleBuffer, textPos);
 	mSpriteBatch->DrawConsoleCommand(*mConsoleFont, cmd, cmdPos);
 
-	mSpriteBatch->DrawTexture2D(mRjeLogo,                                   mDX11Device->md3dImmediateContext, rectLogo, 0xffffffff);
+	mSpriteBatch->DrawTexture2D(mRjeLogo,                                                      mDX11Device->md3dImmediateContext, rectLogo, 0xffffffff);
 	mSpriteBatch->DrawTexture2D(DX11TextureManager::Instance()->mTextures["_transparentGray"], mDX11Device->md3dImmediateContext, rect,     0xffffffff);
 }
 
