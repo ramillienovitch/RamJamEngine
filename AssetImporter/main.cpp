@@ -163,12 +163,12 @@ void ExportToFile( const aiScene* scene )
 			fOut << scene->mMeshes[0]->mVertices[iVert].y << " ";
 			fOut << scene->mMeshes[0]->mVertices[iVert].z << " ";
 
-			fOut << scene->mMeshes[0]->mTextureCoords[0]->x << " ";
-			fOut << scene->mMeshes[0]->mTextureCoords[0]->y << " ";
-
 			fOut << scene->mMeshes[0]->mNormals[iVert].x << " ";
 			fOut << scene->mMeshes[0]->mNormals[iVert].y << " ";
 			fOut << scene->mMeshes[0]->mNormals[iVert].z << "\n";
+
+			fOut << scene->mMeshes[0]->mTextureCoords[0]->x << " ";
+			fOut << scene->mMeshes[0]->mTextureCoords[0]->y << " ";
 		}
 		for (int iIdx=0 ; iIdx<indexCount ; ++iIdx)
 		{
@@ -185,11 +185,11 @@ void ExportToFile( const aiScene* scene )
 			fOut << scene->mMeshes[0]->mVertices[iVert].y << " ";
 			fOut << scene->mMeshes[0]->mVertices[iVert].z << " ";
 
-			fOut << "0.0 0.0 ";
-
 			fOut << scene->mMeshes[0]->mNormals[iVert].x << " ";
 			fOut << scene->mMeshes[0]->mNormals[iVert].y << " ";
 			fOut << scene->mMeshes[0]->mNormals[iVert].z << "\n";
+
+			fOut << "0.0 0.0 ";
 		}
 		for (int iFaces=0 ; iFaces<indexCount ; ++iFaces)
 		{
@@ -219,12 +219,12 @@ void ExportToFile( const aiScene* scene )
 			std::fwrite(&scene->mMeshes[0]->mVertices[iVert].y, sizeof(float), 1, fOut);
 			std::fwrite(&scene->mMeshes[0]->mVertices[iVert].z, sizeof(float), 1, fOut);
 
-			std::fwrite(&scene->mMeshes[0]->mTextureCoords[0]->x, sizeof(float), 1, fOut);
-			std::fwrite(&scene->mMeshes[0]->mTextureCoords[0]->y, sizeof(float), 1, fOut);
-
 			std::fwrite(&scene->mMeshes[0]->mNormals[iVert].x, sizeof(float), 1, fOut);
 			std::fwrite(&scene->mMeshes[0]->mNormals[iVert].y, sizeof(float), 1, fOut);
 			std::fwrite(&scene->mMeshes[0]->mNormals[iVert].z, sizeof(float), 1, fOut);
+
+			std::fwrite(&scene->mMeshes[0]->mTextureCoords[0]->x, sizeof(float), 1, fOut);
+			std::fwrite(&scene->mMeshes[0]->mTextureCoords[0]->y, sizeof(float), 1, fOut);
 		}
 		for (int iIdx=0 ; iIdx<indexCount ; ++iIdx)
 		{
@@ -242,12 +242,12 @@ void ExportToFile( const aiScene* scene )
 			std::fwrite(&scene->mMeshes[0]->mVertices[iVert].y, sizeof(float), 1, fOut);
 			std::fwrite(&scene->mMeshes[0]->mVertices[iVert].z, sizeof(float), 1, fOut);
 
-			std::fwrite(&zero, sizeof(float), 1, fOut);
-			std::fwrite(&zero, sizeof(float), 1, fOut);
-
 			std::fwrite(&scene->mMeshes[0]->mNormals[iVert].x, sizeof(float), 1, fOut);
 			std::fwrite(&scene->mMeshes[0]->mNormals[iVert].y, sizeof(float), 1, fOut);
 			std::fwrite(&scene->mMeshes[0]->mNormals[iVert].z, sizeof(float), 1, fOut);
+
+			std::fwrite(&zero, sizeof(float), 1, fOut);
+			std::fwrite(&zero, sizeof(float), 1, fOut);
 		}
 		for (int iIdx=0 ; iIdx<indexCount ; ++iIdx)
 		{

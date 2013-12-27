@@ -137,9 +137,6 @@
     <ClCompile Include="..\src\MaterialFactory.cpp">
       <Filter>Source Files\RJE_Graphic</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\Mesh.cpp">
-      <Filter>Source Files\RJE_Graphic</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="small.ico">

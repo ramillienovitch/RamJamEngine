@@ -6,12 +6,12 @@
 //////////////////////////////////////////////////////////////////////////
 struct Mesh
 {
-	u32		mVertexBufferCount;
-	u32		mIndexBufferCount;
+	u32		mVertexCount;
+	u32		mIndexCount;
 	u32		mByteWidth;
 
-	void*	mVertexBuffer;
-	u32*	mIndexBuffer;
+	void*	mVertexData;
+	u32*	mIndexData;
 
 	MeshData::RJE_InputLayout			mInputLayout;
 	MeshData::RJE_PrimitiveTopology		mPrimitiveTopology;

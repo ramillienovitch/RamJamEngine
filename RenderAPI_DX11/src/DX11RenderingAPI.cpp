@@ -444,6 +444,9 @@ void DX11RenderingAPI::BuildGeometryBuffers()
 	D3D11_SUBRESOURCE_DATA iinitData;
 	iinitData.pSysMem = &indices[0];
 	RJE_CHECK_FOR_SUCCESS(mDX11Device->md3dDevice->CreateBuffer(&ibd, &iinitData, &mIndexBuffer));
+
+	mModelMesh.Initialize(mDX11Device->md3dDevice, RJE_IL_PosNormalTex);
+	mModelMesh.LoadFromFile(modelPath);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -709,6 +712,9 @@ void DX11RenderingAPI::DrawScene()
 		}
 
 		// Draw the model.
+		mDX11Device->md3dImmediateContext->IASetVertexBuffers(0, 1, &mModelMesh.mVertexBuffer, &stride, &offset);
+		mDX11Device->md3dImmediateContext->IASetIndexBuffer(mModelMesh.mIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+
 		world             = mModelWorld;
 		worldInvTranspose = world;
 		worldInvTranspose.InverseTranspose();
@@ -720,7 +726,11 @@ void DX11RenderingAPI::DrawScene()
 		DX11Effects::BasicFX->SetMaterial(mModelMat);
 
 		activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
-		mDX11Device->md3dImmediateContext->DrawIndexed(mModelIndexCount, mModelIndexOffset, mModelVertexOffset);
+		mDX11Device->md3dImmediateContext->DrawIndexed(mModelMesh.mIndexCount, 0, 0);
+		//mDX11Device->md3dImmediateContext->DrawIndexed(mModelIndexCount, mModelIndexOffset, mModelVertexOffset);
+
+		mDX11Device->md3dImmediateContext->IASetVertexBuffers(0, 1, &mVertexBuffer, &stride, &offset);
+		mDX11Device->md3dImmediateContext->IASetIndexBuffer(mIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
 		// Draw the spheres.
 		for(int i = 0; i < 10; ++i)
@@ -1146,6 +1156,7 @@ void DX11RenderingAPI::Shutdown()
 	
 	PROFILE_GPU_EXIT();
 
+	mModelMesh.Destroy();
 	RJE_SAFE_RELEASE(mVertexBuffer);
 	RJE_SAFE_RELEASE(mVertexBuffer_Gizmo);
 	RJE_SAFE_RELEASE(mIndexBuffer);
