@@ -81,6 +81,7 @@
     <ClInclude Include="include\DX11CommonStates.h" />
     <ClInclude Include="include\DX11DepthBuffer.h" />
     <ClInclude Include="include\DX11Device.h" />
+    <ClInclude Include="include\DX11Drawable.h" />
     <ClInclude Include="include\DX11Effect.h" />
     <ClInclude Include="include\DX11FontSheet.h" />
     <ClInclude Include="include\DX11Helper.h" />
@@ -98,6 +99,7 @@
     <ClCompile Include="src\DX11CommonStates.cpp" />
     <ClCompile Include="src\DX11DepthBuffer.cpp" />
     <ClCompile Include="src\DX11Device.cpp" />
+    <ClCompile Include="src\DX11Drawable.cpp" />
     <ClCompile Include="src\DX11Effect.cpp" />
     <ClCompile Include="src\DX11FontSheet.cpp" />
     <ClCompile Include="src\DX11InputLayout.cpp" />

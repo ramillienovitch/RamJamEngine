@@ -25,6 +25,7 @@ typedef enum PROFILER_STATES
 struct Profile
 {
 	const char* name;
+	int Id;
 	int parentId;
 	int totalCalls;
 	u64 totalTime;

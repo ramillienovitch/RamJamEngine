@@ -58,8 +58,12 @@ struct MaterialProperty
 
 	~MaterialProperty()
 	{
+		// TODO: handle the case with several objects per material
 		if (mData != nullptr)
+		{
 			free(mData);
+			mData = nullptr;
+		}
 	}
 };
 

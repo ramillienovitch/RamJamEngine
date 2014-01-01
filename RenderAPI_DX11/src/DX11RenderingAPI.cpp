@@ -14,7 +14,7 @@ DX11RenderingAPI::DX11RenderingAPI(Scene& scene) : mScene(scene)
 	md3dDriverType		= D3D_DRIVER_TYPE_HARDWARE;
 	ZeroMemory(&mScreenViewport, sizeof(D3D11_VIEWPORT));
 	//-----------
-	VSyncEnabled = true;
+	VSyncEnabled = false;
 	//-----------
 	mConsoleFont  = nullptr;
 	mProfilerFont = nullptr;
@@ -215,6 +215,12 @@ void DX11RenderingAPI::Initialize(int windowWidth, int windowHeight)
 	//----------
 	BuildGeometryBuffers();
 	BuildGizmosBuffers();
+	mModelGO.mTransform.Rotation	= Quaternion(0,0,0).ToMatrix();
+	mModelGO.mTransform.Scale		= Vector3(0.2f, 0.2f, 0.2f);
+	mModelGO.mTransform.Position	= Vector3(0.0f, 1.0f, 0.0f);
+	mMaterialLoader.LoadFromFile(mModelGO.mMaterial, "model.mat");
+	mModelGO.mDrawable.mMesh = mModelMesh;
+	mModelGO.mDrawable.Initialize(DX11Effects::BasicFX);
 
 	SetActivePointLights(3);
 	SetActiveDirLights(1);
@@ -445,7 +451,7 @@ void DX11RenderingAPI::BuildGeometryBuffers()
 	iinitData.pSysMem = &indices[0];
 	RJE_CHECK_FOR_SUCCESS(mDX11Device->md3dDevice->CreateBuffer(&ibd, &iinitData, &mIndexBuffer));
 
-	mModelMesh.Initialize(mDX11Device->md3dDevice, RJE_IL_PosNormalTex);
+	mModelMesh.Initialize(mDX11Device->md3dDevice, mDX11Device->md3dImmediateContext, RJE_IL_PosNormalTex);
 	mModelMesh.LoadFromFile(modelPath);
 }
 
@@ -646,11 +652,11 @@ void DX11RenderingAPI::DrawScene()
 	mDX11Device->md3dImmediateContext->IASetIndexBuffer(mIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
 	// Set constants
-	DirectX::XMMATRIX view     = mCamera->mView;
-	DirectX::XMMATRIX proj     = *(mCamera->mCurrentProjectionMatrix);
-	DirectX::XMMATRIX viewProj = view*proj;
+	Matrix44 view     = mCamera->mView;
+	Matrix44 proj     = *(mCamera->mCurrentProjectionMatrix);
 
 	// Set per frame constants.
+	DX11Effects::BasicFX->SetViewProj(view*proj);
 	DX11Effects::BasicFX->SetDirLights(mDirLights->GetShaderResource());
 	DX11Effects::BasicFX->SetPointLights(mPointLights->GetShaderResource());
 	DX11Effects::BasicFX->SetSpotLights(mSpotLights->GetShaderResource());
@@ -666,22 +672,12 @@ void DX11RenderingAPI::DrawScene()
 	ID3DX11EffectTechnique* activeTech = DX11Effects::BasicFX->BasicTech;
 
 	D3DX11_TECHNIQUE_DESC techDesc;
-	Matrix44 world;
-	Matrix44 worldInvTranspose;
-	Matrix44 worldViewProj;
 
 	activeTech->GetDesc( &techDesc );
 	for(u32 p = 0; p < techDesc.Passes; ++p)
 	{
 		// Draw the box.
-		world             = mBoxWorld;
-		worldInvTranspose = world;
-		worldInvTranspose.InverseTranspose();
-		worldViewProj     = world*view*proj;
-
-		DX11Effects::BasicFX->SetWorld(world);
-		DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
-		DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
+		DX11Effects::BasicFX->SetWorld(mBoxWorld);
 		DX11Effects::BasicFX->SetMaterial(mBoxMat);
 
 		if (mScene.mbUseBlending)
@@ -697,14 +693,7 @@ void DX11RenderingAPI::DrawScene()
 		// Draw the cylinders.
 		for(int i = 0; i < 10; ++i)
 		{
-			world             = mCylWorld[i];
-			worldInvTranspose = world;
-			worldInvTranspose.InverseTranspose();
-			worldViewProj     = world*view*proj;
-
-			DX11Effects::BasicFX->SetWorld(world);
-			DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
-			DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
+			DX11Effects::BasicFX->SetWorld(mCylWorld[i]);
 			DX11Effects::BasicFX->SetMaterial(mCylinderMat);
 
 			activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
@@ -712,22 +701,7 @@ void DX11RenderingAPI::DrawScene()
 		}
 
 		// Draw the model.
-		mDX11Device->md3dImmediateContext->IASetVertexBuffers(0, 1, &mModelMesh.mVertexBuffer, &stride, &offset);
-		mDX11Device->md3dImmediateContext->IASetIndexBuffer(mModelMesh.mIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-
-		world             = mModelWorld;
-		worldInvTranspose = world;
-		worldInvTranspose.InverseTranspose();
-		worldViewProj     = world*view*proj;
-
-		DX11Effects::BasicFX->SetWorld(world);
-		DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
-		DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
-		DX11Effects::BasicFX->SetMaterial(mModelMat);
-
-		activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
-		mDX11Device->md3dImmediateContext->DrawIndexed(mModelMesh.mIndexCount, 0, 0);
-		//mDX11Device->md3dImmediateContext->DrawIndexed(mModelIndexCount, mModelIndexOffset, mModelVertexOffset);
+		mModelGO.mDrawable.Render(activeTech->GetPassByIndex(p));
 
 		mDX11Device->md3dImmediateContext->IASetVertexBuffers(0, 1, &mVertexBuffer, &stride, &offset);
 		mDX11Device->md3dImmediateContext->IASetIndexBuffer(mIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
@@ -735,14 +709,7 @@ void DX11RenderingAPI::DrawScene()
 		// Draw the spheres.
 		for(int i = 0; i < 10; ++i)
 		{
-			world             = mSphereWorld[i];
-			worldInvTranspose = world;
-			worldInvTranspose.InverseTranspose();
-			worldViewProj     = world*view*proj;
-
-			DX11Effects::BasicFX->SetWorld(world);
-			DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
-			DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
+			DX11Effects::BasicFX->SetWorld(mSphereWorld[i]);
 			DX11Effects::BasicFX->SetMaterial(mSphereMat);
 
 			if (mScene.mbUseBlending)
@@ -759,14 +726,7 @@ void DX11RenderingAPI::DrawScene()
 		//////////////////////////////////////////////////////////////////////////
 		
 		// Draw the grid.
-		world             = mGridWorld;
-		worldInvTranspose = world;
-		worldInvTranspose.InverseTranspose();
-		worldViewProj     = world*view*proj;
-
-		RJE_CHECK_FOR_SUCCESS(DX11Effects::BasicFX->SetWorld(world));
-		RJE_CHECK_FOR_SUCCESS(DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose));
-		RJE_CHECK_FOR_SUCCESS(DX11Effects::BasicFX->SetWorldViewProj(worldViewProj));
+		RJE_CHECK_FOR_SUCCESS(DX11Effects::BasicFX->SetWorld(mGridWorld));
 		RJE_CHECK_FOR_SUCCESS(DX11Effects::BasicFX->SetMaterial(mGridMat));
 
 		// if we're in wireframe then we don't need to render the reflections
@@ -825,14 +785,7 @@ void DX11RenderingAPI::DrawScene()
 			DX11Effects::BasicFX->SetDirLights(mDirLights->GetShaderResource());
 
 			// Draw the box.
-			world             = mBoxWorld * reflectionMatrix;
-			worldInvTranspose = world;
-			worldInvTranspose.InverseTranspose();
-			worldViewProj     = world*view*proj;
-
-			DX11Effects::BasicFX->SetWorld(world);
-			DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
-			DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
+			DX11Effects::BasicFX->SetWorld(mBoxWorld * reflectionMatrix);
 			DX11Effects::BasicFX->SetMaterial(mBoxMat);
 
 			// Cull clockwise triangles for reflection.
@@ -851,14 +804,7 @@ void DX11RenderingAPI::DrawScene()
 			// Draw the cylinders.
 			for(int i = 0; i < 10; ++i)
 			{
-				world             = mCylWorld[i] * reflectionMatrix;
-				worldInvTranspose = world;
-				worldInvTranspose.InverseTranspose();
-				worldViewProj     = world*view*proj;
-
-				DX11Effects::BasicFX->SetWorld(world);
-				DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
-				DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
+				DX11Effects::BasicFX->SetWorld(mCylWorld[i] * reflectionMatrix);
 				DX11Effects::BasicFX->SetMaterial(mCylinderMat);
 
 				// Only draw reflection into visible mirror pixels as marked by the stencil buffer. 
@@ -875,14 +821,7 @@ void DX11RenderingAPI::DrawScene()
 			// Draw the spheres.
 			for(int i = 0; i < 10; ++i)
 			{
-				world             = mSphereWorld[i] * reflectionMatrix;
-				worldInvTranspose = world;
-				worldInvTranspose.InverseTranspose();
-				worldViewProj     = world*view*proj;
-
-				DX11Effects::BasicFX->SetWorld(world);
-				DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
-				DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
+				DX11Effects::BasicFX->SetWorld(mSphereWorld[i] * reflectionMatrix);
 				DX11Effects::BasicFX->SetMaterial(mSphereMat);
 
 				mDX11Device->md3dImmediateContext->OMSetBlendState(DX11CommonStates::sCurrentBlendState, blendFactor, 0xffffffff);
@@ -896,20 +835,17 @@ void DX11RenderingAPI::DrawScene()
 			mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_CullClockwise);
 
 			// Draw the model reflection
-			world             = mModelWorld * reflectionMatrix;
-			worldInvTranspose = world;
-			worldInvTranspose.InverseTranspose();
-			worldViewProj        = world*view*proj;
-
-			DX11Effects::BasicFX->SetWorld(world);
-			DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
-			DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
+			DX11Effects::BasicFX->SetWorld(mModelWorld * reflectionMatrix);
 			DX11Effects::BasicFX->SetMaterial(mModelMat);
 			
 			// Only draw reflection into visible mirror pixels as marked by the stencil buffer. 
 			mDX11Device->md3dImmediateContext->OMSetDepthStencilState(DX11CommonStates::sDepthStencilState_DrawStenciled, 1);
 			activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
-			mDX11Device->md3dImmediateContext->DrawIndexed(mModelIndexCount, mModelIndexOffset, mModelVertexOffset);
+			//mDX11Device->md3dImmediateContext->DrawIndexed(mModelIndexCount, mModelIndexOffset, mModelVertexOffset);
+			mModelMesh.Render();
+
+			mDX11Device->md3dImmediateContext->IASetVertexBuffers(0, 1, &mVertexBuffer, &stride, &offset);
+			mDX11Device->md3dImmediateContext->IASetIndexBuffer(mIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
 			// Restore default states.
 			mDX11Device->md3dImmediateContext->RSSetState(0);
@@ -939,14 +875,7 @@ void DX11RenderingAPI::DrawScene()
 
 			// Draw the mirror to the back buffer as usual but with transparency
 			// blending so the reflection shows through.
-			world             = mGridWorld;
-			worldInvTranspose = world;
-			worldInvTranspose.InverseTranspose();
-			worldViewProj     = world*view*proj;
-
-			DX11Effects::BasicFX->SetWorld(world);
-			DX11Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
-			DX11Effects::BasicFX->SetWorldViewProj(worldViewProj);
+			DX11Effects::BasicFX->SetWorld(mGridWorld);
 			DX11Effects::BasicFX->SetMaterial(mGridMat);
 
 			mDX11Device->md3dImmediateContext->OMSetBlendState(DX11CommonStates::sBlendState_Transparent, blendFactor, 0xffffffff);
@@ -982,6 +911,7 @@ void DX11RenderingAPI::DrawScene()
 
 	//-------------------------------------------------------------------------
 
+	PROFILE_CPU("Present");
 	if (VSyncEnabled)
 	{
 		RJE_CHECK_FOR_SUCCESS(mSwapChain->Present(1, 0));
@@ -1015,27 +945,19 @@ void DX11RenderingAPI::DrawGizmos()
 	// Set constants
 	Matrix44 view     = mCamera->mView;
 	Matrix44 proj     = *(mCamera->mCurrentProjectionMatrix);
-	Matrix44 viewProj = view*proj;
 
-	Matrix44 world;
-	Matrix44 worldViewProj;
+	DX11Effects::ColorFX->SetViewProj(view*proj);
 	
 	// Draw the wireBox.
-	world         = mWireBoxWorld;
-	worldViewProj = world*view*proj;
-
 	DX11Effects::ColorFX->SetColor(Color(Color::White).GetVector4RGBANorm());
-	DX11Effects::ColorFX->SetWorldViewProj(worldViewProj);
+	DX11Effects::ColorFX->SetWorld(mWireBoxWorld);
 
 	DX11Effects::ColorFX->ColorTech->GetPassByIndex(0)->Apply(0, mDX11Device->md3dImmediateContext);
 	mDX11Device->md3dImmediateContext->DrawIndexed(mWireBoxIndexCount, mWireBoxIndexOffset, mWireBoxVertexOffset);
 
 	// Draw the Axis.
-	world         = mAxisWorld;
-	worldViewProj = world*view*proj;
-
 	DX11Effects::ColorFX->SetColor(Color(Color::Red).GetVector4RGBANorm());
-	DX11Effects::ColorFX->SetWorldViewProj(worldViewProj);
+	DX11Effects::ColorFX->SetWorld(mAxisWorld);
 
 	DX11Effects::ColorFX->ColorTech->GetPassByIndex(0)->Apply(0, mDX11Device->md3dImmediateContext);
 	mDX11Device->md3dImmediateContext->DrawIndexed(mAxisIndexCount, mAxisIndexOffset, mAxisVertexOffset);

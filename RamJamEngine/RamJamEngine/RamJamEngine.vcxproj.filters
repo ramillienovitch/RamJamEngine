@@ -99,6 +99,9 @@
     <ClInclude Include="..\include\Mesh.h">
       <Filter>Header Files\RJE_Graphic</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\GameObject.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\System.cpp">
@@ -136,6 +139,9 @@
     </ClCompile>
     <ClCompile Include="..\src\MaterialFactory.cpp">
       <Filter>Source Files\RJE_Graphic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\GameObject.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

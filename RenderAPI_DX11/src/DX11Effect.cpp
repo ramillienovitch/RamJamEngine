@@ -23,9 +23,9 @@ BasicEffect::BasicEffect(ID3D11Device* device, const std::string& filename)
 	: Effect(device, filename)
 {
 	BasicTech         = mFX->GetTechniqueByName("Basic");
-	WorldViewProj     = mFX->GetVariableByName("gWorldViewProj")->AsMatrix();
+	ViewProj          = mFX->GetVariableByName("gViewProj")->AsMatrix();
 	World             = mFX->GetVariableByName("gWorld")->AsMatrix();
-	WorldInvTranspose = mFX->GetVariableByName("gWorldInvTranspose")->AsMatrix();
+	//WorldInvTranspose = mFX->GetVariableByName("gWorldInvTranspose")->AsMatrix();
 	TexTransform      = mFX->GetVariableByName("gDiffuseMapTrf")->AsMatrix();
 	EyePosW           = mFX->GetVariableByName("gEyePosW")->AsVector();
 	FogColor          = mFX->GetVariableByName("gFogColor")->AsVector();
@@ -39,8 +39,68 @@ BasicEffect::BasicEffect(ID3D11Device* device, const std::string& filename)
 	SpotLights        = mFX->GetVariableByName("gSpotLights")->AsShaderResource();
 	TextureSampler    = (ID3DX11EffectSamplerVariable*) mFX->GetVariableByName("gTextureSampler");
 }
-
+//-----------------------
 BasicEffect::~BasicEffect(){}
+//-----------------------
+HRESULT BasicEffect::SetMaterial(Material& mat)
+{
+	HRESULT res;
+	for (u32 i = 0; i < mat.mPropertiesCount; ++i)
+	{
+		MaterialProperty& property = *(mat.mProperties[i]);
+		switch (property.mType)
+		{
+		case MaterialPropertyType::Type_Int:
+			{
+				res = mFX->GetVariableBySemantic(property.mName.c_str())->AsScalar()->SetInt(*(reinterpret_cast<int*>(property.mData)));
+				if (res != S_OK) return res;
+				break;
+			}
+		case MaterialPropertyType::Type_Bool:
+			{
+				res = mFX->GetVariableBySemantic(property.mName.c_str())->AsScalar()->SetBool(*(reinterpret_cast<bool*>(property.mData)));
+				if (res != S_OK) return res;
+				break;
+			}
+		case MaterialPropertyType::Type_Float:
+			{
+				res = mFX->GetVariableBySemantic(property.mName.c_str())->AsScalar()->SetFloat(*(reinterpret_cast<float*>(property.mData)));
+				if (res != S_OK) return res;
+				break;
+			}
+		case MaterialPropertyType::Type_Vector:
+			{
+				res = mFX->GetVariableBySemantic(property.mName.c_str())->AsVector()->SetFloatVector(reinterpret_cast<const float*>(property.mData));
+				if (res != S_OK) return res;
+				break;
+			}
+		case MaterialPropertyType::Type_Matrix:
+			{
+				res = mFX->GetVariableBySemantic(property.mName.c_str())->AsMatrix()->SetMatrix(reinterpret_cast<const float*>(property.mData));
+				if (res != S_OK) return res;
+				break;
+			}
+		case MaterialPropertyType::Type_Texture:
+			{
+				res = mFX->GetVariableBySemantic(property.mName.c_str())->AsShaderResource()->SetResource(property.mShaderResource.mTexture);
+				if (res != S_OK) return res;
+				std::string textureTrfName = property.mName + "_Trf";
+				Matrix44 textTrf = Transform::MatrixFromTextureProperties(property.mShaderResource.mTiling, property.mShaderResource.mOffset, property.mShaderResource.mRotationAngleInDegrees);
+				res = mFX->GetVariableBySemantic(textureTrfName.c_str())->AsMatrix()->SetMatrix(reinterpret_cast<const float*>(&textTrf));
+				if (res != S_OK) return res;
+				break;
+			}
+		case MaterialPropertyType::Type_Cubemap:
+			{
+				// TODO: RJE could use a cubemap :)
+				break;
+			}
+		default:
+			break;
+		}
+	}
+	return res;
+}
 #pragma endregion
 
 //////////////////////////////////////////////////////////////////////////
@@ -64,7 +124,8 @@ ColorEffect::ColorEffect(ID3D11Device* device, const std::string& filename)
 {
 	ColorTech		= mFX->GetTechniqueByName("ColorTech");
 	Color			= mFX->GetVariableByName("gColor")->AsVector();
-	WorldViewProj	= mFX->GetVariableByName("gWorldViewProj")->AsMatrix();
+	World			= mFX->GetVariableByName("gWorld")->AsMatrix();
+	ViewProj		= mFX->GetVariableByName("gViewProj")->AsMatrix();
 }
 
 ColorEffect::~ColorEffect(){}

@@ -4,6 +4,7 @@
 #include "../../RamJamEngine/include/GraphicAPI.h"
 #include "../../RamJamEngine/include/Scene.h"
 #include "../../RamJamEngine/include/AntTweakBar.h"
+#include "../../RamJamEngine/include/GameObject.h"
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -42,6 +43,7 @@ struct DX11RenderingAPI : GraphicAPI
 
 	ID3D11Buffer*	mVertexBuffer;
 	ID3D11Buffer*	mIndexBuffer;
+	GameObject		mModelGO;
 	DX11Mesh		mModelMesh;
 
 	ID3D11Buffer*	mVertexBuffer_Gizmo;

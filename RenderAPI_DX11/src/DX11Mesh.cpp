@@ -1,10 +1,11 @@
 #include "DX11Mesh.h"
 
 //////////////////////////////////////////////////////////////////////////
-void DX11Mesh::Initialize(ID3D11Device* device, MeshData::RJE_InputLayout inputLayout)
+void DX11Mesh::Initialize(ID3D11Device* device, ID3D11DeviceContext* deviceContext, MeshData::RJE_InputLayout inputLayout)
 {
-	mDevice      = device;
-	mInputLayout = inputLayout;
+	mDevice        = device;
+	mDeviceContext = deviceContext;
+	mInputLayout   = inputLayout;
 	//-------
 	mVertexBuffer = nullptr;
 	mIndexBuffer  = nullptr;
@@ -67,9 +68,9 @@ void DX11Mesh::LoadFromFile(std::string filePath)
 
 	switch (mInputLayout)
 	{
-	case MeshData::RJE_IL_PosNormalTex:		mByteWidth = (u32) (sizeof(MeshData::PosNormalTex)  * mVertexCount);	break;
-	case MeshData::RJE_IL_PosNormTanTex:	mByteWidth = (u32) (sizeof(MeshData::PosNormTanTex) * mVertexCount);	break;
-	case MeshData::RJE_IL_PosColor:			mByteWidth = (u32) (sizeof(MeshData::ColorVertex)   * mVertexCount);	break;
+	case MeshData::RJE_IL_PosNormalTex:		mDataSize = (u32) sizeof(MeshData::PosNormalTex);		mByteWidth = mDataSize * mVertexCount;	break;
+	case MeshData::RJE_IL_PosNormTanTex:	mDataSize = (u32) sizeof(MeshData::PosNormTanTex);		mByteWidth = mDataSize * mVertexCount;	break;
+	case MeshData::RJE_IL_PosColor:			mDataSize = (u32) sizeof(MeshData::ColorVertex);		mByteWidth = mDataSize * mVertexCount;	break;
 	default:	break;
 	}
 
@@ -94,4 +95,13 @@ void DX11Mesh::LoadFromFile(std::string filePath)
 
 	CreateVertexBuffer();
 	CreateIndexBuffer();
+}
+
+void DX11Mesh::Render()
+{
+	u32 stride = mDataSize;
+	u32 offset = 0;
+	mDeviceContext->IASetVertexBuffers(0, 1, &mVertexBuffer, &stride, &offset);
+	mDeviceContext->IASetIndexBuffer(mIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+	mDeviceContext->DrawIndexed(mIndexCount, 0, 0);
 }

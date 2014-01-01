@@ -4,10 +4,15 @@
 // Transforms and colors geometry.
 //***************************************************************************************
 
+cbuffer cbPerFrame
+{
+	float4x4 gViewProj;
+}
+
 cbuffer cbPerObject
 {
 	float4   gColor;
-	float4x4 gWorldViewProj; 
+	float4x4 gWorld; 
 };
 
 struct VertexIn
@@ -27,7 +32,8 @@ VertexOut VS(VertexIn vin)
 	VertexOut vout;
 	
 	// Transform to homogeneous clip space.
-	vout.PosH = mul(float4(vin.PosL, 1.0f), gWorldViewProj);
+	float4x4 worldViewProj = mul(gWorld, gViewProj);
+	vout.PosH = mul(float4(vin.PosL, 1.0f), worldViewProj);
 	
 	// Just pass vertex color into the pixel shader.
 	vout.Color = vin.Color * gColor;

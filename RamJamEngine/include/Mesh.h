@@ -9,6 +9,7 @@ struct Mesh
 	u32		mVertexCount;
 	u32		mIndexCount;
 	u32		mByteWidth;
+	u32		mDataSize;
 
 	void*	mVertexData;
 	u32*	mIndexData;

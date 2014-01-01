@@ -35,6 +35,7 @@ Profiler::Profiler()
 	Profile fs;
 	fs.totalCalls = 0;
 	fs.name       = "Frame";
+	fs.Id         = 0;
 	fs.parentId   = -1;
 	fs.totalTime  = 0;
 	profiles.push_back(fs);
@@ -107,7 +108,7 @@ void Profiler::PrintChildren(std::ofstream &fout, int parent, int depth)
 		{
 			// Name and ID
 			for(int tabs = 0; tabs < depth; ++tabs)	{fout << "    ";}
-			fout << "|-" << profiles[i].name << " (ID: " << i << ")\n    ";
+			fout << "|-" << profiles[i].name << " (ID: " << profiles[i].Id << ")\n    ";
 
 			// Parent's ID
 			for(int tabs = 0; tabs < depth; ++tabs)	{fout << "    ";}
@@ -146,6 +147,7 @@ void Profiler::ProfileStart(const char* name)
 	if(strcmp(name, "Frame") == 0)
 	{
 		totalFrames++;
+		profiles[0].Id       = 0;
 		profiles[0].parentId = currentParent;
 		currentParent        = 0;
 	}
@@ -156,6 +158,7 @@ void Profiler::ProfileStart(const char* name)
 		{
 			if(profiles[i].name == name)
 			{
+				profiles[i].Id       = i;
 				profiles[i].parentId = currentParent;
 				currentParent        = i;
 				profileExists        = true;
@@ -278,6 +281,8 @@ void Profiler::DisplayCpuState()
 	std::sort(profiles.rbegin(), profiles.rend());	// reverse sort the profiles (using totalTimes)
 	for (std::vector<Profile>::iterator it=profiles.begin()+1 ; it<profiles.end(); ++it)
 	{
+		sprintf_s(buf, "%d - ", it->Id);
+		ConcatText(buf);
 		ConcatTextAndAlign(it->name, 6);
 		//---------------
 		float ms      = ((float)((it->totalTime/totalFrames)/countsPerMs));
@@ -287,12 +292,10 @@ void Profiler::DisplayCpuState()
 			ConcatText("~0 ms\n");
 		else
 		{
-			sprintf_s(buf, "%.4f", ms);
+			sprintf_s(buf, "%.4f ms\t(", ms);
 			ConcatText(buf);
-			ConcatText("ms\t(");
-			sprintf_s(buf, "%.1f", percent);
+			sprintf_s(buf, "%.1f percent of %d)\n", percent, it->parentId);
 			ConcatText(buf);
-			ConcatText("%)\n");
 		}
 	}
 }

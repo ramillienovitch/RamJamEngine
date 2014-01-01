@@ -8,6 +8,8 @@
  
 cbuffer cbPerFrame
 {
+	float4x4 gViewProj;
+	//-----------
 	float3 gEyePosW;
 	//-----------
 	float  gFogStart;
@@ -22,8 +24,7 @@ cbuffer cbPerFrame
 cbuffer cbPerObject
 {
 	float4x4 gWorld;
-	float4x4 gWorldInvTranspose;
-	float4x4 gWorldViewProj;
+	//float4x4 gWorldInvTranspose;
 	float4x4 gDiffuseMapTrf	: Texture_Diffuse_Trf;
 	//-------
 	float4 gMatAmbient		: Ambient;
@@ -66,10 +67,11 @@ VertexOut VS(VertexIn vin)
 	
 	// Transform to world space space.
 	vout.PosW    = mul(float4(vin.PosL, 1.0f), gWorld).xyz;
-	vout.NormalW = mul(vin.NormalL, (float3x3)gWorldInvTranspose);
+	vout.NormalW = vin.NormalL;		//mul(vin.NormalL, (float3x3)gWorldInvTranspose);
 		
 	// Transform to homogeneous clip space.
-	vout.PosH = mul(float4(vin.PosL, 1.0f), gWorldViewProj);
+	float4x4 worldViewProj = mul(gWorld, gViewProj);
+	vout.PosH = mul(float4(vin.PosL, 1.0f), worldViewProj);
 
 	// Output vertex attributes for interpolation across triangle.
 	vout.Tex = mul(float4(vin.Tex, 0.0f, 1.0f), gDiffuseMapTrf).xy;
