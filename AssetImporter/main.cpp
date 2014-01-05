@@ -165,10 +165,21 @@ void ExportToFile( const aiScene* scene )
 
 			fOut << scene->mMeshes[0]->mNormals[iVert].x << " ";
 			fOut << scene->mMeshes[0]->mNormals[iVert].y << " ";
-			fOut << scene->mMeshes[0]->mNormals[iVert].z << "\n";
+			fOut << scene->mMeshes[0]->mNormals[iVert].z << " ";
+
+			if (scene->mMeshes[0]->HasTangentsAndBitangents())
+			{
+				fOut << scene->mMeshes[0]->mTangents[iVert].x << " ";
+				fOut << scene->mMeshes[0]->mTangents[iVert].y << " ";
+				fOut << scene->mMeshes[0]->mTangents[iVert].z << " ";
+			}
+			else
+			{
+				fOut << "0.0 0.0 0.0\n";
+			}
 
 			fOut << scene->mMeshes[0]->mTextureCoords[0]->x << " ";
-			fOut << scene->mMeshes[0]->mTextureCoords[0]->y << " ";
+			fOut << scene->mMeshes[0]->mTextureCoords[0]->y << "\n";
 		}
 		for (int iIdx=0 ; iIdx<indexCount ; ++iIdx)
 		{
@@ -187,9 +198,20 @@ void ExportToFile( const aiScene* scene )
 
 			fOut << scene->mMeshes[0]->mNormals[iVert].x << " ";
 			fOut << scene->mMeshes[0]->mNormals[iVert].y << " ";
-			fOut << scene->mMeshes[0]->mNormals[iVert].z << "\n";
+			fOut << scene->mMeshes[0]->mNormals[iVert].z << " ";
 
-			fOut << "0.0 0.0 ";
+			if (scene->mMeshes[0]->HasTangentsAndBitangents())
+			{
+				fOut << scene->mMeshes[0]->mTangents[iVert].x << " ";
+				fOut << scene->mMeshes[0]->mTangents[iVert].y << " ";
+				fOut << scene->mMeshes[0]->mTangents[iVert].z << " ";
+			}
+			else
+			{
+				fOut << "0.0 0.0 0.0\n";
+			}
+
+			fOut << "0.0 0.0\n";
 		}
 		for (int iFaces=0 ; iFaces<indexCount ; ++iFaces)
 		{
@@ -209,6 +231,10 @@ void ExportToFile( const aiScene* scene )
 		puts("Cannot open file exported_model.rjemesh");
 	}
 
+	float zero = 0.0f;
+
+	std::cout << "Start Export" << std::endl;
+
 	std::fwrite(&scene->mMeshes[0]->mNumVertices, sizeof(unsigned int), 1, fOut);
 	std::fwrite(&scene->mMeshes[0]->mNumFaces,    sizeof(unsigned int), 1, fOut);
 	if (GLOBALS::g_hasTextCoord)
@@ -223,6 +249,19 @@ void ExportToFile( const aiScene* scene )
 			std::fwrite(&scene->mMeshes[0]->mNormals[iVert].y, sizeof(float), 1, fOut);
 			std::fwrite(&scene->mMeshes[0]->mNormals[iVert].z, sizeof(float), 1, fOut);
 
+			if (scene->mMeshes[0]->HasTangentsAndBitangents())
+			{
+				std::fwrite(&scene->mMeshes[0]->mTangents[iVert].x, sizeof(float), 1, fOut);
+				std::fwrite(&scene->mMeshes[0]->mTangents[iVert].y, sizeof(float), 1, fOut);
+				std::fwrite(&scene->mMeshes[0]->mTangents[iVert].z, sizeof(float), 1, fOut);
+			}
+			else
+			{
+				std::fwrite(&zero, sizeof(float), 1, fOut);
+				std::fwrite(&zero, sizeof(float), 1, fOut);
+				std::fwrite(&zero, sizeof(float), 1, fOut);
+			}
+
 			std::fwrite(&scene->mMeshes[0]->mTextureCoords[0]->x, sizeof(float), 1, fOut);
 			std::fwrite(&scene->mMeshes[0]->mTextureCoords[0]->y, sizeof(float), 1, fOut);
 		}
@@ -235,7 +274,6 @@ void ExportToFile( const aiScene* scene )
 	}
 	else
 	{
-		float zero = 0.0f;
 		for (int iVert=0 ; iVert<vertexCount ; ++iVert)
 		{
 			std::fwrite(&scene->mMeshes[0]->mVertices[iVert].x, sizeof(float), 1, fOut);
@@ -246,6 +284,18 @@ void ExportToFile( const aiScene* scene )
 			std::fwrite(&scene->mMeshes[0]->mNormals[iVert].y, sizeof(float), 1, fOut);
 			std::fwrite(&scene->mMeshes[0]->mNormals[iVert].z, sizeof(float), 1, fOut);
 
+			if (scene->mMeshes[0]->HasTangentsAndBitangents())
+			{
+				std::fwrite(&scene->mMeshes[0]->mTangents[iVert].x, sizeof(float), 1, fOut);
+				std::fwrite(&scene->mMeshes[0]->mTangents[iVert].y, sizeof(float), 1, fOut);
+				std::fwrite(&scene->mMeshes[0]->mTangents[iVert].z, sizeof(float), 1, fOut);
+			}
+			else
+			{
+				std::fwrite(&zero, sizeof(float), 1, fOut);
+				std::fwrite(&zero, sizeof(float), 1, fOut);
+				std::fwrite(&zero, sizeof(float), 1, fOut);
+			}
 			std::fwrite(&zero, sizeof(float), 1, fOut);
 			std::fwrite(&zero, sizeof(float), 1, fOut);
 		}

@@ -4,5 +4,4 @@
 GameObject::GameObject()
 {
 	mDrawable.mTransform = &mTransform;
-	mDrawable.mMaterial  = &mMaterial;
 }

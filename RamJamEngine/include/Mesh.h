@@ -2,6 +2,7 @@
 
 #include "Types.h"
 #include "MeshData.h"
+#include "Material.h"
 
 //////////////////////////////////////////////////////////////////////////
 struct Mesh
@@ -13,6 +14,10 @@ struct Mesh
 
 	void*	mVertexData;
 	u32*	mIndexData;
+
+	u32 mSubsetCount;
+
+	std::vector<Material> mMaterial;
 
 	MeshData::RJE_InputLayout			mInputLayout;
 	MeshData::RJE_PrimitiveTopology		mPrimitiveTopology;

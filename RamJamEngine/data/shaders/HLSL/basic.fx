@@ -50,6 +50,7 @@ struct VertexIn
 {
 	float3 PosL    : POSITION;
 	float3 NormalL : NORMAL;
+	float3 TanL    : TANGENT;
 	float2 Tex     : TEXCOORD;
 };
 
@@ -58,6 +59,7 @@ struct VertexOut
 	float4 PosH    : SV_POSITION;
 	float3 PosW    : POSITION;
 	float3 NormalW : NORMAL;
+	float3 TanW    : TANGENT;
 	float2 Tex     : TEXCOORD;
 };
 
@@ -68,6 +70,7 @@ VertexOut VS(VertexIn vin)
 	// Transform to world space space.
 	vout.PosW    = mul(float4(vin.PosL, 1.0f), gWorld).xyz;
 	vout.NormalW = vin.NormalL;		//mul(vin.NormalL, (float3x3)gWorldInvTranspose);
+	vout.TanW    = mul(vin.TanL, (float3x3)gWorld);
 		
 	// Transform to homogeneous clip space.
 	float4x4 worldViewProj = mul(gWorld, gViewProj);

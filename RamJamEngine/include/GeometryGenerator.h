@@ -62,16 +62,18 @@ public:
 	void CreateWireBox(float width, float height, float depth, Data<ColorVertex>& meshData, Color color = Color::White);
 	void CreateWireSphere(float radius, Data<ColorVertex>& meshData, Color color = Color::White);
 	//---------
-	void CreateAxisArrows(Data<ColorVertex>& meshData);
-	void CreateAxisArrows(Vector3 right, Vector3 up, Vector3 forward, Data<ColorVertex>& meshData);
-	void CreateAxisArrows(Quaternion rotation, Data<ColorVertex>& meshData);
+	void CreateAxisArrows(Data<ColorVertex>& meshData, Vector3 scale = Vector3::one);
+	void CreateAxisArrows(Vector3 right, Vector3 up, Vector3 forward, Data<ColorVertex>& meshData, Vector3 scale = Vector3::one);
+	void CreateAxisArrows(Quaternion rotation, Data<ColorVertex>& meshData, Vector3 scale = Vector3::one);
 	
 	/// These primitives are by-default aligned with the z-axis
 	void CreateLine(Data<ColorVertex>& meshData, Color color = Color::White);
 	void CreateLine(Vector3 orientation, Data<ColorVertex>& meshData, Color color = Color::White);
+	void CreateLine(Vector3 start, Vector3 end, Data<ColorVertex>& meshData, Color color = Color::White);
 	//---------
 	void CreateRay(Data<ColorVertex>& meshData, Color color = Color::White);
 	void CreateRay(Vector3 orientation, Data<ColorVertex>& meshData, Color color = Color::White);
+	void CreateRay(Vector3 start, Vector3 orientation, Data<ColorVertex>& meshData, Color color = Color::White);
 	//---------
 	void CreateWireCone( float length, float angle, Data<ColorVertex>& meshData, Color color = Color::White);
 	//---------

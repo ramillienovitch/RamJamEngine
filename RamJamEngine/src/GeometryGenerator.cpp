@@ -730,20 +730,23 @@ void GeometryGenerator::CreateWireSphere(float radius, Data<ColorVertex>& meshDa
 }
 
 //////////////////////////////////////////////////////////////////////////
-void GeometryGenerator::CreateAxisArrows(Data<ColorVertex>& meshData)
-{ CreateAxisArrows(Vector3::right, Vector3::up, Vector3::forward, meshData); }
+void GeometryGenerator::CreateAxisArrows(Data<ColorVertex>& meshData, Vector3 scale /*= Vector3::one*/)
+{ CreateAxisArrows(Vector3::right, Vector3::up, Vector3::forward, meshData, scale); }
 //-------------
-void GeometryGenerator::CreateAxisArrows(Quaternion rotation, Data<ColorVertex>& meshData)
+void GeometryGenerator::CreateAxisArrows(Quaternion rotation, Data<ColorVertex>& meshData, Vector3 scale /*= Vector3::one*/)
 {
 	Vector3 right   = rotation.GetRightVector();
 	Vector3 up      = rotation.GetUpVector();
 	Vector3 forward = rotation.GetForwardVector();
-	CreateAxisArrows(right, up, forward, meshData);
+	CreateAxisArrows(right, up, forward, meshData, scale);
 }
 //-------------
-void GeometryGenerator::CreateAxisArrows(Vector3 right, Vector3 up, Vector3 forward, Data<ColorVertex>& meshData)
+void GeometryGenerator::CreateAxisArrows(Vector3 right, Vector3 up, Vector3 forward, Data<ColorVertex>& meshData, Vector3 scale /*= Vector3::one*/)
 {
 	MeshData::ColorVertex v[6];
+	right   *= scale.x;
+	up      *= scale.y;
+	forward *= scale.z;
 	v[0] = MeshData::ColorVertex(0, 0, 0,                         Color::Red);
 	v[1] = MeshData::ColorVertex(right.x, right.y, right.z,       Color::Red);
 	v[2] = MeshData::ColorVertex(0, 0, 0,                         Color::Lime);
@@ -760,19 +763,21 @@ void GeometryGenerator::CreateAxisArrows(Vector3 right, Vector3 up, Vector3 forw
 }
 
 //////////////////////////////////////////////////////////////////////////
-void GeometryGenerator::CreateLine(Vector3 orientation, Data<ColorVertex>& meshData, Color color)
+void GeometryGenerator::CreateLine(Vector3 start, Vector3 end, Data<ColorVertex>& meshData, Color color)
 {
 	MeshData::ColorVertex v[2];
-	v[0] = MeshData::ColorVertex(0, 0, 0, color);
-	v[1] = MeshData::ColorVertex(orientation.x, orientation.y, orientation.z, color);
+	v[0] = MeshData::ColorVertex(start.x, start.y, start.y, color);
+	v[1] = MeshData::ColorVertex(end.x, end.y, end.z, color);
 	meshData.Vertices.assign(&v[0], &v[2]);
 
 	u32 i[2];
 	i[0] = 0; i[1] = 1;
 	meshData.Indices.assign(&i[0], &i[2]);
 }
-
-//////////////////////////////////////////////////////////////////////////
+//---------
+void GeometryGenerator::CreateLine(Vector3 orientation, Data<ColorVertex>& meshData, Color color)
+{ CreateLine(Vector3::zero, Vector3::forward, meshData, color); }
+//---------
 void GeometryGenerator::CreateLine(Data<ColorVertex>& meshData, Color color)
 { CreateLine(Vector3::forward, meshData, color); }
 
@@ -782,6 +787,9 @@ void GeometryGenerator::CreateRay(Data<ColorVertex>& meshData, Color color)
 //---------
 void GeometryGenerator::CreateRay(Vector3 orientation, Data<ColorVertex>& meshData, Color color)
 { CreateLine(10000*orientation, meshData, color); }
+//---------
+void GeometryGenerator::CreateRay(Vector3 start, Vector3 orientation, Data<ColorVertex>& meshData, Color color)
+{ CreateLine(start, start+(10000*orientation), meshData, color); }
 
 //////////////////////////////////////////////////////////////////////////
 void GeometryGenerator::CreateWireCone(float length, float angle, Data<ColorVertex>& meshData, Color color)

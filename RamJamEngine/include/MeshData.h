@@ -57,18 +57,18 @@ namespace MeshData
 	
 
 	//=========================================
-	struct PosNormalTex
-	{
-		PosNormalTex(){}
-		PosNormalTex(const Vector3& p, const Vector3& n, const Vector2& uv)
-			: Pos(p), Normal(n), Tex(uv){}
-		PosNormalTex(float px, float py, float pz, float nx, float ny, float nz, float u, float v)
-			: Pos(px,py,pz), Normal(nx,ny,nz), Tex(u,v){}
-
-		Vector3 Pos;
-		Vector3 Normal;
-		Vector2 Tex;
-	};
+// 	struct PosNormalTex
+// 	{
+// 		PosNormalTex(){}
+// 		PosNormalTex(const Vector3& p, const Vector3& n, const Vector2& uv)
+// 			: Pos(p), Normal(n), Tex(uv){}
+// 		PosNormalTex(float px, float py, float pz, float nx, float ny, float nz, float u, float v)
+// 			: Pos(px,py,pz), Normal(nx,ny,nz), Tex(u,v){}
+// 
+// 		Vector3 Pos;
+// 		Vector3 Normal;
+// 		Vector2 Tex;
+// 	};
 	//=========================================
 
 

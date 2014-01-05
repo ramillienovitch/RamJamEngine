@@ -43,8 +43,8 @@ struct DX11RenderingAPI : GraphicAPI
 
 	ID3D11Buffer*	mVertexBuffer;
 	ID3D11Buffer*	mIndexBuffer;
+	GameObject*		mEditorGameObject;
 	GameObject		mModelGO;
-	DX11Mesh		mModelMesh;
 
 	ID3D11Buffer*	mVertexBuffer_Gizmo;
 	ID3D11Buffer*	mIndexBuffer_Gizmo;
@@ -81,8 +81,12 @@ struct DX11RenderingAPI : GraphicAPI
 	Matrix44 mGridWorld;
 	Matrix44 mSphereWorld[10];
 	Matrix44 mCylWorld[10];
-	Matrix44 mModelWorld;
-	TwQuaternion mModelRot;
+	//---------------
+	std::string		mEditorName;
+	Vector3			mEditorPos;
+	TwQuaternion	mEditorRot;
+	Vector3			mEditorScale;
+	//---------------
 
 	Matrix44 mView;
 	Matrix44 mProj;

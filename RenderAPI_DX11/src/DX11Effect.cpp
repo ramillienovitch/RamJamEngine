@@ -25,7 +25,6 @@ BasicEffect::BasicEffect(ID3D11Device* device, const std::string& filename)
 	BasicTech         = mFX->GetTechniqueByName("Basic");
 	ViewProj          = mFX->GetVariableByName("gViewProj")->AsMatrix();
 	World             = mFX->GetVariableByName("gWorld")->AsMatrix();
-	//WorldInvTranspose = mFX->GetVariableByName("gWorldInvTranspose")->AsMatrix();
 	TexTransform      = mFX->GetVariableByName("gDiffuseMapTrf")->AsMatrix();
 	EyePosW           = mFX->GetVariableByName("gEyePosW")->AsVector();
 	FogColor          = mFX->GetVariableByName("gFogColor")->AsVector();

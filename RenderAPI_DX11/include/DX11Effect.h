@@ -29,7 +29,6 @@ public:
 
 	HRESULT SetWorld(Matrix44& M)                            { return World->SetMatrix(reinterpret_cast<const float*>(&M)); }
 	HRESULT SetViewProj(Matrix44& M)                         { return ViewProj->SetMatrix(reinterpret_cast<const float*>(&M)); }
-	//HRESULT SetWorldInvTranspose(Matrix44& M)                { return WorldInvTranspose->SetMatrix(reinterpret_cast<const float*>(&M)); }
 	HRESULT SetEyePosW(const Vector3& v)                     { return EyePosW->SetFloatVector(reinterpret_cast<const float*>(&v)); }
 	HRESULT SetFogState(BOOL state)                          { return FogEnabled->SetBool(state != 0); }
 	HRESULT SetAlphaClipState(BOOL state)                    { return AlphaClipEnabled->SetBool(state != 0); }
@@ -49,7 +48,6 @@ public:
 	//-------
 	ID3DX11EffectMatrixVariable*			World;
 	ID3DX11EffectMatrixVariable*			ViewProj;
-	//ID3DX11EffectMatrixVariable*			WorldInvTranspose;
 	ID3DX11EffectMatrixVariable*			TexTransform;
 	//-------
 	ID3DX11EffectVectorVariable*			EyePosW;

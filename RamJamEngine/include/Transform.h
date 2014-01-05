@@ -17,8 +17,11 @@ struct Transform
 	Quaternion				Rotation;
 	Quaternion				LocalRotation;
 	//-----------
-// 	Matrix44				WorldMatrix;
-// 	Matrix44				LocalMatrix;
+	Matrix44				WorldMat;
+	Matrix44				LocalMat;
+	//-----------
+	Matrix44				WorldMatNoScale;
+	Matrix44				LocalMatNoScale;
 	//-----------
 	Transform*				Parent;
 	std::set<Transform*>	Children;
@@ -31,7 +34,8 @@ struct Transform
 	Vector3 Up();
 	Vector3 Forward();
 
-	Matrix44 WorldMatrix ();
+	Matrix44 WorldMatrix();
+	Matrix44 WorldMatrixNoScale();
 
 	//---------------------------
 

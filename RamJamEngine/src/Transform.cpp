@@ -18,6 +18,16 @@ Matrix44 Transform::WorldMatrix()
 }
 
 //////////////////////////////////////////////////////////////////////////
+Matrix44 Transform::WorldMatrixNoScale()
+{
+	Matrix44 position  = Matrix44::Translation(Position);
+	Matrix44 rotation  = Rotation.ToMatrix();
+	Matrix44 world = rotation * position;
+
+	return world;
+}
+
+//////////////////////////////////////////////////////////////////////////
 Vector3 Transform::Right()
 { return Rotation.GetRightVector(); }
 //----------------------------------------
@@ -35,5 +45,6 @@ Matrix44 Transform::MatrixFromTextureProperties( Vector2 tiling, Vector2 offset,
 	t.Position = Vector3(offset.x, offset.y, 0.0f);
 	t.Scale    = Vector3(tiling.x, tiling.y, 1.0f);
 	t.Rotation = Quaternion(0,0,rotationAngle);
-	return t.WorldMatrix();
+	t.WorldMat = t.WorldMatrix();
+	return t.WorldMat;
 }

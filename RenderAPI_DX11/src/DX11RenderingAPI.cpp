@@ -36,7 +36,6 @@ DX11RenderingAPI::DX11RenderingAPI(Scene& scene) : mScene(scene)
 	//-----------
 	
 	// Meshes transforms
-	mModelRot = TwQuaternion();
 	mGridWorld = Matrix44::identity;
 	Transform tempTrf;
 // 	tempTrf.Rotation	= Quaternion(45,45,45).ToMatrix();
@@ -47,11 +46,6 @@ DX11RenderingAPI::DX11RenderingAPI(Scene& scene) : mScene(scene)
 	tempTrf.Scale		= Vector3(2.0f, 1.0f, 2.0f);
 	tempTrf.Position	= Vector3(0.0f, 0.51f, 0.0f);		//0.51 to avoid z-fight occurring with 0.5
 	mBoxWorld			= tempTrf.WorldMatrix();
-	//-------
-	tempTrf.Rotation	= Quaternion(0,45,0).ToMatrix();
-	tempTrf.Scale		= Vector3(0.2f, 0.2f, 0.2f);
-	tempTrf.Position	= Vector3(0.0f, 1.0f, 0.0f);
-	mModelWorld			= tempTrf.WorldMatrix();
 	//-------
 	for(int i = 0; i < 5; ++i)
 	{
@@ -213,14 +207,31 @@ void DX11RenderingAPI::Initialize(int windowWidth, int windowHeight)
 	mMaterialLoader.LoadFromFile(mBoxMat,      "box.mat");
 	mMaterialLoader.LoadFromFile(mModelMat,    "model.mat");
 	//----------
+	DX11Mesh::SetDevice(mDX11Device->md3dDevice, mDX11Device->md3dImmediateContext);
 	BuildGeometryBuffers();
 	BuildGizmosBuffers();
-	mModelGO.mTransform.Rotation	= Quaternion(0,0,0).ToMatrix();
-	mModelGO.mTransform.Scale		= Vector3(0.2f, 0.2f, 0.2f);
-	mModelGO.mTransform.Position	= Vector3(0.0f, 1.0f, 0.0f);
-	mMaterialLoader.LoadFromFile(mModelGO.mMaterial, "model.mat");
-	mModelGO.mDrawable.mMesh = mModelMesh;
-	mModelGO.mDrawable.Initialize(DX11Effects::BasicFX);
+	mModelGO.mName = "Dragon";
+	mModelGO.mTransform.Rotation		= Quaternion(0,45,0).ToMatrix();
+	mModelGO.mTransform.Scale			= Vector3(0.2f, 0.2f, 0.2f);
+	mModelGO.mTransform.Position		= Vector3(0.0f, 1.0f, 0.0f);
+	mModelGO.mTransform.WorldMat		= mModelGO.mTransform.WorldMatrix();
+	mModelGO.mTransform.WorldMatNoScale	= mModelGO.mTransform.WorldMatrixNoScale();
+	string modelPath = System::Instance()->mDataPath + CIniFile::GetValue("modelpath", "meshes", System::Instance()->mResourcesPath);
+	mModelGO.mDrawable.mMesh = rje_new DX11Mesh;
+	mModelGO.mDrawable.mMesh->mMaterial.resize(1);
+	mMaterialLoader.LoadFromFile(mModelGO.mDrawable.mMesh->mMaterial[0], "model.mat");
+	mModelGO.mDrawable.mMesh->LoadModelFromFile(modelPath);
+	mModelGO.mDrawable.mGizmo = rje_new DX11Mesh;
+	mModelGO.mDrawable.mGizmo->LoadWireBox(1,1,1, Color::Lime);
+	mModelGO.mDrawable.SetShader(DX11Effects::BasicFX);
+	mModelGO.mDrawable.SetShaderGizmo(DX11Effects::ColorFX);
+	//-----------
+	mEditorGameObject = &mModelGO;
+	mEditorName  = mEditorGameObject->mName;
+	mEditorRot   = TwQuaternion(mEditorGameObject->mTransform.Rotation.z, mEditorGameObject->mTransform.Rotation.w, mEditorGameObject->mTransform.Rotation.x, mEditorGameObject->mTransform.Rotation.y);
+	mEditorPos   = mEditorGameObject->mTransform.Position;
+	mEditorScale = mEditorGameObject->mTransform.Scale;
+	//-----------
 
 	SetActivePointLights(3);
 	SetActiveDirLights(1);
@@ -234,7 +245,7 @@ void DX11RenderingAPI::Initialize(int windowWidth, int windowHeight)
 	// Create a tweak bar
 	TwBar *bar = TwNewBar("Scene");
 	TwDefine("Scene iconified=true ");
-	int barSize[2] = {224, 320};
+	int barSize[2] = {300, 400};
 	TwSetParam(bar, NULL, "size", TW_PARAM_INT32, 2, barSize);
 	TwAddVarRW(bar, "V-Sync Enabled", TW_TYPE_BOOLCPP, &VSyncEnabled, NULL);
 	TwAddSeparator(bar, NULL, NULL);
@@ -253,8 +264,14 @@ void DX11RenderingAPI::Initialize(int windowWidth, int windowHeight)
 	TwAddVarRW(bar, "Blend Factor Alpha", TW_TYPE_FLOAT, &mBlendFactorA, "min=0 max=1 step=0.05");
 	TwAddSeparator(bar, NULL, NULL);
 	TwAddButton(bar, "Toggle Wireframe", TwSetWireframe, this, NULL);
-	TwAddSeparator(bar, NULL, NULL);
-	TwAddVarRW(bar, "Rotation", TW_TYPE_QUAT4F, &mModelRot, "opened=true");
+	//-----------
+	TwBar *gameObjectBar = TwNewBar("GameObject");
+	TwDefine("GameObject iconified=true ");
+	TwSetParam(gameObjectBar, NULL, "size", TW_PARAM_INT32, 2, barSize);
+	TwAddVarRO(gameObjectBar, "Name",     TW_TYPE_STDSTRING, &mEditorName,  "opened=true");
+	TwAddVarRW(gameObjectBar, "Position", TW_TYPE_DIR3F,     &mEditorPos,   "opened=true");
+	TwAddVarRW(gameObjectBar, "Rotation", TW_TYPE_QUAT4F,    &mEditorRot,   "opened=true");
+	TwAddVarRW(gameObjectBar, "Scale",    TW_TYPE_DIR3F,     &mEditorScale, "opened=true");
 	//-----------
 	TwBar *camBar = TwNewBar("Camera");
 	TwDefine("Camera iconified=true ");
@@ -376,43 +393,38 @@ void DX11RenderingAPI::BuildGeometryBuffers()
 							mModelIndexCount;
 
 
-	std::vector<MeshData::PosNormalTex> vertices(totalVertexCount);
+	std::vector<MeshData::PosNormTanTex> vertices(totalVertexCount);
 	u32 k = 0;
-
+	u64 dataSize = sizeof(MeshData::PosNormTanTex);
 	for(size_t i = 0; i < box.Vertices.size(); ++i, ++k)
 	{
-		vertices[k].Pos    = box.Vertices[i].Position;
-		vertices[k].Normal = box.Vertices[i].Normal;
-		vertices[k].Tex    = box.Vertices[i].TexC;
+		memcpy(&vertices[k], &box.Vertices[i], dataSize);
 	}
 	for(size_t i = 0; i < grid.Vertices.size(); ++i, ++k)
 	{
-		vertices[k].Pos    = grid.Vertices[i].Position;
-		vertices[k].Normal = grid.Vertices[i].Normal;
-		vertices[k].Tex    = grid.Vertices[i].TexC;
+		memcpy(&vertices[k], &grid.Vertices[i], dataSize);
 	}
 	for(size_t i = 0; i < sphere.Vertices.size(); ++i, ++k)
 	{
-		vertices[k].Pos    = sphere.Vertices[i].Position;
-		vertices[k].Normal = sphere.Vertices[i].Normal;
-		vertices[k].Tex    = sphere.Vertices[i].TexC;
+		memcpy(&vertices[k], &sphere.Vertices[i], dataSize);
 	}
 	for(size_t i = 0; i < cylinder.Vertices.size(); ++i, ++k)
 	{
-		vertices[k].Pos    = cylinder.Vertices[i].Position;
-		vertices[k].Normal = cylinder.Vertices[i].Normal;
-		vertices[k].Tex    = cylinder.Vertices[i].TexC;
+		memcpy(&vertices[k], &cylinder.Vertices[i], dataSize);
 	}
 	for(size_t i = 0; i < modelVertexCount; ++i, ++k)
 	{
-		fread(&vertices[k].Pos.x,    sizeof(float), 1, fIn);
-		fread(&vertices[k].Pos.y,    sizeof(float), 1, fIn);
-		fread(&vertices[k].Pos.z,    sizeof(float), 1, fIn);
-		fread(&vertices[k].Tex.x,    sizeof(float), 1, fIn);
-		fread(&vertices[k].Tex.y,    sizeof(float), 1, fIn);
-		fread(&vertices[k].Normal.x, sizeof(float), 1, fIn);
-		fread(&vertices[k].Normal.y, sizeof(float), 1, fIn);
-		fread(&vertices[k].Normal.z, sizeof(float), 1, fIn);
+		fread(&vertices[k].Position.x, sizeof(float), 1, fIn);
+		fread(&vertices[k].Position.y, sizeof(float), 1, fIn);
+		fread(&vertices[k].Position.z, sizeof(float), 1, fIn);
+		fread(&vertices[k].Normal.x,   sizeof(float), 1, fIn);
+		fread(&vertices[k].Normal.y,   sizeof(float), 1, fIn);
+		fread(&vertices[k].Normal.z,   sizeof(float), 1, fIn);
+		fread(&vertices[k].TangentU.x, sizeof(float), 1, fIn);
+		fread(&vertices[k].TangentU.y, sizeof(float), 1, fIn);
+		fread(&vertices[k].TangentU.z, sizeof(float), 1, fIn);
+		fread(&vertices[k].TexC.x,     sizeof(float), 1, fIn);
+		fread(&vertices[k].TexC.y,     sizeof(float), 1, fIn);
 	}
 	std::vector<u32> dragonIndices(mModelIndexCount);
 	for(u32 i = 0; i < modelTriangleCount; ++i)
@@ -426,7 +438,7 @@ void DX11RenderingAPI::BuildGeometryBuffers()
 
 	D3D11_BUFFER_DESC vbd;
 	vbd.Usage          = D3D11_USAGE_IMMUTABLE;
-	vbd.ByteWidth      = (u32) (sizeof(MeshData::PosNormalTex) * totalVertexCount);
+	vbd.ByteWidth      = (u32) (sizeof(MeshData::PosNormTanTex) * totalVertexCount);
 	vbd.BindFlags      = D3D11_BIND_VERTEX_BUFFER;
 	vbd.CPUAccessFlags = 0;
 	vbd.MiscFlags      = 0;
@@ -450,9 +462,6 @@ void DX11RenderingAPI::BuildGeometryBuffers()
 	D3D11_SUBRESOURCE_DATA iinitData;
 	iinitData.pSysMem = &indices[0];
 	RJE_CHECK_FOR_SUCCESS(mDX11Device->md3dDevice->CreateBuffer(&ibd, &iinitData, &mIndexBuffer));
-
-	mModelMesh.Initialize(mDX11Device->md3dDevice, mDX11Device->md3dImmediateContext, RJE_IL_PosNormalTex);
-	mModelMesh.LoadFromFile(modelPath);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -520,10 +529,11 @@ void DX11RenderingAPI::UpdateScene( float dt )
 {
 	//-------------------------------------
 	Transform tempTrf;
-	tempTrf.Rotation	= mModelRot;
-	tempTrf.Scale		= Vector3(0.2f, 0.2f, 0.2f);
-	tempTrf.Position	= Vector3(0.0f, 1.0f, 0.0f);
-	mModelWorld			= tempTrf.WorldMatrix();
+	tempTrf.Rotation								= mEditorRot;
+	tempTrf.Scale									= mEditorScale;
+	tempTrf.Position								= mEditorPos;
+	mEditorGameObject->mTransform.WorldMat			= tempTrf.WorldMatrix();
+	mEditorGameObject->mTransform.WorldMatNoScale	= tempTrf.WorldMatrixNoScale();
 	//-------------------------------------
 
 	// Convert Spherical to Cartesian coordinates.
@@ -639,14 +649,14 @@ void DX11RenderingAPI::DrawScene()
 	DrawGizmos();
 
 	//-------------------------------------------------------------------------
-	mDX11Device->md3dImmediateContext->IASetInputLayout(DX11InputLayouts::PosNormalTex);
+	mDX11Device->md3dImmediateContext->IASetInputLayout(DX11InputLayouts::PosNormalTanTex);
 	mDX11Device->md3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sCurrentRasterizerState);
 
 	float blendFactor[4] = {mBlendFactorR, mBlendFactorG, mBlendFactorB, mBlendFactorA};
 
-	u32 stride = sizeof(MeshData::PosNormalTex);
+	u32 stride = sizeof(MeshData::PosNormTanTex);
 	u32 offset = 0;
 	mDX11Device->md3dImmediateContext->IASetVertexBuffers(0, 1, &mVertexBuffer, &stride, &offset);
 	mDX11Device->md3dImmediateContext->IASetIndexBuffer(mIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
@@ -834,15 +844,12 @@ void DX11RenderingAPI::DrawScene()
 
 			mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_CullClockwise);
 
-			// Draw the model reflection
-			DX11Effects::BasicFX->SetWorld(mModelWorld * reflectionMatrix);
-			DX11Effects::BasicFX->SetMaterial(mModelMat);
-			
 			// Only draw reflection into visible mirror pixels as marked by the stencil buffer. 
+			// Draw the model reflection
 			mDX11Device->md3dImmediateContext->OMSetDepthStencilState(DX11CommonStates::sDepthStencilState_DrawStenciled, 1);
-			activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
-			//mDX11Device->md3dImmediateContext->DrawIndexed(mModelIndexCount, mModelIndexOffset, mModelVertexOffset);
-			mModelMesh.Render();
+			mModelGO.mTransform.WorldMat *= reflectionMatrix;
+			mModelGO.mDrawable.Render(activeTech->GetPassByIndex(p));
+			mModelGO.mTransform.WorldMat *= reflectionMatrix;
 
 			mDX11Device->md3dImmediateContext->IASetVertexBuffers(0, 1, &mVertexBuffer, &stride, &offset);
 			mDX11Device->md3dImmediateContext->IASetIndexBuffer(mIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
@@ -932,15 +939,10 @@ void DX11RenderingAPI::DrawGizmos()
 	mDX11Device->md3dImmediateContext->IASetInputLayout(DX11InputLayouts::PosColor);
 	mDX11Device->md3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
 
-	//mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_CullNone);
-
 	u32 stride = sizeof(MeshData::ColorVertex);
 	u32 offset = 0;
 	mDX11Device->md3dImmediateContext->IASetVertexBuffers(0, 1, &mVertexBuffer_Gizmo, &stride, &offset);
 	mDX11Device->md3dImmediateContext->IASetIndexBuffer(mIndexBuffer_Gizmo, DXGI_FORMAT_R32_UINT, 0);
-
-	float blendFactor[4] = {1.0f, 1.0f, 1.0f, 1.0f};
-	mDX11Device->md3dImmediateContext->OMSetBlendState(DX11CommonStates::sBlendState_Opaque, blendFactor, 0xffffffff);
 
 	// Set constants
 	Matrix44 view     = mCamera->mView;
@@ -948,6 +950,11 @@ void DX11RenderingAPI::DrawGizmos()
 
 	DX11Effects::ColorFX->SetViewProj(view*proj);
 	
+	mModelGO.mDrawable.RenderGizmo(DX11Effects::ColorFX->ColorTech->GetPassByIndex(0));
+
+	mDX11Device->md3dImmediateContext->IASetVertexBuffers(0, 1, &mVertexBuffer_Gizmo, &stride, &offset);
+	mDX11Device->md3dImmediateContext->IASetIndexBuffer(mIndexBuffer_Gizmo, DXGI_FORMAT_R32_UINT, 0);
+
 	// Draw the wireBox.
 	DX11Effects::ColorFX->SetColor(Color(Color::White).GetVector4RGBANorm());
 	DX11Effects::ColorFX->SetWorld(mWireBoxWorld);
@@ -1078,7 +1085,6 @@ void DX11RenderingAPI::Shutdown()
 	
 	PROFILE_GPU_EXIT();
 
-	mModelMesh.Destroy();
 	RJE_SAFE_RELEASE(mVertexBuffer);
 	RJE_SAFE_RELEASE(mVertexBuffer_Gizmo);
 	RJE_SAFE_RELEASE(mIndexBuffer);

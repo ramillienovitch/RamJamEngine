@@ -1,28 +1,39 @@
 #include "DX11Mesh.h"
+#include "..\..\RamJamEngine\include\GeometryGenerator.h"
 
 //////////////////////////////////////////////////////////////////////////
-void DX11Mesh::Initialize(ID3D11Device* device, ID3D11DeviceContext* deviceContext, MeshData::RJE_InputLayout inputLayout)
+DX11Mesh*				DX11Mesh::sInstance      = nullptr;
+ID3D11Device*			DX11Mesh::sDevice        = nullptr;
+ID3D11DeviceContext*	DX11Mesh::sDeviceContext = nullptr;
+
+//////////////////////////////////////////////////////////////////////////
+DX11Mesh::DX11Mesh()
 {
-	mDevice        = device;
-	mDeviceContext = deviceContext;
-	mInputLayout   = inputLayout;
-	//-------
 	mVertexBuffer = nullptr;
 	mIndexBuffer  = nullptr;
+	//--------
+	mSubsetCount = 1;
+}
+
+//////////////////////////////////////////////////////////////////////////
+void DX11Mesh::SetDevice(ID3D11Device* device, ID3D11DeviceContext* deviceContext)
+{
+	sDevice        = device;
+	sDeviceContext = deviceContext;
 }
 
 //////////////////////////////////////////////////////////////////////////
 void DX11Mesh::Destroy()
 {
-	delete mVertexData;
-	delete mIndexData;
+	RJE_SAFE_DELETE(mVertexData);
+	RJE_SAFE_DELETE(mIndexData);
 	//-------
 	RJE_SAFE_RELEASE(mVertexBuffer);
 	RJE_SAFE_RELEASE(mIndexBuffer);
 }
 
 //////////////////////////////////////////////////////////////////////////
-void DX11Mesh::CreateVertexBuffer()
+void DX11Mesh::CreateVertexBuffer(void* vertexData)
 {
 	D3D11_BUFFER_DESC vbd;
 	vbd.Usage          = D3D11_USAGE_IMMUTABLE;
@@ -31,12 +42,12 @@ void DX11Mesh::CreateVertexBuffer()
 	vbd.CPUAccessFlags = 0;
 	vbd.MiscFlags      = 0;
 	D3D11_SUBRESOURCE_DATA vinitData;
-	vinitData.pSysMem = mVertexData;
-	RJE_CHECK_FOR_SUCCESS(mDevice->CreateBuffer(&vbd, &vinitData, &mVertexBuffer));
+	vinitData.pSysMem = vertexData;
+	RJE_CHECK_FOR_SUCCESS(sDevice->CreateBuffer(&vbd, &vinitData, &mVertexBuffer));
 }
 
 //////////////////////////////////////////////////////////////////////////
-void DX11Mesh::CreateIndexBuffer()
+void DX11Mesh::CreateIndexBuffer(u32* indexData)
 {
 	D3D11_BUFFER_DESC ibd;
 	ibd.Usage          = D3D11_USAGE_IMMUTABLE;
@@ -45,12 +56,30 @@ void DX11Mesh::CreateIndexBuffer()
 	ibd.CPUAccessFlags = 0;
 	ibd.MiscFlags      = 0;
 	D3D11_SUBRESOURCE_DATA iinitData;
-	iinitData.pSysMem = &mIndexData[0];
-	RJE_CHECK_FOR_SUCCESS(mDevice->CreateBuffer(&ibd, &iinitData, &mIndexBuffer));
+	iinitData.pSysMem = &indexData[0];
+	RJE_CHECK_FOR_SUCCESS(sDevice->CreateBuffer(&ibd, &iinitData, &mIndexBuffer));
 }
 
 //////////////////////////////////////////////////////////////////////////
-void DX11Mesh::LoadFromFile(std::string filePath)
+void DX11Mesh::Render(u32 subset)
+{
+	u32 stride = mDataSize;
+	u32 offset = 0;
+	switch (mInputLayout)
+	{
+	//case MeshData::RJE_IL_PosNormalTex:		sDeviceContext->IASetInputLayout(DX11InputLayouts::PosNormalTex);		break;
+	case MeshData::RJE_IL_PosNormTanTex:	sDeviceContext->IASetInputLayout(DX11InputLayouts::PosNormalTanTex);	break;
+	case MeshData::RJE_IL_PosColor:			sDeviceContext->IASetInputLayout(DX11InputLayouts::PosColor);			break;
+	default:	break;
+	}
+	
+	sDeviceContext->IASetVertexBuffers(0, 1, &mVertexBuffer, &stride, &offset);
+	sDeviceContext->IASetIndexBuffer(mIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+	sDeviceContext->DrawIndexed(mIndexCount, 0, 0);
+}
+
+//////////////////////////////////////////////////////////////////////////
+void DX11Mesh::LoadModelFromFile(std::string filePath)
 {
 	FILE* fIn;
 	fopen_s(&fIn, filePath.c_str(), "rb");
@@ -64,21 +93,24 @@ void DX11Mesh::LoadFromFile(std::string filePath)
 	u32 modelTriangleCount = 0;
 	fread(&mVertexCount,       sizeof(u32), 1, fIn);
 	fread(&modelTriangleCount, sizeof(u32), 1, fIn);
-	mIndexCount = 3*modelTriangleCount;
+	mIndexCount  = 3*modelTriangleCount;
+	mInputLayout = MeshData::RJE_InputLayout::RJE_IL_PosNormTanTex;
 
-	switch (mInputLayout)
-	{
-	case MeshData::RJE_IL_PosNormalTex:		mDataSize = (u32) sizeof(MeshData::PosNormalTex);		mByteWidth = mDataSize * mVertexCount;	break;
-	case MeshData::RJE_IL_PosNormTanTex:	mDataSize = (u32) sizeof(MeshData::PosNormTanTex);		mByteWidth = mDataSize * mVertexCount;	break;
-	case MeshData::RJE_IL_PosColor:			mDataSize = (u32) sizeof(MeshData::ColorVertex);		mByteWidth = mDataSize * mVertexCount;	break;
-	default:	break;
-	}
+	// 	switch (mInputLayout)
+	// 	{
+	// 	case MeshData::RJE_IL_PosNormalTex:		mDataSize = (u32) sizeof(MeshData::PosNormalTex);		mByteWidth = mDataSize * mVertexCount;	break;
+	// 	case MeshData::RJE_IL_PosNormTanTex:	mDataSize = (u32) sizeof(MeshData::PosNormTanTex);		mByteWidth = mDataSize * mVertexCount;	break;
+	// 	case MeshData::RJE_IL_PosColor:			mDataSize = (u32) sizeof(MeshData::ColorVertex);		mByteWidth = mDataSize * mVertexCount;	break;
+	// 	default:	break;
+	// 	}
 
+	mDataSize   = (u32) sizeof(MeshData::PosNormTanTex);
+	mByteWidth  = mDataSize * mVertexCount;
 	mVertexData = rje_new char[mByteWidth];
 	mIndexData  = rje_new u32[mIndexCount];
 
 	float dummy = 0;
-	for(u64 i = 0; i < mVertexCount*8; ++i)		// 3float => Position + 3float => Normal + 2float => Tex
+	for(u64 i = 0; i < mVertexCount*11; ++i)		// 3float => Position + 3float => Normal + 3float Tangent + 2float => Tex
 	{
 		fread(&dummy, 4, 1, fIn);	memcpy((float*)mVertexData+i, &dummy, 4);
 	}
@@ -93,15 +125,187 @@ void DX11Mesh::LoadFromFile(std::string filePath)
 
 	//-----------------
 
-	CreateVertexBuffer();
-	CreateIndexBuffer();
+	CreateVertexBuffer(mVertexData);
+	CreateIndexBuffer(mIndexData);
 }
 
-void DX11Mesh::Render()
+//////////////////////////////////////////////////////////////////////////
+void DX11Mesh::LoadBox(float width, float height, float depth)
 {
-	u32 stride = mDataSize;
-	u32 offset = 0;
-	mDeviceContext->IASetVertexBuffers(0, 1, &mVertexBuffer, &stride, &offset);
-	mDeviceContext->IASetIndexBuffer(mIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-	mDeviceContext->DrawIndexed(mIndexCount, 0, 0);
+	MeshData::Data<PosNormTanTex> box;
+	GeometryGenerator geoGen;
+
+	geoGen.CreateBox(width, height, depth, box);
+	LoadPrimitive(box);
+}
+
+//////////////////////////////////////////////////////////////////////////
+void DX11Mesh::LoadSphere(float radius, u32 sliceCount, u32 stackCount)
+{
+	MeshData::Data<PosNormTanTex> sphere;
+	GeometryGenerator geoGen;
+
+	geoGen.CreateSphere(radius, sliceCount, stackCount, sphere);
+	LoadPrimitive(sphere);
+}
+
+//////////////////////////////////////////////////////////////////////////
+void DX11Mesh::LoadGeoSphere(float radius, u32 numSubdivisions)
+{
+	MeshData::Data<PosNormTanTex> sphere;
+	GeometryGenerator geoGen;
+
+	geoGen.CreateGeosphere(radius, numSubdivisions, sphere);
+	LoadPrimitive(sphere);
+}
+
+//////////////////////////////////////////////////////////////////////////
+void DX11Mesh::LoadCylinder(float bottomRadius, float topRadius, float height, u32 sliceCount, u32 stackCount)
+{
+	MeshData::Data<PosNormTanTex> cylinder;
+	GeometryGenerator geoGen;
+
+	geoGen.CreateCylinder(bottomRadius, topRadius, bottomRadius, sliceCount, stackCount, cylinder);
+	LoadPrimitive(cylinder);
+}
+
+//////////////////////////////////////////////////////////////////////////
+void DX11Mesh::LoadGrid(float width, float depth, u32 rows, u32 columns)
+{
+	MeshData::Data<PosNormTanTex> grid;
+	GeometryGenerator geoGen;
+
+	geoGen.CreateGrid(width, depth, rows, columns, grid);
+	LoadPrimitive(grid);
+}
+
+//////////////////////////////////////////////////////////////////////////
+void DX11Mesh::LoadWireBox( float width, float height, float depth, Color color )
+{
+	MeshData::Data<ColorVertex> box;
+	GeometryGenerator geoGen;
+
+	geoGen.CreateWireBox(width, height, depth, box, color);
+	LoadPrimitive(box);
+}
+
+//////////////////////////////////////////////////////////////////////////
+void DX11Mesh::LoadWireSphere( float radius, Color color )
+{
+	MeshData::Data<ColorVertex> sphere;
+	GeometryGenerator geoGen;
+
+	geoGen.CreateWireSphere(radius, sphere, color);
+	LoadPrimitive(sphere);
+}
+
+//////////////////////////////////////////////////////////////////////////
+void DX11Mesh::LoadWireCone( float length, float angle, Color color )
+{
+	MeshData::Data<ColorVertex> cone;
+	GeometryGenerator geoGen;
+
+	geoGen.CreateWireCone(length, angle, cone, color);
+	LoadPrimitive(cone);
+}
+
+//////////////////////////////////////////////////////////////////////////
+void DX11Mesh::LoadWireFrustum( Vector3 right, Vector3 up, Vector3 forward, float fovX, float ratio, float nearPlaneDepth, float farPlaneDepth, Color color )
+{
+	MeshData::Data<ColorVertex> frustum;
+	GeometryGenerator geoGen;
+
+	geoGen.CreateWireFrustum(right, up, forward, fovX, ratio, nearPlaneDepth, farPlaneDepth, frustum, color);
+	LoadPrimitive(frustum);
+}
+
+//////////////////////////////////////////////////////////////////////////
+void DX11Mesh::LoadAxisArrows( Vector3 right, Vector3 up, Vector3 forward)
+{
+	MeshData::Data<ColorVertex> axis;
+	GeometryGenerator geoGen;
+
+	geoGen.CreateAxisArrows(right, up, forward, axis);
+	LoadPrimitive(axis);
+}
+
+//////////////////////////////////////////////////////////////////////////
+void DX11Mesh::LoadLine( Vector3 start, Vector3 end, Color color )
+{
+	MeshData::Data<ColorVertex> line;
+	GeometryGenerator geoGen;
+
+	geoGen.CreateLine(start, end, line, color);
+	LoadPrimitive(line);
+}
+
+//////////////////////////////////////////////////////////////////////////
+void DX11Mesh::LoadRay( Vector3 start, Vector3 orientation, Color color )
+{
+	MeshData::Data<ColorVertex> ray;
+	GeometryGenerator geoGen;
+
+	geoGen.CreateRay(start, orientation, ray, color);
+	LoadPrimitive(ray);
+}
+
+//////////////////////////////////////////////////////////////////////////
+void DX11Mesh::LoadPrimitive(MeshData::Data<ColorVertex>& meshData)
+{
+	mInputLayout = MeshData::RJE_InputLayout::RJE_IL_PosColor;
+	mVertexCount = (u32) meshData.Vertices.size();
+	mIndexCount  = (u32) meshData.Indices.size();
+	mDataSize    = (u32) sizeof(MeshData::ColorVertex);
+	mByteWidth   = mDataSize * mVertexCount;
+
+	mVertexData = rje_new char[mByteWidth];
+	mIndexData  = rje_new u32[mIndexCount];
+
+	for (u32 i=0; i<mVertexCount; ++i)
+	{
+		memcpy((float*)mVertexData+4*i+0, &meshData.Vertices[i].pos.x, 4);
+		memcpy((float*)mVertexData+4*i+1, &meshData.Vertices[i].pos.y, 4);
+		memcpy((float*)mVertexData+4*i+2, &meshData.Vertices[i].pos.z, 4);
+		memcpy((float*)mVertexData+4*i+3, &meshData.Vertices[i].color, 4);
+	}
+	for (u32 j=0; j<mIndexCount; ++j)
+	{
+		memcpy(&mIndexData[j], &meshData.Indices[j], 4);
+	}
+	CreateVertexBuffer(mVertexData);
+	CreateIndexBuffer(mIndexData);
+}
+
+//////////////////////////////////////////////////////////////////////////
+void DX11Mesh::LoadPrimitive(MeshData::Data<PosNormTanTex>& meshData)
+{
+	mInputLayout = MeshData::RJE_InputLayout::RJE_IL_PosNormTanTex;
+	mVertexCount = (u32) meshData.Vertices.size();
+	mIndexCount  = (u32) meshData.Indices.size();
+	mDataSize    = (u32) sizeof(MeshData::PosNormTanTex);
+	mByteWidth   = mDataSize * mVertexCount;
+
+	mVertexData = rje_new char[mByteWidth];
+	mIndexData  = rje_new u32[mIndexCount];
+
+	for (u32 i=0; i<mVertexCount; ++i)
+	{
+		memcpy((float*)mVertexData+11*i+0,  &meshData.Vertices[i].Position.x, 4);
+		memcpy((float*)mVertexData+11*i+1,  &meshData.Vertices[i].Position.y, 4);
+		memcpy((float*)mVertexData+11*i+2,  &meshData.Vertices[i].Position.z, 4);
+		memcpy((float*)mVertexData+11*i+3,  &meshData.Vertices[i].Normal.x,   4);
+		memcpy((float*)mVertexData+11*i+4,  &meshData.Vertices[i].Normal.y,   4);
+		memcpy((float*)mVertexData+11*i+5,  &meshData.Vertices[i].Normal.z,   4);
+		memcpy((float*)mVertexData+11*i+6,  &meshData.Vertices[i].TangentU.x, 4);
+		memcpy((float*)mVertexData+11*i+7,  &meshData.Vertices[i].TangentU.y, 4);
+		memcpy((float*)mVertexData+11*i+8,  &meshData.Vertices[i].TangentU.z, 4);
+		memcpy((float*)mVertexData+11*i+9,  &meshData.Vertices[i].TexC.x,     4);
+		memcpy((float*)mVertexData+11*i+10, &meshData.Vertices[i].TexC.y,     4);
+	}
+	for (u32 j=0; j<mIndexCount; ++j)
+	{
+		memcpy(&mIndexData[j], &meshData.Indices[j], 4);
+	}
+	CreateVertexBuffer(mVertexData);
+	CreateIndexBuffer(mIndexData);
 }
