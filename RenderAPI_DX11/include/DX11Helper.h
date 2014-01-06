@@ -60,7 +60,6 @@ using namespace DirectX;
 #include "DX11InputLayout.h"
 #include "DX11StructuredBuffer.h"
 #include "DX11TextureManager.h"
-#include "DX11MaterialLoader.h"
 #include "DX11Mesh.h"
 #include "../../DirectXTex/DirectXTex.h"
 //////////////////////////////////////////////////////////////////////////

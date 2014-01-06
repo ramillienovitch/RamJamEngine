@@ -8,11 +8,11 @@ struct DX11Drawable
 	DX11Drawable();
 	~DX11Drawable();
 	//-----------------
-	// These are just pointers to the GameObject Trf and Material
+	// These are just pointers to the GameObject Trf
 	Transform*		mTransform;
 	//------
-	DX11Mesh*		mMesh;
-	DX11Mesh*		mGizmo;
+	DX11Mesh		mMesh;
+	DX11Mesh		mGizmo;
 	//------
 	Color			mGizmoColor;
 	//------

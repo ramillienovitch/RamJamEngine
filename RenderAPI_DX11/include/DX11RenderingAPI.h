@@ -27,7 +27,6 @@ struct DX11RenderingAPI : GraphicAPI
 	ID3D11InfoQueue*	md3dInfoQueue;
 #endif
 
-	DX11MaterialLoader  mMaterialLoader;
 	DX11FontSheet*		mConsoleFont;
 	DX11FontSheet*		mProfilerFont;
 	DX11SpriteBatch*	mSpriteBatch;
@@ -43,8 +42,10 @@ struct DX11RenderingAPI : GraphicAPI
 
 	ID3D11Buffer*	mVertexBuffer;
 	ID3D11Buffer*	mIndexBuffer;
-	GameObject*		mEditorGameObject;
-	GameObject		mModelGO;
+	//GameObject*		mEditorGameObject;
+	Transform* mEditorTransform;
+	//GameObject		mModelGO;
+	std::vector<unique_ptr<GameObject>> mGameObjects;
 
 	ID3D11Buffer*	mVertexBuffer_Gizmo;
 	ID3D11Buffer*	mIndexBuffer_Gizmo;
@@ -159,6 +160,8 @@ struct DX11RenderingAPI : GraphicAPI
 	void SetActiveDirLights(u32 activeLights);
 	void SetActivePointLights(u32 activeLights);
 	void SetActiveSpotLights(u32 activeLights);
+	//---------------
+	void LoadMaterialFromFile(Material& material, std::string materialFile);
 };
 
 //////////////////////////////////////////////////////////////////////////

@@ -1,5 +1,6 @@
 #include "DX11Mesh.h"
 #include "..\..\RamJamEngine\include\GeometryGenerator.h"
+#include "..\..\RamJamEngine\include\System.h"
 
 //////////////////////////////////////////////////////////////////////////
 DX11Mesh*				DX11Mesh::sInstance      = nullptr;
@@ -65,17 +66,54 @@ void DX11Mesh::Render(u32 subset)
 {
 	u32 stride = mDataSize;
 	u32 offset = 0;
-	switch (mInputLayout)
-	{
-	//case MeshData::RJE_IL_PosNormalTex:		sDeviceContext->IASetInputLayout(DX11InputLayouts::PosNormalTex);		break;
-	case MeshData::RJE_IL_PosNormTanTex:	sDeviceContext->IASetInputLayout(DX11InputLayouts::PosNormalTanTex);	break;
-	case MeshData::RJE_IL_PosColor:			sDeviceContext->IASetInputLayout(DX11InputLayouts::PosColor);			break;
-	default:	break;
-	}
+
+	// This must be done before drawing every object concerned and NOT for every object
+// 	switch (mInputLayout)
+// 	{
+// 	case MeshData::RJE_IL_PosNormalTex:		sDeviceContext->IASetInputLayout(DX11InputLayouts::PosNormalTex);		break;
+// 	case MeshData::RJE_IL_PosNormTanTex:	sDeviceContext->IASetInputLayout(DX11InputLayouts::PosNormalTanTex);	break;
+// 	case MeshData::RJE_IL_PosColor:			sDeviceContext->IASetInputLayout(DX11InputLayouts::PosColor);			break;
+// 	default:	break;
+// 	}
 	
 	sDeviceContext->IASetVertexBuffers(0, 1, &mVertexBuffer, &stride, &offset);
 	sDeviceContext->IASetIndexBuffer(mIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 	sDeviceContext->DrawIndexed(mIndexCount, 0, 0);
+}
+
+//////////////////////////////////////////////////////////////////////////
+void DX11Mesh::LoadMaterialFromFile( Material& material, std::string materialFile )
+{
+	// first we set all the properties from the material file
+	material.LoadPropertiesFromFile(materialFile);
+
+	// then we load the textures if there is any
+	for ( auto it = material.mProperties.begin(); it != material.mProperties.end(); ++it )
+	{
+		if ((*it)->mType == MaterialPropertyType::Type_Texture)
+		{
+			std::string texturePathRel = CIniFile::GetValue((*it)->mName, "textures", System::Instance()->mDataPath + "materials\\" + materialFile);
+			std::string texturePathAbs = System::Instance()->mDataPath + texturePathRel;
+			int slash = (int)texturePathRel.rfind('\\')+1;
+			int point = (int)texturePathRel.find('.');
+			std::string textureName = texturePathRel.substr(slash, point-slash);
+
+			if (textureName == "NONE")
+				material.SetTexture((*it)->mName, DX11TextureManager::Instance()->mTextures["_default"]);
+			else
+			{
+				if (!DX11TextureManager::Instance()->IsTextureLoaded(textureName))
+					DX11TextureManager::Instance()->LoadTexture(texturePathAbs, textureName);
+
+				// we load the texture properties
+				Vector2 tiling = CIniFile::GetValueVector2("Tiling", "textures", System::Instance()->mDataPath + "materials\\" + materialFile);
+				Vector2 offset = CIniFile::GetValueVector2("Offset", "textures", System::Instance()->mDataPath + "materials\\" + materialFile);
+				float rotation = CIniFile::GetValueFloat("Rotation", "textures", System::Instance()->mDataPath + "materials\\" + materialFile);
+
+				material.SetTexture((*it)->mName, DX11TextureManager::Instance()->mTextures[textureName], tiling, offset, rotation);
+			}
+		}
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////

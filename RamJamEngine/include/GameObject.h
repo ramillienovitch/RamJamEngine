@@ -15,6 +15,5 @@ struct GameObject
 #endif
 
 	GameObject();
-
 	// TODO: Add GameObject Everything !!!
 };

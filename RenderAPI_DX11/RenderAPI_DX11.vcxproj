@@ -86,7 +86,6 @@
     <ClInclude Include="include\DX11FontSheet.h" />
     <ClInclude Include="include\DX11Helper.h" />
     <ClInclude Include="include\DX11InputLayout.h" />
-    <ClInclude Include="include\DX11MaterialLoader.h" />
     <ClInclude Include="include\DX11Mesh.h" />
     <ClInclude Include="include\DX11Profiler.h" />
     <ClInclude Include="include\DX11SpriteBatch.h" />
@@ -103,7 +102,6 @@
     <ClCompile Include="src\DX11Effect.cpp" />
     <ClCompile Include="src\DX11FontSheet.cpp" />
     <ClCompile Include="src\DX11InputLayout.cpp" />
-    <ClCompile Include="src\DX11MaterialLoader.cpp" />
     <ClCompile Include="src\DX11Mesh.cpp" />
     <ClCompile Include="src\DX11SpriteBatch.cpp" />
     <ClCompile Include="src\DX11RenderingAPI.cpp" />

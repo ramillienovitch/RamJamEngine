@@ -53,6 +53,7 @@ namespace RJE
 #	define RJE_SAFE_DELETE( X )				if(X) { delete X; X=nullptr; }
 #	define RJE_SAFE_DELETE_PTR( X )			if(X) { delete [] X; X=nullptr; }
 #	define RJE_SAFE_RELEASE( X )			if(X) { X->Release(); X=nullptr; }
+#	define RJE_SAFE_DESTROY( X )			if(X) { X->Destroy(); X=nullptr; }
 #	define RJE_SHUTDOWN( X )				if(X) { X->Shutdown(); delete X; X=nullptr; }
 }
 

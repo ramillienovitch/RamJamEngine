@@ -18,7 +18,9 @@ struct DX11Mesh : Mesh
 	void Render(u32 subset);
 	void Destroy();
 	//--------
-	
+	void LoadMaterialFromFile(Material& material, std::string materialFile);
+	//--------
+
 	void LoadBox(float width, float height, float depth);
 	void LoadSphere(float radius, u32 sliceCount, u32 stackCount);
 	void LoadGeoSphere(float radius, u32 numSubdivisions);

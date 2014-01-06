@@ -201,36 +201,36 @@ void DX11RenderingAPI::Initialize(int windowWidth, int windowHeight)
 	DX11TextureManager::Instance()->Create2DTextureFixedColor(1, RJE_COLOR::Color::White,         "_default");
 	//----------
 	// Material Specs
-	mMaterialLoader.LoadFromFile(mGridMat,     "grid.mat");
-	mMaterialLoader.LoadFromFile(mCylinderMat, "cylinder.mat");
-	mMaterialLoader.LoadFromFile(mSphereMat,   "sphere.mat");
-	mMaterialLoader.LoadFromFile(mBoxMat,      "box.mat");
-	mMaterialLoader.LoadFromFile(mModelMat,    "model.mat");
+	LoadMaterialFromFile(mGridMat,     "grid.mat");
+	LoadMaterialFromFile(mCylinderMat, "cylinder.mat");
+	LoadMaterialFromFile(mSphereMat,   "sphere.mat");
+	LoadMaterialFromFile(mBoxMat,      "box.mat");
+	LoadMaterialFromFile(mModelMat,    "model.mat");
 	//----------
 	DX11Mesh::SetDevice(mDX11Device->md3dDevice, mDX11Device->md3dImmediateContext);
 	BuildGeometryBuffers();
 	BuildGizmosBuffers();
-	mModelGO.mName = "Dragon";
-	mModelGO.mTransform.Rotation		= Quaternion(0,45,0).ToMatrix();
-	mModelGO.mTransform.Scale			= Vector3(0.2f, 0.2f, 0.2f);
-	mModelGO.mTransform.Position		= Vector3(0.0f, 1.0f, 0.0f);
-	mModelGO.mTransform.WorldMat		= mModelGO.mTransform.WorldMatrix();
-	mModelGO.mTransform.WorldMatNoScale	= mModelGO.mTransform.WorldMatrixNoScale();
+	unique_ptr<GameObject> mModelGO (new GameObject);
+	mModelGO->mName = "Dragon";
+	mModelGO->mTransform.Rotation		= Quaternion(0,45,0).ToMatrix();
+	mModelGO->mTransform.Scale			= Vector3(0.2f, 0.2f, 0.2f);
+	mModelGO->mTransform.Position		= Vector3(0.0f, 1.0f, 0.0f);
+	mModelGO->mTransform.WorldMat		= mModelGO->mTransform.WorldMatrix();
+	mModelGO->mTransform.WorldMatNoScale	= mModelGO->mTransform.WorldMatrixNoScale();
 	string modelPath = System::Instance()->mDataPath + CIniFile::GetValue("modelpath", "meshes", System::Instance()->mResourcesPath);
-	mModelGO.mDrawable.mMesh = rje_new DX11Mesh;
-	mModelGO.mDrawable.mMesh->mMaterial.resize(1);
-	mMaterialLoader.LoadFromFile(mModelGO.mDrawable.mMesh->mMaterial[0], "model.mat");
-	mModelGO.mDrawable.mMesh->LoadModelFromFile(modelPath);
-	mModelGO.mDrawable.mGizmo = rje_new DX11Mesh;
-	mModelGO.mDrawable.mGizmo->LoadWireBox(1,1,1, Color::Lime);
-	mModelGO.mDrawable.SetShader(DX11Effects::BasicFX);
-	mModelGO.mDrawable.SetShaderGizmo(DX11Effects::ColorFX);
+	mModelGO->mDrawable.mMesh.mMaterial.resize(1);
+	LoadMaterialFromFile(mModelGO->mDrawable.mMesh.mMaterial[0], "model.mat");
+	mModelGO->mDrawable.mMesh.LoadModelFromFile(modelPath);
+	mModelGO->mDrawable.mGizmo.LoadWireBox(1,1,1, Color::Lime);
+	mModelGO->mDrawable.SetShader(DX11Effects::BasicFX);
+	mModelGO->mDrawable.SetShaderGizmo(DX11Effects::ColorFX);
+	mGameObjects.push_back(std::move(mModelGO));
 	//-----------
-	mEditorGameObject = &mModelGO;
-	mEditorName  = mEditorGameObject->mName;
-	mEditorRot   = TwQuaternion(mEditorGameObject->mTransform.Rotation.z, mEditorGameObject->mTransform.Rotation.w, mEditorGameObject->mTransform.Rotation.x, mEditorGameObject->mTransform.Rotation.y);
-	mEditorPos   = mEditorGameObject->mTransform.Position;
-	mEditorScale = mEditorGameObject->mTransform.Scale;
+	mEditorTransform = &mGameObjects[0]->mTransform;
+	mEditorName  = mGameObjects[0]->mName;
+	mEditorRot   = TwQuaternion(mEditorTransform->Rotation.z, mEditorTransform->Rotation.w, mEditorTransform->Rotation.x, mEditorTransform->Rotation.y);
+	mEditorPos   = mEditorTransform->Position;
+	mEditorScale = mEditorTransform->Scale;
 	//-----------
 
 	SetActivePointLights(3);
@@ -529,11 +529,11 @@ void DX11RenderingAPI::UpdateScene( float dt )
 {
 	//-------------------------------------
 	Transform tempTrf;
-	tempTrf.Rotation								= mEditorRot;
-	tempTrf.Scale									= mEditorScale;
-	tempTrf.Position								= mEditorPos;
-	mEditorGameObject->mTransform.WorldMat			= tempTrf.WorldMatrix();
-	mEditorGameObject->mTransform.WorldMatNoScale	= tempTrf.WorldMatrixNoScale();
+	tempTrf.Rotation					= mEditorRot;
+	tempTrf.Scale						= mEditorScale;
+	tempTrf.Position					= mEditorPos;
+	mEditorTransform->WorldMat			= tempTrf.WorldMatrix();
+	mEditorTransform->WorldMatNoScale	= tempTrf.WorldMatrixNoScale();
 	//-------------------------------------
 
 	// Convert Spherical to Cartesian coordinates.
@@ -711,7 +711,8 @@ void DX11RenderingAPI::DrawScene()
 		}
 
 		// Draw the model.
-		mModelGO.mDrawable.Render(activeTech->GetPassByIndex(p));
+		//mModelGO.mDrawable.Render(activeTech->GetPassByIndex(p));
+		mGameObjects[0]->mDrawable.Render(activeTech->GetPassByIndex(p));
 
 		mDX11Device->md3dImmediateContext->IASetVertexBuffers(0, 1, &mVertexBuffer, &stride, &offset);
 		mDX11Device->md3dImmediateContext->IASetIndexBuffer(mIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
@@ -847,9 +848,12 @@ void DX11RenderingAPI::DrawScene()
 			// Only draw reflection into visible mirror pixels as marked by the stencil buffer. 
 			// Draw the model reflection
 			mDX11Device->md3dImmediateContext->OMSetDepthStencilState(DX11CommonStates::sDepthStencilState_DrawStenciled, 1);
-			mModelGO.mTransform.WorldMat *= reflectionMatrix;
-			mModelGO.mDrawable.Render(activeTech->GetPassByIndex(p));
-			mModelGO.mTransform.WorldMat *= reflectionMatrix;
+// 			mModelGO.mTransform.WorldMat *= reflectionMatrix;
+// 			mModelGO.mDrawable.Render(activeTech->GetPassByIndex(p));
+// 			mModelGO.mTransform.WorldMat *= reflectionMatrix;
+			mGameObjects[0]->mTransform.WorldMat *= reflectionMatrix;
+			mGameObjects[0]->mDrawable.Render(activeTech->GetPassByIndex(p));
+			mGameObjects[0]->mTransform.WorldMat *= reflectionMatrix;
 
 			mDX11Device->md3dImmediateContext->IASetVertexBuffers(0, 1, &mVertexBuffer, &stride, &offset);
 			mDX11Device->md3dImmediateContext->IASetIndexBuffer(mIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
@@ -950,7 +954,8 @@ void DX11RenderingAPI::DrawGizmos()
 
 	DX11Effects::ColorFX->SetViewProj(view*proj);
 	
-	mModelGO.mDrawable.RenderGizmo(DX11Effects::ColorFX->ColorTech->GetPassByIndex(0));
+	//mModelGO.mDrawable.RenderGizmo(DX11Effects::ColorFX->ColorTech->GetPassByIndex(0));
+	mGameObjects[0]->mDrawable.RenderGizmo(DX11Effects::ColorFX->ColorTech->GetPassByIndex(0));
 
 	mDX11Device->md3dImmediateContext->IASetVertexBuffers(0, 1, &mVertexBuffer_Gizmo, &stride, &offset);
 	mDX11Device->md3dImmediateContext->IASetIndexBuffer(mIndexBuffer_Gizmo, DXGI_FORMAT_R32_UINT, 0);
@@ -1210,6 +1215,41 @@ void DX11RenderingAPI::SetMSAA(u32 MSAASamples)
 {
 	InitSwapChain(MSAASamples);
 	System::Instance()->OnResize();
+}
+
+//////////////////////////////////////////////////////////////////////////
+void DX11RenderingAPI::LoadMaterialFromFile( Material& material, std::string materialFile )
+{
+	// first we set all the properties from the material file
+	material.LoadPropertiesFromFile(materialFile);
+
+	// then we load the textures if there is any
+	for ( auto it = material.mProperties.begin(); it != material.mProperties.end(); ++it )
+	{
+		if ((*it)->mType == MaterialPropertyType::Type_Texture)
+		{
+			std::string texturePathRel = CIniFile::GetValue((*it)->mName, "textures", System::Instance()->mDataPath + "materials\\" + materialFile);
+			std::string texturePathAbs = System::Instance()->mDataPath + texturePathRel;
+			int slash = (int)texturePathRel.rfind('\\')+1;
+			int point = (int)texturePathRel.find('.');
+			std::string textureName = texturePathRel.substr(slash, point-slash);
+
+			if (textureName == "NONE")
+				material.SetTexture((*it)->mName, DX11TextureManager::Instance()->mTextures["_default"]);
+			else
+			{
+				if (!DX11TextureManager::Instance()->IsTextureLoaded(textureName))
+					DX11TextureManager::Instance()->LoadTexture(texturePathAbs, textureName);
+
+				// we load the texture properties
+				Vector2 tiling = CIniFile::GetValueVector2("Tiling", "textures", System::Instance()->mDataPath + "materials\\" + materialFile);
+				Vector2 offset = CIniFile::GetValueVector2("Offset", "textures", System::Instance()->mDataPath + "materials\\" + materialFile);
+				float rotation = CIniFile::GetValueFloat("Rotation", "textures", System::Instance()->mDataPath + "materials\\" + materialFile);
+
+				material.SetTexture((*it)->mName, DX11TextureManager::Instance()->mTextures[textureName], tiling, offset, rotation);
+			}
+		}
+	}
 }
 
 
