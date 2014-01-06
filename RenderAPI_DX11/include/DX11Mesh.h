@@ -18,7 +18,7 @@ struct DX11Mesh : Mesh
 	void Render(u32 subset);
 	void Destroy();
 	//--------
-	void LoadMaterialFromFile(Material& material, std::string materialFile);
+	void LoadMaterialFromFile(std::string materialFile);
 	//--------
 
 	void LoadBox(float width, float height, float depth);

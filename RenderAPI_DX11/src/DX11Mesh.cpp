@@ -82,13 +82,15 @@ void DX11Mesh::Render(u32 subset)
 }
 
 //////////////////////////////////////////////////////////////////////////
-void DX11Mesh::LoadMaterialFromFile( Material& material, std::string materialFile )
+void DX11Mesh::LoadMaterialFromFile(std::string materialFile )
 {
+	unique_ptr<Material> material (new Material);
+
 	// first we set all the properties from the material file
-	material.LoadPropertiesFromFile(materialFile);
+	material->LoadPropertiesFromFile(materialFile);
 
 	// then we load the textures if there is any
-	for ( auto it = material.mProperties.begin(); it != material.mProperties.end(); ++it )
+	for ( auto it = material->mProperties.begin(); it != material->mProperties.end(); ++it )
 	{
 		if ((*it)->mType == MaterialPropertyType::Type_Texture)
 		{
@@ -99,7 +101,7 @@ void DX11Mesh::LoadMaterialFromFile( Material& material, std::string materialFil
 			std::string textureName = texturePathRel.substr(slash, point-slash);
 
 			if (textureName == "NONE")
-				material.SetTexture((*it)->mName, DX11TextureManager::Instance()->mTextures["_default"]);
+				material->SetTexture((*it)->mName, DX11TextureManager::Instance()->mTextures["_default"]);
 			else
 			{
 				if (!DX11TextureManager::Instance()->IsTextureLoaded(textureName))
@@ -110,10 +112,12 @@ void DX11Mesh::LoadMaterialFromFile( Material& material, std::string materialFil
 				Vector2 offset = CIniFile::GetValueVector2("Offset", "textures", System::Instance()->mDataPath + "materials\\" + materialFile);
 				float rotation = CIniFile::GetValueFloat("Rotation", "textures", System::Instance()->mDataPath + "materials\\" + materialFile);
 
-				material.SetTexture((*it)->mName, DX11TextureManager::Instance()->mTextures[textureName], tiling, offset, rotation);
+				material->SetTexture((*it)->mName, DX11TextureManager::Instance()->mTextures[textureName], tiling, offset, rotation);
 			}
 		}
 	}
+
+	mMaterial.push_back(std::move(material));
 }
 
 //////////////////////////////////////////////////////////////////////////

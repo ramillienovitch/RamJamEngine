@@ -41,12 +41,12 @@ BasicEffect::BasicEffect(ID3D11Device* device, const std::string& filename)
 //-----------------------
 BasicEffect::~BasicEffect(){}
 //-----------------------
-HRESULT BasicEffect::SetMaterial(Material& mat)
+HRESULT BasicEffect::SetMaterial(Material* mat)
 {
 	HRESULT res;
-	for (u32 i = 0; i < mat.mPropertiesCount; ++i)
+	for (u32 i = 0; i < mat->mPropertiesCount; ++i)
 	{
-		MaterialProperty& property = *(mat.mProperties[i]);
+		MaterialProperty& property = *(mat->mProperties[i]);
 		switch (property.mType)
 		{
 		case MaterialPropertyType::Type_Int:

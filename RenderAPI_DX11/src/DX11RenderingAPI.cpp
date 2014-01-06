@@ -210,29 +210,7 @@ void DX11RenderingAPI::Initialize(int windowWidth, int windowHeight)
 	DX11Mesh::SetDevice(mDX11Device->md3dDevice, mDX11Device->md3dImmediateContext);
 	BuildGeometryBuffers();
 	BuildGizmosBuffers();
-	unique_ptr<GameObject> mModelGO (new GameObject);
-	mModelGO->mName = "Dragon";
-	mModelGO->mTransform.Rotation		= Quaternion(0,45,0).ToMatrix();
-	mModelGO->mTransform.Scale			= Vector3(0.2f, 0.2f, 0.2f);
-	mModelGO->mTransform.Position		= Vector3(0.0f, 1.0f, 0.0f);
-	mModelGO->mTransform.WorldMat		= mModelGO->mTransform.WorldMatrix();
-	mModelGO->mTransform.WorldMatNoScale	= mModelGO->mTransform.WorldMatrixNoScale();
-	string modelPath = System::Instance()->mDataPath + CIniFile::GetValue("modelpath", "meshes", System::Instance()->mResourcesPath);
-	mModelGO->mDrawable.mMesh.mMaterial.resize(1);
-	LoadMaterialFromFile(mModelGO->mDrawable.mMesh.mMaterial[0], "model.mat");
-	mModelGO->mDrawable.mMesh.LoadModelFromFile(modelPath);
-	mModelGO->mDrawable.mGizmo.LoadWireBox(1,1,1, Color::Lime);
-	mModelGO->mDrawable.SetShader(DX11Effects::BasicFX);
-	mModelGO->mDrawable.SetShaderGizmo(DX11Effects::ColorFX);
-	mGameObjects.push_back(std::move(mModelGO));
 	//-----------
-	mEditorTransform = &mGameObjects[0]->mTransform;
-	mEditorName  = mGameObjects[0]->mName;
-	mEditorRot   = TwQuaternion(mEditorTransform->Rotation.z, mEditorTransform->Rotation.w, mEditorTransform->Rotation.x, mEditorTransform->Rotation.y);
-	mEditorPos   = mEditorTransform->Position;
-	mEditorScale = mEditorTransform->Scale;
-	//-----------
-
 	SetActivePointLights(3);
 	SetActiveDirLights(1);
 	SetActiveSpotLights(0);
@@ -268,10 +246,10 @@ void DX11RenderingAPI::Initialize(int windowWidth, int windowHeight)
 	TwBar *gameObjectBar = TwNewBar("GameObject");
 	TwDefine("GameObject iconified=true ");
 	TwSetParam(gameObjectBar, NULL, "size", TW_PARAM_INT32, 2, barSize);
-	TwAddVarRO(gameObjectBar, "Name",     TW_TYPE_STDSTRING, &mEditorName,  "opened=true");
-	TwAddVarRW(gameObjectBar, "Position", TW_TYPE_DIR3F,     &mEditorPos,   "opened=true");
-	TwAddVarRW(gameObjectBar, "Rotation", TW_TYPE_QUAT4F,    &mEditorRot,   "opened=true");
-	TwAddVarRW(gameObjectBar, "Scale",    TW_TYPE_DIR3F,     &mEditorScale, "opened=true");
+	TwAddVarRO(gameObjectBar, "Name",     TW_TYPE_STDSTRING, &mScene.mGameObjectEditorName,  "opened=true");
+	TwAddVarRW(gameObjectBar, "Position", TW_TYPE_DIR3F,     &mScene.mGameObjectEditorPos,   "opened=true");
+	TwAddVarRW(gameObjectBar, "Rotation", TW_TYPE_QUAT4F,    &mScene.mGameObjectEditorRot,   "opened=true");
+	TwAddVarRW(gameObjectBar, "Scale",    TW_TYPE_DIR3F,     &mScene.mGameObjectEditorScale, "opened=true");
 	//-----------
 	TwBar *camBar = TwNewBar("Camera");
 	TwDefine("Camera iconified=true ");
@@ -529,11 +507,11 @@ void DX11RenderingAPI::UpdateScene( float dt )
 {
 	//-------------------------------------
 	Transform tempTrf;
-	tempTrf.Rotation					= mEditorRot;
-	tempTrf.Scale						= mEditorScale;
-	tempTrf.Position					= mEditorPos;
-	mEditorTransform->WorldMat			= tempTrf.WorldMatrix();
-	mEditorTransform->WorldMatNoScale	= tempTrf.WorldMatrixNoScale();
+	tempTrf.Rotation									= mScene.mGameObjectEditorRot;
+	tempTrf.Scale										= mScene.mGameObjectEditorScale;
+	tempTrf.Position									= mScene.mGameObjectEditorPos;
+	mScene.mGameObjectEditorTransform->WorldMat			= tempTrf.WorldMatrix();
+	mScene.mGameObjectEditorTransform->WorldMatNoScale	= tempTrf.WorldMatrixNoScale();
 	//-------------------------------------
 
 	// Convert Spherical to Cartesian coordinates.
@@ -688,7 +666,7 @@ void DX11RenderingAPI::DrawScene()
 	{
 		// Draw the box.
 		DX11Effects::BasicFX->SetWorld(mBoxWorld);
-		DX11Effects::BasicFX->SetMaterial(mBoxMat);
+		DX11Effects::BasicFX->SetMaterial(&mBoxMat);
 
 		if (mScene.mbUseBlending)
 			mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_CullNone);
@@ -704,15 +682,28 @@ void DX11RenderingAPI::DrawScene()
 		for(int i = 0; i < 10; ++i)
 		{
 			DX11Effects::BasicFX->SetWorld(mCylWorld[i]);
-			DX11Effects::BasicFX->SetMaterial(mCylinderMat);
+			DX11Effects::BasicFX->SetMaterial(&mCylinderMat);
 
 			activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
 			mDX11Device->md3dImmediateContext->DrawIndexed(mCylinderIndexCount, mCylinderIndexOffset, mCylinderVertexOffset);
 		}
 
-		// Draw the model.
-		//mModelGO.mDrawable.Render(activeTech->GetPassByIndex(p));
-		mGameObjects[0]->mDrawable.Render(activeTech->GetPassByIndex(p));
+		// Draw the opaque geometry
+		for(const unique_ptr<GameObject>& gameobject : mScene.mGameObjects)
+		{
+			if (gameobject->mDrawable.mMesh)
+				gameobject->mDrawable.Render(activeTech->GetPassByIndex(p));
+		}
+		// Draw the transparent geometry
+		for(const unique_ptr<GameObject>& gameobject_transparent : mScene.mGameObjects)
+		{
+			if (gameobject_transparent->mDrawable.mMesh)
+				gameobject_transparent->mDrawable.Render(activeTech->GetPassByIndex(p), false);
+		}
+
+		// Restore default render states
+		mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sCurrentRasterizerState);
+		mDX11Device->md3dImmediateContext->OMSetBlendState(0, blendFactor, 0xffffffff);
 
 		mDX11Device->md3dImmediateContext->IASetVertexBuffers(0, 1, &mVertexBuffer, &stride, &offset);
 		mDX11Device->md3dImmediateContext->IASetIndexBuffer(mIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
@@ -721,7 +712,7 @@ void DX11RenderingAPI::DrawScene()
 		for(int i = 0; i < 10; ++i)
 		{
 			DX11Effects::BasicFX->SetWorld(mSphereWorld[i]);
-			DX11Effects::BasicFX->SetMaterial(mSphereMat);
+			DX11Effects::BasicFX->SetMaterial(&mSphereMat);
 
 			if (mScene.mbUseBlending)
 				mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_CullNone);
@@ -738,7 +729,7 @@ void DX11RenderingAPI::DrawScene()
 		
 		// Draw the grid.
 		RJE_CHECK_FOR_SUCCESS(DX11Effects::BasicFX->SetWorld(mGridWorld));
-		RJE_CHECK_FOR_SUCCESS(DX11Effects::BasicFX->SetMaterial(mGridMat));
+		RJE_CHECK_FOR_SUCCESS(DX11Effects::BasicFX->SetMaterial(&mGridMat));
 
 		// if we're in wireframe then we don't need to render the reflections
 		if (mScene.mbWireframe || !mScene.mbDrawReflections )
@@ -797,7 +788,7 @@ void DX11RenderingAPI::DrawScene()
 
 			// Draw the box.
 			DX11Effects::BasicFX->SetWorld(mBoxWorld * reflectionMatrix);
-			DX11Effects::BasicFX->SetMaterial(mBoxMat);
+			DX11Effects::BasicFX->SetMaterial(&mBoxMat);
 
 			// Cull clockwise triangles for reflection.
 			if (mScene.mbUseBlending)
@@ -816,7 +807,7 @@ void DX11RenderingAPI::DrawScene()
 			for(int i = 0; i < 10; ++i)
 			{
 				DX11Effects::BasicFX->SetWorld(mCylWorld[i] * reflectionMatrix);
-				DX11Effects::BasicFX->SetMaterial(mCylinderMat);
+				DX11Effects::BasicFX->SetMaterial(&mCylinderMat);
 
 				// Only draw reflection into visible mirror pixels as marked by the stencil buffer. 
 				mDX11Device->md3dImmediateContext->OMSetDepthStencilState(DX11CommonStates::sDepthStencilState_DrawStenciled, 1);
@@ -833,7 +824,7 @@ void DX11RenderingAPI::DrawScene()
 			for(int i = 0; i < 10; ++i)
 			{
 				DX11Effects::BasicFX->SetWorld(mSphereWorld[i] * reflectionMatrix);
-				DX11Effects::BasicFX->SetMaterial(mSphereMat);
+				DX11Effects::BasicFX->SetMaterial(&mSphereMat);
 
 				mDX11Device->md3dImmediateContext->OMSetBlendState(DX11CommonStates::sCurrentBlendState, blendFactor, 0xffffffff);
 				activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
@@ -848,12 +839,12 @@ void DX11RenderingAPI::DrawScene()
 			// Only draw reflection into visible mirror pixels as marked by the stencil buffer. 
 			// Draw the model reflection
 			mDX11Device->md3dImmediateContext->OMSetDepthStencilState(DX11CommonStates::sDepthStencilState_DrawStenciled, 1);
-// 			mModelGO.mTransform.WorldMat *= reflectionMatrix;
-// 			mModelGO.mDrawable.Render(activeTech->GetPassByIndex(p));
-// 			mModelGO.mTransform.WorldMat *= reflectionMatrix;
-			mGameObjects[0]->mTransform.WorldMat *= reflectionMatrix;
-			mGameObjects[0]->mDrawable.Render(activeTech->GetPassByIndex(p));
-			mGameObjects[0]->mTransform.WorldMat *= reflectionMatrix;
+			if (mScene.mGameObjects[0]->mDrawable.mMesh)
+			{
+				mScene.mGameObjects[0]->mTransform.WorldMat *= reflectionMatrix;
+				mScene.mGameObjects[0]->mDrawable.Render(activeTech->GetPassByIndex(p));
+				mScene.mGameObjects[0]->mTransform.WorldMat *= reflectionMatrix;
+			}
 
 			mDX11Device->md3dImmediateContext->IASetVertexBuffers(0, 1, &mVertexBuffer, &stride, &offset);
 			mDX11Device->md3dImmediateContext->IASetIndexBuffer(mIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
@@ -887,7 +878,7 @@ void DX11RenderingAPI::DrawScene()
 			// Draw the mirror to the back buffer as usual but with transparency
 			// blending so the reflection shows through.
 			DX11Effects::BasicFX->SetWorld(mGridWorld);
-			DX11Effects::BasicFX->SetMaterial(mGridMat);
+			DX11Effects::BasicFX->SetMaterial(&mGridMat);
 
 			mDX11Device->md3dImmediateContext->OMSetBlendState(DX11CommonStates::sBlendState_Transparent, blendFactor, 0xffffffff);
 			activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
@@ -951,11 +942,14 @@ void DX11RenderingAPI::DrawGizmos()
 	// Set constants
 	Matrix44 view     = mCamera->mView;
 	Matrix44 proj     = *(mCamera->mCurrentProjectionMatrix);
-
 	DX11Effects::ColorFX->SetViewProj(view*proj);
 	
-	//mModelGO.mDrawable.RenderGizmo(DX11Effects::ColorFX->ColorTech->GetPassByIndex(0));
-	mGameObjects[0]->mDrawable.RenderGizmo(DX11Effects::ColorFX->ColorTech->GetPassByIndex(0));
+	// Draw the gizmo geometry
+	for(const unique_ptr<GameObject>& gizmo : mScene.mGameObjects)
+	{
+		if (gizmo->mDrawable.mGizmo)
+			gizmo->mDrawable.RenderGizmo(DX11Effects::ColorFX->ColorTech->GetPassByIndex(0));
+	}
 
 	mDX11Device->md3dImmediateContext->IASetVertexBuffers(0, 1, &mVertexBuffer_Gizmo, &stride, &offset);
 	mDX11Device->md3dImmediateContext->IASetIndexBuffer(mIndexBuffer_Gizmo, DXGI_FORMAT_R32_UINT, 0);

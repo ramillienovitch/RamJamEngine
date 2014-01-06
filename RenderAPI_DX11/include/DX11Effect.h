@@ -40,7 +40,7 @@ public:
 	HRESULT SetPointLights(ID3D11ShaderResourceView* lights) { return PointLights->SetResource(lights); }
 	HRESULT SetSpotLights(ID3D11ShaderResourceView* lights)  { return SpotLights->SetResource(lights); }
 	HRESULT SetSamplerState(ID3D11SamplerState* pSampler)    { return TextureSampler->SetSampler(0, pSampler); }
-	HRESULT SetMaterial(Material& mat);
+	HRESULT SetMaterial(Material* mat);
 	
 	//-------------------------------------------
 

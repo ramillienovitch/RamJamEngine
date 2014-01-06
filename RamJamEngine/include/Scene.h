@@ -4,14 +4,24 @@
 #include "SceneLoader.h"
 #include "Transform.h"
 #include "Color.h"
+#include "GameObject.h"
 
 using namespace RJE_COLOR;
 
 //////////////////////////////////////////////////////////////////////////
 struct Scene
 {
-	std::set<Transform>		mGameObjects;
 	SceneLoader				mSceneLoader;
+	std::vector<unique_ptr<GameObject>> mGameObjects;
+	
+	//-----------------------------------------------
+	// Editor Values
+	Transform*		mGameObjectEditorTransform;
+	std::string		mGameObjectEditorName;
+	Vector3			mGameObjectEditorPos;
+	Vector3			mGameObjectEditorScale;
+	TwQuaternion	mGameObjectEditorRot;
+	//-----------------------------------------------
 
 	//-----------------------------------------------
 	// Scene parameters

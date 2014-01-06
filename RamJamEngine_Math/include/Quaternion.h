@@ -83,8 +83,9 @@ struct TwQuaternion
 {
 	float q[4];
 	//-----------
-	TwQuaternion() { q[0] = 0.0f; q[1] = 0.0f; q[2] = 0.0f; q[3] = 1.0f; }
-	TwQuaternion(float q0, float q1, float q2, float q3) { q[0] = q0; q[1] = q1; q[2] = q2; q[3] = q3;}
+	TwQuaternion()											{ q[0] = 0.0f; q[1] = 0.0f; q[2] = 0.0f; q[3] = 1.0f; }
+	TwQuaternion(float q0, float q1, float q2, float q3)	{ q[0] = q0; q[1] = q1; q[2] = q2; q[3] = q3;}
+	TwQuaternion(Quaternion quat)							{ q[0] = quat.z; q[1] = quat.w; q[2] = quat.x; q[3] = quat.y; }
 	operator Quaternion() { return Quaternion(q[3], q[0], q[1], -q[2]); }
 	Matrix44 ToMatrix() {Quaternion quat = *this; return quat.ToMatrix();}
 };

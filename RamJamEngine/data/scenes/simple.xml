@@ -1,55 +1,55 @@
 <?xml version="1.0"?>
 
-<SCENE>
-	<PRIMITIVES>
-		<SOLID>
-			<CUBE>
-				<TRANSFORM>
-					<POSITION X="5" Y="10" Z="0"></POSITION>
-					<ROTATION X="0" Y="0" Z="0"></ROTATION>
-					<SCALE X="1" Y="1" Z="1"></SCALE>
-				</TRANSFORM>
-			</CUBE>
-		</SOLID>
-		<WIRE>
-			<SPHERE>
-				<TRANSFORM>
-					<POSITION X="5" Y="10" Z="0"></POSITION>
-					<ROTATION X="0" Y="0" Z="0"></ROTATION>
-					<SCALE X="1" Y="1" Z="1"></SCALE>
-				</TRANSFORM>
-			</SPHERE>
-		</WIRE>
-	</PRIMITIVES>
-	<MESHES>
-		<NAME>dragon.mesh</NAME>
-		<TRANSFORM>
-			<POSITION X="0" Y="5" Z="0"></POSITION>
-			<ROTATION X="0" Y="0" Z="0"></ROTATION>
-			<SCALE X="1" Y="1" Z="1"></SCALE>
-		</TRANSFORM>
-	</MESHES>
-	<LIGHTS>
-		<DIR>
-			<AMBIENT></AMBIENT>
-			<DIFFUSE></DIFFUSE>
-			<SPECULAR></SPECULAR>
-			<DIRECTION></DIRECTION>
-		</DIR>
-		<POINT>
-			<AMBIENT></AMBIENT>
-			<DIFFUSE></DIFFUSE>
-			<SPECULAR></SPECULAR>
-			<POSITION></POSITION>
-			<ATTENUATION></ATTENUATION>
-		</POINT>
-		<SPOT>
-			<AMBIENT></AMBIENT>
-			<DIFFUSE></DIFFUSE>
-			<SPECULAR></SPECULAR>
-			<POSITION></POSITION>
-			<DIRECTION></DIRECTION>
-			<ATTENUATION></ATTENUATION>
-		</SPOT>
-	</LIGHTS>
-</SCENE>
+<scene>
+	<primitives>
+		<solid>
+			<cube>
+				<transform>
+					<position x="5" y="10" z="0"></position>
+					<rotation x="0" y="0" z="0"></rotation>
+					<scale x="1" y="1" z="1"></scale>
+				</transform>
+			</cube>
+		</solid>
+		<wire>
+			<sphere>
+				<transform>
+					<position x="5" y="10" z="0"></position>
+					<rotation x="0" y="0" z="0"></rotation>
+					<scale x="1" y="1" z="1"></scale>
+				</transform>
+			</sphere>
+		</wire>
+	</primitives>
+	<meshes>
+		<name>dragon.mesh</name>
+		<transform>
+			<position x="0" y="5" z="0"></position>
+			<rotation x="0" y="0" z="0"></rotation>
+			<scale x="1" y="1" z="1"></scale>
+		</transform>
+	</meshes>
+	<lights>
+		<dir>
+			<ambient></ambient>
+			<diffuse></diffuse>
+			<specular></specular>
+			<direction></direction>
+		</dir>
+		<point>
+			<ambient></ambient>
+			<diffuse></diffuse>
+			<specular></specular>
+			<position></position>
+			<attenuation></attenuation>
+		</point>
+		<spot>
+			<ambient></ambient>
+			<diffuse></diffuse>
+			<specular></specular>
+			<position></position>
+			<direction></direction>
+			<attenuation></attenuation>
+		</spot>
+	</lights>
+</scene>

@@ -17,7 +17,7 @@ struct Mesh
 
 	u32 mSubsetCount;
 
-	std::vector<Material> mMaterial;
+	std::vector<unique_ptr<Material>> mMaterial;
 
 	MeshData::RJE_InputLayout			mInputLayout;
 	MeshData::RJE_PrimitiveTopology		mPrimitiveTopology;

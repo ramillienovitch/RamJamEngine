@@ -8,11 +8,11 @@ struct DX11Drawable
 	DX11Drawable();
 	~DX11Drawable();
 	//-----------------
-	// These are just pointers to the GameObject Trf
+	// This is just a pointer to the GameObject Transform
 	Transform*		mTransform;
 	//------
-	DX11Mesh		mMesh;
-	DX11Mesh		mGizmo;
+	DX11Mesh*		mMesh;
+	DX11Mesh*		mGizmo;
 	//------
 	Color			mGizmoColor;
 	//------
@@ -22,6 +22,6 @@ struct DX11Drawable
 	static void SetShader(BasicEffect* shader);
 	static void SetShaderGizmo(ColorEffect* shader);
 	//------
-	void Render(ID3DX11EffectPass* shaderPass);
+	void Render(ID3DX11EffectPass* shaderPass, BOOL bDrawOpaque = true);
 	void RenderGizmo(ID3DX11EffectPass* shaderPass);
 };
