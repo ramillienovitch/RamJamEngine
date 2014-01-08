@@ -69,7 +69,7 @@ VertexOut VS(VertexIn vin)
 	
 	// Transform to world space space.
 	vout.PosW    = mul(float4(vin.PosL, 1.0f), gWorld).xyz;
-	vout.NormalW = vin.NormalL;		//mul(vin.NormalL, (float3x3)gWorldInvTranspose);
+	vout.NormalW = mul(vin.NormalL, (float3x3)gWorld);		// Non-uniform scaling needs inverseTranspose !! i.e. mul(vin.NormalL, (float3x3)gWorldInvTranspose);
 	vout.TanW    = mul(vin.TanL, (float3x3)gWorld);
 		
 	// Transform to homogeneous clip space.

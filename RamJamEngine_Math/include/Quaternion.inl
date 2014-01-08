@@ -33,6 +33,13 @@ Quaternion_T<Real>::Quaternion_T(Real pitch, Real yaw, Real roll)
 
 //-----------------------------
 template<typename Real>
+Quaternion_T<Real>::Quaternion_T(Vector3_T<Real> pitchYawRoll)
+{
+	(*this) = Quaternion_T(pitchYawRoll.x, pitchYawRoll.y, pitchYawRoll.z);
+}
+
+//-----------------------------
+template<typename Real>
 Quaternion_T<Real>::Quaternion_T(Vector3_T<Real> axis, Real degrees)
 {
 	axis.Normalize();

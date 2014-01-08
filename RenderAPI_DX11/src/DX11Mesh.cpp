@@ -207,7 +207,7 @@ void DX11Mesh::LoadCylinder(float bottomRadius, float topRadius, float height, u
 	MeshData::Data<PosNormTanTex> cylinder;
 	GeometryGenerator geoGen;
 
-	geoGen.CreateCylinder(bottomRadius, topRadius, bottomRadius, sliceCount, stackCount, cylinder);
+	geoGen.CreateCylinder(bottomRadius, topRadius, height, sliceCount, stackCount, cylinder);
 	LoadPrimitive(cylinder);
 }
 

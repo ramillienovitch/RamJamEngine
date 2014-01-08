@@ -1,55 +1,68 @@
 <?xml version="1.0"?>
 
 <scene>
-	<primitives>
-		<solid>
-			<cube>
-				<transform>
-					<position x="5" y="10" z="0"></position>
-					<rotation x="0" y="0" z="0"></rotation>
-					<scale x="1" y="1" z="1"></scale>
-				</transform>
-			</cube>
-		</solid>
-		<wire>
-			<sphere>
-				<transform>
-					<position x="5" y="10" z="0"></position>
-					<rotation x="0" y="0" z="0"></rotation>
-					<scale x="1" y="1" z="1"></scale>
-				</transform>
-			</sphere>
-		</wire>
-	</primitives>
-	<meshes>
-		<name>dragon.mesh</name>
+	<gameobject>
+		<name>dragon</name>
 		<transform>
-			<position x="0" y="5" z="0"></position>
-			<rotation x="0" y="0" z="0"></rotation>
-			<scale x="1" y="1" z="1"></scale>
+			<position x="0" y="1" z="0"/>
+			<rotation x="0" y="45" z="0"/>
+			<scale    x="0.2" y="0.2" z="0.2"/>
 		</transform>
-	</meshes>
-	<lights>
-		<dir>
-			<ambient></ambient>
-			<diffuse></diffuse>
-			<specular></specular>
-			<direction></direction>
-		</dir>
-		<point>
-			<ambient></ambient>
-			<diffuse></diffuse>
-			<specular></specular>
-			<position></position>
-			<attenuation></attenuation>
-		</point>
-		<spot>
-			<ambient></ambient>
-			<diffuse></diffuse>
-			<specular></specular>
-			<position></position>
-			<direction></direction>
-			<attenuation></attenuation>
-		</spot>
-	</lights>
+		<mesh>
+			<file>dragon.mesh</file>
+			<material>model.mat</material>
+		</mesh>
+	</gameobject>
+	<gameobject>
+		<name>grid</name>
+		<transform>
+			<position x="0" y="0" z="0"/>
+			<rotation x="0" y="0" z="0"/>
+			<scale    x="1" y="1" z="1"/>
+		</transform>
+		<mesh>
+			<primitive>grid</primitive>
+			<parameters width="100" depth="100" rows="2" columns="2"/>
+			<material>grid.mat</material>
+		</mesh>
+	</gameobject>
+	<gameobject>
+		<name>cylinder</name>
+		<transform>
+			<position x="5" y="0" z="5"/>
+			<rotation x="0" y="0" z="0"/>
+			<scale    x="1" y="1" z="1"/>
+		</transform>
+		<mesh>
+			<primitive>cylinder</primitive>
+			<parameters bottomRadius="0.5" topRadius="0.3" height="3" slices="20" stacks="20"/>
+			<material>cylinder.mat</material>
+		</mesh>
+	</gameobject>
+	<gameobject>
+		<name>box</name>
+		<transform>
+			<position x="-5" y="0" z="5"/>
+			<rotation x="0" y="0" z="0"/>
+			<scale    x="1" y="1" z="1"/>
+		</transform>
+		<mesh>
+			<primitive>box</primitive>
+			<parameters width="1" height="1" depth="1"/>
+			<material>box.mat</material>
+		</mesh>
+	</gameobject>
+	<gameobject>
+		<name>geosphere</name>
+		<transform>
+			<position x="-5" y="0" z="-5"/>
+			<rotation x="0" y="0" z="0"/>
+			<scale    x="1" y="1" z="1"/>
+		</transform>
+		<mesh>
+			<primitive>geosphere</primitive>
+			<parameters radius="0.5" subdiv="3"/>
+			<material>sphere.mat</material>
+		</mesh>
+	</gameobject>
 </scene>

@@ -607,10 +607,10 @@ void DX11SpriteBatch::BuildSpriteQuad(const Sprite& sprite, MeshData::SpriteVert
 	v[2].tex = Vector2((float)src.right / mTexWidth, (float)src.top    / mTexHeight); 
 	v[3].tex = Vector2((float)src.right / mTexWidth, (float)src.bottom / mTexHeight); 
 
-	v[0].color = (ARGB)sprite.Color;
-	v[1].color = (ARGB)sprite.Color;
-	v[2].color = (ARGB)sprite.Color;
-	v[3].color = (ARGB)sprite.Color;
+	v[0].color = (u32)sprite.Color;
+	v[1].color = (u32)sprite.Color;
+	v[2].color = (u32)sprite.Color;
+	v[3].color = (u32)sprite.Color;
 
 	// Quad center point.
 	float tx = 0.5f*(v[0].pos.x + v[3].pos.x);

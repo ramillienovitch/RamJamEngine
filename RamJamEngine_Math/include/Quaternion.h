@@ -34,6 +34,7 @@ struct Quaternion_T
 	Quaternion_T(Real w, Real x, Real y, Real z) { Set(w,x,y,z); }
 	Quaternion_T(const Quaternion_T& q)          { Set(q.w, q.x, q.y, q.z); }
 	Quaternion_T(Real pitch, Real yaw, Real roll);
+	Quaternion_T(Vector3_T<Real> pitchYawRoll);
 	Quaternion_T(Vector3_T<Real> axis, Real angle);
 	Quaternion_T(Matrix44_T<Real>& rotation);
 

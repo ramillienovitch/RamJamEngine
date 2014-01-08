@@ -8,10 +8,12 @@
 struct GameObject
 {
 	std::string		mName;
+	Transform		mTransform;
 
-	Transform	mTransform;
 #if (RJE_GRAPHIC_API == DIRECTX_11)
 	DX11Drawable	mDrawable;
+#else
+	OglDrawable		mDrawable;
 #endif
 
 	GameObject();

@@ -1,41 +1,32 @@
 #pragma once
 
-typedef DWORD		ARGB;
-typedef DWORDLONG	ARGB64;
-
-#define ALPHA_SHIFT 24
-#define RED_SHIFT   16
-#define GREEN_SHIFT 8
-#define BLUE_SHIFT  0
-#define ALPHA_MASK  ((ARGB) 0xff << ALPHA_SHIFT)
-
 //////////////////////////////////////////////////////////////////////////
 namespace RJE_COLOR
 {
 	struct Color
 	{
-		ARGB Argb;
+		u32 Argb;
 
-		Color() : Argb((ARGB)Color::Black)					{}
-		Color(IN BYTE r, IN BYTE g, IN BYTE b)				{Argb = MakeARGB(255, r, g, b);}
-		Color(IN BYTE a, IN BYTE r, IN BYTE g, IN BYTE b)	{Argb = MakeARGB(a, r, g, b);}
-		Color(IN ARGB argb)									{Argb = argb;}
+		Color() : Argb((u32)Color::Black)			{}
+		Color(IN u8 r, IN u8 g, IN u8 b)			{Argb = MakeARGB(255, r, g, b);}
+		Color(IN u8 a, IN u8 r, IN u8 g, IN u8 b)	{Argb = MakeARGB(a, r, g, b);}
+		Color(IN u32 argb)							{Argb = argb;}
 		//-----------------
-		BYTE GetAlpha() const		{ return (BYTE) (Argb >> AlphaShift); }
+		u8 GetAlpha() const		{ return (u8) (Argb >> AlphaShift); }
 		f32  GetAlphaNorm() const	{ return GetAlpha()/255.0f; }
 		//-----------------
-		BYTE GetRed() const			{ return (BYTE) (Argb >> RedShift); }
+		u8 GetRed() const			{ return (u8) (Argb >> RedShift); }
 		f32  GetRedNorm() const		{ return GetRed()/255.0f; }
 		//-----------------
-		BYTE GetGreen() const		{ return (BYTE) (Argb >> GreenShift); }
+		u8 GetGreen() const		{ return (u8) (Argb >> GreenShift); }
 		f32  GetGreenNorm() const	{ return GetGreen()/255.0f; }
 		//-----------------
-		BYTE GetBlue() const		{ return (BYTE) (Argb >> BlueShift); }
+		u8 GetBlue() const		{ return (u8) (Argb >> BlueShift); }
 		f32  GetBlueNorm() const	{ return GetBlue()/255.0f; }
 		//-----------------
-		ARGB GetValue() const		{ return Argb; }
+		u32 GetValue() const		{ return Argb; }
 		//-----------------
-		void SetValue(IN ARGB argb)	{ Argb = argb; }
+		void SetValue(IN u32 argb)	{ Argb = argb; }
 		//-----------------
 		Vector4 GetVector4RGBA()		{ return Vector4(GetRed(), GetGreen(), GetBlue(), GetAlpha()); }
 		Vector4 GetVector4ARGB()		{ return Vector4(GetAlpha(), GetRed(), GetGreen(), GetBlue()); }
@@ -212,9 +203,9 @@ namespace RJE_COLOR
 		};
 
 		// Assemble A, R, G, B values into a 32-bit integer
-		static ARGB MakeARGB(IN BYTE a, IN BYTE r, IN BYTE g, IN BYTE b)
+		static u32 MakeARGB(IN u8 a, IN u8 r, IN u8 g, IN u8 b)
 		{
-			return (((ARGB) (b) <<  BlueShift) | ((ARGB) (g) << GreenShift) | ((ARGB) (r) << RedShift) | ((ARGB) (a) << AlphaShift));
+			return (((u32) (b) <<  BlueShift) | ((u32) (g) << GreenShift) | ((u32) (r) << RedShift) | ((u32) (a) << AlphaShift));
 		}
 	};
 }

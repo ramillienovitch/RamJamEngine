@@ -21,6 +21,7 @@ struct Scene
 	Vector3			mGameObjectEditorPos;
 	Vector3			mGameObjectEditorScale;
 	TwQuaternion	mGameObjectEditorRot;
+	Color			mGameObjectEditorColor;
 	//-----------------------------------------------
 
 	//-----------------------------------------------
@@ -28,7 +29,6 @@ struct Scene
 	Vector4	mFogColor;
 	float	mFogStart;
 	float	mFogRange;
-	BOOL	mbDrawReflections;
 	BOOL	mbUseTexture;
 	BOOL	mbUseBlending;
 	BOOL	mbUseFog;
@@ -37,5 +37,4 @@ struct Scene
 	
 	Scene();
 	void LoadFromFile(const char* pFile);
-	void ExtractGameObjects();
 };

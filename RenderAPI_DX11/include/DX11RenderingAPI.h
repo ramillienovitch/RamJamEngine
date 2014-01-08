@@ -40,12 +40,6 @@ struct DX11RenderingAPI : GraphicAPI
 
 	//////////////////////////////////////////////////////////////////////////
 
-	ID3D11Buffer*	mVertexBuffer;
-	ID3D11Buffer*	mIndexBuffer;
-
-	ID3D11Buffer*	mVertexBuffer_Gizmo;
-	ID3D11Buffer*	mIndexBuffer_Gizmo;
-
 	ID3D11ShaderResourceView* mRjeLogo;
 
 	enum LightMode
@@ -62,56 +56,13 @@ struct DX11RenderingAPI : GraphicAPI
 	DirectionalLight				mWorkingDirLights[MAX_LIGHTS];
 	PointLight						mWorkingPointLights[MAX_LIGHTS];
 	SpotLight						mWorkingSpotLights[MAX_LIGHTS];
-	DirectionalLight				mOldDirLights[MAX_LIGHTS];		// Used for reflections
-	PointLight						mOldPointLights[MAX_LIGHTS];
 	u32 mDirLightCount;
 	u32 mPointLightCount;
 	u32 mSpotLightCount;
 
-	Material mBoxMat;
-	Material mGridMat;
-	Material mCylinderMat;
-	Material mSphereMat;
-	Material mModelMat;
-	
-	Matrix44 mBoxWorld;
-	Matrix44 mGridWorld;
-	Matrix44 mSphereWorld[10];
-	Matrix44 mCylWorld[10];
-	//---------------
-
 	Matrix44 mView;
 	Matrix44 mProj;
 
-	//---------------
-	int mBoxVertexOffset;
-	int mGridVertexOffset;
-	int mSphereVertexOffset;
-	int mCylinderVertexOffset;
-	int mModelVertexOffset;
-
-	u32 mBoxIndexOffset;
-	u32 mGridIndexOffset;
-	u32 mSphereIndexOffset;
-	u32 mCylinderIndexOffset;
-	u32 mModelIndexOffset;
-
-	u32 mBoxIndexCount;
-	u32 mGridIndexCount;
-	u32 mSphereIndexCount;
-	u32 mCylinderIndexCount;
-	u32 mModelIndexCount;
-	//---------------
-
-	//---------------
-	Matrix44 mWireBoxWorld;
-	Matrix44 mAxisWorld;
-	int  mWireBoxVertexOffset;
-	int  mAxisVertexOffset;
-	u32 mWireBoxIndexCount;
-	u32 mAxisIndexCount;
-	u32 mWireBoxIndexOffset;
-	u32 mAxisIndexOffset;
 	//---------------
 
 	float mBlendFactorR;
@@ -140,9 +91,6 @@ struct DX11RenderingAPI : GraphicAPI
 	void InitSwapChain(u32 msaaSamples = 4);
 	void ResizeWindow();
 	//---------------
-	void BuildGeometryBuffers();
-	void BuildGizmosBuffers();
-	//---------------
 	void DrawGizmos();
 	void DrawConsole();
 	void DrawProfiler();
@@ -151,8 +99,6 @@ struct DX11RenderingAPI : GraphicAPI
 	void SetActiveDirLights(u32 activeLights);
 	void SetActivePointLights(u32 activeLights);
 	void SetActiveSpotLights(u32 activeLights);
-	//---------------
-	void LoadMaterialFromFile(Material& material, std::string materialFile);
 };
 
 //////////////////////////////////////////////////////////////////////////

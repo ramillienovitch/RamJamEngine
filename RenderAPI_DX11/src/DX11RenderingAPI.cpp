@@ -20,12 +20,7 @@ DX11RenderingAPI::DX11RenderingAPI(Scene& scene) : mScene(scene)
 	mProfilerFont = nullptr;
 	mSpriteBatch  = nullptr;
 	//-----------
-	mVertexBuffer = nullptr;
-	mIndexBuffer  = nullptr;
-	mVertexBuffer_Gizmo = nullptr;
-	mIndexBuffer_Gizmo  = nullptr;
-	//-----------
-	mRjeLogo           = nullptr;
+	mRjeLogo = nullptr;
 	//-----------
 	mEyePosW = Vector3::zero;
 	//-----------
@@ -35,27 +30,6 @@ DX11RenderingAPI::DX11RenderingAPI(Scene& scene) : mScene(scene)
 	mBlendFactorA = 1.0f;
 	//-----------
 	
-	// Meshes transforms
-	mGridWorld = Matrix44::identity;
-	Transform tempTrf;
-// 	tempTrf.Rotation	= Quaternion(45,45,45).ToMatrix();
-// 	tempTrf.Scale		= Vector3(2.5f, 5.0f, 0.5f);
-	tempTrf.Position	= Vector3(0.0f, 5.0f, 0.0f);
-	mWireBoxWorld		= mAxisWorld = tempTrf.WorldMatrix();
-	//-------
-	tempTrf.Scale		= Vector3(2.0f, 1.0f, 2.0f);
-	tempTrf.Position	= Vector3(0.0f, 0.51f, 0.0f);		//0.51 to avoid z-fight occurring with 0.5
-	mBoxWorld			= tempTrf.WorldMatrix();
-	//-------
-	for(int i = 0; i < 5; ++i)
-	{
-		mCylWorld[i*2+0] = Matrix44::Translation(-5.0f, 1.5f, -10.0f + i*5.0f);
-		mCylWorld[i*2+1] = Matrix44::Translation(+5.0f, 1.5f, -10.0f + i*5.0f);
-		//-------
-		mSphereWorld[i*2+0] = Matrix44::Translation(-5.0f, 3.5f, -10.0f + i*5.0f);
-		mSphereWorld[i*2+1] = Matrix44::Translation(+5.0f, 3.5f, -10.0f + i*5.0f);
-	}
-
 	// Light Specs
 	mLightMode = LightMode::Point;
 	mDirLights   = nullptr;
@@ -200,16 +174,9 @@ void DX11RenderingAPI::Initialize(int windowWidth, int windowHeight)
 	DX11TextureManager::Instance()->Create2DTextureFixedColor(1, RJE_COLOR::Color::TransDarkGray, "_transparentGray");
 	DX11TextureManager::Instance()->Create2DTextureFixedColor(1, RJE_COLOR::Color::White,         "_default");
 	//----------
-	// Material Specs
-	LoadMaterialFromFile(mGridMat,     "grid.mat");
-	LoadMaterialFromFile(mCylinderMat, "cylinder.mat");
-	LoadMaterialFromFile(mSphereMat,   "sphere.mat");
-	LoadMaterialFromFile(mBoxMat,      "box.mat");
-	LoadMaterialFromFile(mModelMat,    "model.mat");
-	//----------
 	DX11Mesh::SetDevice(mDX11Device->md3dDevice, mDX11Device->md3dImmediateContext);
-	BuildGeometryBuffers();
-	BuildGizmosBuffers();
+	DX11Drawable::SetShader(DX11Effects::BasicFX);
+	DX11Drawable::SetShaderGizmo(DX11Effects::ColorFX);
 	//-----------
 	SetActivePointLights(3);
 	SetActiveDirLights(1);
@@ -227,7 +194,6 @@ void DX11RenderingAPI::Initialize(int windowWidth, int windowHeight)
 	TwSetParam(bar, NULL, "size", TW_PARAM_INT32, 2, barSize);
 	TwAddVarRW(bar, "V-Sync Enabled", TW_TYPE_BOOLCPP, &VSyncEnabled, NULL);
 	TwAddSeparator(bar, NULL, NULL);
-	TwAddVarRW(bar, "Draw Reflections", TW_TYPE_BOOLCPP, &mScene.mbDrawReflections, NULL);
 	TwAddVarRW(bar, "Use Texture",      TW_TYPE_BOOLCPP, &mScene.mbUseTexture, NULL);
 	TwAddVarRW(bar, "Use Blending",     TW_TYPE_BOOLCPP, &mScene.mbUseBlending, NULL);
 	TwAddSeparator(bar, NULL, NULL);
@@ -245,11 +211,12 @@ void DX11RenderingAPI::Initialize(int windowWidth, int windowHeight)
 	//-----------
 	TwBar *gameObjectBar = TwNewBar("GameObject");
 	TwDefine("GameObject iconified=true ");
-	TwSetParam(gameObjectBar, NULL, "size", TW_PARAM_INT32, 2, barSize);
-	TwAddVarRO(gameObjectBar, "Name",     TW_TYPE_STDSTRING, &mScene.mGameObjectEditorName,  "opened=true");
-	TwAddVarRW(gameObjectBar, "Position", TW_TYPE_DIR3F,     &mScene.mGameObjectEditorPos,   "opened=true");
-	TwAddVarRW(gameObjectBar, "Rotation", TW_TYPE_QUAT4F,    &mScene.mGameObjectEditorRot,   "opened=true");
-	TwAddVarRW(gameObjectBar, "Scale",    TW_TYPE_DIR3F,     &mScene.mGameObjectEditorScale, "opened=true");
+	TwSetParam(gameObjectBar, NULL, "size",  TW_PARAM_INT32, 2, barSize);
+	TwAddVarRO(gameObjectBar, "Name",        TW_TYPE_STDSTRING, &mScene.mGameObjectEditorName,  "opened=true");
+	TwAddVarRW(gameObjectBar, "Position",    TW_TYPE_DIR3F,     &mScene.mGameObjectEditorPos,   "opened=true");
+	TwAddVarRW(gameObjectBar, "Rotation",    TW_TYPE_QUAT4F,    &mScene.mGameObjectEditorRot,   "opened=true");
+	TwAddVarRW(gameObjectBar, "Scale",       TW_TYPE_DIR3F,     &mScene.mGameObjectEditorScale, "opened=true");
+	TwAddVarRW(gameObjectBar, "Gizmo Color", TW_TYPE_COLOR32,   &mScene.mGameObjectEditorColor, "opened=true colorOrder=argb");
 	//-----------
 	TwBar *camBar = TwNewBar("Camera");
 	TwDefine("Camera iconified=true ");
@@ -306,203 +273,6 @@ void DX11RenderingAPI::InitSwapChain(u32 msaaSamples)
 }
 
 //////////////////////////////////////////////////////////////////////////
-void DX11RenderingAPI::BuildGeometryBuffers()
-{
-	FILE* fIn;
-	string modelPath = System::Instance()->mDataPath + CIniFile::GetValue("modelpath", "meshes", System::Instance()->mResourcesPath);
-	fopen_s(&fIn, modelPath.c_str(), "rb");
-
-	if(!fIn)
-	{
-		RJE_MESSAGE_BOX(0, L"dragon.mesh not found.", 0, 0);
-		return;
-	}
-
-	u32 modelVertexCount = 0;
-	u32 modelTriangleCount = 0;
-
-	fread(&modelVertexCount,   sizeof(u32), 1, fIn);
-	fread(&modelTriangleCount, sizeof(u32), 1, fIn);
-
-	mModelIndexCount = 3*modelTriangleCount;
-
-	MeshData::Data<PosNormTanTex> box;
-	MeshData::Data<PosNormTanTex> grid;
-	MeshData::Data<PosNormTanTex> sphere;
-	MeshData::Data<PosNormTanTex> cylinder;
-
-	GeometryGenerator geoGen;
-	geoGen.CreateBox(1.0f, 1.0f, 1.0f, box);
-	geoGen.CreateGrid(100.0f, 100.0f, 2, 2, grid);
-	//geoGen.CreateSphere(0.5f, 20, 20, sphere);
-	geoGen.CreateGeosphere(0.5f, 3, sphere);
-	geoGen.CreateCylinder(0.5f, 0.3f, 3.0f, 20, 20, cylinder);
-
-	// Cache the vertex offsets to each object in the concatenated vertex buffer.
-	mBoxVertexOffset      = 0;
-	mGridVertexOffset     = (int) box.Vertices.size();
-	mSphereVertexOffset   = (int) (mGridVertexOffset + grid.Vertices.size());
-	mCylinderVertexOffset = (int) (mSphereVertexOffset + sphere.Vertices.size());
-	mModelVertexOffset    = (int) (mCylinderVertexOffset + cylinder.Vertices.size());
-
-	// Cache the index count of each object.
-	mBoxIndexCount      = (u32) box.Indices.size();
-	mGridIndexCount     = (u32) grid.Indices.size();
-	mSphereIndexCount   = (u32) sphere.Indices.size();
-	mCylinderIndexCount = (u32) cylinder.Indices.size();
-
-	// Cache the starting index for each object in the concatenated index buffer.
-	mBoxIndexOffset      = 0;
-	mGridIndexOffset     = mBoxIndexCount;
-	mSphereIndexOffset   = mGridIndexOffset + mGridIndexCount;
-	mCylinderIndexOffset = mSphereIndexOffset + mSphereIndexCount;
-	mModelIndexOffset    = mCylinderIndexOffset + mCylinderIndexCount;
-
-	u32 totalVertexCount = (u32) box.Vertices.size() +
-							(u32) grid.Vertices.size() +
-							(u32) sphere.Vertices.size() +
-							(u32) cylinder.Vertices.size() +
-							modelVertexCount;
-
-	u32 totalIndexCount =  mBoxIndexCount +
-							mGridIndexCount + 
-							mSphereIndexCount +
-							mCylinderIndexCount +
-							mModelIndexCount;
-
-
-	std::vector<MeshData::PosNormTanTex> vertices(totalVertexCount);
-	u32 k = 0;
-	u64 dataSize = sizeof(MeshData::PosNormTanTex);
-	for(size_t i = 0; i < box.Vertices.size(); ++i, ++k)
-	{
-		memcpy(&vertices[k], &box.Vertices[i], dataSize);
-	}
-	for(size_t i = 0; i < grid.Vertices.size(); ++i, ++k)
-	{
-		memcpy(&vertices[k], &grid.Vertices[i], dataSize);
-	}
-	for(size_t i = 0; i < sphere.Vertices.size(); ++i, ++k)
-	{
-		memcpy(&vertices[k], &sphere.Vertices[i], dataSize);
-	}
-	for(size_t i = 0; i < cylinder.Vertices.size(); ++i, ++k)
-	{
-		memcpy(&vertices[k], &cylinder.Vertices[i], dataSize);
-	}
-	for(size_t i = 0; i < modelVertexCount; ++i, ++k)
-	{
-		fread(&vertices[k].Position.x, sizeof(float), 1, fIn);
-		fread(&vertices[k].Position.y, sizeof(float), 1, fIn);
-		fread(&vertices[k].Position.z, sizeof(float), 1, fIn);
-		fread(&vertices[k].Normal.x,   sizeof(float), 1, fIn);
-		fread(&vertices[k].Normal.y,   sizeof(float), 1, fIn);
-		fread(&vertices[k].Normal.z,   sizeof(float), 1, fIn);
-		fread(&vertices[k].TangentU.x, sizeof(float), 1, fIn);
-		fread(&vertices[k].TangentU.y, sizeof(float), 1, fIn);
-		fread(&vertices[k].TangentU.z, sizeof(float), 1, fIn);
-		fread(&vertices[k].TexC.x,     sizeof(float), 1, fIn);
-		fread(&vertices[k].TexC.y,     sizeof(float), 1, fIn);
-	}
-	std::vector<u32> dragonIndices(mModelIndexCount);
-	for(u32 i = 0; i < modelTriangleCount; ++i)
-	{
-		fread(&dragonIndices[i*3+0], sizeof(u32), 1, fIn);
-		fread(&dragonIndices[i*3+1], sizeof(u32), 1, fIn);
-		fread(&dragonIndices[i*3+2], sizeof(u32), 1, fIn);
-	}
-
-	fclose(fIn);
-
-	D3D11_BUFFER_DESC vbd;
-	vbd.Usage          = D3D11_USAGE_IMMUTABLE;
-	vbd.ByteWidth      = (u32) (sizeof(MeshData::PosNormTanTex) * totalVertexCount);
-	vbd.BindFlags      = D3D11_BIND_VERTEX_BUFFER;
-	vbd.CPUAccessFlags = 0;
-	vbd.MiscFlags      = 0;
-	D3D11_SUBRESOURCE_DATA vinitData;
-	vinitData.pSysMem = &vertices[0];
-	RJE_CHECK_FOR_SUCCESS(mDX11Device->md3dDevice->CreateBuffer(&vbd, &vinitData, &mVertexBuffer));
-
-	std::vector<u32> indices;
-	indices.insert(indices.end(), box.Indices.begin(), box.Indices.end());
-	indices.insert(indices.end(), grid.Indices.begin(), grid.Indices.end());
-	indices.insert(indices.end(), sphere.Indices.begin(), sphere.Indices.end());
-	indices.insert(indices.end(), cylinder.Indices.begin(), cylinder.Indices.end());
-	indices.insert(indices.end(), dragonIndices.begin(), dragonIndices.end());
-
-	D3D11_BUFFER_DESC ibd;
-	ibd.Usage          = D3D11_USAGE_IMMUTABLE;
-	ibd.ByteWidth      = sizeof(u32) * totalIndexCount;
-	ibd.BindFlags      = D3D11_BIND_INDEX_BUFFER;
-	ibd.CPUAccessFlags = 0;
-	ibd.MiscFlags      = 0;
-	D3D11_SUBRESOURCE_DATA iinitData;
-	iinitData.pSysMem = &indices[0];
-	RJE_CHECK_FOR_SUCCESS(mDX11Device->md3dDevice->CreateBuffer(&ibd, &iinitData, &mIndexBuffer));
-}
-
-//////////////////////////////////////////////////////////////////////////
-void DX11RenderingAPI::BuildGizmosBuffers()
-{
-	MeshData::Data<ColorVertex> wireBox;
-	MeshData::Data<ColorVertex> axis;
-
-	GeometryGenerator geoGen;
-	geoGen.CreateWireBox(1.0f,1.0f,1.0f, wireBox, Color::White);
-	geoGen.CreateWireCone(1.0f, 45.0f, axis, Color::White);
-	//geoGen.CreateAxisArrows(axis);
-
-	u32 totalVertexCount = (u32) wireBox.Vertices.size() + (u32) axis.Vertices.size();
-	u32 totalIndexCount  = (u32) wireBox.Indices.size()  + (u32) axis.Indices.size();
-
-	MeshData::Data<ColorVertex> totalGeometry(totalVertexCount);
-	u32 k = 0;
-	for(size_t i = 0; i < wireBox.Vertices.size(); ++i, ++k)
-	{
-		totalGeometry.Vertices[k].pos   = wireBox.Vertices[i].pos;
-		totalGeometry.Vertices[k].color = wireBox.Vertices[i].color;
-	}
-	for(size_t i = 0; i < axis.Vertices.size(); ++i, ++k)
-	{
-		totalGeometry.Vertices[k].pos   = axis.Vertices[i].pos;
-		totalGeometry.Vertices[k].color = axis.Vertices[i].color;
-	}
-	totalGeometry.Indices.insert(totalGeometry.Indices.end(), wireBox.Indices.begin(), wireBox.Indices.end());
-	totalGeometry.Indices.insert(totalGeometry.Indices.end(), axis.Indices.begin(), axis.Indices.end());
-
-	mWireBoxVertexOffset = 0;
-	mWireBoxIndexOffset  = 0;
-	mWireBoxIndexCount   = (u32)wireBox.Indices.size();
-
-	mAxisVertexOffset = (int) wireBox.Vertices.size();
-	mAxisIndexOffset  = mWireBoxIndexCount;
-	mAxisIndexCount   = (u32)axis.Indices.size();
-
-	D3D11_BUFFER_DESC vbd;
-	vbd.Usage               = D3D11_USAGE_IMMUTABLE;
-	vbd.ByteWidth           = (u32) (sizeof(MeshData::ColorVertex) * totalVertexCount);
-	vbd.BindFlags           = D3D11_BIND_VERTEX_BUFFER;
-	vbd.CPUAccessFlags      = 0;
-	vbd.MiscFlags           = 0;
-	vbd.StructureByteStride = 0;
-	D3D11_SUBRESOURCE_DATA vinitData;
-	vinitData.pSysMem = &totalGeometry.Vertices[0];
-	RJE_CHECK_FOR_SUCCESS(mDX11Device->md3dDevice->CreateBuffer(&vbd, &vinitData, &mVertexBuffer_Gizmo));
-
-	D3D11_BUFFER_DESC ibd;
-	ibd.Usage               = D3D11_USAGE_IMMUTABLE;
-	ibd.ByteWidth           = sizeof(u32) * totalIndexCount;
-	ibd.BindFlags           = D3D11_BIND_INDEX_BUFFER;
-	ibd.CPUAccessFlags      = 0;
-	ibd.MiscFlags           = 0;
-	vbd.StructureByteStride = 0;
-	D3D11_SUBRESOURCE_DATA iinitData;
-	iinitData.pSysMem = &totalGeometry.Indices[0];
-	RJE_CHECK_FOR_SUCCESS(mDX11Device->md3dDevice->CreateBuffer(&ibd, &iinitData, &mIndexBuffer_Gizmo));
-}
-
-//////////////////////////////////////////////////////////////////////////
 void DX11RenderingAPI::UpdateScene( float dt )
 {
 	//-------------------------------------
@@ -512,6 +282,7 @@ void DX11RenderingAPI::UpdateScene( float dt )
 	tempTrf.Position									= mScene.mGameObjectEditorPos;
 	mScene.mGameObjectEditorTransform->WorldMat			= tempTrf.WorldMatrix();
 	mScene.mGameObjectEditorTransform->WorldMatNoScale	= tempTrf.WorldMatrixNoScale();
+	mScene.mGameObjects[0]->mDrawable.mGizmoColor		= mScene.mGameObjectEditorColor;
 	//-------------------------------------
 
 	// Convert Spherical to Cartesian coordinates.
@@ -633,12 +404,7 @@ void DX11RenderingAPI::DrawScene()
 	mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sCurrentRasterizerState);
 
 	float blendFactor[4] = {mBlendFactorR, mBlendFactorG, mBlendFactorB, mBlendFactorA};
-
-	u32 stride = sizeof(MeshData::PosNormTanTex);
-	u32 offset = 0;
-	mDX11Device->md3dImmediateContext->IASetVertexBuffers(0, 1, &mVertexBuffer, &stride, &offset);
-	mDX11Device->md3dImmediateContext->IASetIndexBuffer(mIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-
+	
 	// Set constants
 	Matrix44 view     = mCamera->mView;
 	Matrix44 proj     = *(mCamera->mCurrentProjectionMatrix);
@@ -664,30 +430,6 @@ void DX11RenderingAPI::DrawScene()
 	activeTech->GetDesc( &techDesc );
 	for(u32 p = 0; p < techDesc.Passes; ++p)
 	{
-		// Draw the box.
-		DX11Effects::BasicFX->SetWorld(mBoxWorld);
-		DX11Effects::BasicFX->SetMaterial(&mBoxMat);
-
-		if (mScene.mbUseBlending)
-			mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_CullNone);
-		mDX11Device->md3dImmediateContext->OMSetBlendState(DX11CommonStates::sCurrentBlendState, blendFactor, 0xffffffff);
-		activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
-		mDX11Device->md3dImmediateContext->DrawIndexed(mBoxIndexCount, mBoxIndexOffset, mBoxVertexOffset);
-
-		// restore the default rasterizer state
-		mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sCurrentRasterizerState);
-		mDX11Device->md3dImmediateContext->OMSetBlendState(0, blendFactor, 0xffffffff);
-
-		// Draw the cylinders.
-		for(int i = 0; i < 10; ++i)
-		{
-			DX11Effects::BasicFX->SetWorld(mCylWorld[i]);
-			DX11Effects::BasicFX->SetMaterial(&mCylinderMat);
-
-			activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
-			mDX11Device->md3dImmediateContext->DrawIndexed(mCylinderIndexCount, mCylinderIndexOffset, mCylinderVertexOffset);
-		}
-
 		// Draw the opaque geometry
 		for(const unique_ptr<GameObject>& gameobject : mScene.mGameObjects)
 		{
@@ -697,6 +439,10 @@ void DX11RenderingAPI::DrawScene()
 		// Draw the transparent geometry
 		for(const unique_ptr<GameObject>& gameobject_transparent : mScene.mGameObjects)
 		{
+// 			if (mScene.mbUseBlending)
+// 				mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_CullNone);
+// 			mDX11Device->md3dImmediateContext->OMSetBlendState(DX11CommonStates::sCurrentBlendState, blendFactor, 0xffffffff);
+
 			if (gameobject_transparent->mDrawable.mMesh)
 				gameobject_transparent->mDrawable.Render(activeTech->GetPassByIndex(p), false);
 		}
@@ -704,190 +450,6 @@ void DX11RenderingAPI::DrawScene()
 		// Restore default render states
 		mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sCurrentRasterizerState);
 		mDX11Device->md3dImmediateContext->OMSetBlendState(0, blendFactor, 0xffffffff);
-
-		mDX11Device->md3dImmediateContext->IASetVertexBuffers(0, 1, &mVertexBuffer, &stride, &offset);
-		mDX11Device->md3dImmediateContext->IASetIndexBuffer(mIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-
-		// Draw the spheres.
-		for(int i = 0; i < 10; ++i)
-		{
-			DX11Effects::BasicFX->SetWorld(mSphereWorld[i]);
-			DX11Effects::BasicFX->SetMaterial(&mSphereMat);
-
-			if (mScene.mbUseBlending)
-				mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_CullNone);
-			mDX11Device->md3dImmediateContext->OMSetBlendState(DX11CommonStates::sCurrentBlendState, blendFactor, 0xffffffff);
-			activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
-			mDX11Device->md3dImmediateContext->DrawIndexed(mSphereIndexCount, mSphereIndexOffset, mSphereVertexOffset);
-			
-			// Restore default render states
-			mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sCurrentRasterizerState);
-			mDX11Device->md3dImmediateContext->OMSetBlendState(0, blendFactor, 0xffffffff);
-		}
-
-		//////////////////////////////////////////////////////////////////////////
-		
-		// Draw the grid.
-		RJE_CHECK_FOR_SUCCESS(DX11Effects::BasicFX->SetWorld(mGridWorld));
-		RJE_CHECK_FOR_SUCCESS(DX11Effects::BasicFX->SetMaterial(&mGridMat));
-
-		// if we're in wireframe then we don't need to render the reflections
-		if (mScene.mbWireframe || !mScene.mbDrawReflections )
-		{
-			activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
-			mDX11Device->md3dImmediateContext->DrawIndexed(mGridIndexCount, mGridIndexOffset, mGridVertexOffset);
-		}
-		else
-		{
-			// Do not write to render target.
-			mDX11Device->md3dImmediateContext->OMSetBlendState(DX11CommonStates::sBlendState_NoRenderTargetWrites, blendFactor, 0xffffffff);
-
-			// Render visible mirror pixels to stencil buffer.
-			// Do not write mirror depth to depth buffer at this point, otherwise it will occlude the reflection.
-			mDX11Device->md3dImmediateContext->OMSetDepthStencilState(DX11CommonStates::sDepthStencilState_MarkStencil, 1);
-
-			activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
-			mDX11Device->md3dImmediateContext->DrawIndexed(mGridIndexCount, mGridIndexOffset, mGridVertexOffset);
-
-			// Restore states.
-			mDX11Device->md3dImmediateContext->OMSetDepthStencilState(0, 0);
-			mDX11Device->md3dImmediateContext->OMSetBlendState(0, blendFactor, 0xffffffff);
-
-			//////////////////////////////////////////////////////////////////////////
-
-			// Draw the reflected meshes
-			Vector4 mirrorPlane       = Vector4(0.0f, 1.0f, 0.0f, 0.0f);		// xz plane
-			Matrix44 reflectionMatrix = Matrix44::Reflection(mirrorPlane);
-
-			// Cache the old light directions, and reflect the light directions and position.
-			if (mDirLightCount > 0)
-			{
-				DirectionalLight* light = mDirLights->MapDiscard(mDX11Device->md3dImmediateContext);
-				for (u32 i = 0; i < mDirLightCount; ++i)
-				{
-					mOldDirLights[i] = mWorkingDirLights[i];
-					light[i] = mWorkingDirLights[i];
-					light[i].Direction = Vector3::ReflectRay(mWorkingDirLights[i].Direction, Vector3::up);
-				}
-				mDirLights->Unmap(mDX11Device->md3dImmediateContext);
-			}
-			if (mPointLightCount > 0)
-			{
-				PointLight* light = mPointLights->MapDiscard(mDX11Device->md3dImmediateContext);
-				for (u32 i = 0; i < mPointLightCount; ++i)
-				{
-					mOldPointLights[i] = mWorkingPointLights[i];
-					light[i] = mWorkingPointLights[i];
-					light[i].Position = reflectionMatrix * mWorkingPointLights[i].Position;
-				}
-				mPointLights->Unmap(mDX11Device->md3dImmediateContext);
-			}
-
-			DX11Effects::BasicFX->SetPointLights(mPointLights->GetShaderResource());
-			DX11Effects::BasicFX->SetDirLights(mDirLights->GetShaderResource());
-
-			// Draw the box.
-			DX11Effects::BasicFX->SetWorld(mBoxWorld * reflectionMatrix);
-			DX11Effects::BasicFX->SetMaterial(&mBoxMat);
-
-			// Cull clockwise triangles for reflection.
-			if (mScene.mbUseBlending)
-				mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_CullNone);
-			else
-				mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_CullClockwise);
-
-			// Only draw reflection into visible mirror pixels as marked by the stencil buffer. 
-			mDX11Device->md3dImmediateContext->OMSetDepthStencilState(DX11CommonStates::sDepthStencilState_DrawStenciled, 1);
-			activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
-			mDX11Device->md3dImmediateContext->DrawIndexed(mBoxIndexCount, mBoxIndexOffset, mBoxVertexOffset);
-
-			mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_CullClockwise);
-
-			// Draw the cylinders.
-			for(int i = 0; i < 10; ++i)
-			{
-				DX11Effects::BasicFX->SetWorld(mCylWorld[i] * reflectionMatrix);
-				DX11Effects::BasicFX->SetMaterial(&mCylinderMat);
-
-				// Only draw reflection into visible mirror pixels as marked by the stencil buffer. 
-				mDX11Device->md3dImmediateContext->OMSetDepthStencilState(DX11CommonStates::sDepthStencilState_DrawStenciled, 1);
-				activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
-				mDX11Device->md3dImmediateContext->DrawIndexed(mCylinderIndexCount, mCylinderIndexOffset, mCylinderVertexOffset);
-			}
-
-			if (mScene.mbUseBlending)
-				mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_CullNone);
-			else
-				mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_CullClockwise);
-
-			// Draw the spheres.
-			for(int i = 0; i < 10; ++i)
-			{
-				DX11Effects::BasicFX->SetWorld(mSphereWorld[i] * reflectionMatrix);
-				DX11Effects::BasicFX->SetMaterial(&mSphereMat);
-
-				mDX11Device->md3dImmediateContext->OMSetBlendState(DX11CommonStates::sCurrentBlendState, blendFactor, 0xffffffff);
-				activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
-				mDX11Device->md3dImmediateContext->DrawIndexed(mSphereIndexCount, mSphereIndexOffset, mSphereVertexOffset);
-
-				// Restore default render states
-				mDX11Device->md3dImmediateContext->OMSetBlendState(0, blendFactor, 0xffffffff);
-			}
-
-			mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_CullClockwise);
-
-			// Only draw reflection into visible mirror pixels as marked by the stencil buffer. 
-			// Draw the model reflection
-			mDX11Device->md3dImmediateContext->OMSetDepthStencilState(DX11CommonStates::sDepthStencilState_DrawStenciled, 1);
-			if (mScene.mGameObjects[0]->mDrawable.mMesh)
-			{
-				mScene.mGameObjects[0]->mTransform.WorldMat *= reflectionMatrix;
-				mScene.mGameObjects[0]->mDrawable.Render(activeTech->GetPassByIndex(p));
-				mScene.mGameObjects[0]->mTransform.WorldMat *= reflectionMatrix;
-			}
-
-			mDX11Device->md3dImmediateContext->IASetVertexBuffers(0, 1, &mVertexBuffer, &stride, &offset);
-			mDX11Device->md3dImmediateContext->IASetIndexBuffer(mIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-
-			// Restore default states.
-			mDX11Device->md3dImmediateContext->RSSetState(0);
-			mDX11Device->md3dImmediateContext->OMSetDepthStencilState(0, 0);
-
-			// Restore light settings.
-			if (mDirLightCount > 0)
-			{
-				DirectionalLight* light = mDirLights->MapDiscard(mDX11Device->md3dImmediateContext);
-				for (u32 i = 0; i < mDirLightCount; ++i)
-				{
-					light[i] = mOldDirLights[i];
-				}
-				mDirLights->Unmap(mDX11Device->md3dImmediateContext);
-			}
-			if (mPointLightCount > 0)
-			{
-				PointLight* light = mPointLights->MapDiscard(mDX11Device->md3dImmediateContext);
-				for (u32 i = 0; i < mPointLightCount; ++i)
-				{
-					light[i] = mOldPointLights[i];
-				}
-				mPointLights->Unmap(mDX11Device->md3dImmediateContext);
-			}
-			DX11Effects::BasicFX->SetPointLights(mPointLights->GetShaderResource());
-			DX11Effects::BasicFX->SetDirLights(mDirLights->GetShaderResource());
-
-			// Draw the mirror to the back buffer as usual but with transparency
-			// blending so the reflection shows through.
-			DX11Effects::BasicFX->SetWorld(mGridWorld);
-			DX11Effects::BasicFX->SetMaterial(&mGridMat);
-
-			mDX11Device->md3dImmediateContext->OMSetBlendState(DX11CommonStates::sBlendState_Transparent, blendFactor, 0xffffffff);
-			activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
-			mDX11Device->md3dImmediateContext->DrawIndexed(mGridIndexCount, mGridIndexOffset, mGridVertexOffset);
-
-			// Restore default states.
-			mDX11Device->md3dImmediateContext->OMSetBlendState(0, blendFactor, 0xffffffff);
-			mDX11Device->md3dImmediateContext->OMSetDepthStencilState(0, 0);
-		}
 	}
 	
 	mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_Solid);
@@ -933,12 +495,7 @@ void DX11RenderingAPI::DrawGizmos()
 
 	mDX11Device->md3dImmediateContext->IASetInputLayout(DX11InputLayouts::PosColor);
 	mDX11Device->md3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
-
-	u32 stride = sizeof(MeshData::ColorVertex);
-	u32 offset = 0;
-	mDX11Device->md3dImmediateContext->IASetVertexBuffers(0, 1, &mVertexBuffer_Gizmo, &stride, &offset);
-	mDX11Device->md3dImmediateContext->IASetIndexBuffer(mIndexBuffer_Gizmo, DXGI_FORMAT_R32_UINT, 0);
-
+	
 	// Set constants
 	Matrix44 view     = mCamera->mView;
 	Matrix44 proj     = *(mCamera->mCurrentProjectionMatrix);
@@ -950,23 +507,6 @@ void DX11RenderingAPI::DrawGizmos()
 		if (gizmo->mDrawable.mGizmo)
 			gizmo->mDrawable.RenderGizmo(DX11Effects::ColorFX->ColorTech->GetPassByIndex(0));
 	}
-
-	mDX11Device->md3dImmediateContext->IASetVertexBuffers(0, 1, &mVertexBuffer_Gizmo, &stride, &offset);
-	mDX11Device->md3dImmediateContext->IASetIndexBuffer(mIndexBuffer_Gizmo, DXGI_FORMAT_R32_UINT, 0);
-
-	// Draw the wireBox.
-	DX11Effects::ColorFX->SetColor(Color(Color::White).GetVector4RGBANorm());
-	DX11Effects::ColorFX->SetWorld(mWireBoxWorld);
-
-	DX11Effects::ColorFX->ColorTech->GetPassByIndex(0)->Apply(0, mDX11Device->md3dImmediateContext);
-	mDX11Device->md3dImmediateContext->DrawIndexed(mWireBoxIndexCount, mWireBoxIndexOffset, mWireBoxVertexOffset);
-
-	// Draw the Axis.
-	DX11Effects::ColorFX->SetColor(Color(Color::Red).GetVector4RGBANorm());
-	DX11Effects::ColorFX->SetWorld(mAxisWorld);
-
-	DX11Effects::ColorFX->ColorTech->GetPassByIndex(0)->Apply(0, mDX11Device->md3dImmediateContext);
-	mDX11Device->md3dImmediateContext->DrawIndexed(mAxisIndexCount, mAxisIndexOffset, mAxisVertexOffset);
 
 	PROFILE_GPU_END(L"Render Gizmos");
 }
@@ -1083,11 +623,6 @@ void DX11RenderingAPI::Shutdown()
 	//-----------
 	
 	PROFILE_GPU_EXIT();
-
-	RJE_SAFE_RELEASE(mVertexBuffer);
-	RJE_SAFE_RELEASE(mVertexBuffer_Gizmo);
-	RJE_SAFE_RELEASE(mIndexBuffer);
-	RJE_SAFE_RELEASE(mIndexBuffer_Gizmo);
 
 	DX11TextureManager::DeleteInstance();
 	RJE_SAFE_RELEASE(mRjeLogo);
@@ -1209,41 +744,6 @@ void DX11RenderingAPI::SetMSAA(u32 MSAASamples)
 {
 	InitSwapChain(MSAASamples);
 	System::Instance()->OnResize();
-}
-
-//////////////////////////////////////////////////////////////////////////
-void DX11RenderingAPI::LoadMaterialFromFile( Material& material, std::string materialFile )
-{
-	// first we set all the properties from the material file
-	material.LoadPropertiesFromFile(materialFile);
-
-	// then we load the textures if there is any
-	for ( auto it = material.mProperties.begin(); it != material.mProperties.end(); ++it )
-	{
-		if ((*it)->mType == MaterialPropertyType::Type_Texture)
-		{
-			std::string texturePathRel = CIniFile::GetValue((*it)->mName, "textures", System::Instance()->mDataPath + "materials\\" + materialFile);
-			std::string texturePathAbs = System::Instance()->mDataPath + texturePathRel;
-			int slash = (int)texturePathRel.rfind('\\')+1;
-			int point = (int)texturePathRel.find('.');
-			std::string textureName = texturePathRel.substr(slash, point-slash);
-
-			if (textureName == "NONE")
-				material.SetTexture((*it)->mName, DX11TextureManager::Instance()->mTextures["_default"]);
-			else
-			{
-				if (!DX11TextureManager::Instance()->IsTextureLoaded(textureName))
-					DX11TextureManager::Instance()->LoadTexture(texturePathAbs, textureName);
-
-				// we load the texture properties
-				Vector2 tiling = CIniFile::GetValueVector2("Tiling", "textures", System::Instance()->mDataPath + "materials\\" + materialFile);
-				Vector2 offset = CIniFile::GetValueVector2("Offset", "textures", System::Instance()->mDataPath + "materials\\" + materialFile);
-				float rotation = CIniFile::GetValueFloat("Rotation", "textures", System::Instance()->mDataPath + "materials\\" + materialFile);
-
-				material.SetTexture((*it)->mName, DX11TextureManager::Instance()->mTextures[textureName], tiling, offset, rotation);
-			}
-		}
-	}
 }
 
 
