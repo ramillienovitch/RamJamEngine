@@ -237,6 +237,9 @@
     <None Include="..\data\materials\sphere.mat">
       <Filter>Resource Files\Materials</Filter>
     </None>
+    <None Include="..\data\materials\rayman.mat">
+      <Filter>Resource Files\Materials</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\include\RamJamEngine.rc">

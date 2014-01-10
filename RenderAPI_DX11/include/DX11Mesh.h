@@ -5,6 +5,7 @@
 //////////////////////////////////////////////////////////////////////////
 struct DX11Mesh : Mesh
 {
+	//--------
 	static ID3D11Device*		sDevice;
 	static ID3D11DeviceContext*	sDeviceContext;
 	//--------

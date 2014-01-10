@@ -13,6 +13,7 @@ DX11Mesh::DX11Mesh()
 	mVertexBuffer = nullptr;
 	mIndexBuffer  = nullptr;
 	//--------
+	mSubsets = nullptr;
 	mSubsetCount = 1;
 }
 
@@ -28,6 +29,8 @@ void DX11Mesh::Destroy()
 {
 	RJE_SAFE_DELETE(mVertexData);
 	RJE_SAFE_DELETE(mIndexData);
+	//-------
+	RJE_SAFE_DELETE_PTR(mSubsets);
 	//-------
 	RJE_SAFE_RELEASE(mVertexBuffer);
 	RJE_SAFE_RELEASE(mIndexBuffer);
@@ -52,7 +55,7 @@ void DX11Mesh::CreateIndexBuffer(u32* indexData)
 {
 	D3D11_BUFFER_DESC ibd;
 	ibd.Usage          = D3D11_USAGE_IMMUTABLE;
-	ibd.ByteWidth      = sizeof(u32) * mIndexCount;
+	ibd.ByteWidth      = sizeof(u32) * mIndexTotalCount;
 	ibd.BindFlags      = D3D11_BIND_INDEX_BUFFER;
 	ibd.CPUAccessFlags = 0;
 	ibd.MiscFlags      = 0;
@@ -76,9 +79,18 @@ void DX11Mesh::Render(u32 subset)
 // 	default:	break;
 // 	}
 	
-	sDeviceContext->IASetVertexBuffers(0, 1, &mVertexBuffer, &stride, &offset);
-	sDeviceContext->IASetIndexBuffer(mIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-	sDeviceContext->DrawIndexed(mIndexCount, 0, 0);
+	if(subset==-1)
+	{
+		sDeviceContext->IASetVertexBuffers(0, 1, &mVertexBuffer, &stride, &offset);
+		sDeviceContext->IASetIndexBuffer(mIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+		sDeviceContext->DrawIndexed(mIndexTotalCount, 0, 0);
+	}
+	else
+	{
+		sDeviceContext->IASetVertexBuffers(0, 1, &mVertexBuffer, &stride, &offset);
+		sDeviceContext->IASetIndexBuffer(mIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+		sDeviceContext->DrawIndexed(mSubsets[subset].mIndexCount, mSubsets[subset].mIndexStart, mSubsets[subset].mVertexStart);
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -131,28 +143,39 @@ void DX11Mesh::LoadModelFromFile(std::string filePath)
 		RJE_MESSAGE_BOX(0, L"model file not found.", 0, 0);
 		return;
 	}
-
 	u32 modelTriangleCount = 0;
-	fread(&mVertexCount,       sizeof(u32), 1, fIn);
+	fread(&mSubsetCount, sizeof(u32), 1, fIn);
+	mSubsets = rje_new Subset[mSubsetCount];
+	for (u32 iMesh=0 ; iMesh<mSubsetCount ; ++iMesh)
+	{
+		fread(&mSubsets[iMesh].mVertexStart, sizeof(u32), 1, fIn);
+		fread(&mSubsets[iMesh].mIndexStart,  sizeof(u32), 1, fIn);
+		fread(&mSubsets[iMesh].mVertexCount, sizeof(u32), 1, fIn);
+		fread(&mSubsets[iMesh].mIndexCount,  sizeof(u32), 1, fIn);
+		// multiply by 3 because a triangle has 3 indexes
+		mSubsets[iMesh].mIndexStart *= 3;
+		mSubsets[iMesh].mIndexCount *= 3;
+	}
+	fread(&mVertexTotalCount,  sizeof(u32), 1, fIn);
 	fread(&modelTriangleCount, sizeof(u32), 1, fIn);
-	mIndexCount  = 3*modelTriangleCount;
+	mIndexTotalCount  = 3*modelTriangleCount;
 	mInputLayout = MeshData::RJE_InputLayout::RJE_IL_PosNormTanTex;
 
 	// 	switch (mInputLayout)
 	// 	{
-	// 	case MeshData::RJE_IL_PosNormalTex:		mDataSize = (u32) sizeof(MeshData::PosNormalTex);		mByteWidth = mDataSize * mVertexCount;	break;
-	// 	case MeshData::RJE_IL_PosNormTanTex:	mDataSize = (u32) sizeof(MeshData::PosNormTanTex);		mByteWidth = mDataSize * mVertexCount;	break;
-	// 	case MeshData::RJE_IL_PosColor:			mDataSize = (u32) sizeof(MeshData::ColorVertex);		mByteWidth = mDataSize * mVertexCount;	break;
+	// 	case MeshData::RJE_IL_PosNormalTex:		mDataSize = (u32) sizeof(MeshData::PosNormalTex);		mByteWidth = mDataSize * mVertexTotalCount;	break;
+	// 	case MeshData::RJE_IL_PosNormTanTex:	mDataSize = (u32) sizeof(MeshData::PosNormTanTex);		mByteWidth = mDataSize * mVertexTotalCount;	break;
+	// 	case MeshData::RJE_IL_PosColor:			mDataSize = (u32) sizeof(MeshData::ColorVertex);		mByteWidth = mDataSize * mVertexTotalCount;	break;
 	// 	default:	break;
 	// 	}
 
 	mDataSize   = (u32) sizeof(MeshData::PosNormTanTex);
-	mByteWidth  = mDataSize * mVertexCount;
+	mByteWidth  = mDataSize * mVertexTotalCount;
 	mVertexData = rje_new char[mByteWidth];
-	mIndexData  = rje_new u32[mIndexCount];
+	mIndexData  = rje_new u32[mIndexTotalCount];
 
 	float dummy = 0;
-	for(u64 i = 0; i < mVertexCount*11; ++i)		// 3float => Position + 3float => Normal + 3float Tangent + 2float => Tex
+	for(u64 i = 0; i < mVertexTotalCount*11; ++i)		// 3float => Position + 3float => Normal + 3float Tangent + 2float => Tex
 	{
 		fread(&dummy, 4, 1, fIn);	memcpy((float*)mVertexData+i, &dummy, 4);
 	}
@@ -295,22 +318,22 @@ void DX11Mesh::LoadRay( Vector3 start, Vector3 orientation, Color color )
 void DX11Mesh::LoadPrimitive(MeshData::Data<ColorVertex>& meshData)
 {
 	mInputLayout = MeshData::RJE_InputLayout::RJE_IL_PosColor;
-	mVertexCount = (u32) meshData.Vertices.size();
-	mIndexCount  = (u32) meshData.Indices.size();
+	mVertexTotalCount = (u32) meshData.Vertices.size();
+	mIndexTotalCount  = (u32) meshData.Indices.size();
 	mDataSize    = (u32) sizeof(MeshData::ColorVertex);
-	mByteWidth   = mDataSize * mVertexCount;
+	mByteWidth   = mDataSize * mVertexTotalCount;
 
 	mVertexData = rje_new char[mByteWidth];
-	mIndexData  = rje_new u32[mIndexCount];
+	mIndexData  = rje_new u32[mIndexTotalCount];
 
-	for (u32 i=0; i<mVertexCount; ++i)
+	for (u32 i=0; i<mVertexTotalCount; ++i)
 	{
 		memcpy((float*)mVertexData+4*i+0, &meshData.Vertices[i].pos.x, 4);
 		memcpy((float*)mVertexData+4*i+1, &meshData.Vertices[i].pos.y, 4);
 		memcpy((float*)mVertexData+4*i+2, &meshData.Vertices[i].pos.z, 4);
 		memcpy((float*)mVertexData+4*i+3, &meshData.Vertices[i].color, 4);
 	}
-	for (u32 j=0; j<mIndexCount; ++j)
+	for (u32 j=0; j<mIndexTotalCount; ++j)
 	{
 		memcpy(&mIndexData[j], &meshData.Indices[j], 4);
 	}
@@ -322,15 +345,15 @@ void DX11Mesh::LoadPrimitive(MeshData::Data<ColorVertex>& meshData)
 void DX11Mesh::LoadPrimitive(MeshData::Data<PosNormTanTex>& meshData)
 {
 	mInputLayout = MeshData::RJE_InputLayout::RJE_IL_PosNormTanTex;
-	mVertexCount = (u32) meshData.Vertices.size();
-	mIndexCount  = (u32) meshData.Indices.size();
+	mVertexTotalCount = (u32) meshData.Vertices.size();
+	mIndexTotalCount  = (u32) meshData.Indices.size();
 	mDataSize    = (u32) sizeof(MeshData::PosNormTanTex);
-	mByteWidth   = mDataSize * mVertexCount;
+	mByteWidth   = mDataSize * mVertexTotalCount;
 
 	mVertexData = rje_new char[mByteWidth];
-	mIndexData  = rje_new u32[mIndexCount];
+	mIndexData  = rje_new u32[mIndexTotalCount];
 
-	for (u32 i=0; i<mVertexCount; ++i)
+	for (u32 i=0; i<mVertexTotalCount; ++i)
 	{
 		memcpy((float*)mVertexData+11*i+0,  &meshData.Vertices[i].Position.x, 4);
 		memcpy((float*)mVertexData+11*i+1,  &meshData.Vertices[i].Position.y, 4);
@@ -344,7 +367,7 @@ void DX11Mesh::LoadPrimitive(MeshData::Data<PosNormTanTex>& meshData)
 		memcpy((float*)mVertexData+11*i+9,  &meshData.Vertices[i].TexC.x,     4);
 		memcpy((float*)mVertexData+11*i+10, &meshData.Vertices[i].TexC.y,     4);
 	}
-	for (u32 j=0; j<mIndexCount; ++j)
+	for (u32 j=0; j<mIndexTotalCount; ++j)
 	{
 		memcpy(&mIndexData[j], &meshData.Indices[j], 4);
 	}

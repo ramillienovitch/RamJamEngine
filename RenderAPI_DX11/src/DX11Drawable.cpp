@@ -43,14 +43,29 @@ void DX11Drawable::Render(ID3DX11EffectPass* shaderPass, BOOL bDrawOpaque /*= tr
 {
 	// Set per object constants.
 	RJE_CHECK_FOR_SUCCESS(sShader->SetWorld(mTransform->WorldMat));
-	for (u32 iSubset=0 ; iSubset<mMesh->mSubsetCount; ++iSubset)
+	if (mMesh->mSubsetCount==1)
 	{
 		// opaque test
-		if (mMesh->mMaterial[iSubset]->mIsOpaque == bDrawOpaque)
+		if (mMesh->mMaterial[0]->mIsOpaque == bDrawOpaque)
 		{
-			RJE_CHECK_FOR_SUCCESS(sShader->SetMaterial(mMesh->mMaterial[iSubset].get()));
+			RJE_CHECK_FOR_SUCCESS(sShader->SetMaterial(mMesh->mMaterial[0].get()));
 			RJE_CHECK_FOR_SUCCESS(shaderPass->Apply(NULL, mMesh->sDeviceContext));
-			mMesh->Render(iSubset);
+			mMesh->Render(-1);
+		}
+	}
+	else
+	{
+		for (u32 iSubset=0 ; iSubset<mMesh->mSubsetCount; ++iSubset)
+		{
+			// opaque test
+			//if (mMesh->mMaterial[iSubset]->mIsOpaque == bDrawOpaque)
+			if (mMesh->mMaterial[0]->mIsOpaque == bDrawOpaque)
+			{
+				//RJE_CHECK_FOR_SUCCESS(sShader->SetMaterial(mMesh->mMaterial[iSubset].get()));
+				RJE_CHECK_FOR_SUCCESS(sShader->SetMaterial(mMesh->mMaterial[0].get()));
+				RJE_CHECK_FOR_SUCCESS(shaderPass->Apply(NULL, mMesh->sDeviceContext));
+				mMesh->Render(iSubset);
+			}
 		}
 	}
 }
@@ -62,5 +77,5 @@ void DX11Drawable::RenderGizmo(ID3DX11EffectPass* shaderPass)
 	RJE_CHECK_FOR_SUCCESS(sShader_Gizmo->SetWorld(mTransform->WorldMatNoScale));
 
 	RJE_CHECK_FOR_SUCCESS(shaderPass->Apply(NULL, mGizmo->sDeviceContext));
-	mGizmo->Render(0);
+	mGizmo->Render(-1);
 }

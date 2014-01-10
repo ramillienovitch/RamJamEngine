@@ -209,6 +209,7 @@
     <None Include="..\data\materials\cylinder.mat" />
     <None Include="..\data\materials\grid.mat" />
     <None Include="..\data\materials\model.mat" />
+    <None Include="..\data\materials\rayman.mat" />
     <None Include="..\data\materials\sphere.mat" />
     <None Include="..\data\models\dragon.mesh" />
     <None Include="..\data\models\sphere.mesh" />

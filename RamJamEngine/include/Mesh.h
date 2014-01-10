@@ -7,15 +7,23 @@
 //////////////////////////////////////////////////////////////////////////
 struct Mesh
 {
-	u32		mVertexCount;
-	u32		mIndexCount;
+	u32		mVertexTotalCount;
+	u32		mIndexTotalCount;
 	u32		mByteWidth;
 	u32		mDataSize;
 
 	void*	mVertexData;
 	u32*	mIndexData;
 
-	u32 mSubsetCount;
+	struct Subset
+	{
+		u32 mVertexStart;
+		u32 mIndexStart;
+		u32 mVertexCount;
+		u32 mIndexCount;
+	};
+	Subset*	mSubsets;
+	u32		mSubsetCount;
 
 	std::vector<unique_ptr<Material>> mMaterial;
 

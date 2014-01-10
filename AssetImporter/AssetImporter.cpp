@@ -14,6 +14,7 @@
 
 using namespace std;
 
+typedef unsigned __int32 u32;
 
 namespace GLOBALS
 {
@@ -26,27 +27,7 @@ namespace GLOBALS
 bool ImportExportAssImp( const char* );
 void ExportToFile( const aiScene* );
 void LogLoadError(const char*, const char* );
-
-//////////////////////////////////////////////////////////////////////////
-// OBJ TO RJE
-//////////////////////////////////////////////////////////////////////////
 void GetModelFilename(char*);
-bool ReadFileCounts(char*, int&, int&, int&, int&);
-bool LoadDataStructures(char*, int, int, int, int);
-bool OBJtoRJE(char*);
-
-typedef struct
-{
-	float x, y, z;
-}VertexType;
-
-typedef struct
-{
-	int vIndex1, vIndex2, vIndex3;
-	int tIndex1, tIndex2, tIndex3;
-	int nIndex1, nIndex2, nIndex3;
-}FaceType;
-
 
 //////////////////////////////////////////////////////////////////////////
 // MAIN
@@ -60,7 +41,6 @@ int main(int argc, char* argv[])
 
 	// Then we convert it using AssImp or our custom tool
 	ImportExportAssImp(filename);
-	//OBJtoRJE(filename);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -108,7 +88,13 @@ bool ImportExportAssImp( const char* pFile )
 	// And have it read the given file with some example post processing
 	// Usually - if speed is not the most important aspect for you - you'll
 	// probably to request more post processing than we do in this example.
-	const aiScene* scene = importer.ReadFile( pFile, aiProcess_CalcTangentSpace | aiProcess_Triangulate | aiProcess_JoinIdenticalVertices | aiProcess_SortByPType | aiProcess_GenSmoothNormals | aiProcessPreset_TargetRealtime_MaxQuality );//| aiProcess_ConvertToLeftHanded );
+	const aiScene* scene = importer.ReadFile( pFile,	aiProcess_CalcTangentSpace		|
+														aiProcess_Triangulate			|
+														aiProcess_JoinIdenticalVertices |
+														aiProcess_SortByPType			|
+														aiProcess_GenSmoothNormals		|
+														aiProcess_FlipUVs				|
+														aiProcessPreset_TargetRealtime_MaxQuality);//aiProcess_FlipWindingOrder);//| aiProcess_ConvertToLeftHanded );
 
 	// If the import failed, report it
 	if( !scene )
@@ -144,81 +130,71 @@ void LogLoadError(const char* modelFileName, const char* errorString )
 //////////////////////////////////////////////////////////////////////////
 void ExportToFile( const aiScene* scene )
 {
-	int vertexCount	= scene->mMeshes[0]->mNumVertices;
-	int indexCount	= scene->mMeshes[0]->mNumFaces;
-
 #if EXPORT_TEXT
 	std::ofstream fOut;
 
-	fOut.open("exported_model.mesh");
+	fOut.open("EXPORT\\exported_model.txt");
 
-	fOut << "Vertex Count: " << scene->mMeshes[0]->mNumVertices << "\n";
-	fOut << "Face Count: " << scene->mMeshes[0]->mNumFaces << "\n";
+	u32 dummy         = scene->mNumMeshes;
+	u32 totalVertices = 0;
+	u32 totalFaces    = 0;
+	fOut << "Mesh Count: " << dummy << "\n";
+	for(u32 iMesh=0 ; iMesh<scene->mNumMeshes ; ++iMesh)
+	{
+		dummy = iMesh == 0 ? 0 : scene->mMeshes[iMesh-1]->mNumVertices;		fOut << "Mesh " << iMesh << " Vertex Start :"	<< dummy << "\n";
+		dummy = iMesh == 0 ? 0 : scene->mMeshes[iMesh-1]->mNumFaces;		fOut << "Mesh " << iMesh << " Face Start :"		<< dummy << "\n";
+		dummy = scene->mMeshes[iMesh]->mNumVertices;						fOut << "Mesh " << iMesh << " Vertex Count :"	<< dummy << "\n";
+		dummy = scene->mMeshes[iMesh]->mNumFaces;							fOut << "Mesh " << iMesh << " Face Count :"		<< dummy << "\n";
+		totalVertices += scene->mMeshes[iMesh]->mNumVertices;
+		totalFaces    += scene->mMeshes[iMesh]->mNumFaces;
+	}
+	fOut << "Total Vertex Count: " << totalVertices << "\n";
+	fOut << "Total Face Count: " << totalFaces << "\n";
 	fOut << "\nData:\n\n";
 
-	if (scene->mMeshes[0]->HasTextureCoords(0))
+	for(u32 iMesh=0 ; iMesh<scene->mNumMeshes ; ++iMesh)
 	{
+		int vertexCount = scene->mMeshes[iMesh]->mNumVertices;
 		for (int iVert=0 ; iVert<vertexCount ; ++iVert)
 		{
-			fOut << scene->mMeshes[0]->mVertices[iVert].x << " ";
-			fOut << scene->mMeshes[0]->mVertices[iVert].y << " ";
-			fOut << scene->mMeshes[0]->mVertices[iVert].z << " ";
+			fOut << scene->mMeshes[iMesh]->mVertices[iVert].x << " ";
+			fOut << scene->mMeshes[iMesh]->mVertices[iVert].y << " ";
+			fOut << scene->mMeshes[iMesh]->mVertices[iVert].z << " ";
 
-			fOut << scene->mMeshes[0]->mNormals[iVert].x << " ";
-			fOut << scene->mMeshes[0]->mNormals[iVert].y << " ";
-			fOut << scene->mMeshes[0]->mNormals[iVert].z << " ";
+			fOut << scene->mMeshes[iMesh]->mNormals[iVert].x << " ";
+			fOut << scene->mMeshes[iMesh]->mNormals[iVert].y << " ";
+			fOut << scene->mMeshes[iMesh]->mNormals[iVert].z << " ";
 
-			if (scene->mMeshes[0]->HasTangentsAndBitangents())
+			if (scene->mMeshes[iMesh]->HasTangentsAndBitangents())
 			{
-				fOut << scene->mMeshes[0]->mTangents[iVert].x << " ";
-				fOut << scene->mMeshes[0]->mTangents[iVert].y << " ";
-				fOut << scene->mMeshes[0]->mTangents[iVert].z << " ";
+				fOut << scene->mMeshes[iMesh]->mTangents[iVert].x << " ";
+				fOut << scene->mMeshes[iMesh]->mTangents[iVert].y << " ";
+				fOut << scene->mMeshes[iMesh]->mTangents[iVert].z << " ";
 			}
 			else
 			{
-				fOut << "0.0 0.0 0.0\n";
+				fOut << "0.0 0.0 0.0";
 			}
 
-			fOut << scene->mMeshes[0]->mTextureCoords[0]->x << " ";
-			fOut << scene->mMeshes[0]->mTextureCoords[0]->y << "\n";
-		}
-		for (int iIdx=0 ; iIdx<indexCount ; ++iIdx)
-		{
-			fOut << scene->mMeshes[0]->mFaces[iIdx].mIndices[0] << " ";
-			fOut << scene->mMeshes[0]->mFaces[iIdx].mIndices[1] << " ";
-			fOut << scene->mMeshes[0]->mFaces[iIdx].mIndices[2] << "\n";
+			if (scene->mMeshes[iMesh]->HasTextureCoords(0))
+			{
+				fOut << scene->mMeshes[iMesh]->mTextureCoords[0][iVert].x << " ";
+				fOut << scene->mMeshes[iMesh]->mTextureCoords[0][iVert].y << "\n";
+			}
+			else
+			{
+				fOut << "0.0 0.0\n";
+			}
 		}
 	}
-	else
+	for(u32 iMesh=0 ; iMesh<scene->mNumMeshes ; ++iMesh)
 	{
-		for (int iVert=0 ; iVert<vertexCount ; ++iVert)
+		int indexCount  = scene->mMeshes[iMesh]->mNumFaces;
+		for (int iIdx=0 ; iIdx<indexCount ; ++iIdx)
 		{
-			fOut << scene->mMeshes[0]->mVertices[iVert].x << " ";
-			fOut << scene->mMeshes[0]->mVertices[iVert].y << " ";
-			fOut << scene->mMeshes[0]->mVertices[iVert].z << " ";
-
-			fOut << scene->mMeshes[0]->mNormals[iVert].x << " ";
-			fOut << scene->mMeshes[0]->mNormals[iVert].y << " ";
-			fOut << scene->mMeshes[0]->mNormals[iVert].z << " ";
-
-			if (scene->mMeshes[0]->HasTangentsAndBitangents())
-			{
-				fOut << scene->mMeshes[0]->mTangents[iVert].x << " ";
-				fOut << scene->mMeshes[0]->mTangents[iVert].y << " ";
-				fOut << scene->mMeshes[0]->mTangents[iVert].z << " ";
-			}
-			else
-			{
-				fOut << "0.0 0.0 0.0\n";
-			}
-
-			fOut << "0.0 0.0\n";
-		}
-		for (int iFaces=0 ; iFaces<indexCount ; ++iFaces)
-		{
-			fOut << scene->mMeshes[0]->mFaces[iFaces].mIndices[0] << " ";
-			fOut << scene->mMeshes[0]->mFaces[iFaces].mIndices[1] << " ";
-			fOut << scene->mMeshes[0]->mFaces[iFaces].mIndices[2] << "\n";
+			fOut << scene->mMeshes[iMesh]->mFaces[iIdx].mIndices[0] << " ";
+			fOut << scene->mMeshes[iMesh]->mFaces[iIdx].mIndices[1] << " ";
+			fOut << scene->mMeshes[iMesh]->mFaces[iIdx].mIndices[2] << "\n";
 		}
 	}
 	fOut.close();
@@ -237,60 +213,41 @@ void ExportToFile( const aiScene* scene )
 
 	std::cout << "Start Export" << std::endl;
 
-	std::fwrite(&scene->mMeshes[0]->mNumVertices, sizeof(unsigned int), 1, fOut);
-	std::fwrite(&scene->mMeshes[0]->mNumFaces,    sizeof(unsigned int), 1, fOut);
-	if (scene->mMeshes[0]->HasTextureCoords(0))
+	// --- write subsets, total vertices & faces -----------------
+	u32 dummy         = scene->mNumMeshes;
+	u32 totalVertices = 0;
+	u32 totalFaces    = 0;
+	std::fwrite(&dummy, sizeof(u32), 1, fOut);
+	for(u32 iMesh=0 ; iMesh<scene->mNumMeshes ; ++iMesh)
 	{
-		for (int iVert=0 ; iVert<vertexCount ; ++iVert)
-		{
-			std::fwrite(&scene->mMeshes[0]->mVertices[iVert].x, sizeof(float), 1, fOut);
-			std::fwrite(&scene->mMeshes[0]->mVertices[iVert].y, sizeof(float), 1, fOut);
-			std::fwrite(&scene->mMeshes[0]->mVertices[iVert].z, sizeof(float), 1, fOut);
-
-			std::fwrite(&scene->mMeshes[0]->mNormals[iVert].x, sizeof(float), 1, fOut);
-			std::fwrite(&scene->mMeshes[0]->mNormals[iVert].y, sizeof(float), 1, fOut);
-			std::fwrite(&scene->mMeshes[0]->mNormals[iVert].z, sizeof(float), 1, fOut);
-
-			if (scene->mMeshes[0]->HasTangentsAndBitangents())
-			{
-				std::fwrite(&scene->mMeshes[0]->mTangents[iVert].x, sizeof(float), 1, fOut);
-				std::fwrite(&scene->mMeshes[0]->mTangents[iVert].y, sizeof(float), 1, fOut);
-				std::fwrite(&scene->mMeshes[0]->mTangents[iVert].z, sizeof(float), 1, fOut);
-			}
-			else
-			{
-				std::fwrite(&zero, sizeof(float), 1, fOut);
-				std::fwrite(&zero, sizeof(float), 1, fOut);
-				std::fwrite(&zero, sizeof(float), 1, fOut);
-			}
-
-			std::fwrite(&scene->mMeshes[0]->mTextureCoords[0]->x, sizeof(float), 1, fOut);
-			std::fwrite(&scene->mMeshes[0]->mTextureCoords[0]->y, sizeof(float), 1, fOut);
-		}
-		for (int iIdx=0 ; iIdx<indexCount ; ++iIdx)
-		{
-			std::fwrite(&scene->mMeshes[0]->mFaces[iIdx].mIndices[0], sizeof(unsigned int), 1, fOut);
-			std::fwrite(&scene->mMeshes[0]->mFaces[iIdx].mIndices[1], sizeof(unsigned int), 1, fOut);
-			std::fwrite(&scene->mMeshes[0]->mFaces[iIdx].mIndices[2], sizeof(unsigned int), 1, fOut);
-		}
+		dummy = iMesh == 0 ? 0 : scene->mMeshes[iMesh-1]->mNumVertices;		std::fwrite(&dummy, sizeof(u32), 1, fOut);
+		dummy = iMesh == 0 ? 0 : scene->mMeshes[iMesh-1]->mNumFaces;		std::fwrite(&dummy, sizeof(u32), 1, fOut);
+		dummy = scene->mMeshes[iMesh]->mNumVertices;						std::fwrite(&dummy, sizeof(u32), 1, fOut);
+		dummy = scene->mMeshes[iMesh]->mNumFaces;							std::fwrite(&dummy, sizeof(u32), 1, fOut);
+		totalVertices += scene->mMeshes[iMesh]->mNumVertices;
+		totalFaces    += scene->mMeshes[iMesh]->mNumFaces;
 	}
-	else
+	std::fwrite(&totalVertices, sizeof(u32), 1, fOut);
+	std::fwrite(&totalFaces,    sizeof(u32), 1, fOut);
+	// ----------------------------------------------------
+	for(u32 iMesh=0 ; iMesh<scene->mNumMeshes ; ++iMesh)
 	{
+		int vertexCount = scene->mMeshes[iMesh]->mNumVertices;
 		for (int iVert=0 ; iVert<vertexCount ; ++iVert)
 		{
-			std::fwrite(&scene->mMeshes[0]->mVertices[iVert].x, sizeof(float), 1, fOut);
-			std::fwrite(&scene->mMeshes[0]->mVertices[iVert].y, sizeof(float), 1, fOut);
-			std::fwrite(&scene->mMeshes[0]->mVertices[iVert].z, sizeof(float), 1, fOut);
+			std::fwrite(&scene->mMeshes[iMesh]->mVertices[iVert].x, sizeof(float), 1, fOut);
+			std::fwrite(&scene->mMeshes[iMesh]->mVertices[iVert].y, sizeof(float), 1, fOut);
+			std::fwrite(&scene->mMeshes[iMesh]->mVertices[iVert].z, sizeof(float), 1, fOut);
 
-			std::fwrite(&scene->mMeshes[0]->mNormals[iVert].x, sizeof(float), 1, fOut);
-			std::fwrite(&scene->mMeshes[0]->mNormals[iVert].y, sizeof(float), 1, fOut);
-			std::fwrite(&scene->mMeshes[0]->mNormals[iVert].z, sizeof(float), 1, fOut);
+			std::fwrite(&scene->mMeshes[iMesh]->mNormals[iVert].x, sizeof(float), 1, fOut);
+			std::fwrite(&scene->mMeshes[iMesh]->mNormals[iVert].y, sizeof(float), 1, fOut);
+			std::fwrite(&scene->mMeshes[iMesh]->mNormals[iVert].z, sizeof(float), 1, fOut);
 
-			if (scene->mMeshes[0]->HasTangentsAndBitangents())
+			if (scene->mMeshes[iMesh]->HasTangentsAndBitangents())
 			{
-				std::fwrite(&scene->mMeshes[0]->mTangents[iVert].x, sizeof(float), 1, fOut);
-				std::fwrite(&scene->mMeshes[0]->mTangents[iVert].y, sizeof(float), 1, fOut);
-				std::fwrite(&scene->mMeshes[0]->mTangents[iVert].z, sizeof(float), 1, fOut);
+				std::fwrite(&scene->mMeshes[iMesh]->mTangents[iVert].x, sizeof(float), 1, fOut);
+				std::fwrite(&scene->mMeshes[iMesh]->mTangents[iVert].y, sizeof(float), 1, fOut);
+				std::fwrite(&scene->mMeshes[iMesh]->mTangents[iVert].z, sizeof(float), 1, fOut);
 			}
 			else
 			{
@@ -298,291 +255,31 @@ void ExportToFile( const aiScene* scene )
 				std::fwrite(&zero, sizeof(float), 1, fOut);
 				std::fwrite(&zero, sizeof(float), 1, fOut);
 			}
-			std::fwrite(&zero, sizeof(float), 1, fOut);
-			std::fwrite(&zero, sizeof(float), 1, fOut);
+
+			if (scene->mMeshes[iMesh]->HasTextureCoords(0))
+			{
+				std::fwrite(&scene->mMeshes[iMesh]->mTextureCoords[0][iVert].x, sizeof(float), 1, fOut);
+				std::fwrite(&scene->mMeshes[iMesh]->mTextureCoords[0][iVert].y, sizeof(float), 1, fOut);
+			}
+			else
+			{
+				std::fwrite(&zero, sizeof(float), 1, fOut);
+				std::fwrite(&zero, sizeof(float), 1, fOut);
+			}
 		}
+		
+	}
+	for(u32 iMesh=0 ; iMesh<scene->mNumMeshes ; ++iMesh)
+	{
+		int indexCount  = scene->mMeshes[iMesh]->mNumFaces;
 		for (int iIdx=0 ; iIdx<indexCount ; ++iIdx)
 		{
-			std::fwrite(&scene->mMeshes[0]->mFaces[iIdx].mIndices[0], sizeof(unsigned int), 1, fOut);
-			std::fwrite(&scene->mMeshes[0]->mFaces[iIdx].mIndices[1], sizeof(unsigned int), 1, fOut);
-			std::fwrite(&scene->mMeshes[0]->mFaces[iIdx].mIndices[2], sizeof(unsigned int), 1, fOut);
+			std::fwrite(&scene->mMeshes[iMesh]->mFaces[iIdx].mIndices[0], sizeof(u32), 1, fOut);
+			std::fwrite(&scene->mMeshes[iMesh]->mFaces[iIdx].mIndices[1], sizeof(u32), 1, fOut);
+			std::fwrite(&scene->mMeshes[iMesh]->mFaces[iIdx].mIndices[2], sizeof(u32), 1, fOut);
 		}
 	}
 	fclose(fOut);
 #endif
 	return;
 }
-
-//////////////////////////////////////////////////////////////////////////
-bool OBJtoRJE( char* filename )
-{
-	bool result;
-
-	int vertexCount, textureCount, normalCount, faceCount;
-	char garbage;
-
-	// Read in the number of vertices, texture coords, normals, and faces so that the data structures can be initialized with the exact sizes needed.
-	result = ReadFileCounts(filename, vertexCount, textureCount, normalCount, faceCount);
-	if(!result)
-		return false;
-
-	// Display the counts to the screen for information purposes.
-	std::cout << std::endl;
-	std::cout << "Vertices: " << vertexCount << std::endl;
-	std::cout << "UVs:      " << textureCount << std::endl;
-	std::cout << "Normals:  " << normalCount << std::endl;
-	std::cout << "Faces:    " << faceCount << std::endl;
-
-	// Now read the data from the file into the data structures and then output it in our model format.
-	result = LoadDataStructures(filename, vertexCount, textureCount, normalCount, faceCount);
-	if(!result)
-		return false;
-
-	// Notify the user the model has been converted.
-	std::cout << "\nFile has been converted." << std::endl;
-	std::cin >> garbage;
-
-	return true;
-}
-
-//////////////////////////////////////////////////////////////////////////
-bool ReadFileCounts(char* filename, int& vertexCount, int& textureCount, int& normalCount, int& faceCount)
-{
-	std::ifstream fin;
-	char input;
-
-
-	// Initialize the counts.
-	vertexCount = 0;
-	textureCount = 0;
-	normalCount = 0;
-	faceCount = 0;
-
-	// Open the file.
-	fin.open(filename);
-
-	// Check if it was successful in opening the file.
-	if(fin.fail() == true)
-	{
-		return false;
-	}
-
-	// Read from the file and continue to read until the end of the file is reached.
-	fin.get(input);
-	while(!fin.eof())
-	{
-		// If the line starts with 'v' then count either the vertex, the texture coordinates, or the normal vector.
-		if(input == 'v')
-		{
-			fin.get(input);
-			if(input == ' ') { vertexCount++; }
-			if(input == 't') { textureCount++; }
-			if(input == 'n') { normalCount++; }
-		}
-
-		// If the line starts with 'f' then increment the face count.
-		if(input == 'f')
-		{
-			fin.get(input);
-			if(input == ' ') { faceCount++; }
-		}
-
-		// Otherwise read in the remainder of the line.
-		while(input != '\n')
-		{
-			fin.get(input);
-		}
-
-		// Start reading the beginning of the next line.
-		fin.get(input);
-	}
-
-	// Close the file.
-	fin.close();
-
-	return true;
-}
-
-//////////////////////////////////////////////////////////////////////////
-bool LoadDataStructures(char* filename, int vertexCount, int textureCount, int normalCount, int faceCount)
-{
-	VertexType *vertices, *texcoords, *normals;
-	FaceType *faces;
-	std::ifstream fin;
-	int vertexIndex, texcoordIndex, normalIndex, faceIndex, vIndex, tIndex, nIndex;
-	char input, input2;
-	std::ofstream fout;
-
-
-	// Initialize the four data structures.
-	vertices = new VertexType[vertexCount];
-	if(!vertices)
-	{
-		return false;
-	}
-
-	texcoords = new VertexType[textureCount];
-	if(!texcoords)
-	{
-		return false;
-	}
-
-	normals = new VertexType[normalCount];
-	if(!normals)
-	{
-		return false;
-	}
-
-	faces = new FaceType[faceCount];
-	if(!faces)
-	{
-		return false;
-	}
-
-	// Initialize the indexes.
-	vertexIndex = 0;
-	texcoordIndex = 0;
-	normalIndex = 0;
-	faceIndex = 0;
-
-	// Open the file.
-	fin.open(filename);
-
-	// Check if it was successful in opening the file.
-	if(fin.fail() == true)
-	{
-		return false;
-	}
-
-	// Read in the vertices, texture coordinates, and normals into the data structures.
-	// Important: Also convert to left hand coordinate system since Maya uses right hand coordinate system.
-	fin.get(input);
-	while(!fin.eof())
-	{
-		if(input == 'v')
-		{
-			fin.get(input);
-
-			// Read in the vertices.
-			if(input == ' ') 
-			{ 
-				fin >> vertices[vertexIndex].x >> vertices[vertexIndex].y >> vertices[vertexIndex].z;
-
-				// Invert the Z vertex to change to left hand system.
-				vertices[vertexIndex].z = vertices[vertexIndex].z * -1.0f;
-				vertexIndex++; 
-			}
-
-			// Read in the texture uv coordinates.
-			if(input == 't') 
-			{ 
-				fin >> texcoords[texcoordIndex].x >> texcoords[texcoordIndex].y;
-
-				// Invert the V texture coordinates to left hand system.
-				texcoords[texcoordIndex].y = 1.0f - texcoords[texcoordIndex].y;
-				texcoordIndex++; 
-			}
-
-			// Read in the normals.
-			if(input == 'n') 
-			{ 
-				fin >> normals[normalIndex].x >> normals[normalIndex].y >> normals[normalIndex].z;
-
-				// Invert the Z normal to change to left hand system.
-				normals[normalIndex].z = normals[normalIndex].z * -1.0f;
-				normalIndex++; 
-			}
-		}
-
-		// Read in the faces.
-		if(input == 'f') 
-		{
-			fin.get(input);
-			if(input == ' ')
-			{
-				// Read the face data in backwards to convert it to a left hand system from right hand system.
-				fin >> faces[faceIndex].vIndex3 >> input2 >> faces[faceIndex].tIndex3 >> input2 >> faces[faceIndex].nIndex3
-					>> faces[faceIndex].vIndex2 >> input2 >> faces[faceIndex].tIndex2 >> input2 >> faces[faceIndex].nIndex2
-					>> faces[faceIndex].vIndex1 >> input2 >> faces[faceIndex].tIndex1 >> input2 >> faces[faceIndex].nIndex1;
-				faceIndex++;
-			}
-		}
-
-		// Read in the remainder of the line.
-		while(input != '\n')
-		{
-			fin.get(input);
-		}
-
-		// Start reading the beginning of the next line.
-		fin.get(input);
-	}
-
-	// Close the file.
-	fin.close();
-
-	// Open the output file.
-	fout.open("model.txt");
-
-	// Write out the file header that our model format uses.
-	fout << "Vertex Count: " << (faceCount * 3) << endl;
-	fout << endl;
-	fout << "Data:" << endl;
-	fout << endl;
-
-	// Now loop through all the faces and output the three vertices for each face.
-	for(int i=0; i<faceIndex; i++)
-	{
-		vIndex = faces[i].vIndex1 - 1;
-		tIndex = faces[i].tIndex1 - 1;
-		nIndex = faces[i].nIndex1 - 1;
-
-		fout << vertices[vIndex].x << ' ' << vertices[vIndex].y << ' ' << vertices[vIndex].z << ' '
-			<< texcoords[tIndex].x << ' ' << texcoords[tIndex].y << ' '
-			<< normals[nIndex].x << ' ' << normals[nIndex].y << ' ' << normals[nIndex].z << endl;
-
-		vIndex = faces[i].vIndex2 - 1;
-		tIndex = faces[i].tIndex2 - 1;
-		nIndex = faces[i].nIndex2 - 1;
-
-		fout << vertices[vIndex].x << ' ' << vertices[vIndex].y << ' ' << vertices[vIndex].z << ' '
-			<< texcoords[tIndex].x << ' ' << texcoords[tIndex].y << ' '
-			<< normals[nIndex].x << ' ' << normals[nIndex].y << ' ' << normals[nIndex].z << endl;
-
-		vIndex = faces[i].vIndex3 - 1;
-		tIndex = faces[i].tIndex3 - 1;
-		nIndex = faces[i].nIndex3 - 1;
-
-		fout << vertices[vIndex].x << ' ' << vertices[vIndex].y << ' ' << vertices[vIndex].z << ' '
-			<< texcoords[tIndex].x << ' ' << texcoords[tIndex].y << ' '
-			<< normals[nIndex].x << ' ' << normals[nIndex].y << ' ' << normals[nIndex].z << endl;
-	}
-
-	// Close the output file.
-	fout.close();
-
-	// Release the four data structures.
-	if(vertices)
-	{
-		delete [] vertices;
-		vertices = 0;
-	}
-	if(texcoords)
-	{
-		delete [] texcoords;
-		texcoords = 0;
-	}
-	if(normals)
-	{
-		delete [] normals;
-		normals = 0;
-	}
-	if(faces)
-	{
-		delete [] faces;
-		faces = 0;
-	}
-
-	return true;
-}
-
