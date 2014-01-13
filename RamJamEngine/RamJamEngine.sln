@@ -10,6 +10,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RamJamEngine", "RamJamEngin
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AssetImporter", "..\AssetImporter\AssetImporter.vcxproj", "{FF0BB09B-4415-41F4-A37B-1AB4F0987AED}"
+	ProjectSection(ProjectDependencies) = postProject
+		{5691E159-2D9B-407F-971F-EA5C592DC524} = {5691E159-2D9B-407F-971F-EA5C592DC524}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RamJamEngine_Math", "..\RamJamEngine_Math\RamJamEngine_Math.vcxproj", "{84DC8F89-991C-4A58-8146-94D1791EBC60}"
 	ProjectSection(ProjectDependencies) = postProject

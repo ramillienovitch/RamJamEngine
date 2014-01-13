@@ -133,6 +133,59 @@ void DX11Mesh::LoadMaterialFromFile(std::string materialFile )
 }
 
 //////////////////////////////////////////////////////////////////////////
+void DX11Mesh::LoadMaterialLibraryFromFile(std::string materialLibraryFile)
+{
+	string material;
+	int tokenPos     = (int)materialLibraryFile.rfind("\\");
+	string matFolder = materialLibraryFile.substr(0, tokenPos);
+	ifstream matLibFile (System::Instance()->mDataPath + "materials\\" + materialLibraryFile);
+	if (matLibFile.is_open())
+	{
+		while ( getline (matLibFile,material) )
+		{
+			CheckMaterialFile(matFolder + "\\" + material);
+			LoadMaterialFromFile(matFolder + "\\" + material);
+		}
+		matLibFile.close();
+	}
+	else
+	{
+		RJE_MESSAGE_BOX(0, L"material library file not found.", 0, 0);
+		return;
+	}
+	matLibFile.close();
+}
+
+//////////////////////////////////////////////////////////////////////////
+void DX11Mesh::CheckMaterialFile(string materialFile)
+{
+	ifstream matFile (System::Instance()->mDataPath + "materials\\" + materialFile);
+	if (!matFile.is_open())
+	{
+		std::ofstream out (System::Instance()->mDataPath + "materials\\" + materialFile);
+		out << "[shader]\n";
+		out << "Name=basic\n";
+		out << "# ----------------------\n";
+		out << "[transparency]\n";
+		out << "IsOpaque=true\n";
+		out << "# ----------------------\n";
+		out << "[properties]\n";
+		out << "Ambient=1.0|1.0|1.0|1.0\n";
+		out << "Diffuse=0.8|0.8|0.8|1.0\n";
+		out << "Specular=0.2|0.2|0.2|16.0\n";
+		out << "# ----------------------\n";
+		out << "[textures]\n";
+		out << "Texture_Diffuse=NONE\n";
+		out << "Tiling=1.0|1.0\n";
+		out << "Offset=0.0|0.0\n";
+		out << "Rotation=0.0\n";
+		out << "# ----------------------";
+		out.close();
+	}
+
+}
+
+//////////////////////////////////////////////////////////////////////////
 void DX11Mesh::LoadModelFromFile(std::string filePath)
 {
 	FILE* fIn;

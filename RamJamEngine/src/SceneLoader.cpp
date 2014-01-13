@@ -53,7 +53,7 @@ void SceneLoader::ExtractGameObjects(xml_node<>* gameobjectNode, std::vector<uni
 				string meshPath     = System::Instance()->mDataPath + "models\\" + string(node->first_node()->value());
 				string materialFile = string(node->first_node()->next_sibling()->value());
 				gameobject->mDrawable.mMesh->LoadModelFromFile(meshPath);
-				gameobject->mDrawable.mMesh->LoadMaterialFromFile(materialFile);
+				gameobject->mDrawable.mMesh->LoadMaterialLibraryFromFile(materialFile);
 			}
 			//===== PRIMITIVE ===
 			if (strcmp(node->first_node()->name(), "primitive") == 0)
@@ -64,6 +64,7 @@ void SceneLoader::ExtractGameObjects(xml_node<>* gameobjectNode, std::vector<uni
 				if (strcmp(node->first_node()->value(), "cylinder")  == 0)		ExtractCylinder( node->first_node()->next_sibling(), gameobject);
 				if (strcmp(node->first_node()->value(), "grid")      == 0)		ExtractGrid(     node->first_node()->next_sibling(), gameobject);
 				string materialFile = string(node->first_node()->next_sibling()->next_sibling()->value());
+				gameobject->mDrawable.mMesh->CheckMaterialFile(materialFile);
 				gameobject->mDrawable.mMesh->LoadMaterialFromFile(materialFile);
 			}
 		}

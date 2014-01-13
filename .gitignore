@@ -155,7 +155,7 @@ $RECYCLE.BIN/
 .DS_Store
 
 # Asset Importer Models
-Models
+AssetImporter/Models
 
 # Shaders Binaries
 *.cso

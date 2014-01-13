@@ -2,21 +2,21 @@
 
 <scene>
 	<gameobject>
-		<name>valley</name>
+		<name>cornell</name>
 		<transform>
 			<position x="0" y="0" z="0"/>
 			<rotation x="0" y="0" z="0"/>
-			<scale    x="0.01" y="0.01" z="0.01"/>
+			<scale    x="1" y="1" z="1"/>
 		</transform>
 		<mesh>
-			<file>valley.mesh</file>
-			<material>model.mat</material>
+			<file>cornell.mesh</file>
+			<materialLib>CornellBox\cornell.matlib</materialLib>
 		</mesh>
 	</gameobject>
 	<gameobject>
 		<name>grid</name>
 		<transform>
-			<position x="0" y="0" z="0"/>
+			<position x="0" y="-3" z="0"/>
 			<rotation x="0" y="0" z="0"/>
 			<scale    x="1" y="1" z="1"/>
 		</transform>

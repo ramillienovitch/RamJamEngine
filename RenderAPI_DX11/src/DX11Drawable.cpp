@@ -58,11 +58,11 @@ void DX11Drawable::Render(ID3DX11EffectPass* shaderPass, BOOL bDrawOpaque /*= tr
 		for (u32 iSubset=0 ; iSubset<mMesh->mSubsetCount; ++iSubset)
 		{
 			// opaque test
-			//if (mMesh->mMaterial[iSubset]->mIsOpaque == bDrawOpaque)
-			if (mMesh->mMaterial[0]->mIsOpaque == bDrawOpaque)
+			if (mMesh->mMaterial[iSubset]->mIsOpaque == bDrawOpaque)
+			//if (mMesh->mMaterial[0]->mIsOpaque == bDrawOpaque)
 			{
-				//RJE_CHECK_FOR_SUCCESS(sShader->SetMaterial(mMesh->mMaterial[iSubset].get()));
-				RJE_CHECK_FOR_SUCCESS(sShader->SetMaterial(mMesh->mMaterial[0].get()));
+				RJE_CHECK_FOR_SUCCESS(sShader->SetMaterial(mMesh->mMaterial[iSubset].get()));
+				//RJE_CHECK_FOR_SUCCESS(sShader->SetMaterial(mMesh->mMaterial[0].get()));
 				RJE_CHECK_FOR_SUCCESS(shaderPass->Apply(NULL, mMesh->sDeviceContext));
 				mMesh->Render(iSubset);
 			}

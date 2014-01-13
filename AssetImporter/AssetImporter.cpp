@@ -8,6 +8,7 @@
 #include <windows.h>
 #include <iostream>
 #include <fstream>
+#include <direct.h>
 
 #define EXPORT_BINARY	1
 #define EXPORT_TEXT		0
@@ -15,6 +16,7 @@
 using namespace std;
 
 typedef unsigned __int32 u32;
+typedef unsigned __int64 u64;
 
 namespace GLOBALS
 {
@@ -102,7 +104,6 @@ bool ImportExportAssImp( const char* pFile )
 		LogLoadError( pFile, importer.GetErrorString() );
 		return false;
 	}
-
 	// Now we can access the file's contents.
 	ExportToFile( scene );
 
@@ -130,6 +131,40 @@ void LogLoadError(const char* modelFileName, const char* errorString )
 //////////////////////////////////////////////////////////////////////////
 void ExportToFile( const aiScene* scene )
 {
+	//===================================
+	// Export Materials (this is greedy !! creates as many materials as needed - one per mesh)
+	_mkdir("EXPORT");
+	_mkdir("EXPORT\\Materials");
+	// delete file extension
+	aiString fileName = scene->mRootNode->mName;
+	u64 newSize = 0;
+	while(fileName.data[newSize] != '.')
+	{
+		++newSize;
+	}
+	fileName.length        = newSize;
+	fileName.data[newSize] = 0;
+	//------
+	char buffer[100];
+	aiString materialName;
+	aiString materialLibName;
+	materialName.Append("EXPORT\\Materials\\");
+	materialName.Append(fileName.C_Str());
+	materialLibName = materialName;
+	materialLibName.Append(".matlib");
+	std::ofstream o(materialLibName.C_Str());
+	for(u32 iMesh=0 ; iMesh<scene->mNumMeshes ; ++iMesh)
+	{
+		aiString mat = fileName;
+		_itoa_s(iMesh, buffer, 10);
+		mat.Append("_");
+		mat.Append(buffer);
+		mat.Append(".mat\n");
+		o << mat.C_Str();
+	}
+	o.close();
+	//===================================
+
 #if EXPORT_TEXT
 	std::ofstream fOut;
 
@@ -141,10 +176,10 @@ void ExportToFile( const aiScene* scene )
 	fOut << "Mesh Count: " << dummy << "\n";
 	for(u32 iMesh=0 ; iMesh<scene->mNumMeshes ; ++iMesh)
 	{
-		dummy = iMesh == 0 ? 0 : scene->mMeshes[iMesh-1]->mNumVertices;		fOut << "Mesh " << iMesh << " Vertex Start :"	<< dummy << "\n";
-		dummy = iMesh == 0 ? 0 : scene->mMeshes[iMesh-1]->mNumFaces;		fOut << "Mesh " << iMesh << " Face Start :"		<< dummy << "\n";
-		dummy = scene->mMeshes[iMesh]->mNumVertices;						fOut << "Mesh " << iMesh << " Vertex Count :"	<< dummy << "\n";
-		dummy = scene->mMeshes[iMesh]->mNumFaces;							fOut << "Mesh " << iMesh << " Face Count :"		<< dummy << "\n";
+		dummy = totalVertices;									fOut << "Mesh " << iMesh << " Vertex Start :"	<< dummy << "\n";
+		dummy = totalFaces;										fOut << "Mesh " << iMesh << " Face Start :"		<< dummy << "\n";
+		dummy = scene->mMeshes[iMesh]->mNumVertices;			fOut << "Mesh " << iMesh << " Vertex Count :"	<< dummy << "\n";
+		dummy = scene->mMeshes[iMesh]->mNumFaces;				fOut << "Mesh " << iMesh << " Face Count :"		<< dummy << "\n";
 		totalVertices += scene->mMeshes[iMesh]->mNumVertices;
 		totalFaces    += scene->mMeshes[iMesh]->mNumFaces;
 	}
@@ -200,30 +235,26 @@ void ExportToFile( const aiScene* scene )
 	fOut.close();
 
 #elif EXPORT_BINARY
-	errno_t err;
 	FILE* fOut;
-
-	err = fopen_s(&fOut, "exported_model.mesh", "wb");
+	errno_t err = fopen_s(&fOut, "EXPORT\\exported_model.mesh", "wb");
 	if(err != NULL)
 	{
 		puts("Cannot open file exported_model.mesh");
 	}
-
-	float zero = 0.0f;
-
 	std::cout << "Start Export" << std::endl;
 
 	// --- write subsets, total vertices & faces -----------------
+	float zero        = 0.0f;
 	u32 dummy         = scene->mNumMeshes;
 	u32 totalVertices = 0;
 	u32 totalFaces    = 0;
 	std::fwrite(&dummy, sizeof(u32), 1, fOut);
 	for(u32 iMesh=0 ; iMesh<scene->mNumMeshes ; ++iMesh)
 	{
-		dummy = iMesh == 0 ? 0 : scene->mMeshes[iMesh-1]->mNumVertices;		std::fwrite(&dummy, sizeof(u32), 1, fOut);
-		dummy = iMesh == 0 ? 0 : scene->mMeshes[iMesh-1]->mNumFaces;		std::fwrite(&dummy, sizeof(u32), 1, fOut);
-		dummy = scene->mMeshes[iMesh]->mNumVertices;						std::fwrite(&dummy, sizeof(u32), 1, fOut);
-		dummy = scene->mMeshes[iMesh]->mNumFaces;							std::fwrite(&dummy, sizeof(u32), 1, fOut);
+		dummy = totalVertices;									std::fwrite(&dummy, sizeof(u32), 1, fOut);
+		dummy = totalFaces;										std::fwrite(&dummy, sizeof(u32), 1, fOut);
+		dummy = scene->mMeshes[iMesh]->mNumVertices;			std::fwrite(&dummy, sizeof(u32), 1, fOut);
+		dummy = scene->mMeshes[iMesh]->mNumFaces;				std::fwrite(&dummy, sizeof(u32), 1, fOut);
 		totalVertices += scene->mMeshes[iMesh]->mNumVertices;
 		totalFaces    += scene->mMeshes[iMesh]->mNumFaces;
 	}

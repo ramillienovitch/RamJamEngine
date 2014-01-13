@@ -439,9 +439,9 @@ void DX11RenderingAPI::DrawScene()
 		// Draw the transparent geometry
 		for(const unique_ptr<GameObject>& gameobject_transparent : mScene.mGameObjects)
 		{
-// 			if (mScene.mbUseBlending)
-// 				mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_CullNone);
-// 			mDX11Device->md3dImmediateContext->OMSetBlendState(DX11CommonStates::sCurrentBlendState, blendFactor, 0xffffffff);
+			if (mScene.mbUseBlending)
+				mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_CullNone);
+			mDX11Device->md3dImmediateContext->OMSetBlendState(DX11CommonStates::sCurrentBlendState, blendFactor, 0xffffffff);
 
 			if (gameobject_transparent->mDrawable.mMesh)
 				gameobject_transparent->mDrawable.Render(activeTech->GetPassByIndex(p), false);
