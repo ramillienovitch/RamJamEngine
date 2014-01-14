@@ -154,8 +154,9 @@ $RECYCLE.BIN/
 # Mac desktop service store files
 .DS_Store
 
-# Asset Importer Models
+# Asset Importer Models & Exports
 AssetImporter/Models
+AssetImporter/EXPORT
 
 # Shaders Binaries
 *.cso

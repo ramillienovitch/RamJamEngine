@@ -182,14 +182,19 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\data\textures\bricks.dds" />
+    <Image Include="..\data\textures\crash.png" />
     <Image Include="..\data\textures\flarealpha.dds" />
     <Image Include="..\data\textures\floor.dds" />
     <Image Include="..\data\textures\grass.dds" />
     <Image Include="..\data\textures\gray.dds" />
     <Image Include="..\data\textures\metal_texture.dds" />
     <Image Include="..\data\textures\mipmaps.dds" />
+    <Image Include="..\data\textures\rayman.png" />
     <Image Include="..\data\textures\sand.dds" />
     <Image Include="..\data\textures\seafloor.dds" />
+    <Image Include="..\data\textures\statue\statue_d.dds" />
+    <Image Include="..\data\textures\statue\statue_n.dds" />
+    <Image Include="..\data\textures\statue\statue_s.dds" />
     <Image Include="..\data\textures\stone.dds" />
     <Image Include="..\data\textures\terrainHeightmap.dds" />
     <Image Include="..\data\textures\TransparentGray.dds" />
@@ -206,13 +211,23 @@
   <ItemGroup>
     <None Include="..\data\Config.ini" />
     <None Include="..\data\materials\box.mat" />
+    <None Include="..\data\materials\CornellBox\backWall.mat" />
+    <None Include="..\data\materials\CornellBox\ceiling.mat" />
+    <None Include="..\data\materials\CornellBox\cornell.matlib" />
+    <None Include="..\data\materials\CornellBox\floor.mat" />
+    <None Include="..\data\materials\CornellBox\leftSphere.mat" />
+    <None Include="..\data\materials\CornellBox\leftWall.mat" />
+    <None Include="..\data\materials\CornellBox\light.mat" />
+    <None Include="..\data\materials\CornellBox\rightSphere.mat" />
+    <None Include="..\data\materials\CornellBox\rightWall.mat" />
+    <None Include="..\data\materials\crash.mat" />
     <None Include="..\data\materials\cylinder.mat" />
     <None Include="..\data\materials\grid.mat" />
     <None Include="..\data\materials\model.mat" />
     <None Include="..\data\materials\rayman.mat" />
     <None Include="..\data\materials\sphere.mat" />
-    <None Include="..\data\models\dragon.mesh" />
-    <None Include="..\data\models\sphere.mesh" />
+    <None Include="..\data\materials\statue.mat" />
+    <None Include="..\data\materials\valley.mat" />
     <None Include="..\data\Resources.ini" />
   </ItemGroup>
   <ItemGroup>
@@ -222,6 +237,7 @@
     <Xml Include="..\data\scenes\simple.xml">
       <SubType>Designer</SubType>
     </Xml>
+    <Xml Include="..\data\scenes\sponza.xml" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

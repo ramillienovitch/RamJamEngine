@@ -65,6 +65,7 @@ void DX11Drawable::Render(ID3DX11EffectPass* shaderPass, BOOL bDrawOpaque /*= tr
 				//RJE_CHECK_FOR_SUCCESS(sShader->SetMaterial(mMesh->mMaterial[0].get()));
 				RJE_CHECK_FOR_SUCCESS(shaderPass->Apply(NULL, mMesh->sDeviceContext));
 				mMesh->Render(iSubset);
+				//mMesh->Render(0);
 			}
 		}
 	}

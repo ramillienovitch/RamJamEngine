@@ -13,9 +13,6 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Resource Files\Models">
-      <UniqueIdentifier>{8d619102-e8ff-48b1-8d63-2b26a5d077f1}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Resource Files\Textures">
       <UniqueIdentifier>{98cf6776-5712-4728-bb56-b0b060855913}</UniqueIdentifier>
     </Filter>
@@ -33,6 +30,12 @@
     </Filter>
     <Filter Include="Resource Files\Materials">
       <UniqueIdentifier>{7bb38276-a04e-48b6-b0ac-b99eb2b3b870}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\Materials\Cornell Box">
+      <UniqueIdentifier>{17581b11-8bf5-46c4-86d9-d042b9a2dd67}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\Textures\statue">
+      <UniqueIdentifier>{95edf23d-4749-4fa2-a87c-6f0955995035}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -208,14 +211,23 @@
     <Image Include="..\data\textures\TransparentGray.dds">
       <Filter>Resource Files\Textures</Filter>
     </Image>
+    <Image Include="..\data\textures\crash.png">
+      <Filter>Resource Files\Textures</Filter>
+    </Image>
+    <Image Include="..\data\textures\rayman.png">
+      <Filter>Resource Files\Textures</Filter>
+    </Image>
+    <Image Include="..\data\textures\statue\statue_d.dds">
+      <Filter>Resource Files\Textures\statue</Filter>
+    </Image>
+    <Image Include="..\data\textures\statue\statue_n.dds">
+      <Filter>Resource Files\Textures\statue</Filter>
+    </Image>
+    <Image Include="..\data\textures\statue\statue_s.dds">
+      <Filter>Resource Files\Textures\statue</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\data\models\dragon.mesh">
-      <Filter>Resource Files\Models</Filter>
-    </None>
-    <None Include="..\data\models\sphere.mesh">
-      <Filter>Resource Files\Models</Filter>
-    </None>
     <None Include="..\data\Config.ini">
       <Filter>Resource Files\Config Files</Filter>
     </None>
@@ -240,6 +252,42 @@
     <None Include="..\data\materials\rayman.mat">
       <Filter>Resource Files\Materials</Filter>
     </None>
+    <None Include="..\data\materials\CornellBox\backWall.mat">
+      <Filter>Resource Files\Materials\Cornell Box</Filter>
+    </None>
+    <None Include="..\data\materials\CornellBox\ceiling.mat">
+      <Filter>Resource Files\Materials\Cornell Box</Filter>
+    </None>
+    <None Include="..\data\materials\CornellBox\cornell.matlib">
+      <Filter>Resource Files\Materials\Cornell Box</Filter>
+    </None>
+    <None Include="..\data\materials\CornellBox\floor.mat">
+      <Filter>Resource Files\Materials\Cornell Box</Filter>
+    </None>
+    <None Include="..\data\materials\CornellBox\leftSphere.mat">
+      <Filter>Resource Files\Materials\Cornell Box</Filter>
+    </None>
+    <None Include="..\data\materials\CornellBox\leftWall.mat">
+      <Filter>Resource Files\Materials\Cornell Box</Filter>
+    </None>
+    <None Include="..\data\materials\CornellBox\light.mat">
+      <Filter>Resource Files\Materials\Cornell Box</Filter>
+    </None>
+    <None Include="..\data\materials\CornellBox\rightSphere.mat">
+      <Filter>Resource Files\Materials\Cornell Box</Filter>
+    </None>
+    <None Include="..\data\materials\CornellBox\rightWall.mat">
+      <Filter>Resource Files\Materials\Cornell Box</Filter>
+    </None>
+    <None Include="..\data\materials\crash.mat">
+      <Filter>Resource Files\Materials</Filter>
+    </None>
+    <None Include="..\data\materials\statue.mat">
+      <Filter>Resource Files\Materials</Filter>
+    </None>
+    <None Include="..\data\materials\valley.mat">
+      <Filter>Resource Files\Materials</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\include\RamJamEngine.rc">
@@ -248,6 +296,9 @@
   </ItemGroup>
   <ItemGroup>
     <Xml Include="..\data\scenes\simple.xml">
+      <Filter>Resource Files\Scenes</Filter>
+    </Xml>
+    <Xml Include="..\data\scenes\sponza.xml">
       <Filter>Resource Files\Scenes</Filter>
     </Xml>
   </ItemGroup>

@@ -2,15 +2,15 @@
 
 <scene>
 	<gameobject>
-		<name>cornell</name>
+		<name>model</name>
 		<transform>
 			<position x="0" y="0" z="0"/>
 			<rotation x="0" y="0" z="0"/>
-			<scale    x="1" y="1" z="1"/>
+			<scale    x="0.01" y="0.01" z="0.01"/>
 		</transform>
 		<mesh>
-			<file>cornell.mesh</file>
-			<materialLib>CornellBox\cornell.matlib</materialLib>
+			<file>sponza.mesh</file>
+			<materialLib>Sponza\sponza.matlib</materialLib>
 		</mesh>
 	</gameobject>
 	<gameobject>
@@ -42,7 +42,7 @@
 	<gameobject>
 		<name>box</name>
 		<transform>
-			<position x="-5" y="0" z="5"/>
+			<position x="0" y="0" z="0"/>
 			<rotation x="0" y="0" z="0"/>
 			<scale    x="1" y="1" z="1"/>
 		</transform>

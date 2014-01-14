@@ -5,9 +5,9 @@ Name=basic
 IsOpaque=true
 # ----------------------
 [properties]
-Ambient=1.0|1.0|1.0|1.0
-Diffuse=0.8|0.8|0.8|1.0
-Specular=0.2|0.2|0.2|16.0
+Ambient=0.0|0.0|0.0|1.0
+Diffuse=0.0|0.0|0.0|1.0
+Specular=0.0|0.0|0.0|16.0
 # ----------------------
 [textures]
 Texture_Diffuse=NONE

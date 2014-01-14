@@ -9,9 +9,11 @@
 #include <iostream>
 #include <fstream>
 #include <direct.h>
+#include <vector>
 
 #define EXPORT_BINARY	1
 #define EXPORT_TEXT		0
+#define USE_OBJ_FILE	1
 
 using namespace std;
 
@@ -27,6 +29,7 @@ namespace GLOBALS
 // ASS IMP
 //////////////////////////////////////////////////////////////////////////
 bool ImportExportAssImp( const char* );
+void ExportMaterialToFile( const char*, const aiScene* scene );
 void ExportToFile( const aiScene* );
 void LogLoadError(const char*, const char* );
 void GetModelFilename(char*);
@@ -96,7 +99,7 @@ bool ImportExportAssImp( const char* pFile )
 														aiProcess_SortByPType			|
 														aiProcess_GenSmoothNormals		|
 														aiProcess_FlipUVs				|
-														aiProcessPreset_TargetRealtime_MaxQuality);//aiProcess_FlipWindingOrder);//| aiProcess_ConvertToLeftHanded );
+														aiProcessPreset_TargetRealtime_MaxQuality );//| aiProcess_FlipWindingOrder);//| aiProcess_ConvertToLeftHanded );
 
 	// If the import failed, report it
 	if( !scene )
@@ -104,7 +107,14 @@ bool ImportExportAssImp( const char* pFile )
 		LogLoadError( pFile, importer.GetErrorString() );
 		return false;
 	}
+
+	//-------------------------------
+	// Export Materials
+	
+	//-------------------------------
+
 	// Now we can access the file's contents.
+	ExportMaterialToFile( pFile, scene );
 	ExportToFile( scene );
 
 	// We're done. Everything will be cleaned up by the importer destructor
@@ -129,10 +139,8 @@ void LogLoadError(const char* modelFileName, const char* errorString )
 }
 
 //////////////////////////////////////////////////////////////////////////
-void ExportToFile( const aiScene* scene )
+void ExportMaterialToFile( const char* pFile, const aiScene* scene )
 {
-	//===================================
-	// Export Materials (this is greedy !! creates as many materials as needed - one per mesh)
 	_mkdir("EXPORT");
 	_mkdir("EXPORT\\Materials");
 	// delete file extension
@@ -145,7 +153,6 @@ void ExportToFile( const aiScene* scene )
 	fileName.length        = newSize;
 	fileName.data[newSize] = 0;
 	//------
-	char buffer[100];
 	aiString materialName;
 	aiString materialLibName;
 	materialName.Append("EXPORT\\Materials\\");
@@ -153,6 +160,31 @@ void ExportToFile( const aiScene* scene )
 	materialLibName = materialName;
 	materialLibName.Append(".matlib");
 	std::ofstream o(materialLibName.C_Str());
+#if USE_OBJ_FILE
+	string line;
+	//std::vector<string> objMaterials;
+	std::ifstream objFile(pFile);
+	if (objFile.is_open())
+	{
+		std::size_t found;
+		while ( getline (objFile,line) )
+		{
+			found = line.find("usemtl ");
+			if (found!=std::string::npos)
+			{
+				string material = line.substr(found+7) + ".mat";
+				o << (material+"\n").c_str();
+// 				vector<string>::iterator it = std::find(objMaterials.begin(), objMaterials.end(), material);
+// 				if(it==objMaterials.end())
+// 					objMaterials.push_back(material);
+			}
+		}
+		objFile.close();
+	}
+	else cout << "Unable to open file";
+#else
+	char buffer[100];
+	// Export Materials the greedy way !! creates as many materials as needed (one per mesh)
 	for(u32 iMesh=0 ; iMesh<scene->mNumMeshes ; ++iMesh)
 	{
 		aiString mat = fileName;
@@ -162,9 +194,13 @@ void ExportToFile( const aiScene* scene )
 		mat.Append(".mat\n");
 		o << mat.C_Str();
 	}
+#endif
 	o.close();
-	//===================================
+}
 
+//////////////////////////////////////////////////////////////////////////
+void ExportToFile( const aiScene* scene )
+{
 #if EXPORT_TEXT
 	std::ofstream fOut;
 

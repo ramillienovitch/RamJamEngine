@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+
+<scene>
+	<gameobject>
+		<name>model</name>
+		<transform>
+			<position x="0" y="0" z="0"/>
+			<rotation x="0" y="0" z="0"/>
+			<scale    x="0.01" y="0.01" z="0.01"/>
+		</transform>
+		<mesh>
+			<file>sponza.mesh</file>
+			<materialLib>Sponza\sponza.matlib</materialLib>
+		</mesh>
+	</gameobject>
+</scene>
