@@ -171,8 +171,8 @@ void DX11Mesh::CheckMaterialFile(string materialFile)
 		out << "# ----------------------\n";
 		out << "[properties]\n";
 		out << "Ambient=1.0|1.0|1.0|1.0\n";
-		out << "Diffuse=0.8|0.8|0.8|1.0\n";
-		out << "Specular=0.2|0.2|0.2|16.0\n";
+		out << "Diffuse=1.0|1.0|1.0|1.0\n";
+		out << "Specular=0.0|0.0|0.0|16.0\n";
 		out << "# ----------------------\n";
 		out << "[textures]\n";
 		out << "Texture_Diffuse=NONE\n";

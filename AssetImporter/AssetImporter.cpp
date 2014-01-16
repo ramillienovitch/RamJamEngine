@@ -93,13 +93,27 @@ bool ImportExportAssImp( const char* pFile )
 	// And have it read the given file with some example post processing
 	// Usually - if speed is not the most important aspect for you - you'll
 	// probably to request more post processing than we do in this example.
-	const aiScene* scene = importer.ReadFile( pFile,	aiProcess_CalcTangentSpace		|
-														aiProcess_Triangulate			|
-														aiProcess_JoinIdenticalVertices |
-														aiProcess_SortByPType			|
-														aiProcess_GenSmoothNormals		|
-														aiProcess_FlipUVs				|
-														aiProcessPreset_TargetRealtime_MaxQuality );//| aiProcess_FlipWindingOrder);//| aiProcess_ConvertToLeftHanded );
+	const aiScene* scene = importer.ReadFile( pFile,	aiProcess_CalcTangentSpace			|
+														aiProcess_Triangulate				|
+														aiProcess_JoinIdenticalVertices		|
+														aiProcess_SortByPType				|
+														aiProcess_GenSmoothNormals			|
+														aiProcess_CalcTangentSpace			|
+														aiProcess_ImproveCacheLocality		|
+														aiProcess_LimitBoneWeights			|
+														aiProcess_RemoveRedundantMaterials	|
+														//aiProcess_SplitLargeMeshes		|
+														aiProcess_GenUVCoords				|
+														//aiProcess_FindDegenerates			|
+														aiProcess_FindInvalidData			|
+														aiProcess_FindInstances				|
+														aiProcess_ValidateDataStructure		|
+														aiProcess_OptimizeMeshes			|
+														aiProcess_OptimizeGraph				|
+														aiProcess_MakeLeftHanded			|
+														aiProcess_FlipUVs					|
+														aiProcess_FlipWindingOrder			|
+														aiProcess_Debone );
 
 	// If the import failed, report it
 	if( !scene )
@@ -232,9 +246,16 @@ void ExportToFile( const aiScene* scene )
 			fOut << scene->mMeshes[iMesh]->mVertices[iVert].y << " ";
 			fOut << scene->mMeshes[iMesh]->mVertices[iVert].z << " ";
 
-			fOut << scene->mMeshes[iMesh]->mNormals[iVert].x << " ";
-			fOut << scene->mMeshes[iMesh]->mNormals[iVert].y << " ";
-			fOut << scene->mMeshes[iMesh]->mNormals[iVert].z << " ";
+			if (scene->mMeshes[iMesh]->HasNormals())
+			{
+				fOut << scene->mMeshes[iMesh]->mNormals[iVert].x << " ";
+				fOut << scene->mMeshes[iMesh]->mNormals[iVert].y << " ";
+				fOut << scene->mMeshes[iMesh]->mNormals[iVert].z << " ";
+			}
+			else
+			{
+				fOut << "0.0 0.0 0.0";
+			}
 
 			if (scene->mMeshes[iMesh]->HasTangentsAndBitangents())
 			{
@@ -306,9 +327,18 @@ void ExportToFile( const aiScene* scene )
 			std::fwrite(&scene->mMeshes[iMesh]->mVertices[iVert].y, sizeof(float), 1, fOut);
 			std::fwrite(&scene->mMeshes[iMesh]->mVertices[iVert].z, sizeof(float), 1, fOut);
 
-			std::fwrite(&scene->mMeshes[iMesh]->mNormals[iVert].x, sizeof(float), 1, fOut);
-			std::fwrite(&scene->mMeshes[iMesh]->mNormals[iVert].y, sizeof(float), 1, fOut);
-			std::fwrite(&scene->mMeshes[iMesh]->mNormals[iVert].z, sizeof(float), 1, fOut);
+			if (scene->mMeshes[iMesh]->HasNormals())
+			{
+				std::fwrite(&scene->mMeshes[iMesh]->mNormals[iVert].x, sizeof(float), 1, fOut);
+				std::fwrite(&scene->mMeshes[iMesh]->mNormals[iVert].y, sizeof(float), 1, fOut);
+				std::fwrite(&scene->mMeshes[iMesh]->mNormals[iVert].z, sizeof(float), 1, fOut);
+			}
+			else
+			{
+				std::fwrite(&zero, sizeof(float), 1, fOut);
+				std::fwrite(&zero, sizeof(float), 1, fOut);
+				std::fwrite(&zero, sizeof(float), 1, fOut);
+			}
 
 			if (scene->mMeshes[iMesh]->HasTangentsAndBitangents())
 			{

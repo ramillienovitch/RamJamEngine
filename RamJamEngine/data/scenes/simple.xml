@@ -2,67 +2,20 @@
 
 <scene>
 	<gameobject>
-		<name>model</name>
+		<name>dragon</name>
 		<transform>
-			<position x="0" y="0" z="0"/>
-			<rotation x="0" y="0" z="0"/>
-			<scale    x="0.01" y="0.01" z="0.01"/>
-		</transform>
-		<mesh>
-			<file>sponza.mesh</file>
-			<materialLib>Sponza\sponza.matlib</materialLib>
-		</mesh>
-	</gameobject>
-	<gameobject>
-		<name>grid</name>
-		<transform>
-			<position x="0" y="-3" z="0"/>
-			<rotation x="0" y="0" z="0"/>
+			<position x="0" y="1" z="0"/>
+			<rotation x="0" y="45" z="0"/>
 			<scale    x="1" y="1" z="1"/>
 		</transform>
 		<mesh>
-			<primitive>grid</primitive>
-			<parameters width="100" depth="100" rows="2" columns="2"/>
-			<material>grid.mat</material>
+			<file>dragon.mesh</file>
+			<materialLib>_Default\default.matlib</materialLib>
 		</mesh>
-	</gameobject>
-	<gameobject>
-		<name>cylinder</name>
-		<transform>
-			<position x="5" y="0" z="5"/>
-			<rotation x="0" y="0" z="0"/>
-			<scale    x="1" y="1" z="1"/>
-		</transform>
-		<mesh>
-			<primitive>cylinder</primitive>
-			<parameters bottomRadius="0.5" topRadius="0.3" height="3" slices="20" stacks="20"/>
-			<material>cylinder.mat</material>
-		</mesh>
-	</gameobject>
-	<gameobject>
-		<name>box</name>
-		<transform>
-			<position x="0" y="0" z="0"/>
-			<rotation x="0" y="0" z="0"/>
-			<scale    x="1" y="1" z="1"/>
-		</transform>
-		<mesh>
+		<gizmo>
 			<primitive>box</primitive>
-			<parameters width="1" height="1" depth="1"/>
-			<material>box.mat</material>
-		</mesh>
-	</gameobject>
-	<gameobject>
-		<name>geosphere</name>
-		<transform>
-			<position x="-5" y="0" z="-5"/>
-			<rotation x="0" y="0" z="0"/>
-			<scale    x="1" y="1" z="1"/>
-		</transform>
-		<mesh>
-			<primitive>geosphere</primitive>
-			<parameters radius="0.5" subdiv="3"/>
-			<material>sphere.mat</material>
-		</mesh>
+			<parameters width="2" height="2" depth="2"/>
+			<color a="255" r="0" g="255" b="0"/>
+		</gizmo>
 	</gameobject>
 </scene>

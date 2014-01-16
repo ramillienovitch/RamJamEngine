@@ -1,0 +1,17 @@
+[shader]
+Name=basic
+# ----------------------
+[transparency]
+IsOpaque=true
+# ----------------------
+[properties]
+Ambient=1.0|1.0|1.0|1.0
+Diffuse=1.0|1.0|1.0|1.0
+Specular=0.0|0.0|0.0|16.0
+# ----------------------
+[textures]
+Texture_Diffuse=textures\firetruck\veh_firetruck_windows_dam_d.dds
+Tiling=1.0|1.0
+Offset=0.0|0.0
+Rotation=0.0
+# ----------------------

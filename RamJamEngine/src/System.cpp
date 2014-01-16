@@ -91,7 +91,7 @@ BOOL System::Initialize(int nCmdShow)
 	mGraphicAPI->Initialize(RJE_GLOBALS::gScreenWidth, RJE_GLOBALS::gScreenHeight);
 
 	// Load the Scene file
-	string scenePath = mDataPath + CIniFile::GetValue("simple", "scenes", mResourcesPath);
+	string scenePath = mDataPath + CIniFile::GetValue("scene", "scenes", mResourcesPath);
 	mScene.LoadFromFile(scenePath.c_str());
 
 	return true;

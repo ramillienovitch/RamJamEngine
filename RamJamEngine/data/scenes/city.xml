@@ -1,0 +1,435 @@
+<?xml version="1.0"?>
+
+<scene>
+	<gameobject>
+		<name>city1_1</name>
+		<transform>
+			<position x="-15" y="0" z="-8"/>
+			<rotation x="0" y="0" z="0"/>
+			<scale    x="1" y="1" z="1"/>
+		</transform>
+		<mesh>
+			<file>city1.mesh</file>
+			<materialLib>City\city1.matlib</materialLib>
+		</mesh>
+	</gameobject>
+	<gameobject>
+		<name>city1_2</name>
+		<transform>
+			<position x="-4.6" y="0" z="0"/>
+			<rotation x="0" y="0" z="0"/>
+			<scale    x="1" y="1" z="1"/>
+		</transform>
+		<mesh>
+			<file>city1.mesh</file>
+			<materialLib>City\city1.matlib</materialLib>
+		</mesh>
+	</gameobject>
+	<gameobject>
+		<name>city2_1</name>
+		<transform>
+			<position x="-15" y="0" z="0"/>
+			<rotation x="0" y="0" z="0"/>
+			<scale    x="1" y="1" z="1"/>
+		</transform>
+		<mesh>
+			<file>city2.mesh</file>
+			<materialLib>City\city2.matlib</materialLib>
+		</mesh>
+	</gameobject>
+	<gameobject>
+		<name>city2_2</name>
+		<transform>
+			<position x="-4.6" y="0" z="-8"/>
+			<rotation x="0" y="180" z="0"/>
+			<scale    x="1" y="1" z="1"/>
+		</transform>
+		<mesh>
+			<file>city2.mesh</file>
+			<materialLib>City\city2.matlib</materialLib>
+		</mesh>
+	</gameobject>
+	<gameobject>
+		<name>city2_3</name>
+		<transform>
+			<position x="5.8" y="0" z="-8"/>
+			<rotation x="0" y="180" z="0"/>
+			<scale    x="1" y="1" z="1"/>
+		</transform>
+		<mesh>
+			<file>city2.mesh</file>
+			<materialLib>City\city2.matlib</materialLib>
+		</mesh>
+	</gameobject>
+	<gameobject>
+		<name>city2_4</name>
+		<transform>
+			<position x="5.8" y="0" z="0"/>
+			<rotation x="0" y="0" z="0"/>
+			<scale    x="1" y="1" z="1"/>
+		</transform>
+		<mesh>
+			<file>city2.mesh</file>
+			<materialLib>City\city2.matlib</materialLib>
+		</mesh>
+	</gameobject>
+	<gameobject>
+		<name>city3</name>
+		<transform>
+			<position x="-11" y="0" z="-1"/>
+			<rotation x="0" y="0" z="0"/>
+			<scale    x="1" y="1" z="1"/>
+		</transform>
+		<mesh>
+			<file>city3.mesh</file>
+			<materialLib>City\city3.matlib</materialLib>
+		</mesh>
+	</gameobject>
+	<gameobject>
+		<name>tanker</name>
+		<transform>
+			<position x="8" y="0" z="-4"/>
+			<rotation x="0" y="-30" z="0"/>
+			<scale    x="0.4" y="0.4" z="0.4"/>
+		</transform>
+		<mesh>
+			<file>tanker.mesh</file>
+			<materialLib>TankerTruck\TankerTruck.matlib</materialLib>
+		</mesh>
+	</gameobject>
+	<gameobject>
+		<name>firetruck</name>
+		<transform>
+			<position x="-2" y="0" z="-4.5"/>
+			<rotation x="0" y="-20" z="0"/>
+			<scale    x="0.4" y="0.4" z="0.4"/>
+		</transform>
+		<mesh>
+			<file>firetruck.mesh</file>
+			<materialLib>Firetruck\firetruck.matlib</materialLib>
+		</mesh>
+	</gameobject>
+	<gameobject>
+		<name>ship</name>
+		<transform>
+			<position x="0" y="7" z="-9"/>
+			<rotation x="10" y="-120" z="0"/>
+			<scale    x="0.2" y="0.2" z="0.2"/>
+		</transform>
+		<mesh>
+			<file>deusexship.mesh</file>
+			<materialLib>DeusExShip\deusexship.matlib</materialLib>
+		</mesh>
+	</gameobject>
+	<gameobject>
+		<name>cart1</name>
+		<transform>
+			<position x="-15" y="0" z="-8.5"/>
+			<rotation x="0" y="110" z="0"/>
+			<scale    x="0.008" y="0.008" z="0.008"/>
+		</transform>
+		<mesh>
+			<file>cart.mesh</file>
+			<materialLib>Cart\cart.matlib</materialLib>
+		</mesh>
+	</gameobject>
+	<gameobject>
+		<name>cart2</name>
+		<transform>
+			<position x="-7" y="0.25" z="0.5"/>
+			<rotation x="0" y="0" z="90"/>
+			<scale    x="0.008" y="0.008" z="0.008"/>
+		</transform>
+		<mesh>
+			<file>cart.mesh</file>
+			<materialLib>Cart\cart.matlib</materialLib>
+		</mesh>
+	</gameobject>
+	<gameobject>
+		<name>roadblock1</name>
+		<transform>
+			<position x="3" y="0" z="-8.7"/>
+			<rotation x="0" y="0" z="0"/>
+			<scale    x="0.1" y="0.1" z="0.13"/>
+		</transform>
+		<mesh>
+			<file>roadblock.mesh</file>
+			<materialLib>Roadblock\roadblock.matlib</materialLib>
+		</mesh>
+	</gameobject>
+	<gameobject>
+		<name>roadblock2</name>
+		<transform>
+			<position x="3" y="0" z="1"/>
+			<rotation x="0" y="0" z="0"/>
+			<scale    x="0.1" y="0.1" z="0.13"/>
+		</transform>
+		<mesh>
+			<file>roadblock.mesh</file>
+			<materialLib>Roadblock\roadblock.matlib</materialLib>
+		</mesh>
+	</gameobject>
+	<gameobject>
+		<name>fence1</name>
+		<transform>
+			<position x="-20" y="0.5" z="1"/>
+			<rotation x="0" y="0" z="0"/>
+			<scale    x="0.01" y="0.01" z="0.01"/>
+		</transform>
+		<mesh>
+			<file>fence.mesh</file>
+			<materialLib>Fence\fence.matlib</materialLib>
+		</mesh>
+	</gameobject>
+	<gameobject>
+		<name>fence2</name>
+		<transform>
+			<position x="-20" y="0.5" z="-0.32"/>
+			<rotation x="0" y="0" z="0"/>
+			<scale    x="0.01" y="0.01" z="0.01"/>
+		</transform>
+		<mesh>
+			<file>fence.mesh</file>
+			<materialLib>Fence\fence.matlib</materialLib>
+		</mesh>
+	</gameobject>
+	<gameobject>
+		<name>fence3</name>
+		<transform>
+			<position x="-20" y="0.5" z="-1.64"/>
+			<rotation x="0" y="0" z="0"/>
+			<scale    x="0.01" y="0.01" z="0.01"/>
+		</transform>
+		<mesh>
+			<file>fence.mesh</file>
+			<materialLib>Fence\fence.matlib</materialLib>
+		</mesh>
+	</gameobject>
+	<gameobject>
+		<name>fence4</name>
+		<transform>
+			<position x="-20" y="0.5" z="-2.96"/>
+			<rotation x="0" y="0" z="0"/>
+			<scale    x="0.01" y="0.01" z="0.01"/>
+		</transform>
+		<mesh>
+			<file>fence.mesh</file>
+			<materialLib>Fence\fence.matlib</materialLib>
+		</mesh>
+	</gameobject>
+	<gameobject>
+		<name>fence5</name>
+		<transform>
+			<position x="-20" y="0.5" z="-4.28"/>
+			<rotation x="0" y="0" z="0"/>
+			<scale    x="0.01" y="0.01" z="0.01"/>
+		</transform>
+		<mesh>
+			<file>fence.mesh</file>
+			<materialLib>Fence\fence.matlib</materialLib>
+		</mesh>
+	</gameobject>
+	<gameobject>
+		<name>fence6</name>
+		<transform>
+			<position x="-20" y="0.5" z="-5.6"/>
+			<rotation x="0" y="0" z="0"/>
+			<scale    x="0.01" y="0.01" z="0.01"/>
+		</transform>
+		<mesh>
+			<file>fence.mesh</file>
+			<materialLib>Fence\fence.matlib</materialLib>
+		</mesh>
+	</gameobject>
+	<gameobject>
+		<name>fence7</name>
+		<transform>
+			<position x="-20" y="0.5" z="-6.92"/>
+			<rotation x="0" y="0" z="0"/>
+			<scale    x="0.01" y="0.01" z="0.01"/>
+		</transform>
+		<mesh>
+			<file>fence.mesh</file>
+			<materialLib>Fence\fence.matlib</materialLib>
+		</mesh>
+	</gameobject>
+	<gameobject>
+		<name>fence8</name>
+		<transform>
+			<position x="-20" y="0.5" z="-8.24"/>
+			<rotation x="0" y="0" z="0"/>
+			<scale    x="0.01" y="0.01" z="0.01"/>
+		</transform>
+		<mesh>
+			<file>fence.mesh</file>
+			<materialLib>Fence\fence.matlib</materialLib>
+		</mesh>
+	</gameobject>
+	<gameobject>
+		<name>fence9</name>
+		<transform>
+			<position x="-20" y="0.5" z="-9.56"/>
+			<rotation x="0" y="0" z="0"/>
+			<scale    x="0.01" y="0.01" z="0.01"/>
+		</transform>
+		<mesh>
+			<file>fence.mesh</file>
+			<materialLib>Fence\fence.matlib</materialLib>
+		</mesh>
+	</gameobject>
+	<gameobject>
+		<name>dOg</name>
+		<transform>
+			<position x="-9" y="0" z="-9"/>
+			<rotation x="0" y="-70" z="0"/>
+			<scale    x="1.5" y="1.5" z="1.5"/>
+		</transform>
+		<mesh>
+			<file>dog.mesh</file>
+			<materialLib>Dog\dog.matlib</materialLib>
+		</mesh>
+	</gameobject>
+	<gameobject>
+		<name>road1</name>
+		<transform>
+			<position x="-19" y="0" z="-4"/>
+			<rotation x="0" y="90" z="0"/>
+			<scale    x="1" y="1" z="1"/>
+		</transform>
+		<mesh>
+			<primitive>grid</primitive>
+			<parameters width="5" depth="3" x="2" y="2"/>
+			<material>Road\road1.mat</material>
+		</mesh>
+	</gameobject>
+	<gameobject>
+		<name>road2</name>
+		<transform>
+			<position x="-16" y="0" z="-4"/>
+			<rotation x="0" y="90" z="0"/>
+			<scale    x="1" y="1" z="1"/>
+		</transform>
+		<mesh>
+			<primitive>grid</primitive>
+			<parameters width="5" depth="3" x="2" y="2"/>
+			<material>Road\road3.mat</material>
+		</mesh>
+	</gameobject>
+	<gameobject>
+		<name>road3</name>
+		<transform>
+			<position x="-13" y="0" z="-4"/>
+			<rotation x="0" y="90" z="0"/>
+			<scale    x="1" y="1" z="1"/>
+		</transform>
+		<mesh>
+			<primitive>grid</primitive>
+			<parameters width="5" depth="3" x="2" y="2"/>
+			<material>Road\road2.mat</material>
+		</mesh>
+	</gameobject>
+	<gameobject>
+		<name>road4</name>
+		<transform>
+			<position x="-10" y="0" z="-4"/>
+			<rotation x="0" y="90" z="0"/>
+			<scale    x="1" y="1" z="1"/>
+		</transform>
+		<mesh>
+			<primitive>grid</primitive>
+			<parameters width="5" depth="3" x="2" y="2"/>
+			<material>Road\road4.mat</material>
+		</mesh>
+	</gameobject>
+	<gameobject>
+		<name>road5</name>
+		<transform>
+			<position x="-7" y="0" z="-4"/>
+			<rotation x="0" y="90" z="0"/>
+			<scale    x="1" y="1" z="1"/>
+		</transform>
+		<mesh>
+			<primitive>grid</primitive>
+			<parameters width="5" depth="3" x="2" y="2"/>
+			<material>Road\road1.mat</material>
+		</mesh>
+	</gameobject>
+	<gameobject>
+		<name>road6</name>
+		<transform>
+			<position x="-4" y="0" z="-4"/>
+			<rotation x="0" y="90" z="0"/>
+			<scale    x="1" y="1" z="1"/>
+		</transform>
+		<mesh>
+			<primitive>grid</primitive>
+			<parameters width="5" depth="3" x="2" y="2"/>
+			<material>Road\road4.mat</material>
+		</mesh>
+	</gameobject>
+	<gameobject>
+		<name>road7</name>
+		<transform>
+			<position x="-1" y="0" z="-4"/>
+			<rotation x="0" y="90" z="0"/>
+			<scale    x="1" y="1" z="1"/>
+		</transform>
+		<mesh>
+			<primitive>grid</primitive>
+			<parameters width="5" depth="3" x="2" y="2"/>
+			<material>Road\road2.mat</material>
+		</mesh>
+	</gameobject>
+	<gameobject>
+		<name>road8</name>
+		<transform>
+			<position x="2" y="0" z="-4"/>
+			<rotation x="0" y="90" z="0"/>
+			<scale    x="1" y="1" z="1"/>
+		</transform>
+		<mesh>
+			<primitive>grid</primitive>
+			<parameters width="5" depth="3" x="2" y="2"/>
+			<material>Road\road3.mat</material>
+		</mesh>
+	</gameobject>
+	<gameobject>
+		<name>road9</name>
+		<transform>
+			<position x="5" y="0" z="-4"/>
+			<rotation x="0" y="90" z="0"/>
+			<scale    x="1" y="1" z="1"/>
+		</transform>
+		<mesh>
+			<primitive>grid</primitive>
+			<parameters width="5" depth="3" x="2" y="2"/>
+			<material>Road\road1.mat</material>
+		</mesh>
+	</gameobject>
+	<gameobject>
+		<name>road10</name>
+		<transform>
+			<position x="8" y="0" z="-4"/>
+			<rotation x="0" y="90" z="0"/>
+			<scale    x="1" y="1" z="1"/>
+		</transform>
+		<mesh>
+			<primitive>grid</primitive>
+			<parameters width="5" depth="3" x="2" y="2"/>
+			<material>Road\road4.mat</material>
+		</mesh>
+	</gameobject>
+	<gameobject>
+		<name>road11</name>
+		<transform>
+			<position x="11" y="0" z="-4"/>
+			<rotation x="0" y="90" z="0"/>
+			<scale    x="1" y="1" z="1"/>
+		</transform>
+		<mesh>
+			<primitive>grid</primitive>
+			<parameters width="5" depth="3" x="2" y="2"/>
+			<material>Road\road2.mat</material>
+		</mesh>
+	</gameobject>
+</scene>

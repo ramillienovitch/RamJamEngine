@@ -234,6 +234,7 @@
     <ResourceCompile Include="..\include\RamJamEngine.rc" />
   </ItemGroup>
   <ItemGroup>
+    <Xml Include="..\data\scenes\city.xml" />
     <Xml Include="..\data\scenes\simple.xml">
       <SubType>Designer</SubType>
     </Xml>

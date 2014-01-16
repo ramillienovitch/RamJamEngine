@@ -1,0 +1,17 @@
+[shader]
+Name=basic
+# ----------------------
+[transparency]
+IsOpaque=true
+# ----------------------
+[properties]
+Ambient=0.8|0.8|0.8|1.0
+Diffuse=0.8|0.8|0.8|1.0
+Specular=0.3|0.3|0.3|16.0
+# ----------------------
+[textures]
+Texture_Diffuse=NONE
+Tiling=1.0|1.0
+Offset=0.0|0.0
+Rotation=0.0
+# ----------------------

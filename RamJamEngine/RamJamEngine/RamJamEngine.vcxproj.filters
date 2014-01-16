@@ -301,5 +301,8 @@
     <Xml Include="..\data\scenes\sponza.xml">
       <Filter>Resource Files\Scenes</Filter>
     </Xml>
+    <Xml Include="..\data\scenes\city.xml">
+      <Filter>Resource Files\Scenes</Filter>
+    </Xml>
   </ItemGroup>
 </Project>
