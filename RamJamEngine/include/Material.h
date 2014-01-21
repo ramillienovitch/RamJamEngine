@@ -80,36 +80,54 @@ struct Material
 	//----------------------------------
 
 	void LoadPropertiesFromFile  (std::string filename);
-	void SetPropertiesFromFactory(std::string shaderName, std::string materialPath);
+	void SetPropertiesFromFactory(std::string shaderName);
 	//-------
-	template <typename T>
-	void SetProperty       (std::string propertyName, T propertyData);
-	template <typename T>
-	T    GetProperty       (std::string propertyName);
-	void AddProperty       (std::string propertyName, MaterialPropertyType propertyType, u64 propertyDataLength);
-	//-------
-	void AddPropertyInt    (std::string propertyName);
-	void AddPropertyBool   (std::string propertyName);
-	void AddPropertyFloat  (std::string propertyName);
-	void AddPropertyVector (std::string propertyName);
+	void AddProperty       (std::string propertyName, MaterialPropertyType propertyType, u64 propertyDataLength, void* propertyData);
+	void AddPropertyInt    (std::string propertyName, int     propertyData);
+	void AddPropertyBool   (std::string propertyName, BOOL    propertyData);
+	void AddPropertyFloat  (std::string propertyName, float   propertyData);
+	void AddPropertyVector (std::string propertyName, Vector4 propertyData);
 	void AddPropertyMatrix (std::string propertyName);
-	//-------
-	void AddPropertyTexture(std::string propertyName);
-	void SetTexture        (std::string propertyName, ShaderResource* shaderResource, Vector2& tiling = Vector2(1,1), Vector2& offset = Vector2(0,0), float rotation = 0.0f);
+	void AddPropertyTexture(std::string propertyName, ShaderResource* shaderResource = nullptr, Vector2& tiling = Vector2(1,1), Vector2& offset = Vector2(0,0), float rotation = 0.0f);
 };
 
-template <typename T>
-void Material::SetProperty( std::string propertyName, T propertyData )
+//////////////////////////////////////////////////////////////////////////
+FORCEINLINE void Material::AddProperty( std::string propertyName, MaterialPropertyType propertyType, u64 propertyDataLength, void* propertyData )
 {
-	for ( auto it = mProperties.begin(); it != mProperties.end(); ++it )
-	{
-		if ((*it)->mName == propertyName)
-			memcpy((*it)->mData, reinterpret_cast<void*>(&propertyData), sizeof(T));
-	}
+	MaterialProperty* property = new MaterialProperty();
+	property->mName            = propertyName;
+	property->mType            = propertyType;
+	property->mData            = malloc (propertyDataLength);
+	if (propertyData)
+		memcpy(property->mData, propertyData, propertyDataLength);
+	++mPropertiesCount;
+	mProperties.push_back(property);
 }
-
-// template <typename T>
-// T Material::GetProperty( std::string propertyName )
-// {
-// 
-// }
+//------------------------------------------------------------
+FORCEINLINE void Material::AddPropertyInt( std::string propertyName, int propertyData )
+{ AddProperty(propertyName, MaterialPropertyType::Type_Int, sizeof(int), reinterpret_cast<void*>(&propertyData)); }
+//------------------
+FORCEINLINE void Material::AddPropertyBool( std::string propertyName, BOOL propertyData )
+{ AddProperty(propertyName, MaterialPropertyType::Type_Bool, sizeof(bool), reinterpret_cast<void*>(&propertyData)); }
+//------------------
+FORCEINLINE void Material::AddPropertyFloat( std::string propertyName, float propertyData )
+{ AddProperty(propertyName, MaterialPropertyType::Type_Float, sizeof(float), reinterpret_cast<void*>(&propertyData)); }
+//------------------
+FORCEINLINE void Material::AddPropertyVector( std::string propertyName, Vector4 propertyData )
+{ AddProperty(propertyName, MaterialPropertyType::Type_Vector, sizeof(Vector4), reinterpret_cast<void*>(&propertyData)); }
+//------------------
+FORCEINLINE void Material::AddPropertyMatrix( std::string propertyName )
+{ AddProperty(propertyName, MaterialPropertyType::Type_Matrix, sizeof(Matrix44), nullptr); }
+//------------------------------------------------------------
+FORCEINLINE void Material::AddPropertyTexture( std::string propertyName, ShaderResource* shaderResource /*= nullptr*/, Vector2& tiling /*= Vector2(1,1)*/, Vector2& offset /*= Vector2(0,0)*/, float rotation /*= 0.0f*/ )
+{
+	MaterialProperty* property                        = new MaterialProperty();
+	property->mName                                   = propertyName;
+	property->mType                                   = MaterialPropertyType::Type_Texture;
+	property->mShaderResource.mTexture                = shaderResource;
+	property->mShaderResource.mOffset                 = offset;
+	property->mShaderResource.mTiling                 = tiling;
+	property->mShaderResource.mRotationAngleInDegrees = rotation;
+	++mPropertiesCount;
+	mProperties.push_back(property);
+}

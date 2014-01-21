@@ -234,11 +234,12 @@ void DX11CommonStates::InitAll(ID3D11Device* device)
 	RJE_CHECK_FOR_SUCCESS(NoRenderTargetWrites(device, &sBlendState_NoRenderTargetWrites));
 	sCurrentBlendState = sBlendState_AlphaToCoverage;
 
-	RJE_CHECK_FOR_SUCCESS(DepthDefault(  device, &sDepthStencilState_Default));
-	RJE_CHECK_FOR_SUCCESS(DepthDisable(  device, &sDepthStencilState_DepthDisable));
-	RJE_CHECK_FOR_SUCCESS(MarkStencil(device, &sDepthStencilState_MarkStencil));
+	RJE_CHECK_FOR_SUCCESS(DepthDefault( device, &sDepthStencilState_Default));
+	RJE_CHECK_FOR_SUCCESS(DepthDisable( device, &sDepthStencilState_DepthDisable));
+	RJE_CHECK_FOR_SUCCESS(DepthRead(    device, &sDepthStencilState_DepthRead));
+	RJE_CHECK_FOR_SUCCESS(MarkStencil(  device, &sDepthStencilState_MarkStencil));
 	RJE_CHECK_FOR_SUCCESS(DrawStenciled(device, &sDepthStencilState_DrawStenciled));
-	RJE_CHECK_FOR_SUCCESS(NoDoubleBlend( device, &sDepthStencilState_NoDoubleBlend));
+	RJE_CHECK_FOR_SUCCESS(NoDoubleBlend(device, &sDepthStencilState_NoDoubleBlend));
 	sCurrentDepthStencilState = sDepthStencilState_Default;
 }
 
@@ -246,6 +247,7 @@ void DX11CommonStates::DestroyAll()
 {
 	RJE_SAFE_RELEASE(sDepthStencilState_Default);
 	RJE_SAFE_RELEASE(sDepthStencilState_DepthDisable);
+	RJE_SAFE_RELEASE(sDepthStencilState_DepthRead);
 	RJE_SAFE_RELEASE(sDepthStencilState_MarkStencil);
 	RJE_SAFE_RELEASE(sDepthStencilState_DrawStenciled);
 	RJE_SAFE_RELEASE(sDepthStencilState_NoDoubleBlend);
@@ -289,4 +291,5 @@ ID3D11DepthStencilState* DX11CommonStates::sDepthStencilState_DrawStenciled = nu
 ID3D11DepthStencilState* DX11CommonStates::sDepthStencilState_NoDoubleBlend = nullptr;
 ID3D11DepthStencilState* DX11CommonStates::sDepthStencilState_Default       = nullptr;
 ID3D11DepthStencilState* DX11CommonStates::sDepthStencilState_DepthDisable  = nullptr;
+ID3D11DepthStencilState* DX11CommonStates::sDepthStencilState_DepthRead     = nullptr;
 ID3D11DepthStencilState* DX11CommonStates::sCurrentDepthStencilState        = nullptr;

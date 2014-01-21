@@ -1,13 +1,26 @@
 #include "IniFile.h"
 #include "Debug.h"
 
-CIniFile::CIniFile(void)	// Default constructor
+bool						CIniFile::sFileOpened = false;
+vector<CIniFile::Record>	CIniFile::sContent;
+
+void CIniFile::OpenFile(string fileName)
 {
+	sFileOpened = true;
+	Load(fileName, sContent);
 }
 
-CIniFile::~CIniFile(void)
+void CIniFile::CloseFile()
 {
+	CIniFile::sFileOpened = false;
+	sContent.empty();
 }
+
+CIniFile::CIniFile(void)	// Default constructor
+{}
+
+CIniFile::~CIniFile(void)
+{}
 
 // A function to trim whitespace from both sides of a given string
 void Trim(std::string& str, const std::string & ChrsToTrim = " \t\n\r", int TrimDir = 0)
@@ -205,19 +218,33 @@ bool CIniFile::SectionExists(string SectionName, string FileName)
 vector<CIniFile::Record> CIniFile::GetRecord(string KeyName, string SectionName, string FileName)
 {
 	vector<Record> data;													// Holds the return data
-	vector<Record> content;													// Holds the current record													// Holds the current record
-
-	if (Load(FileName, content))											// Make sure the file is loaded
+	
+	if (sFileOpened)
 	{
-		vector<Record>::iterator iter = std::find_if(content.begin(), 
-				content.end(), 
-				CIniFile::RecordSectionKeyIs(SectionName,KeyName));			// Locate the Record
+		vector<Record>::iterator iter = std::find_if(sContent.begin(), 
+			sContent.end(), 
+			CIniFile::RecordSectionKeyIs(SectionName,KeyName));				// Locate the Record
 
-		if (iter == content.end()) return data;								// The Record was not found
+		if (iter == sContent.end()) return data;								// The Record was not found
 
 		data.push_back (*iter);												// The Record was found
+		return data;
 	}
-	return data;															// Return the Record
+	else
+	{
+		vector<Record> content;													// Holds the current record
+		if (Load(FileName, content))											// Make sure the file is loaded
+		{
+			vector<Record>::iterator iter = std::find_if(content.begin(), 
+				content.end(), 
+				CIniFile::RecordSectionKeyIs(SectionName,KeyName));				// Locate the Record
+
+			if (iter == content.end()) return data;								// The Record was not found
+
+			data.push_back (*iter);												// The Record was found
+		}
+		return data;															// Return the Record
+	}
 }
 
 string CIniFile::GetValue(string KeyName, string SectionName, string FileName)

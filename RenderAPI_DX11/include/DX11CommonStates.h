@@ -88,6 +88,7 @@ struct DX11CommonStates
 	static ID3D11DepthStencilState* sDepthStencilState_DrawStenciled;
 	static ID3D11DepthStencilState* sDepthStencilState_NoDoubleBlend;
 	static ID3D11DepthStencilState* sDepthStencilState_DepthDisable;
+	static ID3D11DepthStencilState* sDepthStencilState_DepthRead;
 	static ID3D11DepthStencilState* sDepthStencilState_Default;
 	static ID3D11DepthStencilState* sCurrentDepthStencilState;
 };

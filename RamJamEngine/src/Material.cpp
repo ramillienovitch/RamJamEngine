@@ -18,16 +18,15 @@ Material::~Material()
 //////////////////////////////////////////////////////////////////////////
 void Material::LoadPropertiesFromFile( std::string filename )
 {
-	std::string materialPath = System::Instance()->mDataPath + "materials\\" + filename;
-	std::string shaderName   = CIniFile::GetValue("Name", "shader", materialPath);
-	mIsOpaque = CIniFile::GetValueBool("IsOpaque", "transparency", materialPath);
+	std::string shaderName = CIniFile::GetValue("Name", "shader");
+	mIsOpaque = CIniFile::GetValueBool("IsOpaque", "transparency");
 	
 	RJE_ASSERT(MaterialFactory::Instance()->IsShaderLoaded(shaderName));
-	SetPropertiesFromFactory(shaderName, materialPath);
+	SetPropertiesFromFactory(shaderName);
 }
 
 //////////////////////////////////////////////////////////////////////////
-void Material::SetPropertiesFromFactory( std::string shaderName, std::string materialPath )
+void Material::SetPropertiesFromFactory( std::string shaderName )
 {
 	std::vector<MaterialFactory::MaterialProperty>& properties = MaterialFactory::Instance()->mFactories[shaderName];
 
@@ -36,83 +35,35 @@ void Material::SetPropertiesFromFactory( std::string shaderName, std::string mat
 		if (!it->mSemantic.empty())
 		{
 			std::string& type = it->mType;
-			if ( type == "int")
-			{
-				AddPropertyInt(it->mSemantic);
-				SetProperty(it->mSemantic, CIniFile::GetValueInt(it->mSemantic, "properties", materialPath));
-			}
-			else if ( type == "bool")
-			{
-				AddPropertyBool(it->mSemantic);
-				SetProperty(it->mSemantic, CIniFile::GetValueBool(it->mSemantic, "properties", materialPath));
-			}
-			else if ( type == "float")
-			{
-				AddPropertyFloat(it->mSemantic);
-				SetProperty(it->mSemantic, CIniFile::GetValueFloat(it->mSemantic, "properties", materialPath));
-			}
-			else if ( type == "float4")
-			{
-				AddPropertyVector(it->mSemantic);
-				SetProperty(it->mSemantic, CIniFile::GetValueVector4(it->mSemantic, "properties", materialPath));
-			}
+			if      ( type == "int")			AddPropertyInt(   it->mSemantic, CIniFile::GetValueInt(    it->mSemantic, "properties"));
+			else if ( type == "bool")			AddPropertyBool(  it->mSemantic, CIniFile::GetValueBool(   it->mSemantic, "properties"));
+			else if ( type == "float")			AddPropertyFloat( it->mSemantic, CIniFile::GetValueFloat(  it->mSemantic, "properties"));
+			else if ( type == "float4")			AddPropertyVector(it->mSemantic, CIniFile::GetValueVector4(it->mSemantic, "properties"));
 			else if ( type == "float4x4")		AddPropertyMatrix(it->mSemantic);
-			else if ( type == "Texture2D")		AddPropertyTexture(it->mSemantic);
-		}
-	}
-}
+			else if ( type == "Texture2D")
+			{
+				std::string texturePathRel = CIniFile::GetValue(it->mSemantic, "textures");
+				std::string texturePathAbs = System::Instance()->mDataPath + texturePathRel;
+				int slash = (int)texturePathRel.rfind('\\')+1;
+				int point = (int)texturePathRel.find('.');
+				std::string textureName = texturePathRel.substr(slash, point-slash);
 
-//////////////////////////////////////////////////////////////////////////
-void Material::AddProperty( std::string propertyName, MaterialPropertyType propertyType, size_t propertyDataLength )
-{
-	MaterialProperty* property = rje_new MaterialProperty();
-	property->mName            = propertyName;
-	property->mType            = propertyType;
-	property->mData            = malloc (propertyDataLength);
-	++mPropertiesCount;
-	mProperties.push_back(property);
-}
-//------------------------------------------------------------
-void Material::AddPropertyInt( std::string propertyName )
-{ AddProperty(propertyName, MaterialPropertyType::Type_Int, sizeof(int)); }
-//------------------
-void Material::AddPropertyBool( std::string propertyName )
-{ AddProperty(propertyName, MaterialPropertyType::Type_Bool, sizeof(bool)); }
-//------------------
-void Material::AddPropertyFloat( std::string propertyName )
-{ AddProperty(propertyName, MaterialPropertyType::Type_Float, sizeof(float)); }
-//------------------
-void Material::AddPropertyVector( std::string propertyName )
-{ AddProperty(propertyName, MaterialPropertyType::Type_Vector, sizeof(Vector4)); }
-//------------------
-void Material::AddPropertyMatrix( std::string propertyName )
-{ AddProperty(propertyName, MaterialPropertyType::Type_Matrix, sizeof(Matrix44)); }
-//------------------------------------------------------------
-void Material::AddPropertyTexture( std::string propertyName )
-{
-	MaterialProperty* property         = rje_new MaterialProperty();
-	property->mName                    = propertyName;
-	property->mType                    = MaterialPropertyType::Type_Texture;
-	property->mShaderResource.mTexture                = nullptr;
-	property->mShaderResource.mOffset                 = 0.0f;
-	property->mShaderResource.mTiling                 = 0.0f;
-	property->mShaderResource.mRotationAngleInDegrees = 0.0f;
-	++mPropertiesCount;
-	mProperties.push_back(property);
-}
+				if (textureName == "NONE")
+					AddPropertyTexture(it->mSemantic, DX11TextureManager::Instance()->mTextures["_default"]);
+				else
+				{
+					// we prevent loading if we're already using this texture
+					if (!DX11TextureManager::Instance()->IsTextureLoaded(textureName))
+						DX11TextureManager::Instance()->LoadTexture(texturePathAbs, textureName);
 
-//////////////////////////////////////////////////////////////////////////
-void Material::SetTexture( std::string propertyName, ShaderResource* shaderResource, Vector2& tiling, Vector2& offset, float rotation)
-{
-	for ( auto it = mProperties.begin(); it != mProperties.end(); ++it )
-	{
-		if ((*it)->mName == propertyName)
-		{
-			(*it)->mShaderResource.mTexture                = shaderResource;
-			(*it)->mShaderResource.mTiling                 = tiling;
-			(*it)->mShaderResource.mOffset                 = offset;
-			(*it)->mShaderResource.mRotationAngleInDegrees = rotation;
-			break;
+					// we load the texture properties
+					Vector2 tiling = CIniFile::GetValueVector2("Tiling", "textures");
+					Vector2 offset = CIniFile::GetValueVector2("Offset", "textures");
+					float rotation = CIniFile::GetValueFloat("Rotation", "textures");
+
+					AddPropertyTexture(it->mSemantic, DX11TextureManager::Instance()->mTextures[textureName], tiling, offset, rotation);
+				}
+			}
 		}
 	}
 }
