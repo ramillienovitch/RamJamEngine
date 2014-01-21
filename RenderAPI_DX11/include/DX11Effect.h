@@ -2,7 +2,6 @@
 
 #include "DX11Helper.h"
 
-#pragma region Effect
 class Effect
 {
 public:
@@ -16,11 +15,9 @@ private:
 protected:
 	ID3DX11Effect* mFX;
 };
-#pragma endregion
 
 //////////////////////////////////////////////////////////////////////////
 
-#pragma region BasicEffect
 class BasicEffect : public Effect
 {
 public:
@@ -65,11 +62,9 @@ public:
 	ID3DX11EffectShaderResourceVariable*	PointLights;
 	ID3DX11EffectShaderResourceVariable*	SpotLights;
 };
-#pragma endregion
 
 //////////////////////////////////////////////////////////////////////////
 
-#pragma region SpriteEffect
 class SpriteEffect : public Effect
 {
 public:
@@ -81,11 +76,9 @@ public:
 	ID3DX11EffectTechnique* SpriteTech;
 	ID3DX11EffectShaderResourceVariable* SpriteMap;
 };
-#pragma endregion
 
 //////////////////////////////////////////////////////////////////////////
 
-#pragma region ColorEffect
 class ColorEffect : public Effect
 {
 public:
@@ -101,11 +94,10 @@ public:
 	ID3DX11EffectMatrixVariable*	World;
 	ID3DX11EffectMatrixVariable*	ViewProj;
 };
-#pragma endregion
+
 
 //////////////////////////////////////////////////////////////////////////
 
-#pragma region Effects
 class DX11Effects
 {
 public:
@@ -116,4 +108,3 @@ public:
 	static ColorEffect*  ColorFX;
 	static SpriteEffect* SpriteFX;
 };
-#pragma endregion

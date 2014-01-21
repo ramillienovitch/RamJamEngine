@@ -13,6 +13,7 @@ typedef ID3D11ShaderResourceView ShaderResource;
 struct Texture
 {
 	ShaderResource*		mTexture;
+	Matrix44			mTextureMatrix;
 	Vector2				mTiling;
 	Vector2				mOffset;
 	f32					mRotationAngleInDegrees;

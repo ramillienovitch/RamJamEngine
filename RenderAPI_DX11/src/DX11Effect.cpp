@@ -2,7 +2,6 @@
 #include "../../RamJamEngine/include/System.h"
 #include "../../RamJamEngine/include/MaterialFactory.h"
 
-#pragma region Effect
 Effect::Effect(ID3D11Device* device, const std::string& filename)
 {
 	mFX = nullptr;
@@ -14,11 +13,9 @@ Effect::~Effect()
 {
 	RJE_SAFE_RELEASE(mFX);
 }
-#pragma endregion
 
 //////////////////////////////////////////////////////////////////////////
 
-#pragma region BasicEffect
 BasicEffect::BasicEffect(ID3D11Device* device, const std::string& filename)
 	: Effect(device, filename)
 {
@@ -43,7 +40,7 @@ BasicEffect::~BasicEffect(){}
 //-----------------------
 HRESULT BasicEffect::SetMaterial(Material* mat)
 {
-	HRESULT res;
+	HRESULT res = S_OK;
 	for (u32 i = 0; i < mat->mPropertiesCount; ++i)
 	{
 		MaterialProperty& property = *(mat->mProperties[i]);
@@ -84,8 +81,7 @@ HRESULT BasicEffect::SetMaterial(Material* mat)
 				res = mFX->GetVariableBySemantic(property.mName.c_str())->AsShaderResource()->SetResource(property.mShaderResource.mTexture);
 				if (res != S_OK) return res;
 				std::string textureTrfName = property.mName + "_Trf";
-				Matrix44 textTrf = Transform::MatrixFromTextureProperties(property.mShaderResource.mTiling, property.mShaderResource.mOffset, property.mShaderResource.mRotationAngleInDegrees);
-				res = mFX->GetVariableBySemantic(textureTrfName.c_str())->AsMatrix()->SetMatrix(reinterpret_cast<const float*>(&textTrf));
+				res = mFX->GetVariableBySemantic(textureTrfName.c_str())->AsMatrix()->SetMatrix(reinterpret_cast<const float*>(&property.mShaderResource.mTextureMatrix));
 				if (res != S_OK) return res;
 				break;
 			}
@@ -100,11 +96,9 @@ HRESULT BasicEffect::SetMaterial(Material* mat)
 	}
 	return res;
 }
-#pragma endregion
 
 //////////////////////////////////////////////////////////////////////////
 
-#pragma region SpriteEffect
 SpriteEffect::SpriteEffect(ID3D11Device* device, const std::string& filename)
 	: Effect(device, filename)
 {
@@ -113,11 +107,9 @@ SpriteEffect::SpriteEffect(ID3D11Device* device, const std::string& filename)
 }
 
 SpriteEffect::~SpriteEffect(){}
-#pragma endregion
 
 //////////////////////////////////////////////////////////////////////////
 
-#pragma region ColorEffect
 ColorEffect::ColorEffect(ID3D11Device* device, const std::string& filename)
 	: Effect(device, filename)
 {
@@ -128,15 +120,12 @@ ColorEffect::ColorEffect(ID3D11Device* device, const std::string& filename)
 }
 
 ColorEffect::~ColorEffect(){}
-#pragma endregion
 
 //////////////////////////////////////////////////////////////////////////
 
-#pragma region Effects
-
-BasicEffect*  DX11Effects::BasicFX  = nullptr;
-ColorEffect*  DX11Effects::ColorFX  = nullptr;
-SpriteEffect* DX11Effects::SpriteFX = nullptr;
+BasicEffect*  DX11Effects::BasicFX     = nullptr;
+ColorEffect*  DX11Effects::ColorFX     = nullptr;
+SpriteEffect* DX11Effects::SpriteFX    = nullptr;
 
 void DX11Effects::InitAll(ID3D11Device* device)
 {
@@ -158,4 +147,3 @@ void DX11Effects::DestroyAll()
 	RJE_SAFE_DELETE(SpriteFX);
 	RJE_SAFE_DELETE(ColorFX);
 }
-#pragma endregion

@@ -2,6 +2,7 @@
 
 #include "MathHelper.h"
 #include "Texture.h"
+#include "Transform.h"
 
 enum MaterialPropertyType
 {
@@ -128,6 +129,7 @@ FORCEINLINE void Material::AddPropertyTexture( std::string propertyName, ShaderR
 	property->mShaderResource.mOffset                 = offset;
 	property->mShaderResource.mTiling                 = tiling;
 	property->mShaderResource.mRotationAngleInDegrees = rotation;
+	property->mShaderResource.mTextureMatrix          = Transform::MatrixFromTextureProperties(tiling, offset, rotation);
 	++mPropertiesCount;
 	mProperties.push_back(property);
 }
