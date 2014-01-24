@@ -5,21 +5,7 @@
 //=============================================================================
 
 #include "lightHelper.fx"
- 
-cbuffer cbPerFrame
-{
-	float4x4 gViewProj;
-	//-----------
-	float3 gEyePosW;
-	//-----------
-	float  gFogStart;
-	float  gFogRange;
-	float4 gFogColor;
-	//-----------
-	bool   gUseFog;
-	bool   gUseTexture;
-	bool   gUseAlphaClip;
-};
+#include "PerFrameConstants.hlsli"
 
 cbuffer cbPerObject
 {
@@ -27,24 +13,15 @@ cbuffer cbPerObject
 	//float4x4 gWorldInvTranspose;
 	float4x4 gDiffuseMapTrf	: Texture_Diffuse_Trf;
 	//-------
-	float4 gMatAmbient		: Ambient;
-	float4 gMatDiffuse		: Diffuse;
-	float4 gMatSpecular		: Specular;
+	bool   gMatUseAlpha			: Transparency;
+	float4 gMatAlbedo			: Albedo;
+	float  gMatSpecularAmount	: SpecularAmount;
+	float  gMatSpecularPower	: SpecularPower;
 }; 
 
 // Nonnumeric values cannot be added to a cbuffer.
 Texture2D gDiffuseMap		: Texture_Diffuse;
-
 SamplerState gTextureSampler;
-
-// SamplerState samAnisotropic
-// {
-// 	Filter = ANISOTROPIC;
-// 	MaxAnisotropy = 4;
-// 
-// 	AddressU = WRAP;
-// 	AddressV = WRAP;
-// };
 
 struct VertexIn
 {
@@ -101,7 +78,9 @@ float4 PS(VertexOut pin) : SV_Target
 	if(gUseTexture)
 	{
 		// Sample texture.
-		texColor = gDiffuseMap.Sample( gTextureSampler, pin.Tex );
+		uint2 textureDim;
+		gDiffuseMap.GetDimensions(textureDim.x, textureDim.y);
+		texColor = (textureDim.x == 0U ? float4(1.0f, 1.0f, 1.0f, 1.0f) : gDiffuseMap.Sample( gTextureSampler, pin.Tex ));
 
 		if(gUseAlphaClip)
 		{
@@ -119,16 +98,15 @@ float4 PS(VertexOut pin) : SV_Target
 	float4 litColor = texColor;
 	
 	// Start with a sum of zero. 
-	float4 ambient = float4(0.0f, 0.0f, 0.0f, 0.0f);
 	float4 diffuse = float4(0.0f, 0.0f, 0.0f, 0.0f);
 	float4 spec    = float4(0.0f, 0.0f, 0.0f, 0.0f);
 
 	// Sum the light contribution from each light source.  
 	float4 A, D, S;
 	Material mat;
-	mat.Ambient  = gMatAmbient;
-	mat.Diffuse  = gMatDiffuse;
-	mat.Specular = gMatSpecular;
+	mat.Albedo         = gMatAlbedo;
+	mat.SpecularAmount = gMatSpecularAmount;
+	mat.SpecularPower  = gMatSpecularPower;
 	uint totalLights, dummy;
 
 	// Directionnal Lighting
@@ -136,9 +114,8 @@ float4 PS(VertexOut pin) : SV_Target
 	for (uint dirLightIdx = 0; dirLightIdx < totalLights; ++dirLightIdx)
 	{
 		DirectionalLight light = gDirLights[dirLightIdx];
-		ComputeDirectionalLight(mat, light, pin.NormalW, toEye, A, D, S);
+		ComputeDirectionalLight(mat, light, pin.NormalW, toEye, D, S);
 
-		ambient += A;
 		diffuse += D;
 		spec    += S;
 	}
@@ -148,9 +125,8 @@ float4 PS(VertexOut pin) : SV_Target
 	for (uint pointLightIdx = 0; pointLightIdx < totalLights; ++pointLightIdx)
 	{
 		PointLight light = gPointLights[pointLightIdx];
-		ComputePointLight(mat, light, pin.PosW, pin.NormalW, toEye, A, D, S);
+		ComputePointLight(mat, light, pin.PosW, pin.NormalW, toEye, D, S);
 
-		ambient += A;
 		diffuse += D;
 		spec    += S;
 	}
@@ -160,15 +136,14 @@ float4 PS(VertexOut pin) : SV_Target
 	for (uint spotLightIdx = 0; spotLightIdx < totalLights; ++spotLightIdx)
 	{
 		SpotLight light = gSpotLights[spotLightIdx];
-		ComputeSpotLight(mat, light, pin.PosW, pin.NormalW, toEye, A, D, S);
+		ComputeSpotLight(mat, light, pin.PosW, pin.NormalW, toEye, D, S);
 
-		ambient += A;
 		diffuse += D;
 		spec    += S;
 	}
 
 	// Modulate with late add.
-	litColor = texColor*(ambient + diffuse) + spec;
+	litColor = texColor*(gAmbientLightColor + diffuse) + spec;
 
 	//
 	// Fogging
@@ -182,8 +157,15 @@ float4 PS(VertexOut pin) : SV_Target
 		litColor = lerp(litColor, gFogColor, fogLerp);
 	}
 
-	// Common to take alpha from diffuse material.
-	litColor.a = gMatDiffuse.a * texColor.a;
+	if (gMatUseAlpha)
+	{
+		// Common to take alpha from diffuse material.
+		litColor.a = gMatAlbedo.a * texColor.a;
+	}
+	else
+	{
+		litColor.a = 1.0;
+	}
 
 	return litColor;
 }

@@ -19,7 +19,7 @@ Material::~Material()
 void Material::LoadPropertiesFromFile( std::string filename )
 {
 	std::string shaderName = CIniFile::GetValue("Name", "shader");
-	mIsOpaque = CIniFile::GetValueBool("IsOpaque", "transparency");
+	mIsOpaque = !CIniFile::GetValueBool("Transparency", "properties");
 	
 	RJE_ASSERT(MaterialFactory::Instance()->IsShaderLoaded(shaderName));
 	SetPropertiesFromFactory(shaderName);
@@ -48,9 +48,7 @@ void Material::SetPropertiesFromFactory( std::string shaderName )
 				int point = (int)texturePathRel.find('.');
 				std::string textureName = texturePathRel.substr(slash, point-slash);
 
-				if (textureName == "NONE")
-					AddPropertyTexture(it->mSemantic, DX11TextureManager::Instance()->mTextures["_default"]);
-				else
+				if (textureName != "NONE")
 				{
 					// we prevent loading if we're already using this texture
 					if (!DX11TextureManager::Instance()->IsTextureLoaded(textureName))

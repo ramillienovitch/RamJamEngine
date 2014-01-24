@@ -1,13 +1,11 @@
 [shader]
 Name=basic
 # ----------------------
-[transparency]
-IsOpaque=true
-# ----------------------
 [properties]
-Ambient=0.0|0.0|0.0|1.0
-Diffuse=0.0|0.0|0.0|1.0
-Specular=0.3|0.3|0.3|16.0
+Transparency=false
+Albedo=1.0|1.0|1.0|1.0
+SpecularAmount=0.0
+SpecularPower=0.0
 # ----------------------
 [textures]
 Texture_Diffuse=NONE

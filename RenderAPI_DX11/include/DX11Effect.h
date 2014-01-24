@@ -33,6 +33,7 @@ public:
 	HRESULT SetFogColor(const Vector4& v)                    { return FogColor->SetFloatVector(reinterpret_cast<const float*>(&v)); }
 	HRESULT SetFogStart(float f)                             { return FogStart->SetFloat(f); }
 	HRESULT SetFogRange(float f)                             { return FogRange->SetFloat(f); }
+	HRESULT SetAmbientLight(const Vector4& v)                { return AmbientLight->SetFloatVector(reinterpret_cast<const float*>(&v)); }
 	HRESULT SetDirLights(ID3D11ShaderResourceView* lights)   { return DirLights->SetResource(lights); }
 	HRESULT SetPointLights(ID3D11ShaderResourceView* lights) { return PointLights->SetResource(lights); }
 	HRESULT SetSpotLights(ID3D11ShaderResourceView* lights)  { return SpotLights->SetResource(lights); }
@@ -58,6 +59,7 @@ public:
 	//-------
 	ID3DX11EffectSamplerVariable*			TextureSampler;
 	//-------
+	ID3DX11EffectVectorVariable*			AmbientLight;
 	ID3DX11EffectShaderResourceVariable*	DirLights;
 	ID3DX11EffectShaderResourceVariable*	PointLights;
 	ID3DX11EffectShaderResourceVariable*	SpotLights;

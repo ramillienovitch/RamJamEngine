@@ -6,41 +6,29 @@
 
 struct DirectionalLight
 {
-	float4 Ambient;
-	float4 Diffuse;
-	float4 Specular;
+	float3 Color;
 	float3 Direction;
-	float pad;
+	float2 pad;
 };
 
 struct PointLight
-{ 
-	float4 Ambient;
-	float4 Diffuse;
-	float4 Specular;
-
+{
 	float3 Position;
-	float Range;
-
-	float3 Att;
-	float pad;
+	float3 Color;
+	float  Range;
+	float  Intensity;
 };
 
 struct SpotLight
 {
-	float4 Ambient;
-	float4 Diffuse;
-	float4 Specular;
-
+	float3 Color;
 	float3 Position;
-	float Range;
-
 	float3 Direction;
-	float Spot;
-
-	float3 Att;
-	float pad;
+	float  Spot;
+	float  Range;
+	float  Intensity;
 };
+
 
 StructuredBuffer<DirectionalLight>	gDirLights;
 StructuredBuffer<PointLight>		gPointLights;
@@ -48,9 +36,9 @@ StructuredBuffer<SpotLight>			gSpotLights;
 
 struct Material
 {
-	float4 Ambient;
-	float4 Diffuse;
-	float4 Specular; // w = SpecPower
+	float4 Albedo;
+	float  SpecularAmount;
+	float  SpecularPower;
 };
 
 //---------------------------------------------------------------------------------------
@@ -60,20 +48,15 @@ struct Material
 //---------------------------------------------------------------------------------------
 void ComputeDirectionalLight(Material mat, DirectionalLight L, 
 							 float3 normal, float3 toEye,
-							 out float4 ambient,
 							 out float4 diffuse,
 							 out float4 spec)
 {
 	// Initialize outputs.
-	ambient = float4(0.0f, 0.0f, 0.0f, 0.0f);
 	diffuse = float4(0.0f, 0.0f, 0.0f, 0.0f);
 	spec    = float4(0.0f, 0.0f, 0.0f, 0.0f);
 
 	// The light vector aims opposite the direction the light rays travel.
 	float3 lightVec = -L.Direction;
-
-	// Add ambient term.
-	ambient = mat.Ambient * L.Ambient;
 
 	// Add diffuse and specular term, provided the surface is in 
 	// the line of site of the light.
@@ -85,10 +68,11 @@ void ComputeDirectionalLight(Material mat, DirectionalLight L,
 	if( diffuseFactor > 0.0f )
 	{
 		float3 v         = reflect(-lightVec, normal);
-		float specFactor = pow(max(dot(v, toEye), 0.0f), mat.Specular.w);
+		float specFactor = pow(max(dot(v, toEye), 0.0f), (mat.SpecularPower<1.0 ? 1.0 : mat.SpecularPower));
 
-		diffuse = diffuseFactor * mat.Diffuse * L.Diffuse;
-		spec    = specFactor * mat.Specular * L.Specular;
+		float3 diff = diffuseFactor * mat.Albedo.rgb * L.Color;
+		diffuse = float4(diff,1.0);
+		spec    = specFactor * mat.SpecularAmount * float4(L.Color, 1.0);
 	}
 }
 
@@ -98,10 +82,9 @@ void ComputeDirectionalLight(Material mat, DirectionalLight L,
 // later we will modify the individual terms.
 //---------------------------------------------------------------------------------------
 void ComputePointLight(Material mat, PointLight L, float3 pos, float3 normal, float3 toEye,
-				   out float4 ambient, out float4 diffuse, out float4 spec)
+				out float4 diffuse, out float4 spec)
 {
 	// Initialize outputs.
-	ambient = float4(0.0f, 0.0f, 0.0f, 0.0f);
 	diffuse = float4(0.0f, 0.0f, 0.0f, 0.0f);
 	spec    = float4(0.0f, 0.0f, 0.0f, 0.0f);
 
@@ -117,9 +100,6 @@ void ComputePointLight(Material mat, PointLight L, float3 pos, float3 normal, fl
 		
 	// Normalize the light vector.
 	lightVec /= d; 
-	
-	// Ambient term.
-	ambient = mat.Ambient * L.Ambient;
 
 	// Add diffuse and specular term, provided the surface is in 
 	// the line of site of the light.
@@ -131,14 +111,17 @@ void ComputePointLight(Material mat, PointLight L, float3 pos, float3 normal, fl
 	if( diffuseFactor > 0.0f )
 	{
 		float3 v         = reflect(-lightVec, normal);
-		float specFactor = pow(max(dot(v, toEye), 0.0f), mat.Specular.w);
+		float specFactor = pow(max(dot(v, toEye), 0.0f), (mat.SpecularPower<1.0 ? 1.0 : mat.SpecularPower));
 
-		diffuse = diffuseFactor * mat.Diffuse * L.Diffuse;
-		spec    = specFactor * mat.Specular * L.Specular;
+		float3 diff = diffuseFactor * mat.Albedo.rgb * L.Color;
+		diffuse = float4(diff,1.0);
+		spec    = specFactor * mat.SpecularAmount * float4(L.Color, 1.0);
 	}
 
-	// Attenuate
-	float att = 1.0f / dot(L.Att, float3(1.0f, d, d*d));
+	// calculate basic attenuation
+	//float att = 1.0f / dot(L.Att, float3(1.0f, d, d*d));
+	float att = saturate(1-d/L.Range);
+	att *= L.Intensity * att;
 
 	diffuse *= att;
 	spec    *= att;
@@ -150,10 +133,8 @@ void ComputePointLight(Material mat, PointLight L, float3 pos, float3 normal, fl
 // later we will modify the individual terms.
 //---------------------------------------------------------------------------------------
 void ComputeSpotLight(Material mat, SpotLight L, float3 pos, float3 normal, float3 toEye,
-				  out float4 ambient, out float4 diffuse, out float4 spec)
+				out float4 diffuse, out float4 spec)
 {
-	// Initialize outputs.
-	ambient = float4(0.0f, 0.0f, 0.0f, 0.0f);
 	diffuse = float4(0.0f, 0.0f, 0.0f, 0.0f);
 	spec    = float4(0.0f, 0.0f, 0.0f, 0.0f);
 
@@ -170,9 +151,6 @@ void ComputeSpotLight(Material mat, SpotLight L, float3 pos, float3 normal, floa
 	// Normalize the light vector.
 	lightVec /= d; 
 	
-	// Ambient term.
-	ambient = mat.Ambient * L.Ambient;
-
 	// Add diffuse and specular term, provided the surface is in 
 	// the line of site of the light.
 
@@ -183,18 +161,21 @@ void ComputeSpotLight(Material mat, SpotLight L, float3 pos, float3 normal, floa
 	if( diffuseFactor > 0.0f )
 	{
 		float3 v         = reflect(-lightVec, normal);
-		float specFactor = pow(max(dot(v, toEye), 0.0f), mat.Specular.w);
+		float specFactor = pow(max(dot(v, toEye), 0.0f), (mat.SpecularPower<1.0 ? 1.0 : mat.SpecularPower));
 
-		diffuse = diffuseFactor * mat.Diffuse * L.Diffuse;
-		spec    = specFactor * mat.Specular * L.Specular;
+		float3 diff = diffuseFactor * mat.Albedo.rgb * L.Color;
+		diffuse = float4(diff,1.0);
+		spec    = specFactor * mat.SpecularAmount * float4(L.Color, 1.0);
 	}
 	
 	// Scale by spotlight factor and attenuate.
 	float3 lightDir = normalize(L.Direction);
 	float spot      = pow(max(dot(-lightVec, lightDir), 0.0f), L.Spot);
-	float att       = spot / dot(L.Att, float3(1.0f, d, d*d));
+	//L.Att = float3(0.05f, 0.025f, 0.005f);
+	//float att       = spot / dot(L.Att, float3(1.0f, d, d*d));
+	float att = saturate(1-d/L.Range);
+	att *= L.Intensity * spot * att;
 
-	ambient *= spot;
 	diffuse *= att;
 	spec    *= att;
 }

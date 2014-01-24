@@ -1,13 +1,11 @@
 [shader]
 Name=basic
 # ----------------------
-[transparency]
-IsOpaque=false
-# ----------------------
 [properties]
-Ambient=0.6|0.8|0.9|1.0
-Diffuse=0.6|0.8|0.9|1.0
-Specular=0.9|0.9|0.9|16.0
+Transparency=false
+Albedo=1.0|1.0|1.0|1.0
+SpecularAmount=0.0
+SpecularPower=0.0
 # ----------------------
 [textures]
 Texture_Diffuse=textures\WireFence.dds

@@ -1,13 +1,11 @@
 [shader]
 Name=basic
 # ----------------------
-[transparency]
-IsOpaque=true
-# ----------------------
 [properties]
-Ambient=1.0|1.0|1.0|1.0
-Diffuse=0.8|0.8|0.8|1.0
-Specular=0.2|0.2|0.2|16.0
+Transparency=false
+Albedo=1.0|1.0|1.0|1.0
+SpecularAmount=0.0
+SpecularPower=0.0
 # ----------------------
 [textures]
 Texture_Diffuse=textures\city\crvInterior.jpg

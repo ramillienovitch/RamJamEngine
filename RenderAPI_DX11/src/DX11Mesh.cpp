@@ -140,13 +140,11 @@ void DX11Mesh::CheckMaterialFile(string materialFile)
 		out << "[shader]\n";
 		out << "Name=basic\n";
 		out << "# ----------------------\n";
-		out << "[transparency]\n";
-		out << "IsOpaque=true\n";
-		out << "# ----------------------\n";
 		out << "[properties]\n";
-		out << "Ambient=1.0|1.0|1.0|1.0\n";
-		out << "Diffuse=1.0|1.0|1.0|1.0\n";
-		out << "Specular=0.0|0.0|0.0|16.0\n";
+		out << "Transparency=false\n";
+		out << "Albedo=1.0|1.0|1.0|1.0\n";
+		out << "SpecularAmount=0.0\n";
+		out << "SpecularPower=0.0\n";
 		out << "# ----------------------\n";
 		out << "[textures]\n";
 		out << "Texture_Diffuse=NONE\n";

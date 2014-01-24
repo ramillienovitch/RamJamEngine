@@ -5,21 +5,7 @@
 //=============================================================================
 
 #include "lightHelper.fx"
- 
-cbuffer cbPerFrame
-{
-	float4x4 gViewProj;
-	//-----------
-	float3 gEyePosW;
-	//-----------
-	float  gFogStart;
-	float  gFogRange;
-	float4 gFogColor;
-	//-----------
-	bool   gUseFog;
-	bool   gUseTexture;
-	bool   gUseAlphaClip;
-};
+#include "PerFrameConstants.hlsli"
 
 cbuffer cbPerObject
 {

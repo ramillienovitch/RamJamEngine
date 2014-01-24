@@ -26,6 +26,7 @@ struct Scene
 
 	//-----------------------------------------------
 	// Scene parameters
+	Vector4	mAmbientLightColor;
 	Vector4	mFogColor;
 	float	mFogStart;
 	float	mFogRange;

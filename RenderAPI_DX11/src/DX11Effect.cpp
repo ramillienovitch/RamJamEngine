@@ -31,6 +31,7 @@ BasicEffect::BasicEffect(ID3D11Device* device, const std::string& filename)
 	FogStart          = mFX->GetVariableByName("gFogStart")->AsScalar();
 	FogRange          = mFX->GetVariableByName("gFogRange")->AsScalar();
 	DirLights         = mFX->GetVariableByName("gDirLights")->AsShaderResource();
+	AmbientLight      = mFX->GetVariableByName("gAmbientLightColor")->AsVector();
 	PointLights       = mFX->GetVariableByName("gPointLights")->AsShaderResource();
 	SpotLights        = mFX->GetVariableByName("gSpotLights")->AsShaderResource();
 	TextureSampler    = (ID3DX11EffectSamplerVariable*) mFX->GetVariableByName("gTextureSampler");

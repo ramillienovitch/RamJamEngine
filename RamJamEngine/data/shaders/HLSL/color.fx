@@ -4,10 +4,7 @@
 // Transforms and colors geometry.
 //***************************************************************************************
 
-cbuffer cbPerFrame
-{
-	float4x4 gViewProj;
-}
+#include "PerFrameConstants.hlsli"
 
 cbuffer cbPerObject
 {

@@ -109,9 +109,6 @@
     <FxCompile Include="..\RamJamEngine\data\shaders\HLSL\color.fx">
       <Filter>Resource Files\Shaders</Filter>
     </FxCompile>
-    <FxCompile Include="..\RamJamEngine\data\shaders\HLSL\lighting.fx">
-      <Filter>Resource Files\Shaders</Filter>
-    </FxCompile>
     <FxCompile Include="..\RamJamEngine\data\shaders\HLSL\lightHelper.fx">
       <Filter>Resource Files\Shaders</Filter>
     </FxCompile>
@@ -121,5 +118,10 @@
     <FxCompile Include="..\RamJamEngine\data\shaders\HLSL\sprite.fx">
       <Filter>Resource Files\Shaders</Filter>
     </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\RamJamEngine\data\shaders\HLSL\PerFrameConstants.hlsli">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

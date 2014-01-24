@@ -38,23 +38,17 @@ DX11RenderingAPI::DX11RenderingAPI(Scene& scene) : mScene(scene)
 	Vector4 black = Color(Color::Black).GetVector4RGBANorm();
 	for (int i = 0; i < MAX_LIGHTS; i++)
 	{
-		mWorkingDirLights[i].Ambient   = Vector4(0.2f, 0.2f, 0.2f, 1.0f);
-		mWorkingDirLights[i].Diffuse   = Vector4(0.5f, 0.5f, 0.5f, 1.0f);
-		mWorkingDirLights[i].Specular  = Vector4(0.5f, 0.5f, 0.5f, 1.0f);
+		mWorkingDirLights[i].Color     = Vector3(0.5f, 0.5f, 0.5f);
 		mWorkingDirLights[i].Direction = Vector3(0.57735f, -0.57735f, 0.57735f);
 		//--------
-		mWorkingPointLights[i].Diffuse  = Color::GetRandomRGBNorm();
-		mWorkingPointLights[i].Ambient  = black;
-		mWorkingPointLights[i].Specular = Vector4(0.7f, 0.7f, 0.7f, 1.0f);
-		mWorkingPointLights[i].Att      = Vector3(0.175f, 0.175f, 0.175f);
-		mWorkingPointLights[i].Range    = 50.0f;
+		mWorkingPointLights[i].Color     = Color::GetRandomVector3RGBNorm();
+		mWorkingPointLights[i].Intensity = 2.0f;
+		mWorkingPointLights[i].Range     = 5.0f;
 		//--------
-		mWorkingSpotLights[i].Diffuse   = Color::GetRandomRGBNorm();
-		mWorkingSpotLights[i].Ambient   = black;
-		mWorkingSpotLights[i].Specular  = Vector4(0.5f, 0.5f, 0.5f, 1.0f);
+		mWorkingSpotLights[i].Color     = Vector3(0.5f, 0.5f, 0.5f);
 		mWorkingSpotLights[i].Spot      = RJE::Math::Deg2Rad_f * 45.0f;
-		mWorkingSpotLights[i].Range     = 50.0f;
-		mWorkingSpotLights[i].Att       = Vector3(0.05f, 0.025f, 0.005f);
+		mWorkingSpotLights[i].Range     = 10.0f;
+		mWorkingSpotLights[i].Intensity = 2.0f;
 		mWorkingSpotLights[i].Position  = RJE::Math::Rand(0,1000) * Vector3::RandUnitSphere();
 		mWorkingSpotLights[i].Direction = RJE::Math::Rand(0,1000) * Vector3::RandUnitSphere();
 	}
@@ -194,6 +188,10 @@ void DX11RenderingAPI::Initialize(int windowWidth, int windowHeight)
 	TwSetParam(bar, NULL, "size", TW_PARAM_INT32, 2, barSize);
 	TwAddVarRW(bar, "V-Sync Enabled", TW_TYPE_BOOLCPP, &VSyncEnabled, NULL);
 	TwAddSeparator(bar, NULL, NULL);
+	TwAddButton(bar, "Toggle Wireframe", TwSetWireframe, this, NULL);
+	TwAddSeparator(bar, NULL, NULL);
+	TwAddVarRW(bar, "Ambient Color", TW_TYPE_COLOR4F, &mScene.mAmbientLightColor, NULL);
+	TwAddSeparator(bar, NULL, NULL);
 	TwAddVarRW(bar, "Use Texture",      TW_TYPE_BOOLCPP, &mScene.mbUseTexture, NULL);
 	TwAddVarRW(bar, "Use Blending",     TW_TYPE_BOOLCPP, &mScene.mbUseBlending, NULL);
 	TwAddSeparator(bar, NULL, NULL);
@@ -206,8 +204,6 @@ void DX11RenderingAPI::Initialize(int windowWidth, int windowHeight)
 	TwAddVarRW(bar, "Blend Factor Green", TW_TYPE_FLOAT, &mBlendFactorG, "min=0 max=1 step=0.05");
 	TwAddVarRW(bar, "Blend Factor Blue",  TW_TYPE_FLOAT, &mBlendFactorB, "min=0 max=1 step=0.05");
 	TwAddVarRW(bar, "Blend Factor Alpha", TW_TYPE_FLOAT, &mBlendFactorA, "min=0 max=1 step=0.05");
-	TwAddSeparator(bar, NULL, NULL);
-	TwAddButton(bar, "Toggle Wireframe", TwSetWireframe, this, NULL);
 	//-----------
 	TwBar *gameObjectBar = TwNewBar("GameObject");
 	TwDefine("GameObject iconified=true ");
@@ -280,6 +276,9 @@ void DX11RenderingAPI::UpdateScene( float dt )
 	tempTrf.Rotation									= mScene.mGameObjectEditorRot;
 	tempTrf.Scale										= mScene.mGameObjectEditorScale;
 	tempTrf.Position									= mScene.mGameObjectEditorPos;
+	mScene.mGameObjectEditorTransform->Position			= mScene.mGameObjectEditorPos;
+	mScene.mGameObjectEditorTransform->Rotation			= mScene.mGameObjectEditorRot;
+	mScene.mGameObjectEditorTransform->Scale			= mScene.mGameObjectEditorScale;
 	mScene.mGameObjectEditorTransform->WorldMat			= tempTrf.WorldMatrix();
 	mScene.mGameObjectEditorTransform->WorldMatNoScale	= tempTrf.WorldMatrixNoScale();
 	mScene.mGameObjects[0]->mDrawable.mGizmoColor		= mScene.mGameObjectEditorColor;
@@ -323,6 +322,11 @@ void DX11RenderingAPI::UpdateScene( float dt )
 				if (mPointLightCount < MAX_LIGHTS)
 					SetActivePointLights(mPointLightCount + 1);
 			}
+			else if (mLightMode == LightMode::Spot)
+			{
+				if (mSpotLightCount < MAX_LIGHTS)
+					SetActiveSpotLights(mSpotLightCount + 1);
+			}
 		}
 		if (Input::Instance()->GetKeyboardDown(Subtract))
 		{
@@ -335,6 +339,11 @@ void DX11RenderingAPI::UpdateScene( float dt )
 			{
 				if (mPointLightCount > 0)
 					SetActivePointLights(mPointLightCount - 1);
+			}
+			else if (mLightMode == LightMode::Spot)
+			{
+				if (mSpotLightCount > 0)
+					SetActiveSpotLights(mSpotLightCount - 1);
 			}
 		}
 	}
@@ -360,9 +369,9 @@ void DX11RenderingAPI::UpdateScene( float dt )
 		PointLight* light = mPointLights->MapDiscard(mDX11Device->md3dImmediateContext);
 		for (u32 i = 0; i < mPointLightCount; ++i)
 		{
-			mWorkingPointLights[i].Position.x = (i+1)*cosf(2*i + RJE::Math::Pi_f + timer );
+			mWorkingPointLights[i].Position.x = (i+3)*cosf(2*i + RJE::Math::Pi_f + timer );
 			mWorkingPointLights[i].Position.y = 2.0f + cosf( timer );
-			mWorkingPointLights[i].Position.z = (i+1)*sinf(2*i + RJE::Math::Pi_f + timer );
+			mWorkingPointLights[i].Position.z = (i+3)*sinf(2*i + RJE::Math::Pi_f + timer );
 			light[i] = mWorkingPointLights[i];
 		}
 		mPointLights->Unmap(mDX11Device->md3dImmediateContext);
@@ -411,6 +420,7 @@ void DX11RenderingAPI::DrawScene()
 
 	// Set per frame constants.
 	DX11Effects::BasicFX->SetViewProj(view*proj);
+	DX11Effects::BasicFX->SetAmbientLight(mScene.mAmbientLightColor);
 	DX11Effects::BasicFX->SetDirLights(mDirLights->GetShaderResource());
 	DX11Effects::BasicFX->SetPointLights(mPointLights->GetShaderResource());
 	DX11Effects::BasicFX->SetSpotLights(mSpotLights->GetShaderResource());
