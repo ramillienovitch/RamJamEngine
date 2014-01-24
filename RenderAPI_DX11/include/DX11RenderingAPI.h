@@ -39,6 +39,21 @@ struct DX11RenderingAPI : GraphicAPI
 	Scene& mScene;
 
 	//////////////////////////////////////////////////////////////////////////
+	// Used in Tiled Deferred Shading
+
+	std::vector< std::tr1::shared_ptr<Texture2D> >	mGBuffer;
+	std::vector<ID3D11RenderTargetView*>			mGBufferRTV;			// Handy cache of list of RT pointers for G-buffer
+	std::vector<ID3D11ShaderResourceView*>			mGBufferSRV;			// Handy cache of list of SRV pointers for the G-buffer
+	unsigned int mGBufferWidth;
+	unsigned int mGBufferHeight;
+
+	// We use a different lit buffer (different bind flags and MSAA handling) depending on whether we
+	// write to it from the pixel shader (render target) or compute shader (UAV)
+	std::tr1::shared_ptr<StructuredBuffer<FramebufferFlatElement> > mLitBufferCS;
+
+	std::tr1::shared_ptr<Depth2D> mDepthBuffer;
+
+	//////////////////////////////////////////////////////////////////////////
 
 	ID3D11ShaderResourceView* mRjeLogo;
 
@@ -53,6 +68,10 @@ struct DX11RenderingAPI : GraphicAPI
 	StructuredBuffer<DirectionalLight>*		mDirLights;
 	StructuredBuffer<PointLight>*			mPointLights;
 	StructuredBuffer<SpotLight>*			mSpotLights;
+	float							mPointLightsRadius[MAX_LIGHTS];
+	float							mPointLightsHeight[MAX_LIGHTS];
+	float							mPointLightsAngle[MAX_LIGHTS];
+	float							mPointLightsAnimSpeed[MAX_LIGHTS];
 	DirectionalLight				mWorkingDirLights[MAX_LIGHTS];
 	PointLight						mWorkingPointLights[MAX_LIGHTS];
 	SpotLight						mWorkingSpotLights[MAX_LIGHTS];

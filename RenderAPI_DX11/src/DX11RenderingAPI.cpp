@@ -38,12 +38,18 @@ DX11RenderingAPI::DX11RenderingAPI(Scene& scene) : mScene(scene)
 	Vector4 black = Color(Color::Black).GetVector4RGBANorm();
 	for (int i = 0; i < MAX_LIGHTS; i++)
 	{
+		float radius = RJE::Math::Rand(0.0f,1.0f);
+		mPointLightsRadius[i]    = sqrt(radius) * 15.0f;
+		mPointLightsHeight[i]    = RJE::Math::Rand(0.0f,10.0f);
+		mPointLightsAngle[i]     = RJE::Math::Rand(0.0f,RJE::Math::Pi_Two_f);
+		mPointLightsAnimSpeed[i] = RJE::Math::Rand(0.1f,2.0f);
+		//--------
 		mWorkingDirLights[i].Color     = Vector3(0.5f, 0.5f, 0.5f);
 		mWorkingDirLights[i].Direction = Vector3(0.57735f, -0.57735f, 0.57735f);
 		//--------
 		mWorkingPointLights[i].Color     = Color::GetRandomVector3RGBNorm();
-		mWorkingPointLights[i].Intensity = 2.0f;
-		mWorkingPointLights[i].Range     = 5.0f;
+		mWorkingPointLights[i].Range     = RJE::Math::Rand(1.0f,8.0f);
+		mWorkingPointLights[i].Intensity = mWorkingPointLights[i].Range * 0.1f;
 		//--------
 		mWorkingSpotLights[i].Color     = Vector3(0.5f, 0.5f, 0.5f);
 		mWorkingSpotLights[i].Spot      = RJE::Math::Deg2Rad_f * 45.0f;
@@ -369,9 +375,9 @@ void DX11RenderingAPI::UpdateScene( float dt )
 		PointLight* light = mPointLights->MapDiscard(mDX11Device->md3dImmediateContext);
 		for (u32 i = 0; i < mPointLightCount; ++i)
 		{
-			mWorkingPointLights[i].Position.x = (i+3)*cosf(2*i + RJE::Math::Pi_f + timer );
-			mWorkingPointLights[i].Position.y = 2.0f + cosf( timer );
-			mWorkingPointLights[i].Position.z = (i+3)*sinf(2*i + RJE::Math::Pi_f + timer );
+			mWorkingPointLights[i].Position.x = mPointLightsRadius[i] * cosf(mPointLightsAngle[i] + timer * mPointLightsAnimSpeed[i] );
+			mWorkingPointLights[i].Position.y = mPointLightsHeight[i];
+			mWorkingPointLights[i].Position.z = mPointLightsRadius[i] * sinf(mPointLightsAngle[i] + timer * mPointLightsAnimSpeed[i] );
 			light[i] = mWorkingPointLights[i];
 		}
 		mPointLights->Unmap(mDX11Device->md3dImmediateContext);
@@ -383,7 +389,7 @@ void DX11RenderingAPI::UpdateScene( float dt )
 		{
 			mWorkingSpotLights[i].Position.x = (i+1)*cosf(2*i + RJE::Math::Pi_f + timer );
 			mWorkingSpotLights[i].Position.y = 2.0f + cosf( timer );
-			mWorkingSpotLights[i].Position.z = (i+1)*sinf(2*i + RJE::Math::Pi_f + timer );
+			mWorkingSpotLights[i].Position.z =(i+1)*sinf(2*i + RJE::Math::Pi_f + timer );
 			light[i] = mWorkingSpotLights[i];
 		}
 		mSpotLights->Unmap(mDX11Device->md3dImmediateContext);

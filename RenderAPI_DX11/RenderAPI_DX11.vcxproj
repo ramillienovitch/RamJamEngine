@@ -91,6 +91,7 @@
     <ClInclude Include="include\DX11SpriteBatch.h" />
     <ClInclude Include="include\DX11RenderingAPI.h" />
     <ClInclude Include="include\DX11StructuredBuffer.h" />
+    <ClInclude Include="include\DX11Texture2D.h" />
     <ClInclude Include="include\DxErr.h" />
     <ClInclude Include="include\DX11TextureManager.h" />
   </ItemGroup>
@@ -106,6 +107,7 @@
     <ClCompile Include="src\DX11SpriteBatch.cpp" />
     <ClCompile Include="src\DX11RenderingAPI.cpp" />
     <ClCompile Include="src\DX11Profiler.cpp" />
+    <ClCompile Include="src\DX11Texture2D.cpp" />
     <ClCompile Include="src\DX11TextureManager.cpp" />
   </ItemGroup>
   <ItemGroup>
