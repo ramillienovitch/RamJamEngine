@@ -20,7 +20,9 @@ BasicEffect::BasicEffect(ID3D11Device* device, const std::string& filename)
 	: Effect(device, filename)
 {
 	BasicTech         = mFX->GetTechniqueByName("Basic");
+	DeferredTech      = mFX->GetTechniqueByName("Deferred");
 	ViewProj          = mFX->GetVariableByName("gViewProj")->AsMatrix();
+	Proj              = mFX->GetVariableByName("gProj")->AsMatrix();
 	World             = mFX->GetVariableByName("gWorld")->AsMatrix();
 	TexTransform      = mFX->GetVariableByName("gDiffuseMapTrf")->AsMatrix();
 	EyePosW           = mFX->GetVariableByName("gEyePosW")->AsVector();
@@ -100,6 +102,17 @@ HRESULT BasicEffect::SetMaterial(Material* mat)
 
 //////////////////////////////////////////////////////////////////////////
 
+PostProcessEffect::PostProcessEffect(ID3D11Device* device, const std::string& filename)
+	: Effect(device, filename)
+{
+	PostProcessTech = mFX->GetTechniqueByName("PostProcess");
+	TextureMap      = mFX->GetVariableByName("gTexture")->AsShaderResource();
+}
+
+PostProcessEffect::~PostProcessEffect(){}
+
+//////////////////////////////////////////////////////////////////////////
+
 SpriteEffect::SpriteEffect(ID3D11Device* device, const std::string& filename)
 	: Effect(device, filename)
 {
@@ -124,16 +137,20 @@ ColorEffect::~ColorEffect(){}
 
 //////////////////////////////////////////////////////////////////////////
 
-BasicEffect*  DX11Effects::BasicFX     = nullptr;
-ColorEffect*  DX11Effects::ColorFX     = nullptr;
-SpriteEffect* DX11Effects::SpriteFX    = nullptr;
+BasicEffect*       DX11Effects::BasicFX       = nullptr;
+ColorEffect*       DX11Effects::ColorFX       = nullptr;
+SpriteEffect*      DX11Effects::SpriteFX      = nullptr;
+PostProcessEffect* DX11Effects::PostProcessFX = nullptr;
 
 void DX11Effects::InitAll(ID3D11Device* device)
 {
-	string shaderPath = System::Instance()->mDataPath;
+	string shaderPath;
 
-	shaderPath += CIniFile::GetValue("basic",  "shaders", System::Instance()->mResourcesPath);
+	shaderPath = System::Instance()->mDataPath + CIniFile::GetValue("basic",  "shaders", System::Instance()->mResourcesPath);
 	BasicFX  = rje_new BasicEffect( device, shaderPath);
+	//-------------
+	shaderPath = System::Instance()->mDataPath + CIniFile::GetValue("postprocess", "shaders", System::Instance()->mResourcesPath);
+	PostProcessFX = rje_new PostProcessEffect(device, shaderPath);
 	//-------------
 	shaderPath = System::Instance()->mDataPath + CIniFile::GetValue("sprite", "shaders", System::Instance()->mResourcesPath);
 	SpriteFX = rje_new SpriteEffect(device, shaderPath);
@@ -147,4 +164,5 @@ void DX11Effects::DestroyAll()
 	RJE_SAFE_DELETE(BasicFX);
 	RJE_SAFE_DELETE(SpriteFX);
 	RJE_SAFE_DELETE(ColorFX);
+	RJE_SAFE_DELETE(PostProcessFX);
 }

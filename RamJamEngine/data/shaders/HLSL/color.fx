@@ -4,7 +4,7 @@
 // Transforms and colors geometry.
 //***************************************************************************************
 
-#include "PerFrameConstants.hlsli"
+#include "PerFrameConstants.hlsl"
 
 cbuffer cbPerObject
 {

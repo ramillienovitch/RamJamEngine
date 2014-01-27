@@ -69,6 +69,9 @@
     <ClInclude Include="include\DX11Texture2D.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\RamJamEngine\include\ShaderDefines.h">
+      <Filter>Resource Files\Shaders</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\DX11DepthBuffer.cpp">
@@ -124,9 +127,18 @@
     <FxCompile Include="..\RamJamEngine\data\shaders\HLSL\sprite.fx">
       <Filter>Resource Files\Shaders</Filter>
     </FxCompile>
+    <FxCompile Include="..\RamJamEngine\data\shaders\HLSL\postprocess.fx">
+      <Filter>Resource Files\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\RamJamEngine\data\shaders\HLSL\tiledeferred.fx">
+      <Filter>Resource Files\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\RamJamEngine\data\shaders\HLSL\Rendering.hlsl">
+      <Filter>Resource Files\Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\RamJamEngine\data\shaders\HLSL\PerFrameConstants.hlsli">
+    <None Include="..\RamJamEngine\data\shaders\HLSL\PerFrameConstants.hlsl">
       <Filter>Resource Files\Shaders</Filter>
     </None>
   </ItemGroup>

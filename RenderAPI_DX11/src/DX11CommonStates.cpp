@@ -138,6 +138,9 @@ HRESULT DX11CommonStates::Tranparent(ID3D11Device* pDevice, ID3D11BlendState** p
 HRESULT DX11CommonStates::AlphaToCoverage(ID3D11Device* pDevice, ID3D11BlendState** pResult)
 { return CreateBlendState(pDevice, pResult, true, false, false); }
 
+HRESULT DX11CommonStates::LightingBlend(ID3D11Device* pDevice, ID3D11BlendState** pResult)
+{ return CreateBlendState(pDevice, pResult, false, false, true, D3D11_BLEND_ONE, D3D11_BLEND_ONE, D3D11_BLEND_ONE, D3D11_BLEND_ONE); }
+
 HRESULT DX11CommonStates::AlphaBlend(ID3D11Device* pDevice, ID3D11BlendState** pResult)
 { return CreateBlendState(pDevice, pResult, false, false, true, D3D11_BLEND_ONE, D3D11_BLEND_ONE, D3D11_BLEND_INV_SRC_ALPHA, D3D11_BLEND_INV_SRC_ALPHA); }
 
@@ -166,11 +169,20 @@ HRESULT DX11CommonStates::DepthDisable(ID3D11Device* pDevice, ID3D11DepthStencil
 HRESULT DX11CommonStates::DepthRead(ID3D11Device* pDevice, ID3D11DepthStencilState** pResult)
 { return CreateDepthStencilState(pDevice, pResult, true, false); }
 
+HRESULT DX11CommonStates::DepthComplementaryZ(ID3D11Device* pDevice, ID3D11DepthStencilState** pResult)
+{ return CreateDepthStencilState(pDevice, pResult, true, true, false, D3D11_COMPARISON_GREATER_EQUAL); }
+
 HRESULT DX11CommonStates::MarkStencil(ID3D11Device* pDevice, ID3D11DepthStencilState** pResult)
 { return CreateDepthStencilState(pDevice, pResult, true, false, true, D3D11_COMPARISON_LESS, D3D11_COMPARISON_ALWAYS, D3D11_STENCIL_OP_REPLACE); }
 
 HRESULT DX11CommonStates::DrawStenciled(ID3D11Device* pDevice, ID3D11DepthStencilState** pResult)
 { return CreateDepthStencilState(pDevice, pResult, true, true, true, D3D11_COMPARISON_LESS, D3D11_COMPARISON_EQUAL); }
+
+HRESULT DX11CommonStates::WriteStencil(ID3D11Device* pDevice, ID3D11DepthStencilState** pResult)
+{ return CreateDepthStencilState(pDevice, pResult, false, false, true, D3D11_COMPARISON_GREATER_EQUAL, D3D11_COMPARISON_ALWAYS, D3D11_STENCIL_OP_REPLACE, D3D11_STENCIL_OP_REPLACE, D3D11_STENCIL_OP_REPLACE); }
+
+HRESULT DX11CommonStates::EqualStencil(ID3D11Device* pDevice, ID3D11DepthStencilState** pResult)
+{ return CreateDepthStencilState(pDevice, pResult, true, false, true, D3D11_COMPARISON_GREATER_EQUAL, D3D11_COMPARISON_EQUAL); }
 
 HRESULT DX11CommonStates::NoDoubleBlend(ID3D11Device* pDevice, ID3D11DepthStencilState** pResult)
 { return CreateDepthStencilState(pDevice, pResult, true, true, true, D3D11_COMPARISON_LESS_EQUAL, D3D11_COMPARISON_EQUAL, D3D11_STENCIL_OP_INCR); }
@@ -232,14 +244,18 @@ void DX11CommonStates::InitAll(ID3D11Device* device)
 	RJE_CHECK_FOR_SUCCESS(AlphaToCoverage(     device, &sBlendState_AlphaToCoverage));
 	RJE_CHECK_FOR_SUCCESS(BlendFactor(         device, &sBlendState_BlendFactor));
 	RJE_CHECK_FOR_SUCCESS(NoRenderTargetWrites(device, &sBlendState_NoRenderTargetWrites));
+	RJE_CHECK_FOR_SUCCESS(LightingBlend(       device, &sBlendState_LightingBlend));
 	sCurrentBlendState = sBlendState_AlphaToCoverage;
 
-	RJE_CHECK_FOR_SUCCESS(DepthDefault( device, &sDepthStencilState_Default));
-	RJE_CHECK_FOR_SUCCESS(DepthDisable( device, &sDepthStencilState_DepthDisable));
-	RJE_CHECK_FOR_SUCCESS(DepthRead(    device, &sDepthStencilState_DepthRead));
-	RJE_CHECK_FOR_SUCCESS(MarkStencil(  device, &sDepthStencilState_MarkStencil));
-	RJE_CHECK_FOR_SUCCESS(DrawStenciled(device, &sDepthStencilState_DrawStenciled));
-	RJE_CHECK_FOR_SUCCESS(NoDoubleBlend(device, &sDepthStencilState_NoDoubleBlend));
+	RJE_CHECK_FOR_SUCCESS(DepthDefault(       device, &sDepthStencilState_Default));
+	RJE_CHECK_FOR_SUCCESS(DepthDisable(       device, &sDepthStencilState_DepthDisable));
+	RJE_CHECK_FOR_SUCCESS(DepthRead(          device, &sDepthStencilState_DepthRead));
+	RJE_CHECK_FOR_SUCCESS(DepthComplementaryZ(device, &sDepthStencilState_DepthComplementaryZ));
+	RJE_CHECK_FOR_SUCCESS(MarkStencil(        device, &sDepthStencilState_MarkStencil));
+	RJE_CHECK_FOR_SUCCESS(DrawStenciled(      device, &sDepthStencilState_DrawStenciled));
+	RJE_CHECK_FOR_SUCCESS(WriteStencil(       device, &sDepthStencilState_WriteStencil));
+	RJE_CHECK_FOR_SUCCESS(EqualStencil(       device, &sDepthStencilState_EqualStencil));
+	RJE_CHECK_FOR_SUCCESS(NoDoubleBlend(      device, &sDepthStencilState_NoDoubleBlend));
 	sCurrentDepthStencilState = sDepthStencilState_Default;
 }
 
@@ -248,8 +264,11 @@ void DX11CommonStates::DestroyAll()
 	RJE_SAFE_RELEASE(sDepthStencilState_Default);
 	RJE_SAFE_RELEASE(sDepthStencilState_DepthDisable);
 	RJE_SAFE_RELEASE(sDepthStencilState_DepthRead);
+	RJE_SAFE_RELEASE(sDepthStencilState_DepthComplementaryZ);
 	RJE_SAFE_RELEASE(sDepthStencilState_MarkStencil);
 	RJE_SAFE_RELEASE(sDepthStencilState_DrawStenciled);
+	RJE_SAFE_RELEASE(sDepthStencilState_WriteStencil);
+	RJE_SAFE_RELEASE(sDepthStencilState_EqualStencil);
 	RJE_SAFE_RELEASE(sDepthStencilState_NoDoubleBlend);
 
 	RJE_SAFE_RELEASE(sBlendState_Opaque);
@@ -257,6 +276,7 @@ void DX11CommonStates::DestroyAll()
 	RJE_SAFE_RELEASE(sBlendState_AlphaToCoverage);
 	RJE_SAFE_RELEASE(sBlendState_BlendFactor);
 	RJE_SAFE_RELEASE(sBlendState_NoRenderTargetWrites);
+	RJE_SAFE_RELEASE(sBlendState_LightingBlend);
 
 	RJE_SAFE_RELEASE(sSamplerState_Anisotropic);
 	RJE_SAFE_RELEASE(sSamplerState_Linear);
@@ -284,12 +304,16 @@ ID3D11BlendState*	DX11CommonStates::sBlendState_Transparent          = nullptr;
 ID3D11BlendState*	DX11CommonStates::sBlendState_AlphaToCoverage      = nullptr;
 ID3D11BlendState*	DX11CommonStates::sBlendState_BlendFactor          = nullptr;
 ID3D11BlendState*	DX11CommonStates::sBlendState_NoRenderTargetWrites = nullptr;
+ID3D11BlendState*	DX11CommonStates::sBlendState_LightingBlend        = nullptr;
 ID3D11BlendState*	DX11CommonStates::sCurrentBlendState               = nullptr;
 
-ID3D11DepthStencilState* DX11CommonStates::sDepthStencilState_MarkStencil   = nullptr;
-ID3D11DepthStencilState* DX11CommonStates::sDepthStencilState_DrawStenciled = nullptr;
-ID3D11DepthStencilState* DX11CommonStates::sDepthStencilState_NoDoubleBlend = nullptr;
-ID3D11DepthStencilState* DX11CommonStates::sDepthStencilState_Default       = nullptr;
-ID3D11DepthStencilState* DX11CommonStates::sDepthStencilState_DepthDisable  = nullptr;
-ID3D11DepthStencilState* DX11CommonStates::sDepthStencilState_DepthRead     = nullptr;
-ID3D11DepthStencilState* DX11CommonStates::sCurrentDepthStencilState        = nullptr;
+ID3D11DepthStencilState* DX11CommonStates::sDepthStencilState_MarkStencil         = nullptr;
+ID3D11DepthStencilState* DX11CommonStates::sDepthStencilState_DrawStenciled       = nullptr;
+ID3D11DepthStencilState* DX11CommonStates::sDepthStencilState_WriteStencil        = nullptr;
+ID3D11DepthStencilState* DX11CommonStates::sDepthStencilState_EqualStencil        = nullptr;
+ID3D11DepthStencilState* DX11CommonStates::sDepthStencilState_NoDoubleBlend       = nullptr;
+ID3D11DepthStencilState* DX11CommonStates::sDepthStencilState_Default             = nullptr;
+ID3D11DepthStencilState* DX11CommonStates::sDepthStencilState_DepthDisable        = nullptr;
+ID3D11DepthStencilState* DX11CommonStates::sDepthStencilState_DepthRead           = nullptr;
+ID3D11DepthStencilState* DX11CommonStates::sDepthStencilState_DepthComplementaryZ = nullptr;
+ID3D11DepthStencilState* DX11CommonStates::sCurrentDepthStencilState              = nullptr;

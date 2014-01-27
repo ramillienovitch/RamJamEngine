@@ -4,6 +4,8 @@
 // Structures and functions for lighting calculations.
 //***************************************************************************************
 
+#include "Rendering.hlsl"
+
 struct DirectionalLight
 {
 	float3 Color;
@@ -178,4 +180,52 @@ void ComputeSpotLight(Material mat, SpotLight L, float3 pos, float3 normal, floa
 
 	diffuse *= att;
 	spec    *= att;
+}
+
+// As below, we separate this for diffuse/specular parts for convenience in deferred lighting
+void AccumulatePhongBRDF(float3 normal,
+						 float3 lightDir,
+						 float3 viewDir,
+						 float3 lightContrib,
+						 float specularPower,
+						 inout float3 litDiffuse,
+						 inout float3 litSpecular)
+{
+	// Simple Phong
+	float NdotL = dot(normal, lightDir);
+	[flatten] if (NdotL > 0.0f)
+	{
+		float3 r = reflect(lightDir, normal);
+		float RdotV = max(0.0f, dot(r, viewDir));
+		float specular = pow(RdotV, specularPower);
+
+		litDiffuse += lightContrib * NdotL;
+		litSpecular += lightContrib * specular;
+	}
+}
+
+// Uses an in-out for accumulation to avoid returning and accumulating 0
+void AccumulateBRDF(SurfaceData surface, PointLight light,
+					inout float3 lit)
+{
+	float3 directionToLight = light.Position - surface.positionView;
+	float distanceToLight = length(directionToLight);
+
+	[branch] if (distanceToLight < light.Range)
+	{
+		float attenuation = saturate(1-distanceToLight/light.Range);
+		attenuation *= light.Intensity * attenuation;
+		directionToLight *= rcp(distanceToLight);       // A full normalize/RSQRT might be as fast here anyways...
+
+		float3 litDiffuse = float3(0.0f, 0.0f, 0.0f);
+			float3 litSpecular = float3(0.0f, 0.0f, 0.0f);
+			AccumulatePhongBRDF(	surface.normal,
+									directionToLight,
+									normalize(surface.positionView),
+									attenuation * light.Color,
+									surface.specularPower,
+									litDiffuse, litSpecular);
+
+		lit += surface.albedo.rgb * (litDiffuse + surface.specularAmount * litSpecular);
+	}
 }

@@ -27,14 +27,14 @@ struct FramebufferFlatElement
 
 //////////////////////////////////////////////////////////////////////////
 
-class BasicEffect : public Effect
+struct BasicEffect : public Effect
 {
-public:
 	BasicEffect(ID3D11Device* device, const std::string& filename);
 	~BasicEffect();
 
 	HRESULT SetWorld(Matrix44& M)                            { return World->SetMatrix(reinterpret_cast<const float*>(&M)); }
 	HRESULT SetViewProj(Matrix44& M)                         { return ViewProj->SetMatrix(reinterpret_cast<const float*>(&M)); }
+	HRESULT SetProj(Matrix44& M)                             { return Proj->SetMatrix(reinterpret_cast<const float*>(&M)); }
 	HRESULT SetEyePosW(const Vector3& v)                     { return EyePosW->SetFloatVector(reinterpret_cast<const float*>(&v)); }
 	HRESULT SetFogState(BOOL state)                          { return FogEnabled->SetBool(state != 0); }
 	HRESULT SetAlphaClipState(BOOL state)                    { return AlphaClipEnabled->SetBool(state != 0); }
@@ -52,9 +52,11 @@ public:
 	//-------------------------------------------
 
 	ID3DX11EffectTechnique*					BasicTech;
+	ID3DX11EffectTechnique*					DeferredTech;
 	//-------
 	ID3DX11EffectMatrixVariable*			World;
 	ID3DX11EffectMatrixVariable*			ViewProj;
+	ID3DX11EffectMatrixVariable*			Proj;
 	ID3DX11EffectMatrixVariable*			TexTransform;
 	//-------
 	ID3DX11EffectVectorVariable*			EyePosW;
@@ -75,10 +77,21 @@ public:
 };
 
 //////////////////////////////////////////////////////////////////////////
-
-class SpriteEffect : public Effect
+struct PostProcessEffect : public Effect
 {
-public:
+	PostProcessEffect(ID3D11Device* device, const std::string& filename);
+	~PostProcessEffect();
+	
+	ID3DX11EffectTechnique*					PostProcessTech;
+	ID3DX11EffectShaderResourceVariable*	TextureMap;
+
+	void SetTextureMap(ID3D11ShaderResourceView* tex) { TextureMap->SetResource(tex); }
+};
+
+//////////////////////////////////////////////////////////////////////////
+
+struct SpriteEffect : public Effect
+{
 	SpriteEffect(ID3D11Device* device, const std::string& filename);
 	~SpriteEffect();
 
@@ -90,9 +103,8 @@ public:
 
 //////////////////////////////////////////////////////////////////////////
 
-class ColorEffect : public Effect
+struct ColorEffect : public Effect
 {
-public:
 	ColorEffect(ID3D11Device* device, const std::string& filename);
 	~ColorEffect();
 
@@ -109,13 +121,13 @@ public:
 
 //////////////////////////////////////////////////////////////////////////
 
-class DX11Effects
+struct DX11Effects
 {
-public:
 	static void InitAll(ID3D11Device* device);
 	static void DestroyAll();
 
-	static BasicEffect*  BasicFX;
-	static ColorEffect*  ColorFX;
-	static SpriteEffect* SpriteFX;
+	static BasicEffect*       BasicFX;
+	static ColorEffect*       ColorFX;
+	static SpriteEffect*      SpriteFX;
+	static PostProcessEffect* PostProcessFX;
 };

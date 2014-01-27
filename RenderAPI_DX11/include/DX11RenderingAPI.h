@@ -47,11 +47,8 @@ struct DX11RenderingAPI : GraphicAPI
 	unsigned int mGBufferWidth;
 	unsigned int mGBufferHeight;
 
-	// We use a different lit buffer (different bind flags and MSAA handling) depending on whether we
-	// write to it from the pixel shader (render target) or compute shader (UAV)
-	std::tr1::shared_ptr<StructuredBuffer<FramebufferFlatElement> > mLitBufferCS;
-
-	std::tr1::shared_ptr<Depth2D> mDepthBuffer;
+	std::tr1::shared_ptr<StructuredBuffer<FramebufferFlatElement> >		mLitBufferCS;
+	std::tr1::shared_ptr<Depth2D>										mDepthBuffer;
 
 	//////////////////////////////////////////////////////////////////////////
 
@@ -91,6 +88,10 @@ struct DX11RenderingAPI : GraphicAPI
 
 	//---------------
 	Vector3 mEyePosW;
+	//---------------
+
+	ID3D11Buffer* mScreenQuadVB;
+	ID3D11Buffer* mScreenQuadIB;
 	
 	//////////////////////////////////////////////////////////////////////////
 
@@ -110,6 +111,8 @@ struct DX11RenderingAPI : GraphicAPI
 	void InitSwapChain(u32 msaaSamples = 4);
 	void ResizeWindow();
 	//---------------
+	void BuildScreenQuad();
+	//---------------
 	void DrawGizmos();
 	void DrawConsole();
 	void DrawProfiler();
@@ -118,6 +121,12 @@ struct DX11RenderingAPI : GraphicAPI
 	void SetActiveDirLights(u32 activeLights);
 	void SetActivePointLights(u32 activeLights);
 	void SetActiveSpotLights(u32 activeLights);
+
+	//////////////////////////////////////////////////////////////////////////
+
+	void RenderGBuffer();		// Draws geometry into G-buffer
+	void RenderPostProcess();	// Handles post-processing, etc
+	void ComputeLighting();
 };
 
 //////////////////////////////////////////////////////////////////////////

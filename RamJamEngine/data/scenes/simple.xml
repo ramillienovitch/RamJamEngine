@@ -2,20 +2,28 @@
 
 <scene>
 	<gameobject>
-		<name>dragon</name>
+		<name>ground</name>
 		<transform>
-			<position x="0" y="1" z="0"/>
-			<rotation x="0" y="45" z="0"/>
+			<position x="0" y="0" z="0"/>
+			<rotation x="0" y="0" z="0"/>
 			<scale    x="1" y="1" z="1"/>
 		</transform>
 		<mesh>
-			<file>dragon.mesh</file>
-			<materialLib>_Default\default.matlib</materialLib>
+			<primitive>grid</primitive>
+			<parameters width="30" depth="30" x="2" y="2"/>
+			<material>grid.mat</material>
 		</mesh>
-		<gizmo>
-			<primitive>box</primitive>
-			<parameters width="2" height="2" depth="2"/>
-			<color a="255" r="0" g="255" b="0"/>
-		</gizmo>
+	</gameobject>
+	<gameobject>
+		<name>rayman</name>
+		<transform>
+			<position x="0" y="0" z="0"/>
+			<rotation x="0" y="0" z="0"/>
+			<scale    x="1" y="1" z="1"/>
+		</transform>
+		<mesh>
+			<file>rayman.mesh</file>
+			<materialLib>Rayman\rayman.matlib</materialLib>
+		</mesh>
 	</gameobject>
 </scene>

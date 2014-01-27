@@ -1,45 +1,11 @@
 //=============================================================================
-// Basic.fx by Frank Luna (C) 2011 All Rights Reserved.
-//
 // Basic effect that currently supports transformations, lighting, and texturing.
 //=============================================================================
 
 #include "lightHelper.fx"
-#include "PerFrameConstants.hlsli"
+#include "Rendering.hlsl"
 
-cbuffer cbPerObject
-{
-	float4x4 gWorld;
-	//float4x4 gWorldInvTranspose;
-	float4x4 gDiffuseMapTrf	: Texture_Diffuse_Trf;
-	//-------
-	bool   gMatUseAlpha			: Transparency;
-	float4 gMatAlbedo			: Albedo;
-	float  gMatSpecularAmount	: SpecularAmount;
-	float  gMatSpecularPower	: SpecularPower;
-}; 
-
-// Nonnumeric values cannot be added to a cbuffer.
-Texture2D gDiffuseMap		: Texture_Diffuse;
-SamplerState gTextureSampler;
-
-struct VertexIn
-{
-	float3 PosL    : POSITION;
-	float3 NormalL : NORMAL;
-	float3 TanL    : TANGENT;
-	float2 Tex     : TEXCOORD;
-};
-
-struct VertexOut
-{
-	float4 PosH    : SV_POSITION;
-	float3 PosW    : POSITION;
-	float3 NormalW : NORMAL;
-	float3 TanW    : TANGENT;
-	float2 Tex     : TEXCOORD;
-};
-
+//////////////////////////////////////////////////////////////////////////
 VertexOut VS(VertexIn vin)
 {
 	VertexOut vout;
@@ -59,6 +25,7 @@ VertexOut VS(VertexIn vin)
 	return vout;
 }
  
+//////////////////////////////////////////////////////////////////////////
 float4 PS(VertexOut pin) : SV_Target
 {
 	// Interpolating normal can unnormalize it, so normalize it.
@@ -82,7 +49,7 @@ float4 PS(VertexOut pin) : SV_Target
 		gDiffuseMap.GetDimensions(textureDim.x, textureDim.y);
 		texColor = (textureDim.x == 0U ? float4(1.0f, 1.0f, 1.0f, 1.0f) : gDiffuseMap.Sample( gTextureSampler, pin.Tex ));
 
-		if(gUseAlphaClip)
+		if(gMatUseAlpha)
 		{
 			// Discard pixel if texture alpha < 0.1.  Note that we do this
 			// test as soon as possible so that we can potentially exit the shader 
@@ -170,6 +137,24 @@ float4 PS(VertexOut pin) : SV_Target
 	return litColor;
 }
 
+//////////////////////////////////////////////////////////////////////////
+void GBufferPS(VertexOut input, out GBuffer outputGBuffer)
+{
+	SurfaceData surface = ComputeSurfaceDataFromGeometry(input);
+	outputGBuffer.normal_specular = float4(EncodeSphereMap(surface.normal), surface.specularAmount, surface.specularPower);
+	outputGBuffer.albedo = surface.albedo;
+	outputGBuffer.positionZGrad = float2(ddx_coarse(surface.positionView.z), ddy_coarse(surface.positionView.z));
+
+	if (gMatUseAlpha)
+	{
+		// Alpha test
+		clip(outputGBuffer.albedo.a - 0.3f);
+
+		// Always use face normal for alpha tested stuff since it's double-sided
+		outputGBuffer.normal_specular.xy = EncodeSphereMap(normalize(ComputeFaceNormal(input.PosW)));
+	}
+}
+
 //--------------------------------------------------------------------------------------------------
 
 technique11 Basic
@@ -179,5 +164,15 @@ technique11 Basic
 		SetVertexShader( CompileShader( vs_5_0, VS() ) );
 		SetGeometryShader( NULL );
 		SetPixelShader( CompileShader( ps_5_0, PS() ) );
+	}
+}
+
+technique Deferred
+{
+	pass P0
+	{
+		SetVertexShader( CompileShader( vs_5_0, VS() ) );
+		SetGeometryShader( NULL );
+		SetPixelShader( CompileShader( ps_5_0, GBufferPS() ) );
 	}
 }

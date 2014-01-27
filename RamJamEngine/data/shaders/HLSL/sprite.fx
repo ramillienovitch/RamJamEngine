@@ -2,8 +2,6 @@
 // Sprite.fx by Frank Luna (C) 2011 All Rights Reserved.
 //=============================================================================
 
-#include "lightHelper.fx"
- 
 Texture2D gSpriteTex;
 
 SamplerState samLinear
@@ -49,9 +47,6 @@ technique11 SpriteTech
 	pass P0
 	{
 		SetVertexShader( CompileShader( vs_5_0, VS() ) );
-		SetHullShader( NULL );
-		SetDomainShader( NULL );
-		SetGeometryShader( NULL );
 		SetPixelShader( CompileShader( ps_5_0, PS() ) );
 	}
 }
