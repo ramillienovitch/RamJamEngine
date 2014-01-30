@@ -130,9 +130,6 @@
     <FxCompile Include="..\RamJamEngine\data\shaders\HLSL\postprocess.fx">
       <Filter>Resource Files\Shaders</Filter>
     </FxCompile>
-    <FxCompile Include="..\RamJamEngine\data\shaders\HLSL\tiledeferred.fx">
-      <Filter>Resource Files\Shaders</Filter>
-    </FxCompile>
     <FxCompile Include="..\RamJamEngine\data\shaders\HLSL\Rendering.hlsl">
       <Filter>Resource Files\Shaders</Filter>
     </FxCompile>

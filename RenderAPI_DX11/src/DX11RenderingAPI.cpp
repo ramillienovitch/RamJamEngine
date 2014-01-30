@@ -10,7 +10,7 @@ DX11RenderingAPI::DX11RenderingAPI(Scene& scene) : mScene(scene)
 	mDX11Device			= nullptr;
 	mDX11DepthBuffer	= nullptr;
 	mSwapChain			= nullptr;
-	mRenderTargetView	= nullptr;
+	mBackbufferRTV		= nullptr;
 	md3dDriverType		= D3D_DRIVER_TYPE_HARDWARE;
 	ZeroMemory(&mScreenViewport, sizeof(D3D11_VIEWPORT));
 	//-----------
@@ -151,10 +151,6 @@ void DX11RenderingAPI::Initialize(int windowWidth, int windowHeight)
 	RJE_SAFE_RELEASE(dxgiDevice);
 	RJE_SAFE_RELEASE(dxgiAdapter);
 
-	//---------------------
-	ResizeWindow();	// we call the ResizeWindow method here to avoid code duplication.
-	//---------------------
-
 	// We init the effect first and then the input layouts
 	DX11Effects     ::InitAll(mDX11Device->md3dDevice);
 	DX11InputLayouts::InitAll(mDX11Device->md3dDevice);
@@ -178,7 +174,7 @@ void DX11RenderingAPI::Initialize(int windowWidth, int windowHeight)
 	DX11Drawable::SetShader(DX11Effects::BasicFX);
 	DX11Drawable::SetShaderGizmo(DX11Effects::ColorFX);
 	//-----------
-	SetActivePointLights(3);
+	SetActivePointLights(0);
 	SetActiveDirLights(1);
 	SetActiveSpotLights(0);
 	//-----------
@@ -195,19 +191,24 @@ void DX11RenderingAPI::Initialize(int windowWidth, int windowHeight)
 	int barSize[2] = {300, 400};
 	TwSetParam(bar, NULL, "size", TW_PARAM_INT32, 2, barSize);
 	TwAddVarRW(bar, "V-Sync Enabled", TW_TYPE_BOOLCPP, &VSyncEnabled, NULL);
-	TwAddSeparator(bar, NULL, NULL);
+	TwAddSeparator(bar, NULL, NULL); //===============================================
 	TwAddButton(bar, "Toggle Wireframe", TwSetWireframe, this, NULL);
-	TwAddSeparator(bar, NULL, NULL);
+	TwAddSeparator(bar, NULL, NULL); //===============================================
 	TwAddVarRW(bar, "Ambient Color", TW_TYPE_COLOR4F, &mScene.mAmbientLightColor, NULL);
-	TwAddSeparator(bar, NULL, NULL);
-	TwAddVarRW(bar, "Use Texture",      TW_TYPE_BOOLCPP, &mScene.mbUseTexture, NULL);
-	TwAddVarRW(bar, "Use Blending",     TW_TYPE_BOOLCPP, &mScene.mbUseBlending, NULL);
-	TwAddSeparator(bar, NULL, NULL);
-	TwAddVarRW(bar, "Use Fog", TW_TYPE_BOOLCPP,   &mScene.mbUseFog, NULL);
+	TwAddSeparator(bar, NULL, NULL); //===============================================
+	TwAddVarRW(bar, "Use Texture",  TW_TYPE_BOOLCPP, &mScene.mbUseTexture, NULL);
+	TwAddVarRW(bar, "Use Blending", TW_TYPE_BOOLCPP, &mScene.mbUseBlending, NULL);
+	TwAddSeparator(bar, NULL, NULL); //===============================================
+	TwAddVarRW(bar, "Show Albedo Only",    TW_TYPE_BOOLCPP, &mScene.mbOnlyAlbedo,     NULL);
+	TwAddVarRW(bar, "Show Normal Only",    TW_TYPE_BOOLCPP, &mScene.mbOnlyNormals,    NULL);
+	TwAddVarRW(bar, "Show Depth Only",     TW_TYPE_BOOLCPP, &mScene.mbOnlyDepth,      NULL);
+	TwAddVarRW(bar, "Show Specular Only ", TW_TYPE_BOOLCPP, &mScene.mbOnlySpecular,   NULL);
+	TwAddVarRW(bar, "Use Face Normals",    TW_TYPE_BOOLCPP, &mScene.mbUseFaceNormals, NULL);
+	TwAddVarRW(bar, "Use Fog",             TW_TYPE_BOOLCPP, &mScene.mbUseFog,         NULL);
 	TwAddVarRW(bar, "Fog Color", TW_TYPE_COLOR4F, &mScene.mFogColor, NULL);
-	TwAddVarRW(bar, "Fog Start", TW_TYPE_FLOAT,   &mScene.mFogStart, "min=10 max=100");
-	TwAddVarRW(bar, "Fog Range", TW_TYPE_FLOAT,   &mScene.mFogRange, "min=20 max=500");
-	TwAddSeparator(bar, NULL, NULL);
+	TwAddVarRW(bar, "Fog Start", TW_TYPE_FLOAT, &mScene.mFogStart, "min=10 max=100");
+	TwAddVarRW(bar, "Fog Range", TW_TYPE_FLOAT, &mScene.mFogRange, "min=20 max=500");
+	TwAddSeparator(bar, NULL, NULL); //===============================================
 	TwAddVarRW(bar, "Blend Factor Red",   TW_TYPE_FLOAT, &mBlendFactorR, "min=0 max=1 step=0.05");
 	TwAddVarRW(bar, "Blend Factor Green", TW_TYPE_FLOAT, &mBlendFactorG, "min=0 max=1 step=0.05");
 	TwAddVarRW(bar, "Blend Factor Blue",  TW_TYPE_FLOAT, &mBlendFactorB, "min=0 max=1 step=0.05");
@@ -261,16 +262,6 @@ void DX11RenderingAPI::InitSwapChain(u32 msaaSamples /*=4*/)
 
 	//-----------
 
-	mGBufferWidth  = mWindowWidth;
-	mGBufferHeight = mWindowHeight;
-
-	// Create/recreate any textures related to screen size
-	mGBuffer.resize(0);
-	mGBufferRTV.resize(0);
-	mGBufferSRV.resize(0);
-	mLitBufferCS = nullptr;
-	mDepthBuffer = nullptr;
-
 	// To correctly create the swap chain, we must use the IDXGIFactory that was
 	// used to create the device.  If we tried to use a different IDXGIFactory instance
 	// (by calling CreateDXGIFactory), we get an error: "IDXGIFactory::CreateSwapChain:
@@ -288,49 +279,6 @@ void DX11RenderingAPI::InitSwapChain(u32 msaaSamples /*=4*/)
 	RJE_SAFE_RELEASE(dxgiDevice);
 	RJE_SAFE_RELEASE(dxgiAdapter);
 	RJE_SAFE_RELEASE(dxgiFactory);
-
-	//---------------------------
-
-	// standard depth/stencil buffer
-	mDepthBuffer = shared_ptr<Depth2D>(new Depth2D(	mDX11Device->md3dDevice, mGBufferWidth, mGBufferHeight,
-													D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE,
-													sampleDesc,
-													MSAA_Samples > 1 )); // Include stencil if using MSAA
-
-	// lit buffer
-	mLitBufferCS = shared_ptr< StructuredBuffer<FramebufferFlatElement> >(new StructuredBuffer<FramebufferFlatElement>(
-		mDX11Device->md3dDevice, mGBufferWidth * mGBufferHeight * MSAA_Samples,
-		D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE));
-
-	// ------  G-Buffer  ------
-	// normal_specular
-	mGBuffer.push_back(shared_ptr<Texture2D>(new Texture2D(
-		mDX11Device->md3dDevice, mGBufferWidth, mGBufferHeight, DXGI_FORMAT_R16G16B16A16_FLOAT,
-		D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE,
-		sampleDesc)));
-
-	// albedo
-	mGBuffer.push_back(shared_ptr<Texture2D>(new Texture2D(
-		mDX11Device->md3dDevice, mGBufferWidth, mGBufferHeight, DXGI_FORMAT_R8G8B8A8_UNORM,
-		D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE,
-		sampleDesc)));
-
-	// positionZgrad
-	mGBuffer.push_back(shared_ptr<Texture2D>(new Texture2D(
-		mDX11Device->md3dDevice, mGBufferWidth, mGBufferHeight, DXGI_FORMAT_R16G16_FLOAT,
-		D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE,
-		sampleDesc)));
-
-	// Set up GBuffer resource list
-	mGBufferRTV.resize(mGBuffer.size(), 0);
-	mGBufferSRV.resize(mGBuffer.size() + 1, 0);
-	for (std::size_t i = 0; i < mGBuffer.size(); ++i)
-	{
-		mGBufferRTV[i] = mGBuffer[i]->GetRenderTarget();
-		mGBufferSRV[i] = mGBuffer[i]->GetShaderResource();
-	}
-	// Depth buffer is the last SRV that we use for reading
-	mGBufferSRV.back() = mDepthBuffer->GetShaderResource();
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -464,28 +412,18 @@ void DX11RenderingAPI::DrawScene()
 	PROFILE_GPU_START(L"Render Scene");
 	PROFILE_GPU_START_DEEP(L"DEEP Scene");
 	
-	mDX11Device->md3dImmediateContext->ClearRenderTargetView(mRenderTargetView, DirectX::Colors::LightSteelBlue);
+	mDX11Device->md3dImmediateContext->ClearRenderTargetView(mBackbufferRTV, DirectX::Colors::LightSteelBlue);
 	mDX11Device->md3dImmediateContext->ClearDepthStencilView(mDX11DepthBuffer->mDepthStencilView, D3D11_CLEAR_DEPTH|D3D11_CLEAR_STENCIL, 1.0f, 0);
-	// Clear GBuffer
-	// NOTE: We actually only need to clear the depth buffer here since we replace unwritten (i.e. far plane) samples
-	// with the skybox. We use the depth buffer to reconstruct position and only in-frustum positions are shaded.
-	// NOTE: Complementary Z buffer: clear to 0 (far)!
-	//mDX11Device->md3dImmediateContext->ClearDepthStencilView(mDepthBuffer->GetDepthStencil(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 0.0f, 0);
 
 	//-------------------------------------------------------------------------
 
-	//DrawGizmos();
+	DrawGizmos();
 
 	//-------------------------------------------------------------------------
 	mDX11Device->md3dImmediateContext->IASetInputLayout(DX11InputLayouts::PosNormalTanTex);
 	mDX11Device->md3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	float blendFactor[4] = {mBlendFactorR, mBlendFactorG, mBlendFactorB, mBlendFactorA};
-
-	// Set up render GBuffer render targets
-// 	mDX11Device->md3dImmediateContext->OMSetDepthStencilState(DX11CommonStates::sDepthStencilState_DepthComplementaryZ, 0);
-// 	mDX11Device->md3dImmediateContext->OMSetRenderTargets(static_cast<u32>(mGBufferRTV.size()), &mGBufferRTV.front(), mDepthBuffer->GetDepthStencil());
-// 	mDX11Device->md3dImmediateContext->OMSetBlendState(DX11CommonStates::sCurrentBlendState, blendFactor, 0xFFFFFFFF);
 	
 	mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sCurrentRasterizerState);
 
@@ -496,11 +434,13 @@ void DX11RenderingAPI::DrawScene()
 	// Set per frame constants.
 	DX11Effects::BasicFX->SetViewProj(view*proj);
 	DX11Effects::BasicFX->SetProj(proj);
-	DX11Effects::BasicFX->SetAmbientLight(mScene.mAmbientLightColor);
-	DX11Effects::BasicFX->SetDirLights(mDirLights->GetShaderResource());
-	DX11Effects::BasicFX->SetPointLights(mPointLights->GetShaderResource());
-	DX11Effects::BasicFX->SetSpotLights(mSpotLights->GetShaderResource());
 	DX11Effects::BasicFX->SetEyePosW(mEyePosW);
+	DX11Effects::BasicFX->OnlyAlbedo(  mScene.mbOnlyAlbedo);
+	DX11Effects::BasicFX->OnlyNormals( mScene.mbOnlyNormals);
+	DX11Effects::BasicFX->OnlyDepth(   mScene.mbOnlyDepth);
+	DX11Effects::BasicFX->OnlySpecular(mScene.mbOnlySpecular);
+	DX11Effects::BasicFX->UseFaceNormals(mScene.mbUseFaceNormals);
+	DX11Effects::BasicFX->SetAmbientLight(mScene.mAmbientLightColor);
 	DX11Effects::BasicFX->SetSamplerState(DX11CommonStates::sCurrentSamplerState);
 	DX11Effects::BasicFX->SetFogColor(      mScene.mFogColor);
 	DX11Effects::BasicFX->SetFogStart(      mScene.mFogStart);
@@ -508,6 +448,9 @@ void DX11RenderingAPI::DrawScene()
 	DX11Effects::BasicFX->SetFogState(      mScene.mbUseFog);
 	DX11Effects::BasicFX->SetAlphaClipState(mScene.mbUseBlending);
 	DX11Effects::BasicFX->SetTextureState(  mScene.mbUseTexture);
+	DX11Effects::BasicFX->SetDirLights(mDirLights->GetShaderResource());
+	DX11Effects::BasicFX->SetPointLights(mPointLights->GetShaderResource());
+	DX11Effects::BasicFX->SetSpotLights(mSpotLights->GetShaderResource());
 
 	ID3DX11EffectTechnique* activeTech = DX11Effects::BasicFX->BasicTech;
 
@@ -563,9 +506,6 @@ void DX11RenderingAPI::DrawScene()
 
 	//-------------------------------------------------------------------------
 
-	// Cleanup (aka make the runtime happy)
-	//mDX11Device->md3dImmediateContext->OMSetRenderTargets(0, 0, 0);
-
 	PROFILE_CPU("Present");
 	if (VSyncEnabled)
 	{
@@ -578,52 +518,17 @@ void DX11RenderingAPI::DrawScene()
 }
 
 //////////////////////////////////////////////////////////////////////////
-void DX11RenderingAPI::RenderGBuffer()
-{
-
-}
-
-//////////////////////////////////////////////////////////////////////////
 void DX11RenderingAPI::RenderPostProcess()
 {
-// 	d3dDeviceContext->IASetInputLayout(mMeshVertexLayout);
-// 
-// 	d3dDeviceContext->VSSetConstantBuffers(0, 1, &mPerFrameConstants);
-// 	d3dDeviceContext->VSSetShader(mSkyboxVS->GetShader(), 0, 0);
-// 
-// 	d3dDeviceContext->RSSetState(mDoubleSidedRasterizerState);
-// 
-// 	d3dDeviceContext->PSSetConstantBuffers(0, 1, &mPerFrameConstants);
-// 	d3dDeviceContext->PSSetSamplers(0, 1, &mDiffuseSampler);
-// 	d3dDeviceContext->PSSetShader(mSkyboxPS->GetShader(), 0, 0);
-// 
-// 	d3dDeviceContext->PSSetShaderResources(5, 1, &skybox);
-// 	d3dDeviceContext->PSSetShaderResources(6, 1, &depthSRV);
-// 
-// 	ID3D11ShaderResourceView* litView = mLitBufferCS->GetShaderResource();
-// 	d3dDeviceContext->PSSetShaderResources(7, 1, &litView);
-// 
-// 	d3dDeviceContext->OMSetRenderTargets(1, &backBuffer, 0);
-// 	d3dDeviceContext->OMSetBlendState(mGeometryBlendState, 0, 0xFFFFFFFF);
-	
-	// Render the Skybox here
-	//mSkyboxMesh.Render();
-
-	//////////////////////////////////////////////////////////////////////////
-
-
-	mDX11Device->md3dImmediateContext->IASetInputLayout(DX11InputLayouts::PosNormalTanTex);
-	mDX11Device->md3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
 	UINT stride = sizeof(PosNormTanTex);
 	UINT offset = 0;
 
-	XMMATRIX identity = XMMatrixIdentity();
+	mDX11Device->md3dImmediateContext->OMSetRenderTargets(1, &mBackbufferRTV, 0);
 
-	ID3DX11EffectTechnique* texOnlyTech = DX11Effects::PostProcessFX->PostProcessTech;
+	ID3DX11EffectTechnique* PostProcessTech = DX11Effects::PostProcessFX->PostProcessTech;
 	D3DX11_TECHNIQUE_DESC techDesc;
 
-	texOnlyTech->GetDesc( &techDesc );
+	PostProcessTech->GetDesc( &techDesc );
 	for(UINT p = 0; p < techDesc.Passes; ++p)
 	{
 		mDX11Device->md3dImmediateContext->IASetVertexBuffers(0, 1, &mScreenQuadVB, &stride, &offset);
@@ -631,10 +536,9 @@ void DX11RenderingAPI::RenderPostProcess()
 
 		DX11Effects::PostProcessFX->SetTextureMap(mRjeLogo);
 
-		texOnlyTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
+		PostProcessTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
 		mDX11Device->md3dImmediateContext->DrawIndexed(6, 0, 0);
 	}
-
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -745,24 +649,6 @@ void DX11RenderingAPI::Draw2dElements()
 
 
 //////////////////////////////////////////////////////////////////////////
-void DX11RenderingAPI::ComputeLighting()
-{
-	// Compute shader setup (always does all the lights at once)
-// 	d3dDeviceContext->CSSetConstantBuffers(0, 1, &mPerFrameConstants);
-// 	d3dDeviceContext->CSSetShaderResources(0, static_cast<UINT>(mGBufferSRV.size()), &mGBufferSRV.front());
-// 	d3dDeviceContext->CSSetShaderResources(5, 1, &lightBufferSRV);
-
-// 	ID3D11UnorderedAccessView *litBufferUAV = mLitBufferCS->GetUnorderedAccess();
-// 	d3dDeviceContext->CSSetUnorderedAccessViews(0, 1, &litBufferUAV, 0);
-// 	d3dDeviceContext->CSSetShader(mComputeShaderTileCS->GetShader(), 0, 0);
-
-	// Dispatch
-	unsigned int dispatchWidth  = (mGBufferWidth  + COMPUTE_SHADER_TILE_GROUP_DIM - 1) / COMPUTE_SHADER_TILE_GROUP_DIM;
-	unsigned int dispatchHeight = (mGBufferHeight + COMPUTE_SHADER_TILE_GROUP_DIM - 1) / COMPUTE_SHADER_TILE_GROUP_DIM;
-	mDX11Device->md3dImmediateContext->Dispatch(dispatchWidth, dispatchHeight, 1);
-}
-
-//////////////////////////////////////////////////////////////////////////
 void DX11RenderingAPI::SetActiveDirLights(u32 activeLights)
 {
 	mDirLightCount = activeLights;
@@ -812,7 +698,7 @@ void DX11RenderingAPI::Shutdown()
 	RJE_SAFE_DELETE(mConsoleFont);
 	RJE_SAFE_DELETE(mProfilerFont);
 
-	RJE_SAFE_RELEASE(mRenderTargetView);
+	RJE_SAFE_RELEASE(mBackbufferRTV);
 	mDX11DepthBuffer->Release();
 	RJE_SAFE_RELEASE(mSwapChain);
 
@@ -883,7 +769,7 @@ void DX11RenderingAPI::ResizeWindow(int newSizeWidth, int newSizeHeight)
 
 	// Release the old views, as they hold references to the buffers we
 	// will be destroying.  Also release the old depth/stencil buffer.
-	RJE_SAFE_RELEASE(mRenderTargetView);
+	RJE_SAFE_RELEASE(mBackbufferRTV);
 	RJE_SAFE_RELEASE(mDX11DepthBuffer->mDepthStencilView);
 	RJE_SAFE_RELEASE(mDX11DepthBuffer->mDepthStencilBuffer);
 
@@ -891,7 +777,7 @@ void DX11RenderingAPI::ResizeWindow(int newSizeWidth, int newSizeHeight)
 	RJE_CHECK_FOR_SUCCESS(mSwapChain->ResizeBuffers(1, newSizeWidth, newSizeHeight, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH))
 	ID3D11Texture2D* backBuffer;
 	RJE_CHECK_FOR_SUCCESS(mSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&backBuffer)));
-	RJE_CHECK_FOR_SUCCESS(mDX11Device->md3dDevice->CreateRenderTargetView(backBuffer, 0, &mRenderTargetView));
+	RJE_CHECK_FOR_SUCCESS(mDX11Device->md3dDevice->CreateRenderTargetView(backBuffer, 0, &mBackbufferRTV));
 	RJE_SAFE_RELEASE(backBuffer);
 
 	// Create the depth/stencil buffer and view.
@@ -908,7 +794,7 @@ void DX11RenderingAPI::ResizeWindow(int newSizeWidth, int newSizeHeight)
 
 	depthStencilDesc.Usage          = D3D11_USAGE_DEFAULT;
 	depthStencilDesc.BindFlags      = D3D11_BIND_DEPTH_STENCIL;
-	depthStencilDesc.CPUAccessFlags = 0; 
+	depthStencilDesc.CPUAccessFlags = 0;
 	depthStencilDesc.MiscFlags      = 0;
 
 	RJE_CHECK_FOR_SUCCESS(mDX11Device->md3dDevice->CreateTexture2D(&depthStencilDesc, 0, &(mDX11DepthBuffer->mDepthStencilBuffer)));
@@ -916,7 +802,7 @@ void DX11RenderingAPI::ResizeWindow(int newSizeWidth, int newSizeHeight)
 
 
 	// Bind the render target view and depth/stencil view to the pipeline.
-	mDX11Device->md3dImmediateContext->OMSetRenderTargets(1, &mRenderTargetView, mDX11DepthBuffer->mDepthStencilView);
+	mDX11Device->md3dImmediateContext->OMSetRenderTargets(1, &mBackbufferRTV, mDX11DepthBuffer->mDepthStencilView);
 
 	// Set the viewport transform.
 	mScreenViewport.TopLeftX = 0;

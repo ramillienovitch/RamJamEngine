@@ -31,6 +31,7 @@ struct DX11CommonStates
 									UINT8 renderTargetWriteMask);
 
 	// Blend states.
+	static HRESULT Default(             ID3D11Device*, ID3D11BlendState**);
 	static HRESULT Opaque(              ID3D11Device*, ID3D11BlendState**);
 	static HRESULT Tranparent(          ID3D11Device*, ID3D11BlendState**);
 	static HRESULT AlphaToCoverage(     ID3D11Device*, ID3D11BlendState**);
@@ -81,6 +82,7 @@ struct DX11CommonStates
 	static ID3D11SamplerState*	sSamplerState_Linear;
 	static ID3D11SamplerState*	sCurrentSamplerState;
 
+	static ID3D11BlendState*	sBlendState_Default;
 	static ID3D11BlendState*	sBlendState_Opaque;
 	static ID3D11BlendState*	sBlendState_Transparent;
 	static ID3D11BlendState*	sBlendState_AlphaToCoverage;

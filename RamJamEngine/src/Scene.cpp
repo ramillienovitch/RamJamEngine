@@ -9,10 +9,15 @@ Scene::Scene()
 	mFogStart = 15.0f;
 	mFogRange = 175.0f;
 
-	mbUseFog          = false;
-	mbUseTexture      = true;
-	mbUseBlending     = true;
-	mbWireframe       = false;
+	mbUseFog         = false;
+	mbUseTexture     = true;
+	mbUseBlending    = true;
+	mbWireframe      = false;
+	mbUseFaceNormals = false;
+	mbOnlyAlbedo     = false;
+	mbOnlyNormals    = false;
+	mbOnlyDepth      = false;
+	mbOnlySpecular   = false;
 }
 
 //////////////////////////////////////////////////////////////////////////

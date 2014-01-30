@@ -74,7 +74,7 @@ void ComputeDirectionalLight(Material mat, DirectionalLight L,
 
 		float3 diff = diffuseFactor * mat.Albedo.rgb * L.Color;
 		diffuse = float4(diff,1.0);
-		spec    = specFactor * mat.SpecularAmount * float4(L.Color, 1.0);
+		spec    = float4((specFactor * mat.SpecularAmount).xxx, 1.0);
 	}
 }
 
@@ -83,8 +83,9 @@ void ComputeDirectionalLight(Material mat, DirectionalLight L,
 // from a point light.  We need to output the terms separately because
 // later we will modify the individual terms.
 //---------------------------------------------------------------------------------------
-void ComputePointLight(Material mat, PointLight L, float3 pos, float3 normal, float3 toEye,
-				out float4 diffuse, out float4 spec)
+void ComputePointLight(	Material mat, PointLight L,
+						float3 pos, float3 normal, float3 toEye,
+						out float4 diffuse, out float4 spec)
 {
 	// Initialize outputs.
 	diffuse = float4(0.0f, 0.0f, 0.0f, 0.0f);
@@ -117,7 +118,7 @@ void ComputePointLight(Material mat, PointLight L, float3 pos, float3 normal, fl
 
 		float3 diff = diffuseFactor * mat.Albedo.rgb * L.Color;
 		diffuse = float4(diff,1.0);
-		spec    = specFactor * mat.SpecularAmount * float4(L.Color, 1.0);
+		spec    = float4((specFactor * mat.SpecularAmount).xxx, 1.0);
 	}
 
 	// calculate basic attenuation
@@ -134,8 +135,9 @@ void ComputePointLight(Material mat, PointLight L, float3 pos, float3 normal, fl
 // from a spotlight.  We need to output the terms separately because
 // later we will modify the individual terms.
 //---------------------------------------------------------------------------------------
-void ComputeSpotLight(Material mat, SpotLight L, float3 pos, float3 normal, float3 toEye,
-				out float4 diffuse, out float4 spec)
+void ComputeSpotLight(	Material mat, SpotLight L,
+						float3 pos, float3 normal, float3 toEye,
+						out float4 diffuse, out float4 spec)
 {
 	diffuse = float4(0.0f, 0.0f, 0.0f, 0.0f);
 	spec    = float4(0.0f, 0.0f, 0.0f, 0.0f);
@@ -167,7 +169,7 @@ void ComputeSpotLight(Material mat, SpotLight L, float3 pos, float3 normal, floa
 
 		float3 diff = diffuseFactor * mat.Albedo.rgb * L.Color;
 		diffuse = float4(diff,1.0);
-		spec    = specFactor * mat.SpecularAmount * float4(L.Color, 1.0);
+		spec    = float4((specFactor * mat.SpecularAmount).xxx, 1.0);
 	}
 	
 	// Scale by spotlight factor and attenuate.

@@ -18,7 +18,7 @@ struct DX11RenderingAPI : GraphicAPI
 	DX11CommonStates*		mDX11CommonStates;
 
 	IDXGISwapChain*			mSwapChain;
-	ID3D11RenderTargetView* mRenderTargetView;
+	ID3D11RenderTargetView* mBackbufferRTV;
 	D3D11_VIEWPORT			mScreenViewport;
 	D3D_DRIVER_TYPE			md3dDriverType;
 
@@ -37,20 +37,6 @@ struct DX11RenderingAPI : GraphicAPI
 
 	// shortcut for System::Instance()->mScene
 	Scene& mScene;
-
-	//////////////////////////////////////////////////////////////////////////
-	// Used in Tiled Deferred Shading
-
-	std::vector< std::tr1::shared_ptr<Texture2D> >	mGBuffer;
-	std::vector<ID3D11RenderTargetView*>			mGBufferRTV;			// Handy cache of list of RT pointers for G-buffer
-	std::vector<ID3D11ShaderResourceView*>			mGBufferSRV;			// Handy cache of list of SRV pointers for the G-buffer
-	unsigned int mGBufferWidth;
-	unsigned int mGBufferHeight;
-
-	std::tr1::shared_ptr<StructuredBuffer<FramebufferFlatElement> >		mLitBufferCS;
-	std::tr1::shared_ptr<Depth2D>										mDepthBuffer;
-
-	//////////////////////////////////////////////////////////////////////////
 
 	ID3D11ShaderResourceView* mRjeLogo;
 
@@ -124,9 +110,7 @@ struct DX11RenderingAPI : GraphicAPI
 
 	//////////////////////////////////////////////////////////////////////////
 
-	void RenderGBuffer();		// Draws geometry into G-buffer
-	void RenderPostProcess();	// Handles post-processing, etc
-	void ComputeLighting();
+	void RenderPostProcess();
 };
 
 //////////////////////////////////////////////////////////////////////////

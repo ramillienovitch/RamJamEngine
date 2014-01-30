@@ -18,15 +18,6 @@ protected:
 
 //////////////////////////////////////////////////////////////////////////
 
-struct FramebufferFlatElement
-{
-	// Flat framebuffer RGBA16-encoded
-	unsigned int rg;
-	unsigned int ba;
-};
-
-//////////////////////////////////////////////////////////////////////////
-
 struct BasicEffect : public Effect
 {
 	BasicEffect(ID3D11Device* device, const std::string& filename);
@@ -36,6 +27,11 @@ struct BasicEffect : public Effect
 	HRESULT SetViewProj(Matrix44& M)                         { return ViewProj->SetMatrix(reinterpret_cast<const float*>(&M)); }
 	HRESULT SetProj(Matrix44& M)                             { return Proj->SetMatrix(reinterpret_cast<const float*>(&M)); }
 	HRESULT SetEyePosW(const Vector3& v)                     { return EyePosW->SetFloatVector(reinterpret_cast<const float*>(&v)); }
+	HRESULT UseFaceNormals(BOOL state)                       { return FaceNormals->SetBool(state != 0); }
+	HRESULT OnlyAlbedo(BOOL state)                           { return ViewAlbedo->SetBool(state != 0); }
+	HRESULT OnlyNormals(BOOL state)                          { return ViewNormals->SetBool(state != 0); }
+	HRESULT OnlyDepth(BOOL state)                            { return ViewDepth->SetBool(state != 0); }
+	HRESULT OnlySpecular(BOOL state)                         { return ViewSpecular->SetBool(state != 0); }
 	HRESULT SetFogState(BOOL state)                          { return FogEnabled->SetBool(state != 0); }
 	HRESULT SetAlphaClipState(BOOL state)                    { return AlphaClipEnabled->SetBool(state != 0); }
 	HRESULT SetTextureState(BOOL state)                      { return TextureEnabled->SetBool(state != 0); }
@@ -52,7 +48,6 @@ struct BasicEffect : public Effect
 	//-------------------------------------------
 
 	ID3DX11EffectTechnique*					BasicTech;
-	ID3DX11EffectTechnique*					DeferredTech;
 	//-------
 	ID3DX11EffectMatrixVariable*			World;
 	ID3DX11EffectMatrixVariable*			ViewProj;
@@ -61,6 +56,12 @@ struct BasicEffect : public Effect
 	//-------
 	ID3DX11EffectVectorVariable*			EyePosW;
 	ID3DX11EffectVectorVariable*			FogColor;
+	//-------
+	ID3DX11EffectScalarVariable*			FaceNormals;
+	ID3DX11EffectScalarVariable*			ViewAlbedo;
+	ID3DX11EffectScalarVariable*			ViewNormals;
+	ID3DX11EffectScalarVariable*			ViewDepth;
+	ID3DX11EffectScalarVariable*			ViewSpecular;
 	//-------
 	ID3DX11EffectScalarVariable*			FogEnabled;
 	ID3DX11EffectScalarVariable*			AlphaClipEnabled;
@@ -81,11 +82,11 @@ struct PostProcessEffect : public Effect
 {
 	PostProcessEffect(ID3D11Device* device, const std::string& filename);
 	~PostProcessEffect();
+
+	HRESULT SetTextureMap(ID3D11ShaderResourceView* tex)        { return TextureMap->SetResource(tex); }
 	
 	ID3DX11EffectTechnique*					PostProcessTech;
 	ID3DX11EffectShaderResourceVariable*	TextureMap;
-
-	void SetTextureMap(ID3D11ShaderResourceView* tex) { TextureMap->SetResource(tex); }
 };
 
 //////////////////////////////////////////////////////////////////////////
@@ -126,8 +127,8 @@ struct DX11Effects
 	static void InitAll(ID3D11Device* device);
 	static void DestroyAll();
 
-	static BasicEffect*       BasicFX;
-	static ColorEffect*       ColorFX;
-	static SpriteEffect*      SpriteFX;
-	static PostProcessEffect* PostProcessFX;
+	static BasicEffect*           BasicFX;
+	static ColorEffect*           ColorFX;
+	static SpriteEffect*          SpriteFX;
+	static PostProcessEffect*     PostProcessFX;
 };

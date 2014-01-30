@@ -34,6 +34,12 @@ struct Scene
 	BOOL	mbUseBlending;
 	BOOL	mbUseFog;
 	BOOL	mbWireframe;
+	//---------
+	BOOL	mbUseFaceNormals;
+	BOOL	mbOnlyAlbedo;
+	BOOL	mbOnlyNormals;
+	BOOL	mbOnlyDepth;
+	BOOL	mbOnlySpecular;
 	//-----------------------------------------------
 	
 	Scene();

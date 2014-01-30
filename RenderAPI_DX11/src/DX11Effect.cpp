@@ -20,13 +20,17 @@ BasicEffect::BasicEffect(ID3D11Device* device, const std::string& filename)
 	: Effect(device, filename)
 {
 	BasicTech         = mFX->GetTechniqueByName("Basic");
-	DeferredTech      = mFX->GetTechniqueByName("Deferred");
 	ViewProj          = mFX->GetVariableByName("gViewProj")->AsMatrix();
 	Proj              = mFX->GetVariableByName("gProj")->AsMatrix();
 	World             = mFX->GetVariableByName("gWorld")->AsMatrix();
 	TexTransform      = mFX->GetVariableByName("gDiffuseMapTrf")->AsMatrix();
 	EyePosW           = mFX->GetVariableByName("gEyePosW")->AsVector();
 	FogColor          = mFX->GetVariableByName("gFogColor")->AsVector();
+	FaceNormals       = mFX->GetVariableByName("gUseFaceNormals")->AsScalar();
+	ViewAlbedo        = mFX->GetVariableByName("gVisualizeAlbedo")->AsScalar();
+	ViewNormals       = mFX->GetVariableByName("gVisualizeNormals")->AsScalar();
+	ViewDepth         = mFX->GetVariableByName("gVisualizeDepth")->AsScalar();
+	ViewSpecular      = mFX->GetVariableByName("gVisualizeSpecular")->AsScalar();
 	FogEnabled        = mFX->GetVariableByName("gUseFog")->AsScalar();
 	AlphaClipEnabled  = mFX->GetVariableByName("gUseAlphaClip")->AsScalar();
 	TextureEnabled    = mFX->GetVariableByName("gUseTexture")->AsScalar();
@@ -105,8 +109,8 @@ HRESULT BasicEffect::SetMaterial(Material* mat)
 PostProcessEffect::PostProcessEffect(ID3D11Device* device, const std::string& filename)
 	: Effect(device, filename)
 {
-	PostProcessTech = mFX->GetTechniqueByName("PostProcess");
-	TextureMap      = mFX->GetVariableByName("gTexture")->AsShaderResource();
+	PostProcessTech         = mFX->GetTechniqueByName("PostProcess");
+	TextureMap              = mFX->GetVariableByName("gTexture")->AsShaderResource();
 }
 
 PostProcessEffect::~PostProcessEffect(){}
@@ -137,10 +141,10 @@ ColorEffect::~ColorEffect(){}
 
 //////////////////////////////////////////////////////////////////////////
 
-BasicEffect*       DX11Effects::BasicFX       = nullptr;
-ColorEffect*       DX11Effects::ColorFX       = nullptr;
-SpriteEffect*      DX11Effects::SpriteFX      = nullptr;
-PostProcessEffect* DX11Effects::PostProcessFX = nullptr;
+BasicEffect*           DX11Effects::BasicFX         = nullptr;
+ColorEffect*           DX11Effects::ColorFX         = nullptr;
+SpriteEffect*          DX11Effects::SpriteFX        = nullptr;
+PostProcessEffect*     DX11Effects::PostProcessFX   = nullptr;
 
 void DX11Effects::InitAll(ID3D11Device* device)
 {

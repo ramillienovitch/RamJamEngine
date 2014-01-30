@@ -88,7 +88,7 @@ BOOL System::Initialize(int nCmdShow)
 	RJE_ASSERT(InitializeWindows(nCmdShow));
 
 	// We launch DirectX or OpenGL
-	mGraphicAPI->Initialize(RJE_GLOBALS::gScreenWidth, RJE_GLOBALS::gScreenHeight);
+	mGraphicAPI->Initialize(mScreenWidth, mScreenHeight);
 
 	// Load the Scene file
 	string scenePath = mDataPath + CIniFile::GetValue("scene", "scenes", mResourcesPath);
@@ -400,10 +400,11 @@ ATOM System::RegisterMyClass( HINSTANCE hInstance )
 	wcex.hIconSm		= LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
 	wcex.cbSize			= sizeof(WNDCLASSEX);
 
-	if (RJE_GLOBALS::gFullScreen)
-		wcex.lpszMenuName	= NULL;
-	else
-		wcex.lpszMenuName	= MAKEINTRESOURCE(IDC_RAMJAMENGINE);
+	wcex.lpszMenuName	= NULL;
+// 	if (RJE_GLOBALS::gFullScreen)
+// 		wcex.lpszMenuName	= NULL;
+// 	else
+// 		wcex.lpszMenuName	= MAKEINTRESOURCE(IDC_RAMJAMENGINE);
 
 	return RegisterClassEx(&wcex);
 }

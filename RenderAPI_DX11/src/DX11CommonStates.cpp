@@ -129,6 +129,12 @@ HRESULT DX11CommonStates::CreateSamplerState(ID3D11Device* device, D3D11_FILTER 
 //--------------------------------------------------------------------------------------
 // Blend states
 //--------------------------------------------------------------------------------------
+HRESULT DX11CommonStates::Default(ID3D11Device* pDevice, ID3D11BlendState** pResult)
+{
+	CD3D11_BLEND_DESC desc(D3D11_DEFAULT);
+	return pDevice->CreateBlendState(&desc, pResult);
+}
+
 HRESULT DX11CommonStates::Opaque(ID3D11Device* pDevice, ID3D11BlendState** pResult)
 { return CreateBlendState(pDevice, pResult); }
 
@@ -170,7 +176,11 @@ HRESULT DX11CommonStates::DepthRead(ID3D11Device* pDevice, ID3D11DepthStencilSta
 { return CreateDepthStencilState(pDevice, pResult, true, false); }
 
 HRESULT DX11CommonStates::DepthComplementaryZ(ID3D11Device* pDevice, ID3D11DepthStencilState** pResult)
-{ return CreateDepthStencilState(pDevice, pResult, true, true, false, D3D11_COMPARISON_GREATER_EQUAL); }
+{
+	CD3D11_DEPTH_STENCIL_DESC desc(D3D11_DEFAULT);
+	desc.DepthFunc = D3D11_COMPARISON_GREATER_EQUAL;
+	return pDevice->CreateDepthStencilState(&desc, pResult);
+}
 
 HRESULT DX11CommonStates::MarkStencil(ID3D11Device* pDevice, ID3D11DepthStencilState** pResult)
 { return CreateDepthStencilState(pDevice, pResult, true, false, true, D3D11_COMPARISON_LESS, D3D11_COMPARISON_ALWAYS, D3D11_STENCIL_OP_REPLACE); }
@@ -239,6 +249,7 @@ void DX11CommonStates::InitAll(ID3D11Device* device)
 	RJE_CHECK_FOR_SUCCESS(LinearWrap(     device, &sSamplerState_Linear));
 	sCurrentSamplerState = sSamplerState_Anisotropic;
 
+	RJE_CHECK_FOR_SUCCESS(Default(             device, &sBlendState_Default));
 	RJE_CHECK_FOR_SUCCESS(Opaque(              device, &sBlendState_Opaque));
 	RJE_CHECK_FOR_SUCCESS(Tranparent(          device, &sBlendState_Transparent));
 	RJE_CHECK_FOR_SUCCESS(AlphaToCoverage(     device, &sBlendState_AlphaToCoverage));
@@ -271,6 +282,7 @@ void DX11CommonStates::DestroyAll()
 	RJE_SAFE_RELEASE(sDepthStencilState_EqualStencil);
 	RJE_SAFE_RELEASE(sDepthStencilState_NoDoubleBlend);
 
+	RJE_SAFE_RELEASE(sBlendState_Default);
 	RJE_SAFE_RELEASE(sBlendState_Opaque);
 	RJE_SAFE_RELEASE(sBlendState_Transparent);
 	RJE_SAFE_RELEASE(sBlendState_AlphaToCoverage);
@@ -299,6 +311,7 @@ ID3D11SamplerState*	DX11CommonStates::sSamplerState_Anisotropic = nullptr;
 ID3D11SamplerState*	DX11CommonStates::sSamplerState_Linear      = nullptr;
 ID3D11SamplerState*	DX11CommonStates::sCurrentSamplerState      = nullptr;
 
+ID3D11BlendState*	DX11CommonStates::sBlendState_Default              = nullptr;
 ID3D11BlendState*	DX11CommonStates::sBlendState_Opaque               = nullptr;
 ID3D11BlendState*	DX11CommonStates::sBlendState_Transparent          = nullptr;
 ID3D11BlendState*	DX11CommonStates::sBlendState_AlphaToCoverage      = nullptr;

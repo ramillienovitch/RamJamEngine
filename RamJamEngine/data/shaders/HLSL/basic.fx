@@ -5,6 +5,9 @@
 #include "lightHelper.fx"
 #include "Rendering.hlsl"
 
+Texture2D		gDiffuseMap : Texture_Diffuse;
+SamplerState	gTextureSampler;
+
 //////////////////////////////////////////////////////////////////////////
 VertexOut VS(VertexIn vin)
 {
@@ -28,8 +31,20 @@ VertexOut VS(VertexIn vin)
 //////////////////////////////////////////////////////////////////////////
 float4 PS(VertexOut pin) : SV_Target
 {
+	SurfaceData surface = ComputeSurfaceDataFromGeometry(pin, gDiffuseMap, gTextureSampler);
+	if (gVisualizeAlbedo)
+		return surface.albedo;
+	
+	if (gVisualizeNormals)
+		return float4(surface.normal, 1.0);
+		//return float4(EncodeSphereMap(surface.normal), surface.specularAmount, surface.specularPower == 0 ? 1.0 : surface.specularPower);
+	
+	if (gVisualizeDepth)
+		return float4((pin.PosH.z / pin.PosH.w).xxx, 1.0);
+
 	// Interpolating normal can unnormalize it, so normalize it.
-	pin.NormalW = normalize(pin.NormalW);
+	//pin.NormalW = normalize(pin.NormalW);
+	pin.NormalW = surface.normal;
 
 	// The toEye vector is used in lighting.
 	float3 toEye = gEyePosW - pin.PosW;
@@ -39,10 +54,10 @@ float4 PS(VertexOut pin) : SV_Target
 
 	// Normalize.
 	toEye /= distToEye;
-
+	
 	// Default to multiplicative identity.
 	float4 texColor = float4(1, 1, 1, 1);
-	if(gUseTexture)
+	[flatten] if(gUseTexture)
 	{
 		// Sample texture.
 		uint2 textureDim;
@@ -65,15 +80,16 @@ float4 PS(VertexOut pin) : SV_Target
 	float4 litColor = texColor;
 	
 	// Start with a sum of zero. 
-	float4 diffuse = float4(0.0f, 0.0f, 0.0f, 0.0f);
-	float4 spec    = float4(0.0f, 0.0f, 0.0f, 0.0f);
+	float4 diffuse     = float4(0.0f, 0.0f, 0.0f, 0.0f);
+	float4 spec        = float4(0.0f, 0.0f, 0.0f, 0.0f);
+	float4 coloredSpec = float4(0.0f, 0.0f, 0.0f, 0.0f);
 
 	// Sum the light contribution from each light source.  
 	float4 A, D, S;
 	Material mat;
 	mat.Albedo         = gMatAlbedo;
-	mat.SpecularAmount = gMatSpecularAmount;
-	mat.SpecularPower  = gMatSpecularPower;
+	mat.SpecularAmount = 0.8;//gMatSpecularAmount;
+	mat.SpecularPower  = 16.0;//gMatSpecularPower;
 	uint totalLights, dummy;
 
 	// Directionnal Lighting
@@ -83,8 +99,9 @@ float4 PS(VertexOut pin) : SV_Target
 		DirectionalLight light = gDirLights[dirLightIdx];
 		ComputeDirectionalLight(mat, light, pin.NormalW, toEye, D, S);
 
-		diffuse += D;
-		spec    += S;
+		diffuse     += D;
+		spec        += S;
+		coloredSpec += S * float4(light.Color, 1.0);
 	}
 
 	// Point Lighting
@@ -94,8 +111,9 @@ float4 PS(VertexOut pin) : SV_Target
 		PointLight light = gPointLights[pointLightIdx];
 		ComputePointLight(mat, light, pin.PosW, pin.NormalW, toEye, D, S);
 
-		diffuse += D;
-		spec    += S;
+		diffuse     += D;
+		spec        += S;
+		coloredSpec += S * float4(light.Color, 1.0);
 	}
 
 	// Spot Lighting
@@ -105,12 +123,16 @@ float4 PS(VertexOut pin) : SV_Target
 		SpotLight light = gSpotLights[spotLightIdx];
 		ComputeSpotLight(mat, light, pin.PosW, pin.NormalW, toEye, D, S);
 
-		diffuse += D;
-		spec    += S;
+		diffuse     += D;
+		spec        += S;
+		coloredSpec += S * float4(light.Color, 1.0);
 	}
 
+	if (gVisualizeSpecular)
+		return spec;
+
 	// Modulate with late add.
-	litColor = texColor*(gAmbientLightColor + diffuse) + spec;
+	litColor = texColor*(gAmbientLightColor + diffuse) + coloredSpec;
 
 	//
 	// Fogging
@@ -137,24 +159,6 @@ float4 PS(VertexOut pin) : SV_Target
 	return litColor;
 }
 
-//////////////////////////////////////////////////////////////////////////
-void GBufferPS(VertexOut input, out GBuffer outputGBuffer)
-{
-	SurfaceData surface = ComputeSurfaceDataFromGeometry(input);
-	outputGBuffer.normal_specular = float4(EncodeSphereMap(surface.normal), surface.specularAmount, surface.specularPower);
-	outputGBuffer.albedo = surface.albedo;
-	outputGBuffer.positionZGrad = float2(ddx_coarse(surface.positionView.z), ddy_coarse(surface.positionView.z));
-
-	if (gMatUseAlpha)
-	{
-		// Alpha test
-		clip(outputGBuffer.albedo.a - 0.3f);
-
-		// Always use face normal for alpha tested stuff since it's double-sided
-		outputGBuffer.normal_specular.xy = EncodeSphereMap(normalize(ComputeFaceNormal(input.PosW)));
-	}
-}
-
 //--------------------------------------------------------------------------------------------------
 
 technique11 Basic
@@ -164,15 +168,5 @@ technique11 Basic
 		SetVertexShader( CompileShader( vs_5_0, VS() ) );
 		SetGeometryShader( NULL );
 		SetPixelShader( CompileShader( ps_5_0, PS() ) );
-	}
-}
-
-technique Deferred
-{
-	pass P0
-	{
-		SetVertexShader( CompileShader( vs_5_0, VS() ) );
-		SetGeometryShader( NULL );
-		SetPixelShader( CompileShader( ps_5_0, GBufferPS() ) );
 	}
 }

@@ -2,8 +2,9 @@
 // Post Process Shader used to render a textured screen quad
 //===========================================================
 
+#include "Rendering.hlsl"
 
-struct VertexIn
+struct QuadIn
 {
 	float3 PosL    : POSITION;
 	float3 NormalL : NORMAL;
@@ -11,26 +12,27 @@ struct VertexIn
 	float2 Tex     : TEXCOORD;
 };
 
-struct VertexOut
+struct QuadOut
 {
 	float4 PosH    : SV_POSITION;
 	float2 Tex     : TEXCOORD;
 };
 
-Texture2D gTexture;
+Texture2D	gTexture;
 
 SamplerState samAnisotropic
 {
 	Filter = ANISOTROPIC;
-	MaxAnisotropy = 4;
+	MaxAnisotropy = 16;
 
 	AddressU = WRAP;
 	AddressV = WRAP;
+	AddressW = WRAP;
 };
 
-VertexOut PostProcessVS(VertexIn vin)
+QuadOut PostProcessVS(QuadIn vin)
 {
-	VertexOut vout;
+	QuadOut vout;
 
 	vout.PosH = float4(vin.PosL, 1.0);
 	vout.Tex = vin.Tex;
@@ -38,7 +40,7 @@ VertexOut PostProcessVS(VertexIn vin)
 	return vout;
 }
 
-float4 PostProcessPS(VertexOut input) : SV_Target
+float4 PostProcessPS(QuadOut input) : SV_Target
 {
 	float4 color;
 	uint2 textureDim;

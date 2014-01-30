@@ -1,3 +1,6 @@
+#ifndef PER_FRAME_CONSTANTS_HLSL
+#define PER_FRAME_CONSTANTS_HLSL
+
 cbuffer cbPerFrame : register (b0)
 {
 	float4 gAmbientLightColor;
@@ -11,11 +14,15 @@ cbuffer cbPerFrame : register (b0)
 	float  gFogRange;
 	float4 gFogColor;
 	//-----------
+	bool gVisualizeAlbedo;
+	bool gVisualizeNormals;
+	bool gVisualizeDepth;
+	bool gVisualizeSpecular;
+	//-----------
 	bool   gUseFaceNormals;
-	bool   gUseLightingOnly;
 	bool   gUseFog;
 	bool   gUseTexture;
 	bool   gUseAlphaClip;
-	//-----------
-	uint4 mFramebufferDimensions;
 };
+
+#endif
