@@ -14,6 +14,7 @@ cbuffer cbPerFrame : register (b0)
 	float  gFogRange;
 	float4 gFogColor;
 	//-----------
+	bool gVisualizePosition;
 	bool gVisualizeAlbedo;
 	bool gVisualizeNormals;
 	bool gVisualizeDepth;

@@ -28,10 +28,6 @@ struct BasicEffect : public Effect
 	HRESULT SetProj(Matrix44& M)                             { return Proj->SetMatrix(reinterpret_cast<const float*>(&M)); }
 	HRESULT SetEyePosW(const Vector3& v)                     { return EyePosW->SetFloatVector(reinterpret_cast<const float*>(&v)); }
 	HRESULT UseFaceNormals(BOOL state)                       { return FaceNormals->SetBool(state != 0); }
-	HRESULT OnlyAlbedo(BOOL state)                           { return ViewAlbedo->SetBool(state != 0); }
-	HRESULT OnlyNormals(BOOL state)                          { return ViewNormals->SetBool(state != 0); }
-	HRESULT OnlyDepth(BOOL state)                            { return ViewDepth->SetBool(state != 0); }
-	HRESULT OnlySpecular(BOOL state)                         { return ViewSpecular->SetBool(state != 0); }
 	HRESULT SetFogState(BOOL state)                          { return FogEnabled->SetBool(state != 0); }
 	HRESULT SetAlphaClipState(BOOL state)                    { return AlphaClipEnabled->SetBool(state != 0); }
 	HRESULT SetTextureState(BOOL state)                      { return TextureEnabled->SetBool(state != 0); }
@@ -59,11 +55,6 @@ struct BasicEffect : public Effect
 	ID3DX11EffectVectorVariable*			FogColor;
 	//-------
 	ID3DX11EffectScalarVariable*			FaceNormals;
-	ID3DX11EffectScalarVariable*			ViewAlbedo;
-	ID3DX11EffectScalarVariable*			ViewNormals;
-	ID3DX11EffectScalarVariable*			ViewDepth;
-	ID3DX11EffectScalarVariable*			ViewSpecular;
-	//-------
 	ID3DX11EffectScalarVariable*			FogEnabled;
 	ID3DX11EffectScalarVariable*			AlphaClipEnabled;
 	ID3DX11EffectScalarVariable*			TextureEnabled;
@@ -86,10 +77,21 @@ struct PostProcessEffect : public Effect
 
 	HRESULT SetTextureMap(ID3D11ShaderResourceView* tex)                 { return TextureMap->SetResource(tex); }
 	HRESULT SetGuffer(std::vector<ID3D11ShaderResourceView*> gBufferSRV) { return GBuffer->SetResourceArray(&gBufferSRV.front(), 0, (u32)gBufferSRV.size()); }
+	HRESULT OnlyPosition(BOOL state)                                     { return ViewPosition->SetBool(state != 0); }
+	HRESULT OnlyAlbedo(BOOL state)                                       { return ViewAlbedo->SetBool(state != 0); }
+	HRESULT OnlyNormals(BOOL state)                                      { return ViewNormals->SetBool(state != 0); }
+	HRESULT OnlyDepth(BOOL state)                                        { return ViewDepth->SetBool(state != 0); }
+	HRESULT OnlySpecular(BOOL state)                                     { return ViewSpecular->SetBool(state != 0); }
 	
 	ID3DX11EffectTechnique*					PostProcessTech;
+	ID3DX11EffectTechnique*					ResolveDeferredTech;
 	ID3DX11EffectShaderResourceVariable*	TextureMap;
 	ID3DX11EffectShaderResourceVariable*	GBuffer;
+	ID3DX11EffectScalarVariable*			ViewPosition;
+	ID3DX11EffectScalarVariable*			ViewAlbedo;
+	ID3DX11EffectScalarVariable*			ViewNormals;
+	ID3DX11EffectScalarVariable*			ViewSpecular;
+	ID3DX11EffectScalarVariable*			ViewDepth;
 };
 
 //////////////////////////////////////////////////////////////////////////

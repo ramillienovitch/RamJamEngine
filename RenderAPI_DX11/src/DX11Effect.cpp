@@ -28,10 +28,6 @@ BasicEffect::BasicEffect(ID3D11Device* device, const std::string& filename)
 	EyePosW           = mFX->GetVariableByName("gEyePosW")->AsVector();
 	FogColor          = mFX->GetVariableByName("gFogColor")->AsVector();
 	FaceNormals       = mFX->GetVariableByName("gUseFaceNormals")->AsScalar();
-	ViewAlbedo        = mFX->GetVariableByName("gVisualizeAlbedo")->AsScalar();
-	ViewNormals       = mFX->GetVariableByName("gVisualizeNormals")->AsScalar();
-	ViewDepth         = mFX->GetVariableByName("gVisualizeDepth")->AsScalar();
-	ViewSpecular      = mFX->GetVariableByName("gVisualizeSpecular")->AsScalar();
 	FogEnabled        = mFX->GetVariableByName("gUseFog")->AsScalar();
 	AlphaClipEnabled  = mFX->GetVariableByName("gUseAlphaClip")->AsScalar();
 	TextureEnabled    = mFX->GetVariableByName("gUseTexture")->AsScalar();
@@ -110,9 +106,15 @@ HRESULT BasicEffect::SetMaterial(Material* mat)
 PostProcessEffect::PostProcessEffect(ID3D11Device* device, const std::string& filename)
 	: Effect(device, filename)
 {
-	PostProcessTech = mFX->GetTechniqueByName("PostProcess");
-	TextureMap      = mFX->GetVariableByName("gTexture")->AsShaderResource();
-	GBuffer         = mFX->GetVariableByName("gGbuffer")->AsShaderResource();
+	PostProcessTech     = mFX->GetTechniqueByName("PostProcess");
+	ResolveDeferredTech = mFX->GetTechniqueByName("ResolveDeferred");
+	TextureMap          = mFX->GetVariableByName("gTexture")->AsShaderResource();
+	GBuffer             = mFX->GetVariableByName("gGbuffer")->AsShaderResource();
+	ViewPosition        = mFX->GetVariableByName("gVisualizePosition")->AsScalar();
+	ViewAlbedo          = mFX->GetVariableByName("gVisualizeAlbedo")->AsScalar();
+	ViewNormals         = mFX->GetVariableByName("gVisualizeNormals")->AsScalar();
+	ViewDepth           = mFX->GetVariableByName("gVisualizeDepth")->AsScalar();
+	ViewSpecular        = mFX->GetVariableByName("gVisualizeSpecular")->AsScalar();
 }
 
 PostProcessEffect::~PostProcessEffect(){}

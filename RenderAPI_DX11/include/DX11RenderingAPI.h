@@ -104,8 +104,8 @@ struct DX11RenderingAPI : GraphicAPI
 	void ResizeWindow();
 	//---------------
 	void BuildScreenQuad();
-	void BuildDepthBuffer(DXGI_SAMPLE_DESC desc);
-	void BuildGBuffer(    DXGI_SAMPLE_DESC desc);
+	void BuildDepthBuffer();
+	void BuildGBuffer();
 	//---------------
 	void DrawGizmos();
 	void DrawConsole();

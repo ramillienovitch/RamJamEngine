@@ -36,6 +36,7 @@ struct Scene
 	BOOL	mbWireframe;
 	//---------
 	BOOL	mbUseFaceNormals;
+	BOOL	mbOnlyPosition;
 	BOOL	mbOnlyAlbedo;
 	BOOL	mbOnlyNormals;
 	BOOL	mbOnlyDepth;
