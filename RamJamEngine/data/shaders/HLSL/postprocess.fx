@@ -19,6 +19,7 @@ struct QuadOut
 };
 
 Texture2D	gTexture;
+Texture2D	gGbuffer[5];
 
 SamplerState samAnisotropic
 {

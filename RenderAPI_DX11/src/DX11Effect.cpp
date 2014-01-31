@@ -20,6 +20,7 @@ BasicEffect::BasicEffect(ID3D11Device* device, const std::string& filename)
 	: Effect(device, filename)
 {
 	BasicTech         = mFX->GetTechniqueByName("Basic");
+	DeferredTech      = mFX->GetTechniqueByName("Deferred");
 	ViewProj          = mFX->GetVariableByName("gViewProj")->AsMatrix();
 	Proj              = mFX->GetVariableByName("gProj")->AsMatrix();
 	World             = mFX->GetVariableByName("gWorld")->AsMatrix();
@@ -109,8 +110,9 @@ HRESULT BasicEffect::SetMaterial(Material* mat)
 PostProcessEffect::PostProcessEffect(ID3D11Device* device, const std::string& filename)
 	: Effect(device, filename)
 {
-	PostProcessTech         = mFX->GetTechniqueByName("PostProcess");
-	TextureMap              = mFX->GetVariableByName("gTexture")->AsShaderResource();
+	PostProcessTech = mFX->GetTechniqueByName("PostProcess");
+	TextureMap      = mFX->GetVariableByName("gTexture")->AsShaderResource();
+	GBuffer         = mFX->GetVariableByName("gGbuffer")->AsShaderResource();
 }
 
 PostProcessEffect::~PostProcessEffect(){}

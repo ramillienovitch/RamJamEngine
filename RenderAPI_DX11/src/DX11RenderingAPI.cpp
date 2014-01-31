@@ -7,11 +7,11 @@ DX11RenderingAPI::~DX11RenderingAPI() {}
 //////////////////////////////////////////////////////////////////////////
 DX11RenderingAPI::DX11RenderingAPI(Scene& scene) : mScene(scene)
 {
-	mDX11Device			= nullptr;
-	mDX11DepthBuffer	= nullptr;
-	mSwapChain			= nullptr;
-	mBackbufferRTV		= nullptr;
-	md3dDriverType		= D3D_DRIVER_TYPE_HARDWARE;
+	mDX11Device    = nullptr;
+	mDepthBuffer   = nullptr;
+	mSwapChain     = nullptr;
+	mBackbufferRTV = nullptr;
+	md3dDriverType = D3D_DRIVER_TYPE_HARDWARE;
 	ZeroMemory(&mScreenViewport, sizeof(D3D11_VIEWPORT));
 	//-----------
 	VSyncEnabled = false;
@@ -64,7 +64,6 @@ DX11RenderingAPI::DX11RenderingAPI(Scene& scene) : mScene(scene)
 void DX11RenderingAPI::Initialize(int windowWidth, int windowHeight)
 {
 	mDX11Device       = rje_new DX11Device;
-	mDX11DepthBuffer  = rje_new DX11DepthBuffer;
 	mDX11CommonStates = rje_new DX11CommonStates;
 
 	mWindowWidth  = windowWidth;
@@ -126,7 +125,7 @@ void DX11RenderingAPI::Initialize(int windowWidth, int windowHeight)
 // #endif
 
 	//--------------------
-	InitSwapChain();
+	InitSwapChain(1);
 	//--------------------
 
 	IDXGIDevice*  dxgiDevice  = nullptr;
@@ -412,8 +411,10 @@ void DX11RenderingAPI::DrawScene()
 	PROFILE_GPU_START(L"Render Scene");
 	PROFILE_GPU_START_DEEP(L"DEEP Scene");
 	
+	//mDX11Device->md3dImmediateContext->OMSetRenderTargets(1, &mBackbufferRTV, mDepthBuffer->GetDepthStencil());
+	mDX11Device->md3dImmediateContext->OMSetRenderTargets((u32)mGBufferRTV.size(), &mGBufferRTV.front(), mDepthBuffer->GetDepthStencil());
 	mDX11Device->md3dImmediateContext->ClearRenderTargetView(mBackbufferRTV, DirectX::Colors::LightSteelBlue);
-	mDX11Device->md3dImmediateContext->ClearDepthStencilView(mDX11DepthBuffer->mDepthStencilView, D3D11_CLEAR_DEPTH|D3D11_CLEAR_STENCIL, 1.0f, 0);
+	mDX11Device->md3dImmediateContext->ClearDepthStencilView(mDepthBuffer->GetDepthStencil(), D3D11_CLEAR_DEPTH|D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 	//-------------------------------------------------------------------------
 
@@ -452,7 +453,8 @@ void DX11RenderingAPI::DrawScene()
 	DX11Effects::BasicFX->SetPointLights(mPointLights->GetShaderResource());
 	DX11Effects::BasicFX->SetSpotLights(mSpotLights->GetShaderResource());
 
-	ID3DX11EffectTechnique* activeTech = DX11Effects::BasicFX->BasicTech;
+	//ID3DX11EffectTechnique* activeTech = DX11Effects::BasicFX->BasicTech;
+	ID3DX11EffectTechnique* activeTech = DX11Effects::BasicFX->DeferredTech;
 
 	D3DX11_TECHNIQUE_DESC techDesc;
 
@@ -524,6 +526,7 @@ void DX11RenderingAPI::RenderPostProcess()
 	UINT offset = 0;
 
 	mDX11Device->md3dImmediateContext->OMSetRenderTargets(1, &mBackbufferRTV, 0);
+	mDX11Device->md3dImmediateContext->ClearRenderTargetView(mBackbufferRTV, DirectX::Colors::LightSteelBlue);
 
 	ID3DX11EffectTechnique* PostProcessTech = DX11Effects::PostProcessFX->PostProcessTech;
 	D3DX11_TECHNIQUE_DESC techDesc;
@@ -534,7 +537,8 @@ void DX11RenderingAPI::RenderPostProcess()
 		mDX11Device->md3dImmediateContext->IASetVertexBuffers(0, 1, &mScreenQuadVB, &stride, &offset);
 		mDX11Device->md3dImmediateContext->IASetIndexBuffer(mScreenQuadIB, DXGI_FORMAT_R32_UINT, 0);
 
-		DX11Effects::PostProcessFX->SetTextureMap(mRjeLogo);
+		//DX11Effects::PostProcessFX->SetTextureMap(mRjeLogo);
+		DX11Effects::PostProcessFX->SetGuffer(mGBufferSRV);
 
 		PostProcessTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
 		mDX11Device->md3dImmediateContext->DrawIndexed(6, 0, 0);
@@ -699,7 +703,6 @@ void DX11RenderingAPI::Shutdown()
 	RJE_SAFE_DELETE(mProfilerFont);
 
 	RJE_SAFE_RELEASE(mBackbufferRTV);
-	mDX11DepthBuffer->Release();
 	RJE_SAFE_RELEASE(mSwapChain);
 
 	//------- Not used for now
@@ -712,8 +715,11 @@ void DX11RenderingAPI::Shutdown()
 
 	mDX11Device->Release();
 
+	for(Texture2D* tex2D : mGBuffer)
+		RJE_SAFE_DELETE(tex2D);
+
+	RJE_SAFE_DELETE(mDepthBuffer);
 	RJE_SAFE_DELETE(mDX11CommonStates);
-	RJE_SAFE_DELETE(mDX11DepthBuffer);
 	RJE_SAFE_DELETE(mDX11Device);
 }
 
@@ -756,6 +762,43 @@ void DX11RenderingAPI::BuildScreenQuad()
 }
 
 //////////////////////////////////////////////////////////////////////////
+void DX11RenderingAPI::BuildDepthBuffer(DXGI_SAMPLE_DESC desc)
+{
+	RJE_SAFE_DELETE(mDepthBuffer);
+	mDepthBuffer = rje_new Depth2D( mDX11Device->md3dDevice, mWindowWidth, mWindowHeight, D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE, desc, MSAA_Samples > 1 /*Include stencil if using MSAA*/);
+}
+
+//////////////////////////////////////////////////////////////////////////
+void DX11RenderingAPI::BuildGBuffer(DXGI_SAMPLE_DESC desc)
+{
+	u32 gBufferWidth  = mWindowWidth;
+	u32 gBufferHeight = mWindowHeight;
+
+	// Create/recreate any textures related to screen size
+	mGBuffer.resize(0);
+	mGBufferRTV.resize(0);
+	mGBufferSRV.resize(0);
+
+	// === G-Buffer ===
+	// Position / Albedo / Normal / Specular
+	mGBuffer.push_back(rje_new Texture2D( mDX11Device->md3dDevice, gBufferWidth, gBufferHeight, DXGI_FORMAT_R16G16B16A16_FLOAT, D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE, desc));
+	mGBuffer.push_back(rje_new Texture2D( mDX11Device->md3dDevice, gBufferWidth, gBufferHeight, DXGI_FORMAT_R8G8B8A8_UNORM,     D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE, desc));
+	mGBuffer.push_back(rje_new Texture2D( mDX11Device->md3dDevice, gBufferWidth, gBufferHeight, DXGI_FORMAT_R16G16B16A16_FLOAT, D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE, desc));
+	mGBuffer.push_back(rje_new Texture2D( mDX11Device->md3dDevice, gBufferWidth, gBufferHeight, DXGI_FORMAT_R16G16_FLOAT,       D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE, desc));
+
+	// Set up GBuffer resource list
+	mGBufferRTV.resize(mGBuffer.size(), 0);
+	mGBufferSRV.resize(mGBuffer.size() + 1, 0);
+	for (std::size_t i = 0; i < mGBuffer.size(); ++i)
+	{
+		mGBufferRTV[i] = mGBuffer[i]->GetRenderTarget();
+		mGBufferSRV[i] = mGBuffer[i]->GetShaderResource();
+	}
+	// Depth buffer is the last SRV that we use for reading
+	mGBufferSRV.back() = mDepthBuffer->GetShaderResource();
+}
+
+//////////////////////////////////////////////////////////////////////////
 void DX11RenderingAPI::ResizeWindow() {ResizeWindow(mWindowWidth, mWindowHeight);}
 //-------------------------------------------
 void DX11RenderingAPI::ResizeWindow(int newSizeWidth, int newSizeHeight)
@@ -770,8 +813,6 @@ void DX11RenderingAPI::ResizeWindow(int newSizeWidth, int newSizeHeight)
 	// Release the old views, as they hold references to the buffers we
 	// will be destroying.  Also release the old depth/stencil buffer.
 	RJE_SAFE_RELEASE(mBackbufferRTV);
-	RJE_SAFE_RELEASE(mDX11DepthBuffer->mDepthStencilView);
-	RJE_SAFE_RELEASE(mDX11DepthBuffer->mDepthStencilBuffer);
 
 	// Resize the swap chain and recreate the render target view.
 	RJE_CHECK_FOR_SUCCESS(mSwapChain->ResizeBuffers(1, newSizeWidth, newSizeHeight, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH))
@@ -779,30 +820,6 @@ void DX11RenderingAPI::ResizeWindow(int newSizeWidth, int newSizeHeight)
 	RJE_CHECK_FOR_SUCCESS(mSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&backBuffer)));
 	RJE_CHECK_FOR_SUCCESS(mDX11Device->md3dDevice->CreateRenderTargetView(backBuffer, 0, &mBackbufferRTV));
 	RJE_SAFE_RELEASE(backBuffer);
-
-	// Create the depth/stencil buffer and view.
-	D3D11_TEXTURE2D_DESC depthStencilDesc;
-
-	depthStencilDesc.Width     = newSizeWidth;
-	depthStencilDesc.Height    = newSizeHeight;
-	depthStencilDesc.MipLevels = 1;
-	depthStencilDesc.ArraySize = 1;
-	depthStencilDesc.Format    = DXGI_FORMAT_D24_UNORM_S8_UINT;
-
-	depthStencilDesc.SampleDesc.Count   = MSAA_Samples;
-	depthStencilDesc.SampleDesc.Quality = 0;
-
-	depthStencilDesc.Usage          = D3D11_USAGE_DEFAULT;
-	depthStencilDesc.BindFlags      = D3D11_BIND_DEPTH_STENCIL;
-	depthStencilDesc.CPUAccessFlags = 0;
-	depthStencilDesc.MiscFlags      = 0;
-
-	RJE_CHECK_FOR_SUCCESS(mDX11Device->md3dDevice->CreateTexture2D(&depthStencilDesc, 0, &(mDX11DepthBuffer->mDepthStencilBuffer)));
-	RJE_CHECK_FOR_SUCCESS(mDX11Device->md3dDevice->CreateDepthStencilView(mDX11DepthBuffer->mDepthStencilBuffer, 0, &(mDX11DepthBuffer->mDepthStencilView)));
-
-
-	// Bind the render target view and depth/stencil view to the pipeline.
-	mDX11Device->md3dImmediateContext->OMSetRenderTargets(1, &mBackbufferRTV, mDX11DepthBuffer->mDepthStencilView);
 
 	// Set the viewport transform.
 	mScreenViewport.TopLeftX = 0;
@@ -813,6 +830,12 @@ void DX11RenderingAPI::ResizeWindow(int newSizeWidth, int newSizeHeight)
 	mScreenViewport.MaxDepth = 1.0f;
 
 	mDX11Device->md3dImmediateContext->RSSetViewports(1, &mScreenViewport);
+
+	DXGI_SAMPLE_DESC sampleDesc;
+	sampleDesc.Count   = MSAA_Samples;
+	sampleDesc.Quality = 0;
+	BuildDepthBuffer(sampleDesc);
+	BuildGBuffer(sampleDesc);
 
 	// The window resized, so update the aspect ratio and recompute the projection matrix.
 	mCamera->mSettings.AspectRatio = (float)newSizeWidth / (float)newSizeWidth;

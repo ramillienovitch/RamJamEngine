@@ -52,7 +52,6 @@ using namespace DirectX;
 //////////////////////////////////////////////////////////////////////////
 #include "DX11Profiler.h"
 #include "DX11Device.h"
-#include "DX11DepthBuffer.h"
 #include "DX11CommonStates.h"
 #include "DX11Effect.h"
 #include "DX11FontSheet.h"

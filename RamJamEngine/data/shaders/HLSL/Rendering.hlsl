@@ -24,6 +24,15 @@ struct VertexOut
 };
 
 //-------------------
+struct Gbuffer
+{
+	float4 Position : SV_TARGET0;
+	float4 Albedo   : SV_TARGET1;
+	float4 Normal   : SV_TARGET2;
+	float2 Specular : SV_TARGET3;
+};
+
+//-------------------
 // Data that we can read or derive from the surface shader outputs
 struct SurfaceData
 {

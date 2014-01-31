@@ -31,6 +31,21 @@ VertexOut VS(VertexIn vin)
 //////////////////////////////////////////////////////////////////////////
 float4 PS(VertexOut pin) : SV_Target
 {
+	/*
+	#define SAMPLES 16
+	Texture2DMS< float3, SAMPLES > gTexture;
+	float4 main( uint2 pos )
+	{
+	float3 color = 0.0f;
+	for( uint sample = 0; sample < SAMPLES; ++sample )
+	{
+	color += gTexture.Load( pos, sample );
+	}
+	color /= float( SAMPLES);
+	return float4( color, 1.0f );
+	}
+	*/
+
 	SurfaceData surface = ComputeSurfaceDataFromGeometry(pin, gDiffuseMap, gTextureSampler);
 	if (gVisualizeAlbedo)
 		return surface.albedo;
@@ -159,6 +174,20 @@ float4 PS(VertexOut pin) : SV_Target
 	return litColor;
 }
 
+//////////////////////////////////////////////////////////////////////////
+Gbuffer GbufferPS(VertexOut pin)
+{
+	Gbuffer gbuffer;
+	SurfaceData surface = ComputeSurfaceDataFromGeometry(pin, gDiffuseMap, gTextureSampler);
+	
+	gbuffer.Position = float4(pin.PosW, 1.0);
+	gbuffer.Albedo   = surface.albedo;
+	gbuffer.Normal   = float4(surface.normal, 1.0);
+	gbuffer.Specular = float2(surface.specularAmount, surface.specularPower);
+	return gbuffer;
+}
+
+
 //--------------------------------------------------------------------------------------------------
 
 technique11 Basic
@@ -168,5 +197,15 @@ technique11 Basic
 		SetVertexShader( CompileShader( vs_5_0, VS() ) );
 		SetGeometryShader( NULL );
 		SetPixelShader( CompileShader( ps_5_0, PS() ) );
+	}
+}
+
+technique11 Deferred
+{
+	pass P0
+	{
+		SetVertexShader( CompileShader( vs_5_0, VS() ) );
+		SetGeometryShader( NULL );
+		SetPixelShader( CompileShader( ps_5_0, GbufferPS() ) );
 	}
 }

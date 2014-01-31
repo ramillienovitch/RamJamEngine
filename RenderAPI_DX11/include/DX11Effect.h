@@ -48,6 +48,7 @@ struct BasicEffect : public Effect
 	//-------------------------------------------
 
 	ID3DX11EffectTechnique*					BasicTech;
+	ID3DX11EffectTechnique*					DeferredTech;
 	//-------
 	ID3DX11EffectMatrixVariable*			World;
 	ID3DX11EffectMatrixVariable*			ViewProj;
@@ -83,10 +84,12 @@ struct PostProcessEffect : public Effect
 	PostProcessEffect(ID3D11Device* device, const std::string& filename);
 	~PostProcessEffect();
 
-	HRESULT SetTextureMap(ID3D11ShaderResourceView* tex)        { return TextureMap->SetResource(tex); }
+	HRESULT SetTextureMap(ID3D11ShaderResourceView* tex)                 { return TextureMap->SetResource(tex); }
+	HRESULT SetGuffer(std::vector<ID3D11ShaderResourceView*> gBufferSRV) { return GBuffer->SetResourceArray(&gBufferSRV.front(), 0, (u32)gBufferSRV.size()); }
 	
 	ID3DX11EffectTechnique*					PostProcessTech;
 	ID3DX11EffectShaderResourceVariable*	TextureMap;
+	ID3DX11EffectShaderResourceVariable*	GBuffer;
 };
 
 //////////////////////////////////////////////////////////////////////////

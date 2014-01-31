@@ -14,13 +14,19 @@ struct DX11RenderingAPI : GraphicAPI
 	virtual ~DX11RenderingAPI();
 
 	DX11Device*				mDX11Device;
-	DX11DepthBuffer*		mDX11DepthBuffer;
 	DX11CommonStates*		mDX11CommonStates;
 
 	IDXGISwapChain*			mSwapChain;
 	ID3D11RenderTargetView* mBackbufferRTV;
 	D3D11_VIEWPORT			mScreenViewport;
 	D3D_DRIVER_TYPE			md3dDriverType;
+
+	//---------------
+	Depth2D*								mDepthBuffer;
+	std::vector<Texture2D*>					mGBuffer;
+	std::vector<ID3D11RenderTargetView*>	mGBufferRTV;
+	std::vector<ID3D11ShaderResourceView*>	mGBufferSRV;
+	//---------------
 
 #if defined(RJE_DEBUG)  
 	IDXGIDebug*			md3dDebug;
@@ -38,7 +44,7 @@ struct DX11RenderingAPI : GraphicAPI
 	// shortcut for System::Instance()->mScene
 	Scene& mScene;
 
-	ID3D11ShaderResourceView* mRjeLogo;
+	ID3D11ShaderResourceView*  mRjeLogo;
 
 	enum LightMode
 	{
@@ -98,6 +104,8 @@ struct DX11RenderingAPI : GraphicAPI
 	void ResizeWindow();
 	//---------------
 	void BuildScreenQuad();
+	void BuildDepthBuffer(DXGI_SAMPLE_DESC desc);
+	void BuildGBuffer(    DXGI_SAMPLE_DESC desc);
 	//---------------
 	void DrawGizmos();
 	void DrawConsole();
