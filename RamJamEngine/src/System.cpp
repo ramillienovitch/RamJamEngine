@@ -49,16 +49,6 @@ System::System()
 	mProcessID = ::GetCurrentProcessId();
 	// ===================================
 
-	mLastMousePos.x  = 0;
-	mLastMousePos.y  = 0;
-	mCameraTheta	 = 1.5f*RJE::Math::Pi_f;
-	mCameraPhi		 = 0.25f*RJE::Math::Pi_f;
-	mCameraRadius	 = 10.0f;
-
-	mCameraAnimated = false;
-	mAnimationSpeed = 10.0f;
-
-
 #if (RJE_GRAPHIC_API == DIRECTX_11)
 	mGraphicAPI = rje_new DX11RenderingAPI(mScene);
 #else
@@ -304,6 +294,7 @@ LRESULT CALLBACK System::MessageHandler(HWND hwnd, UINT umsg, WPARAM wparam, LPA
 BOOL System::UpdateScene(float dt)
 {
 	PROFILE_CPU("Update Scene");
+	mGraphicAPI->mCamera->Update();
 	mGraphicAPI->UpdateScene(dt);
 	return true;
 }
@@ -465,97 +456,9 @@ void System::CalculateFrameStats()
 //////////////////////////////////////////////////////////////////////////
 void System::HandleInputs()
 {
-	int x = Input::Instance()->GetMousePosX();
-	int y = Input::Instance()->GetMousePosY();
-	
-	if (Input::Instance()->GetKeyboardDown(Spacebar))
-		mCameraAnimated = !mCameraAnimated;
-
-	if (Input::Instance()->GetKeyboardDown(Return))
-	{
-		mGraphicAPI->mCamera->SetCameraOrtho(!mGraphicAPI->mCamera->IsOrtho());
-		mGraphicAPI->mCamera->UpdateProjMatrix((float)mScreenWidth, (float)mScreenHeight);
-	}
-
-	if (mCameraAnimated)
-		mCameraTheta = RJE::Math::Deg2Rad_f*mAnimationSpeed*Timer::Instance()->Time();
-
-	// Wheel Scroll
-	if (Input::Instance()->GetMouseButtonDown(WheelUp))
-	{
-		if (Input::Instance()->GetKeyboard(LeftShift) || Input::Instance()->GetKeyboard(RightShift))
-			mCameraRadius -= 1.0f;
-		else
-			mCameraRadius -= 0.25f;
-	}
-	if (Input::Instance()->GetMouseButtonDown(WheelDown))
-	{
-		if (Input::Instance()->GetKeyboard(LeftShift) || Input::Instance()->GetKeyboard(RightShift))
-			mCameraRadius += 1.0f;
-		else
-			mCameraRadius += 0.25f;
-	}
-	mCameraRadius = RJE::Math::Clamp(mCameraRadius, 2.0f, 500.0f);
-
 	// Mouse Buttons
 	if (Input::Instance()->GetMouseButtonAnyDown())		SetCapture(mHWnd);
 	if (Input::Instance()->GetMouseButtonAnyUp())		ReleaseCapture();
-
-	if (Input::Instance()->IsMouseMoving())
-	{
-		if (Input::Instance()->GetKeyboard(LeftCtrl))
-		{
-			if( Input::Instance()->GetMouseButton(RButton) )
-			{
-				if (mGraphicAPI->mCamera->IsOrtho())
-				{
-					// Make each pixel correspond to 0.001 unit in the scene.
-					float dx = 0.001f*static_cast<float>(x - mLastMousePos.x);
-
-					mGraphicAPI->mCamera->mSettings.OrthoZoom += dx;
-					mGraphicAPI->mCamera->mSettings.OrthoZoom = RJE::Math::Clamp(mGraphicAPI->mCamera->mSettings.OrthoZoom, 0.0001f, 10000.0f);
-					mGraphicAPI->mCamera->UpdateProjMatrix((float)mScreenWidth, (float)mScreenHeight);
-				}
-				else
-				{
-					// Make each pixel correspond to 0.05 unit in the scene.
-					float dx = 0.05f*static_cast<float>(x - mLastMousePos.x);
-
-					mGraphicAPI->mCamera->mSettings.FOV += dx;
-					mGraphicAPI->mCamera->mSettings.FOV = RJE::Math::Clamp(mGraphicAPI->mCamera->mSettings.FOV, 1.0f, 179.0f);
-					mGraphicAPI->mCamera->UpdateProjMatrix((float)mScreenWidth, (float)mScreenHeight);
-				}
-			}
-		}
-		else
-		{
-			if( Input::Instance()->GetMouseButton(LButton) )
-			{
-				// Make each pixel correspond to a quarter of a degree.
-				float dx = RJE::Math::Deg2Rad_f*0.25f*static_cast<float>(x - mLastMousePos.x);
-				float dy = RJE::Math::Deg2Rad_f*0.25f*static_cast<float>(y - mLastMousePos.y);
-
-				// Update angles based on input to orbit camera around box.
-				if (!mCameraAnimated)
-					mCameraTheta -= dx;
-
-				mCameraPhi -= dy;
-				mCameraPhi = RJE::Math::Clamp(mCameraPhi, 0.1f, RJE::Math::Pi_f-0.1f);
-			}
-			else if( Input::Instance()->GetMouseButton(RButton) )
-			{
-				// Make each pixel correspond to 0.05 unit in the scene.
-				float dx = 0.05f*static_cast<float>(x - mLastMousePos.x);
-
-				// Update the camera radius based on input.
-				mCameraRadius += dx;
-				mCameraRadius = RJE::Math::Clamp(mCameraRadius, 0.5f, 100.0f);
-			}
-		}
-
-		mLastMousePos.x = x;
-		mLastMousePos.y = y;
-	}
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -567,23 +470,23 @@ void System::LoadConfigFile()
 	{
 		CIniFile::Create(filename);
 
-		CIniFile::SetValue("fullscreen",           "false", "rendering", filename);
-		CIniFile::SetValue("screenwidth",          "1280",  "rendering", filename);
-		CIniFile::SetValue("screenheight",         "720",   "rendering", filename);
+		CIniFile::SetValue("fullscreen",   "false", "rendering", filename);
+		CIniFile::SetValue("screenwidth",  "1280",  "rendering", filename);
+		CIniFile::SetValue("screenheight", "720",   "rendering", filename);
 		//---------------
-		CIniFile::SetValue("runinbackground",     "true", "misc", filename);
+		CIniFile::SetValue("runinbackground", "true", "misc", filename);
 		//---------------
 		CIniFile::SetValue("debugverbosity", "0",    "debug", filename);
 		CIniFile::SetValue("showcursor",     "true", "debug", filename);
 	}
-	RJE_GLOBALS::gFullScreen			= CIniFile::GetValueBool("fullscreen",          "rendering", filename);
-	RJE_GLOBALS::gScreenWidth			= CIniFile::GetValueInt("screenwidth",          "rendering", filename);
-	RJE_GLOBALS::gScreenHeight			= CIniFile::GetValueInt("screenheight",         "rendering", filename);
+	RJE_GLOBALS::gFullScreen			= CIniFile::GetValueBool("fullscreen",  "rendering", filename);
+	RJE_GLOBALS::gScreenWidth			= CIniFile::GetValueInt("screenwidth",  "rendering", filename);
+	RJE_GLOBALS::gScreenHeight			= CIniFile::GetValueInt("screenheight", "rendering", filename);
 	//---------------
-	RJE_GLOBALS::gRunInBackground		= CIniFile::GetValueBool("runinbackground",    "misc", filename);
+	RJE_GLOBALS::gRunInBackground		= CIniFile::GetValueBool("runinbackground", "misc", filename);
 	//---------------
-	RJE_GLOBALS::gDebugVerbosity		= CIniFile::GetValueInt("debugverbosity",  "debug", filename);
-	RJE_GLOBALS::gShowCursor			= CIniFile::GetValueBool("showcursor",     "debug", filename);
+	RJE_GLOBALS::gDebugVerbosity		= CIniFile::GetValueInt("debugverbosity", "debug", filename);
+	RJE_GLOBALS::gShowCursor			= CIniFile::GetValueBool("showcursor",    "debug", filename);
 }
 
 //////////////////////////////////////////////////////////////////////////

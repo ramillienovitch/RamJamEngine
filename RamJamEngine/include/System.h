@@ -42,15 +42,6 @@ public:
 	// Rendering Statistics
 	float mRenderingTime;
 
-
-	POINT		mLastMousePos;
-	float		mCameraTheta;
-	float		mCameraPhi;
-	float		mCameraRadius;
-
-	BOOL		mCameraAnimated;
-	float		mAnimationSpeed;
-
 	GraphicAPI* mGraphicAPI;
 	Scene		mScene;
 	

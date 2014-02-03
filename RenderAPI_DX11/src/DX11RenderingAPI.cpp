@@ -22,8 +22,6 @@ DX11RenderingAPI::DX11RenderingAPI(Scene& scene) : mScene(scene)
 	//-----------
 	mRjeLogo = nullptr;
 	//-----------
-	mEyePosW = Vector3::zero;
-	//-----------
 	mBlendFactorR = 0.5f;
 	mBlendFactorG = 0.5f;
 	mBlendFactorB = 0.5f;
@@ -223,12 +221,6 @@ void DX11RenderingAPI::Initialize(int windowWidth, int windowHeight)
 	TwAddVarRW(gameObjectBar, "Rotation",    TW_TYPE_QUAT4F,    &mScene.mGameObjectEditorRot,   "opened=true");
 	TwAddVarRW(gameObjectBar, "Scale",       TW_TYPE_DIR3F,     &mScene.mGameObjectEditorScale, "opened=true");
 	TwAddVarRW(gameObjectBar, "Gizmo Color", TW_TYPE_COLOR32,   &mScene.mGameObjectEditorColor, "opened=true colorOrder=argb");
-	//-----------
-	TwBar *camBar = TwNewBar("Camera");
-	TwDefine("Camera iconified=true ");
-	TwSetParam(camBar, NULL, "size", TW_PARAM_INT32, 2, barSize);
-	TwAddVarRW(camBar, "Position", TW_TYPE_DIR3F, &mCamera->mPosition, "opened=false");
-	TwAddVarRW(camBar, "LookAt", TW_TYPE_DIR3F, &mCamera->mLookAt, "opened=false");
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -297,19 +289,6 @@ void DX11RenderingAPI::UpdateScene( float dt )
 	mScene.mGameObjectEditorTransform->WorldMatNoScale	= tempTrf.WorldMatrixNoScale();
 	mScene.mGameObjects[0]->mDrawable.mGizmoColor		= mScene.mGameObjectEditorColor;
 	//-------------------------------------
-
-	// Convert Spherical to Cartesian coordinates.
-	float x = System::Instance()->mCameraRadius*sinf(System::Instance()->mCameraPhi)*cosf(System::Instance()->mCameraTheta);
-	float z = System::Instance()->mCameraRadius*sinf(System::Instance()->mCameraPhi)*sinf(System::Instance()->mCameraTheta);
-	float y = System::Instance()->mCameraRadius*cosf(System::Instance()->mCameraPhi);
-
-	mEyePosW = Vector3(x, y, z);
-
-	// Build the view matrix.
-	mCamera->mPosition = Vector3(x, y, z);
-	mCamera->mLookAt   = Vector3::zero;
-	mCamera->mUp       = Vector3(0.0f, 1.0f, 0.0f);
-	mCamera->UpdateViewMatrix();
 	
 	// Inputs modifiers : TODO: Get these out of DX11RenderingAPI !
 	if (!Console::Instance()->IsActive())
@@ -317,7 +296,6 @@ void DX11RenderingAPI::UpdateScene( float dt )
 		if (Input::Instance()->GetKeyboardDown(Keyboard1))	mLightMode = LightMode::Directional;
 		if (Input::Instance()->GetKeyboardDown(Keyboard2))	mLightMode = LightMode::Point;
 		if (Input::Instance()->GetKeyboardDown(Keyboard3))	mLightMode = LightMode::Spot;
-		if (Input::Instance()->GetKeyboardDown(S))			{DX11CommonStates::sCurrentRasterizerState = DX11CommonStates::sRasterizerState_Solid;}
 		if (Input::Instance()->GetKeyboardDown(A))			DX11CommonStates::sCurrentSamplerState    = DX11CommonStates::sSamplerState_Anisotropic;
 		if (Input::Instance()->GetKeyboardDown(L))			DX11CommonStates::sCurrentSamplerState    = DX11CommonStates::sSamplerState_Linear;
 		if (Input::Instance()->GetKeyboardDown(U))			DX11CommonStates::sCurrentBlendState      = DX11CommonStates::sBlendState_BlendFactor;
@@ -485,7 +463,7 @@ void DX11RenderingAPI::RenderForward()
 	// Set per frame constants.
 	DX11Effects::BasicFX->SetViewProj(view*proj);
 	DX11Effects::BasicFX->SetProj(proj);
-	DX11Effects::BasicFX->SetEyePosW(mEyePosW);
+	DX11Effects::BasicFX->SetEyePosW(mCamera->mTrf.Position);
 	DX11Effects::BasicFX->UseFaceNormals(mScene.mbUseFaceNormals);
 	DX11Effects::BasicFX->SetAmbientLight(mScene.mAmbientLightColor);
 	DX11Effects::BasicFX->SetSamplerState(DX11CommonStates::sCurrentSamplerState);
@@ -604,8 +582,9 @@ void DX11RenderingAPI::RenderPostProcess()
 
 	mDX11Device->md3dImmediateContext->OMSetRenderTargets(1, &mBackbufferRTV, 0);
 	mDX11Device->md3dImmediateContext->ClearRenderTargetView(mBackbufferRTV, DirectX::Colors::Black);
+	//mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_Solid);
 
-	DX11Effects::PostProcessFX->SetEyePosW(mEyePosW);
+	DX11Effects::PostProcessFX->SetEyePosW(mCamera->mTrf.Position);
 	DX11Effects::PostProcessFX->OnlyPosition( mScene.mbOnlyPosition);
 	DX11Effects::PostProcessFX->OnlyAlbedo(   mScene.mbOnlyAlbedo);
 	DX11Effects::PostProcessFX->OnlyNormals(  mScene.mbOnlyNormals);

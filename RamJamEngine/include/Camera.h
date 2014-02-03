@@ -1,6 +1,13 @@
 #pragma once
 
 #include "MathHelper.h"
+#include "Transform.h"
+
+enum CameraMode
+{
+	Camera_TrackBall,
+	Camera_FPS
+};
 
 struct CameraSettings
 {
@@ -13,9 +20,11 @@ struct CameraSettings
 
 struct Camera
 {
-	Vector3 mPosition;
 	Vector3 mUp;
 	Vector3 mLookAt;
+	float mPitch;
+	float mYaw;
+	Transform mTrf;
 
 	Matrix44  mView;
 	Matrix44  mPerspProj;
@@ -24,7 +33,20 @@ struct Camera
 
 	BOOL bIsOrtho;
 
-	CameraSettings mSettings;
+	CameraMode		mMode;
+	CameraSettings	mSettings;
+
+	// TrackBall Camera Settings
+	Vector2	mLastMousePos;
+	float	mCameraTheta;
+	float	mCameraPhi;
+	float	mCameraRadius;
+	BOOL	mCameraAnimated;
+	float	mAnimationSpeed;
+
+	// FPS Camera Setting
+	float mSpeed;
+	float mSpeedMultiplier;
 
 	Camera();
 	~Camera() {};
@@ -32,6 +54,8 @@ struct Camera
 	BOOL IsOrtho();
 
 	void SetCameraOrtho(BOOL);
+
+	void Update();
 
 	void UpdateViewMatrix();
 	void UpdateProjMatrix(float, float);

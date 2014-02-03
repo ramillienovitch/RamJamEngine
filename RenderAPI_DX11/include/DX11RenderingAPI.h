@@ -79,8 +79,6 @@ struct DX11RenderingAPI : GraphicAPI
 	float mBlendFactorA;
 
 	//---------------
-	Vector3 mEyePosW;
-	//---------------
 
 	ID3D11Buffer* mScreenQuadVB;
 	ID3D11Buffer* mScreenQuadIB;
