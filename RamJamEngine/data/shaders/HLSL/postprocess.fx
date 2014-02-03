@@ -2,6 +2,7 @@
 // Post Process Shader used to render a textured screen quad
 //===========================================================
 
+#include "lightHelper.fx"
 #include "Rendering.hlsl"
 
 struct QuadIn
@@ -59,48 +60,66 @@ float4 ResolveDeferredPS(QuadOut input) : SV_Target
 	if (gVisualizeAlbedo)		return gGbuffer[1].Sample( samAnisotropic, input.Tex );
 	if (gVisualizeNormals)		return gGbuffer[2].Sample( samAnisotropic, input.Tex );
 	if (gVisualizeSpecular)		return gGbuffer[3].Sample( samAnisotropic, input.Tex );
-	if (gVisualizeDepth)		return float4(gGbuffer[4].Sample( samAnisotropic, input.Tex ).x, 0.0, 0.0, 1.0);
-	return float4(1.0,1.0,1.0,1.0);
+	if (gVisualizeDepth)
+	{
+		float zBuffer = gGbuffer[4].Sample( samAnisotropic, input.Tex ).x;
+		return float4(zBuffer, zBuffer, zBuffer, 1.0);
+	}
 
 	//////////////////////////////////////////////////////////////////////////
-	/*
-	float4 litColor = texColor;
+	
+	VertexOut vout;
+	vout.PosW    = gGbuffer[0].Sample( samAnisotropic, input.Tex ).xyz;
+	vout.NormalW = gGbuffer[2].Sample( samAnisotropic, input.Tex ).xyz;
 
-	// Start with a sum of zero. 
-	float4 diffuse     = float4(0.0f, 0.0f, 0.0f, 0.0f);
-	float4 spec        = float4(0.0f, 0.0f, 0.0f, 0.0f);
-	float4 coloredSpec = float4(0.0f, 0.0f, 0.0f, 0.0f);
+	float4 litColor;
 
-	// Sum the light contribution from each light source.  
-	float4 A, D, S;
+	// Start with a sum of zero.
+	float4 albedo  = gUseTexture ? gGbuffer[1].Sample( samAnisotropic, input.Tex ) : float4(1.0,1.0,1.0,1.0);
+	float4 diffuse = gAmbientLightColor;
+	float4 spec    = float4(0.0f, 0.0f, 0.0f, 0.0f);
+
+	// Sum the light contribution from each light source.
+	float3 toEye = gEyePosW - vout.PosW;
+	float distToEye = length(toEye); 
+	toEye = normalize(toEye);
+	float4 D, S;
 	Material mat;
-	mat.Albedo         = gMatAlbedo;
-	mat.SpecularAmount = 0.8;//gMatSpecularAmount;
-	mat.SpecularPower  = 16.0;//gMatSpecularPower;
+	mat.Albedo         = float4(1.0,1.0,1.0,1.0);
+	float2 matSpecular = gGbuffer[3].Sample( samAnisotropic, input.Tex ).xy;
+	mat.SpecularAmount = matSpecular.x;
+	mat.SpecularPower  = matSpecular.y;
 	uint totalLights, dummy;
+
+	float3 lit;
 
 	// Directionnal Lighting
 	gDirLights.GetDimensions(totalLights, dummy);
 	for (uint dirLightIdx = 0; dirLightIdx < totalLights; ++dirLightIdx)
 	{
 		DirectionalLight light = gDirLights[dirLightIdx];
-		ComputeDirectionalLight(mat, light, pin.NormalW, toEye, D, S);
+		ComputeDirectionalLight(mat, light, vout.NormalW, toEye, D, S);
 
-		diffuse     += D;
-		spec        += S;
-		coloredSpec += S * float4(light.Color, 1.0);
+		diffuse += D;
+		spec    += S * float4(light.Color, 1.0);
 	}
-
+	
 	// Point Lighting
 	gPointLights.GetDimensions(totalLights, dummy);
+	SurfaceData surface;
+	surface.positionView   = vout.PosW;
+	surface.normal         = vout.NormalW;
+	surface.albedo         = albedo;
+	surface.specularAmount = mat.SpecularAmount;
+	surface.specularPower  = mat.SpecularPower;
 	for (uint pointLightIdx = 0; pointLightIdx < totalLights; ++pointLightIdx)
 	{
 		PointLight light = gPointLights[pointLightIdx];
-		ComputePointLight(mat, light, pin.PosW, pin.NormalW, toEye, D, S);
-
-		diffuse     += D;
-		spec        += S;
-		coloredSpec += S * float4(light.Color, 1.0);
+// 		ComputePointLight(mat, light, vout.PosW, vout.NormalW, toEye, D, S);
+// 
+// 		diffuse += D;
+// 		spec    += S * float4(light.Color, 1.0);
+		AccumulateBRDF(surface, light, lit);
 	}
 
 	// Spot Lighting
@@ -108,22 +127,13 @@ float4 ResolveDeferredPS(QuadOut input) : SV_Target
 	for (uint spotLightIdx = 0; spotLightIdx < totalLights; ++spotLightIdx)
 	{
 		SpotLight light = gSpotLights[spotLightIdx];
-		ComputeSpotLight(mat, light, pin.PosW, pin.NormalW, toEye, D, S);
+		ComputeSpotLight(mat, light, vout.PosW, vout.NormalW, toEye, D, S);
 
-		diffuse     += D;
-		spec        += S;
-		coloredSpec += S * float4(light.Color, 1.0);
+		diffuse += D;
+		spec    += S * float4(light.Color, 1.0);
 	}
 
-	if (gVisualizeSpecular)
-		return spec;
-
-	// Modulate with late add.
-	litColor = texColor*(gAmbientLightColor + diffuse) + coloredSpec;
-
-	//
-	// Fogging
-	//
+	litColor = float4(lit, 1.0) + albedo*diffuse + spec;
 
 	if( gUseFog )
 	{
@@ -133,16 +143,7 @@ float4 ResolveDeferredPS(QuadOut input) : SV_Target
 		litColor = lerp(litColor, gFogColor, fogLerp);
 	}
 
-	if (gMatUseAlpha)
-	{
-		// Common to take alpha from diffuse material.
-		litColor.a = gMatAlbedo.a * texColor.a;
-	}
-	else
-	{
-		litColor.a = 1.0;
-	}
-	*/
+	return litColor;
 }
 
 //--------------------------------------------------------------------------------------------------

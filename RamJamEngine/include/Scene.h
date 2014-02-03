@@ -26,6 +26,7 @@ struct Scene
 
 	//-----------------------------------------------
 	// Scene parameters
+	BOOL	mbDeferredRendering;
 	Vector4	mAmbientLightColor;
 	Vector4	mFogColor;
 	float	mFogStart;

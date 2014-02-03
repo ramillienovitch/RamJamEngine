@@ -110,11 +110,21 @@ PostProcessEffect::PostProcessEffect(ID3D11Device* device, const std::string& fi
 	ResolveDeferredTech = mFX->GetTechniqueByName("ResolveDeferred");
 	TextureMap          = mFX->GetVariableByName("gTexture")->AsShaderResource();
 	GBuffer             = mFX->GetVariableByName("gGbuffer")->AsShaderResource();
+	EyePosW             = mFX->GetVariableByName("gEyePosW")->AsVector();
 	ViewPosition        = mFX->GetVariableByName("gVisualizePosition")->AsScalar();
 	ViewAlbedo          = mFX->GetVariableByName("gVisualizeAlbedo")->AsScalar();
 	ViewNormals         = mFX->GetVariableByName("gVisualizeNormals")->AsScalar();
 	ViewDepth           = mFX->GetVariableByName("gVisualizeDepth")->AsScalar();
 	ViewSpecular        = mFX->GetVariableByName("gVisualizeSpecular")->AsScalar();
+	FogColor            = mFX->GetVariableByName("gFogColor")->AsVector();
+	FogEnabled          = mFX->GetVariableByName("gUseFog")->AsScalar();
+	TextureEnabled      = mFX->GetVariableByName("gUseTexture")->AsScalar();
+	FogStart            = mFX->GetVariableByName("gFogStart")->AsScalar();
+	FogRange            = mFX->GetVariableByName("gFogRange")->AsScalar();
+	DirLights           = mFX->GetVariableByName("gDirLights")->AsShaderResource();
+	AmbientLight        = mFX->GetVariableByName("gAmbientLightColor")->AsVector();
+	PointLights         = mFX->GetVariableByName("gPointLights")->AsShaderResource();
+	SpotLights          = mFX->GetVariableByName("gSpotLights")->AsShaderResource();
 }
 
 PostProcessEffect::~PostProcessEffect(){}

@@ -8,7 +8,9 @@ Scene::Scene()
 	mAmbientLightColor = Color(Color::Black).GetVector4RGBANorm();
 	mFogStart = 15.0f;
 	mFogRange = 175.0f;
-
+	//-----------
+	mbDeferredRendering = true;
+	//-----------
 	mbUseFog         = false;
 	mbUseTexture     = true;
 	mbUseBlending    = true;

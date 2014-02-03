@@ -100,11 +100,11 @@ float4 PS(VertexOut pin) : SV_Target
 	float4 coloredSpec = float4(0.0f, 0.0f, 0.0f, 0.0f);
 
 	// Sum the light contribution from each light source.  
-	float4 A, D, S;
+	float4 D, S;
 	Material mat;
 	mat.Albedo         = gMatAlbedo;
-	mat.SpecularAmount = 0.8;//gMatSpecularAmount;
-	mat.SpecularPower  = 16.0;//gMatSpecularPower;
+	mat.SpecularAmount = gMatSpecularAmount;
+	mat.SpecularPower  = gMatSpecularPower;
 	uint totalLights, dummy;
 
 	// Directionnal Lighting
@@ -184,6 +184,7 @@ Gbuffer GbufferPS(VertexOut pin)
 	gbuffer.Albedo   = surface.albedo;
 	gbuffer.Normal   = float4(surface.normal, 1.0);
 	gbuffer.Specular = float2(surface.specularAmount, surface.specularPower);
+	gbuffer.Depth    = 1.0 - pin.PosH.z/pin.PosH.w;
 	return gbuffer;
 }
 

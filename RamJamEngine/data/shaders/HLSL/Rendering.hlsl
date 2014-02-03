@@ -30,6 +30,7 @@ struct Gbuffer
 	float4 Albedo   : SV_TARGET1;
 	float4 Normal   : SV_TARGET2;
 	float2 Specular : SV_TARGET3;
+	float  Depth    : SV_TARGET4;
 };
 
 //-------------------

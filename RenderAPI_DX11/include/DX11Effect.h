@@ -77,21 +77,43 @@ struct PostProcessEffect : public Effect
 
 	HRESULT SetTextureMap(ID3D11ShaderResourceView* tex)                 { return TextureMap->SetResource(tex); }
 	HRESULT SetGuffer(std::vector<ID3D11ShaderResourceView*> gBufferSRV) { return GBuffer->SetResourceArray(&gBufferSRV.front(), 0, (u32)gBufferSRV.size()); }
+	HRESULT SetEyePosW(const Vector3& v)                                 { return EyePosW->SetFloatVector(reinterpret_cast<const float*>(&v)); }
 	HRESULT OnlyPosition(BOOL state)                                     { return ViewPosition->SetBool(state != 0); }
 	HRESULT OnlyAlbedo(BOOL state)                                       { return ViewAlbedo->SetBool(state != 0); }
 	HRESULT OnlyNormals(BOOL state)                                      { return ViewNormals->SetBool(state != 0); }
 	HRESULT OnlyDepth(BOOL state)                                        { return ViewDepth->SetBool(state != 0); }
 	HRESULT OnlySpecular(BOOL state)                                     { return ViewSpecular->SetBool(state != 0); }
+	HRESULT SetFogState(BOOL state)                                      { return FogEnabled->SetBool(state != 0); }
+	HRESULT SetTextureState(BOOL state)                                  { return TextureEnabled->SetBool(state != 0); }
+	HRESULT SetFogColor(const Vector4& v)                                { return FogColor->SetFloatVector(reinterpret_cast<const float*>(&v)); }
+	HRESULT SetFogStart(float f)                                         { return FogStart->SetFloat(f); }
+	HRESULT SetFogRange(float f)                                         { return FogRange->SetFloat(f); }
+	HRESULT SetAmbientLight(const Vector4& v)                            { return AmbientLight->SetFloatVector(reinterpret_cast<const float*>(&v)); }
+	HRESULT SetDirLights(ID3D11ShaderResourceView* lights)               { return DirLights->SetResource(lights); }
+	HRESULT SetPointLights(ID3D11ShaderResourceView* lights)             { return PointLights->SetResource(lights); }
+	HRESULT SetSpotLights(ID3D11ShaderResourceView* lights)              { return SpotLights->SetResource(lights); }
 	
 	ID3DX11EffectTechnique*					PostProcessTech;
 	ID3DX11EffectTechnique*					ResolveDeferredTech;
 	ID3DX11EffectShaderResourceVariable*	TextureMap;
 	ID3DX11EffectShaderResourceVariable*	GBuffer;
+	ID3DX11EffectVectorVariable*			EyePosW;
+	//-------
 	ID3DX11EffectScalarVariable*			ViewPosition;
 	ID3DX11EffectScalarVariable*			ViewAlbedo;
 	ID3DX11EffectScalarVariable*			ViewNormals;
 	ID3DX11EffectScalarVariable*			ViewSpecular;
 	ID3DX11EffectScalarVariable*			ViewDepth;
+	ID3DX11EffectScalarVariable*			TextureEnabled;
+	ID3DX11EffectVectorVariable*			FogColor;
+	ID3DX11EffectScalarVariable*			FogEnabled;
+	ID3DX11EffectScalarVariable*			FogStart;
+	ID3DX11EffectScalarVariable*			FogRange;
+	//-------
+	ID3DX11EffectVectorVariable*			AmbientLight;
+	ID3DX11EffectShaderResourceVariable*	DirLights;
+	ID3DX11EffectShaderResourceVariable*	PointLights;
+	ID3DX11EffectShaderResourceVariable*	SpotLights;
 };
 
 //////////////////////////////////////////////////////////////////////////

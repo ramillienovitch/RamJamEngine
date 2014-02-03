@@ -190,6 +190,7 @@ void DX11RenderingAPI::Initialize(int windowWidth, int windowHeight)
 	int barSize[2] = {300, 400};
 	TwSetParam(bar, NULL, "size", TW_PARAM_INT32, 2, barSize);
 	TwAddVarRW(bar, "V-Sync Enabled", TW_TYPE_BOOLCPP, &VSyncEnabled, NULL);
+	TwAddVarRW(bar, "Render Deferred",  TW_TYPE_BOOLCPP, &mScene.mbDeferredRendering, NULL);
 	TwAddSeparator(bar, NULL, NULL); //===============================================
 	TwAddButton(bar, "Toggle Wireframe", TwSetWireframe, this, NULL);
 	TwAddSeparator(bar, NULL, NULL); //===============================================
@@ -411,81 +412,18 @@ void DX11RenderingAPI::DrawScene()
 
 	PROFILE_GPU_START(L"Render Scene");
 	PROFILE_GPU_START_DEEP(L"DEEP Scene");
-	
-	//mDX11Device->md3dImmediateContext->OMSetRenderTargets(1, &mBackbufferRTV, mDepthBuffer->GetDepthStencil());
-	mDX11Device->md3dImmediateContext->OMSetRenderTargets(static_cast<u32>(mGBufferRTV.size()), &mGBufferRTV.front(), mDepthBuffer->GetDepthStencil());
-	//mDX11Device->md3dImmediateContext->ClearRenderTargetView(mGBufferRTV[1], DirectX::Colors::LightSteelBlue);
-	for (ID3D11RenderTargetView* rtv : mGBufferRTV)
-		mDX11Device->md3dImmediateContext->ClearRenderTargetView(rtv, DirectX::Colors::LightSteelBlue);
-	//mDX11Device->md3dImmediateContext->ClearRenderTargetView(mBackbufferRTV, DirectX::Colors::LightSteelBlue);
-	mDX11Device->md3dImmediateContext->ClearDepthStencilView(mDepthBuffer->GetDepthStencil(), D3D11_CLEAR_DEPTH|D3D11_CLEAR_STENCIL, 1.0f, 0);
 
-	//-------------------------------------------------------------------------
-
-	DrawGizmos();
-
-	//-------------------------------------------------------------------------
-	mDX11Device->md3dImmediateContext->IASetInputLayout(DX11InputLayouts::PosNormalTanTex);
-	mDX11Device->md3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-	float blendFactor[4] = {mBlendFactorR, mBlendFactorG, mBlendFactorB, mBlendFactorA};
-	
-	mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sCurrentRasterizerState);
-
-	// Set constants
-	Matrix44 view     = mCamera->mView;
-	Matrix44 proj     = *(mCamera->mCurrentProjectionMatrix);
-
-	// Set per frame constants.
-	DX11Effects::BasicFX->SetViewProj(view*proj);
-	DX11Effects::BasicFX->SetProj(proj);
-	DX11Effects::BasicFX->SetEyePosW(mEyePosW);
-	DX11Effects::BasicFX->UseFaceNormals(mScene.mbUseFaceNormals);
-	DX11Effects::BasicFX->SetAmbientLight(mScene.mAmbientLightColor);
-	DX11Effects::BasicFX->SetSamplerState(DX11CommonStates::sCurrentSamplerState);
-	DX11Effects::BasicFX->SetFogColor(      mScene.mFogColor);
-	DX11Effects::BasicFX->SetFogStart(      mScene.mFogStart);
-	DX11Effects::BasicFX->SetFogRange(      mScene.mFogRange);
-	DX11Effects::BasicFX->SetFogState(      mScene.mbUseFog);
-	DX11Effects::BasicFX->SetAlphaClipState(mScene.mbUseBlending);
-	DX11Effects::BasicFX->SetTextureState(  mScene.mbUseTexture);
-	DX11Effects::BasicFX->SetDirLights(mDirLights->GetShaderResource());
-	DX11Effects::BasicFX->SetPointLights(mPointLights->GetShaderResource());
-	DX11Effects::BasicFX->SetSpotLights(mSpotLights->GetShaderResource());
-
-	//ID3DX11EffectTechnique* activeTech = DX11Effects::BasicFX->BasicTech;
-	ID3DX11EffectTechnique* activeTech = DX11Effects::BasicFX->DeferredTech;
-
-	D3DX11_TECHNIQUE_DESC techDesc;
-
-	activeTech->GetDesc( &techDesc );
-	for(u32 p = 0; p < techDesc.Passes; ++p)
+	if (mScene.mbDeferredRendering)
 	{
-		// Draw the opaque geometry
-		for(const unique_ptr<GameObject>& gameobject : mScene.mGameObjects)
-		{
-			if (gameobject->mDrawable.mMesh)
-				gameobject->mDrawable.Render(activeTech->GetPassByIndex(p));
-		}
-		// Draw the transparent geometry
-		for(const unique_ptr<GameObject>& gameobject_transparent : mScene.mGameObjects)
-		{
-			if (mScene.mbUseBlending)
-				mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_CullNone);
-			//mDX11Device->md3dImmediateContext->OMSetBlendState(DX11CommonStates::sCurrentBlendState, blendFactor, 0xffffffff);
-
-			if (gameobject_transparent->mDrawable.mMesh)
-				gameobject_transparent->mDrawable.Render(activeTech->GetPassByIndex(p), false);
-		}
-
-		// Restore default render states
-		mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sCurrentRasterizerState);
-		mDX11Device->md3dImmediateContext->OMSetBlendState(0, blendFactor, 0xffffffff);
+		RenderGBuffer();
+		RenderPostProcess();
+	}
+	else
+	{
+		RenderForward();
 	}
 
-	mDX11Device->md3dImmediateContext->OMSetRenderTargets(0, 0, 0);
-	RenderPostProcess();
-	
+	float blendFactor[4] = {mBlendFactorR, mBlendFactorG, mBlendFactorB, mBlendFactorA};
 	mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_Solid);
 	mDX11Device->md3dImmediateContext->OMSetBlendState(DX11CommonStates::sBlendState_AlphaToCoverage, blendFactor, 0xffffffff);
 
@@ -521,19 +459,167 @@ void DX11RenderingAPI::DrawScene()
 }
 
 //////////////////////////////////////////////////////////////////////////
+void DX11RenderingAPI::RenderForward()
+{
+	PROFILE_CPU("Render Forward");
+	PROFILE_GPU_START(L"Render Forward");
+
+	mDX11Device->md3dImmediateContext->OMSetRenderTargets(1, &mBackbufferRTV, mDepthBuffer->GetDepthStencil());
+	mDX11Device->md3dImmediateContext->ClearRenderTargetView(mBackbufferRTV, DirectX::Colors::LightSteelBlue);
+	mDX11Device->md3dImmediateContext->ClearDepthStencilView(mDepthBuffer->GetDepthStencil(), D3D11_CLEAR_DEPTH|D3D11_CLEAR_STENCIL, 1.0f, 0);
+
+	DrawGizmos();
+
+	//-------------------------------------------------------------------------
+	mDX11Device->md3dImmediateContext->IASetInputLayout(DX11InputLayouts::PosNormalTanTex);
+	mDX11Device->md3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	float blendFactor[4] = {mBlendFactorR, mBlendFactorG, mBlendFactorB, mBlendFactorA};
+
+	mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sCurrentRasterizerState);
+
+	// Set constants
+	Matrix44 view     = mCamera->mView;
+	Matrix44 proj     = *(mCamera->mCurrentProjectionMatrix);
+
+	// Set per frame constants.
+	DX11Effects::BasicFX->SetViewProj(view*proj);
+	DX11Effects::BasicFX->SetProj(proj);
+	DX11Effects::BasicFX->SetEyePosW(mEyePosW);
+	DX11Effects::BasicFX->UseFaceNormals(mScene.mbUseFaceNormals);
+	DX11Effects::BasicFX->SetAmbientLight(mScene.mAmbientLightColor);
+	DX11Effects::BasicFX->SetSamplerState(DX11CommonStates::sCurrentSamplerState);
+	DX11Effects::BasicFX->SetFogColor(      mScene.mFogColor);
+	DX11Effects::BasicFX->SetFogStart(      mScene.mFogStart);
+	DX11Effects::BasicFX->SetFogRange(      mScene.mFogRange);
+	DX11Effects::BasicFX->SetFogState(      mScene.mbUseFog);
+	DX11Effects::BasicFX->SetAlphaClipState(mScene.mbUseBlending);
+	DX11Effects::BasicFX->SetTextureState(  mScene.mbUseTexture);
+	DX11Effects::BasicFX->SetDirLights(mDirLights->GetShaderResource());
+	DX11Effects::BasicFX->SetPointLights(mPointLights->GetShaderResource());
+	DX11Effects::BasicFX->SetSpotLights(mSpotLights->GetShaderResource());
+
+	ID3DX11EffectTechnique* activeTech = DX11Effects::BasicFX->BasicTech;
+
+	D3DX11_TECHNIQUE_DESC techDesc;
+
+	activeTech->GetDesc( &techDesc );
+	for(u32 p = 0; p < techDesc.Passes; ++p)
+	{
+		// Draw the opaque geometry
+		for(const unique_ptr<GameObject>& gameobject : mScene.mGameObjects)
+		{
+			if (gameobject->mDrawable.mMesh)
+				gameobject->mDrawable.Render(activeTech->GetPassByIndex(p));
+		}
+		// Draw the transparent geometry
+		for(const unique_ptr<GameObject>& gameobject_transparent : mScene.mGameObjects)
+		{
+			if (mScene.mbUseBlending)
+				mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_CullNone);
+			//mDX11Device->md3dImmediateContext->OMSetBlendState(DX11CommonStates::sCurrentBlendState, blendFactor, 0xffffffff);
+
+			if (gameobject_transparent->mDrawable.mMesh)
+				gameobject_transparent->mDrawable.Render(activeTech->GetPassByIndex(p), false);
+		}
+
+		// Restore default render states
+		mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sCurrentRasterizerState);
+		mDX11Device->md3dImmediateContext->OMSetBlendState(0, blendFactor, 0xffffffff);
+	}
+
+	PROFILE_GPU_END(L"Render Forward");
+}
+
+//////////////////////////////////////////////////////////////////////////
+void DX11RenderingAPI::RenderGBuffer()
+{
+	PROFILE_CPU("Render G Buffer");
+	PROFILE_GPU_START(L"Render G Buffer");
+
+	mDX11Device->md3dImmediateContext->OMSetRenderTargets(static_cast<u32>(mGBufferRTV.size()), &mGBufferRTV.front(), mDepthBuffer->GetDepthStencil());
+	for (ID3D11RenderTargetView* rtv : mGBufferRTV)
+		mDX11Device->md3dImmediateContext->ClearRenderTargetView(rtv, DirectX::Colors::Black);
+	mDX11Device->md3dImmediateContext->ClearDepthStencilView(mDepthBuffer->GetDepthStencil(), D3D11_CLEAR_DEPTH|D3D11_CLEAR_STENCIL, 1.0f, 0);
+
+	DrawGizmos();
+
+	mDX11Device->md3dImmediateContext->IASetInputLayout(DX11InputLayouts::PosNormalTanTex);
+	mDX11Device->md3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	float blendFactor[4] = {mBlendFactorR, mBlendFactorG, mBlendFactorB, mBlendFactorA};
+
+	mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sCurrentRasterizerState);
+
+	// Set constants
+	Matrix44 view     = mCamera->mView;
+	Matrix44 proj     = *(mCamera->mCurrentProjectionMatrix);
+
+	// Set per frame constants.
+	DX11Effects::BasicFX->SetViewProj(view*proj);
+	DX11Effects::BasicFX->SetProj(proj);
+	DX11Effects::BasicFX->SetSamplerState(DX11CommonStates::sCurrentSamplerState);
+
+	//ID3DX11EffectTechnique* activeTech = DX11Effects::BasicFX->BasicTech;
+	ID3DX11EffectTechnique* activeTech = DX11Effects::BasicFX->DeferredTech;
+
+	D3DX11_TECHNIQUE_DESC techDesc;
+
+	activeTech->GetDesc( &techDesc );
+	for(u32 p = 0; p < techDesc.Passes; ++p)
+	{
+		// Draw the opaque geometry
+		for(const unique_ptr<GameObject>& gameobject : mScene.mGameObjects)
+		{
+			if (gameobject->mDrawable.mMesh)
+				gameobject->mDrawable.Render(activeTech->GetPassByIndex(p));
+		}
+		// Draw the transparent geometry
+		for(const unique_ptr<GameObject>& gameobject_transparent : mScene.mGameObjects)
+		{
+			if (mScene.mbUseBlending)
+				mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_CullNone);
+			//mDX11Device->md3dImmediateContext->OMSetBlendState(DX11CommonStates::sCurrentBlendState, blendFactor, 0xffffffff);
+
+			if (gameobject_transparent->mDrawable.mMesh)
+				gameobject_transparent->mDrawable.Render(activeTech->GetPassByIndex(p), false);
+		}
+
+		// Restore default render states
+		mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sCurrentRasterizerState);
+		mDX11Device->md3dImmediateContext->OMSetBlendState(0, blendFactor, 0xffffffff);
+	}
+
+	PROFILE_GPU_END(L"Render G Buffer");
+}
+
+//////////////////////////////////////////////////////////////////////////
 void DX11RenderingAPI::RenderPostProcess()
 {
+	PROFILE_CPU("Render Post Process");
+	PROFILE_GPU_START(L"Render Post Process");
+
 	UINT stride = sizeof(PosNormTanTex);
 	UINT offset = 0;
 
 	mDX11Device->md3dImmediateContext->OMSetRenderTargets(1, &mBackbufferRTV, 0);
-	mDX11Device->md3dImmediateContext->ClearRenderTargetView(mBackbufferRTV, DirectX::Colors::LightSteelBlue);
+	mDX11Device->md3dImmediateContext->ClearRenderTargetView(mBackbufferRTV, DirectX::Colors::Black);
 
-
-	DX11Effects::PostProcessFX->OnlyAlbedo(  mScene.mbOnlyAlbedo);
-	DX11Effects::PostProcessFX->OnlyNormals( mScene.mbOnlyNormals);
-	DX11Effects::PostProcessFX->OnlyDepth(   mScene.mbOnlyDepth);
-	DX11Effects::PostProcessFX->OnlySpecular(mScene.mbOnlySpecular);
+	DX11Effects::PostProcessFX->SetEyePosW(mEyePosW);
+	DX11Effects::PostProcessFX->OnlyPosition( mScene.mbOnlyPosition);
+	DX11Effects::PostProcessFX->OnlyAlbedo(   mScene.mbOnlyAlbedo);
+	DX11Effects::PostProcessFX->OnlyNormals(  mScene.mbOnlyNormals);
+	DX11Effects::PostProcessFX->OnlyDepth(    mScene.mbOnlyDepth);
+	DX11Effects::PostProcessFX->OnlySpecular( mScene.mbOnlySpecular);
+	DX11Effects::PostProcessFX->SetFogColor(      mScene.mFogColor);
+	DX11Effects::PostProcessFX->SetFogStart(      mScene.mFogStart);
+	DX11Effects::PostProcessFX->SetFogRange(      mScene.mFogRange);
+	DX11Effects::PostProcessFX->SetFogState(      mScene.mbUseFog);
+	DX11Effects::PostProcessFX->SetTextureState(  mScene.mbUseTexture);
+	DX11Effects::PostProcessFX->SetAmbientLight(mScene.mAmbientLightColor);
+	DX11Effects::PostProcessFX->SetDirLights(  mDirLights->GetShaderResource());
+	DX11Effects::PostProcessFX->SetPointLights(mPointLights->GetShaderResource());
+	DX11Effects::PostProcessFX->SetSpotLights( mSpotLights->GetShaderResource());
 
 	ID3DX11EffectTechnique* PostProcessTech = DX11Effects::PostProcessFX->ResolveDeferredTech;
 	D3DX11_TECHNIQUE_DESC techDesc;
@@ -552,6 +638,8 @@ void DX11RenderingAPI::RenderPostProcess()
 	}
 	ID3D11ShaderResourceView* nullViews[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 	mDX11Device->md3dImmediateContext->PSSetShaderResources(0, 5, nullViews);
+
+	PROFILE_GPU_END(L"Render Post Process");
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -789,22 +877,23 @@ void DX11RenderingAPI::BuildGBuffer()
 	mGBufferSRV.resize(0);
 
 	// === G-Buffer ===
-	// Position / Albedo / Normal / Specular
+	// Position / Albedo / Normal / Specular / Depth
 	mGBuffer.push_back(rje_new Texture2D( mDX11Device->md3dDevice, gBufferWidth, gBufferHeight, DXGI_FORMAT_R16G16B16A16_FLOAT));
 	mGBuffer.push_back(rje_new Texture2D( mDX11Device->md3dDevice, gBufferWidth, gBufferHeight, DXGI_FORMAT_R8G8B8A8_UNORM));
 	mGBuffer.push_back(rje_new Texture2D( mDX11Device->md3dDevice, gBufferWidth, gBufferHeight, DXGI_FORMAT_R16G16B16A16_FLOAT));
 	mGBuffer.push_back(rje_new Texture2D( mDX11Device->md3dDevice, gBufferWidth, gBufferHeight, DXGI_FORMAT_R16G16_FLOAT));
+	mGBuffer.push_back(rje_new Texture2D( mDX11Device->md3dDevice, gBufferWidth, gBufferHeight, DXGI_FORMAT_R32_FLOAT));
 
 	// Set up GBuffer resource list
 	mGBufferRTV.resize(mGBuffer.size(), 0);
-	mGBufferSRV.resize(mGBuffer.size() + 1, 0);
+	mGBufferSRV.resize(mGBuffer.size(), 0);
 	for (std::size_t i = 0; i < mGBuffer.size(); ++i)
 	{
 		mGBufferRTV[i] = mGBuffer[i]->GetRenderTarget();
 		mGBufferSRV[i] = mGBuffer[i]->GetShaderResource();
 	}
 	// Depth buffer is the last SRV that we use for reading
-	mGBufferSRV.back() = mDepthBuffer->GetShaderResource();
+	//mGBufferSRV.back() = mDepthBuffer->GetShaderResource();
 }
 
 //////////////////////////////////////////////////////////////////////////
