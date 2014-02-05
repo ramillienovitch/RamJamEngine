@@ -20,7 +20,8 @@ struct QuadOut
 };
 
 Texture2D	gTexture;
-Texture2D	gGbuffer[5] : register(t0);
+//Texture2D	gGbuffer[3] : register(t0);
+Texture2DMS<float4, MSAA_SAMPLES>	gGbuffer[3] : register(t0);
 
 SamplerState samAnisotropic
 {
@@ -56,84 +57,92 @@ float4 PostProcessPS(QuadOut input) : SV_Target
 //////////////////////////////////////////////////////////////////////////
 float4 ResolveDeferredPS(QuadOut input) : SV_Target
 {
-	if (gVisualizePosition)		return gGbuffer[0].Sample( samAnisotropic, input.Tex );
-	if (gVisualizeAlbedo)		return gGbuffer[1].Sample( samAnisotropic, input.Tex );
-	if (gVisualizeNormals)		return gGbuffer[2].Sample( samAnisotropic, input.Tex );
-	if (gVisualizeSpecular)		return gGbuffer[3].Sample( samAnisotropic, input.Tex );
-	if (gVisualizeDepth)
-	{
-		float zBuffer = gGbuffer[4].Sample( samAnisotropic, input.Tex ).x;
-		return float4(zBuffer, zBuffer, zBuffer, 1.0);
-	}
+	uint3 gbufferSize;
+	gGbuffer[0].GetDimensions(gbufferSize.x, gbufferSize.y, gbufferSize.z);
+	uint2 pixelCoords = uint2(input.Tex.x * gbufferSize.x, input.Tex.y * gbufferSize.y);
+
+	SurfaceData surfaceSamples[MSAA_SAMPLES];
+	ComputeSurfaceDataFromGBufferAllSamples(gGbuffer, pixelCoords, surfaceSamples);
+	bool perSampleShading = RequiresPerSampleShading(surfaceSamples);
+	
+#if SHADER_DEBUG
+	SurfaceData averagedData = AverageMSAASamples(surfaceSamples);
+	if (gVisualizePosition)		return float4(averagedData.positionView, 1.0);
+	if (gVisualizeAlbedo)		return averagedData.albedo;
+	if (gVisualizeNormals)		return float4(DecodeSphereMap(averagedData.normal.xy), 1.0);
+	if (gVisualizeSpecular)		return float4(averagedData.specularAmount, averagedData.specularPower, 0.0, 1.0);
+#endif
 
 	//////////////////////////////////////////////////////////////////////////
 	
-	VertexOut vout;
-	vout.PosW    = gGbuffer[0].Sample( samAnisotropic, input.Tex ).xyz;
-	vout.NormalW = gGbuffer[2].Sample( samAnisotropic, input.Tex ).xyz;
-
-	float4 litColor;
-
-	// Start with a sum of zero.
-	float4 albedo  = gUseTexture ? gGbuffer[1].Sample( samAnisotropic, input.Tex ) : float4(1.0,1.0,1.0,1.0);
-	float4 diffuse = gAmbientLightColor;
-	float4 spec    = float4(0.0f, 0.0f, 0.0f, 0.0f);
-
-	// Sum the light contribution from each light source.
-	float3 toEye = gEyePosW - vout.PosW;
+	float3 toEye = gEyePosW - surfaceSamples[0].positionView;
 	float distToEye = length(toEye); 
 	toEye = normalize(toEye);
-	float4 D, S;
-	Material mat;
-	mat.Albedo         = float4(1.0,1.0,1.0,1.0);
-	float2 matSpecular = gGbuffer[3].Sample( samAnisotropic, input.Tex ).xy;
-	mat.SpecularAmount = matSpecular.x;
-	mat.SpecularPower  = matSpecular.y;
-	uint totalLights, dummy;
 
-	float3 lit;
+	float3 lit = float3(0.0f, 0.0f, 0.0f);
 
-	// Directionnal Lighting
-	gDirLights.GetDimensions(totalLights, dummy);
-	for (uint dirLightIdx = 0; dirLightIdx < totalLights; ++dirLightIdx)
+	[branch] if (gVisualizePerSampleShading && perSampleShading)
 	{
-		DirectionalLight light = gDirLights[dirLightIdx];
-		ComputeDirectionalLight(mat, light, vout.NormalW, toEye, D, S);
-
-		diffuse += D;
-		spec    += S * float4(light.Color, 1.0);
+		return float4(1.0, 0.0, 0.0, 1.0);
 	}
-	
-	// Point Lighting
-	gPointLights.GetDimensions(totalLights, dummy);
-	SurfaceData surface;
-	surface.positionView   = vout.PosW;
-	surface.normal         = vout.NormalW;
-	surface.albedo         = albedo;
-	surface.specularAmount = mat.SpecularAmount;
-	surface.specularPower  = mat.SpecularPower;
-	for (uint pointLightIdx = 0; pointLightIdx < totalLights; ++pointLightIdx)
+	else
 	{
-		PointLight light = gPointLights[pointLightIdx];
-// 		ComputePointLight(mat, light, vout.PosW, vout.NormalW, toEye, D, S);
-// 
-// 		diffuse += D;
-// 		spec    += S * float4(light.Color, 1.0);
-		AccumulateBRDF(surface, light, lit);
+		uint totalLights, dummy;
+		gDirLights.GetDimensions(totalLights, dummy);
+		for (uint dirLightIdx = 0; dirLightIdx < totalLights; ++dirLightIdx)
+		{
+			[branch] if (perSampleShading)
+			{
+				DirectionalLight light = gDirLights[dirLightIdx];
+				for (uint sample = 0; sample < MSAA_SAMPLES; ++sample)
+				{
+					AccumulateDirBRDF(surfaceSamples[sample], light, toEye, lit);
+				}
+				lit *= rcp(MSAA_SAMPLES);
+			}
+			else
+			{
+				DirectionalLight light = gDirLights[dirLightIdx];
+				AccumulateDirBRDF(surfaceSamples[0], light, toEye, lit);
+			}
+		}
+		gPointLights.GetDimensions(totalLights, dummy);
+		for (uint pointLightIdx = 0; pointLightIdx < totalLights; ++pointLightIdx)
+		{
+			[branch] if (perSampleShading)
+			{
+				PointLight light = gPointLights[pointLightIdx];
+				for (uint sample = 0; sample < MSAA_SAMPLES; ++sample)
+				{
+					AccumulatePointBRDF(surfaceSamples[sample], light, toEye, lit, MSAA_SAMPLES);
+				}
+			}
+			else
+			{
+				PointLight light = gPointLights[pointLightIdx];
+				AccumulatePointBRDF(surfaceSamples[0], light, toEye, lit, 1);
+			}
+		}
+		gSpotLights.GetDimensions(totalLights, dummy);
+		for (uint spotLightIdx = 0; spotLightIdx < totalLights; ++spotLightIdx)
+		{
+			[branch] if (perSampleShading)
+			{
+				SpotLight light = gSpotLights[spotLightIdx];
+				for (uint sample = 0; sample < MSAA_SAMPLES; ++sample)
+				{
+					AccumulateSpotBRDF(surfaceSamples[sample], light, toEye, lit, MSAA_SAMPLES);
+				}
+			}
+			else
+			{
+				SpotLight light = gSpotLights[spotLightIdx];
+				AccumulateSpotBRDF(surfaceSamples[0], light, toEye, lit, 1);
+			}
+		}
 	}
 
-	// Spot Lighting
-	gSpotLights.GetDimensions(totalLights, dummy);
-	for (uint spotLightIdx = 0; spotLightIdx < totalLights; ++spotLightIdx)
-	{
-		SpotLight light = gSpotLights[spotLightIdx];
-		ComputeSpotLight(mat, light, vout.PosW, vout.NormalW, toEye, D, S);
-
-		diffuse += D;
-		spec    += S * float4(light.Color, 1.0);
-	}
-
-	litColor = float4(lit, 1.0) + albedo*diffuse + spec;
+	float4 litColor = float4(lit, 1.0) + gAmbientLightColor;
 
 	if( gUseFog )
 	{

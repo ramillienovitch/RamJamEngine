@@ -60,6 +60,9 @@ void Camera::SetCameraOrtho(BOOL orthographic = true)
 //////////////////////////////////////////////////////////////////////////
 void Camera::Update()
 {
+	if (Console::Instance()->IsActive())
+		return;
+
 	int mouseX = Input::Instance()->GetMousePosX();
 	int mouseY = Input::Instance()->GetMousePosY();
 

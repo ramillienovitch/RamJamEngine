@@ -19,8 +19,8 @@ Scene::Scene()
 	mbOnlyPosition   = false;
 	mbOnlyAlbedo     = false;
 	mbOnlyNormals    = false;
-	mbOnlyDepth      = false;
 	mbOnlySpecular   = false;
+	mbViewPerSampleShading = false;
 }
 
 //////////////////////////////////////////////////////////////////////////

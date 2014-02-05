@@ -78,4 +78,5 @@ void MemoryReport()
 	std::cout << "Total Unfreed: " << totalSize << " bytes" << std::endl;
 	SetConsoleTextAttribute(hstdout, White);
 	RJE_MESSAGE_BOX(NULL, L"Memory Leaks Found !\nCheck the console for details", L"Memory Manager", MB_ICONWARNING | MB_OK);
+	getchar();
 };

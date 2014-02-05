@@ -53,9 +53,6 @@ float4 PS(VertexOut pin) : SV_Target
 	if (gVisualizeNormals)
 		return float4(surface.normal, 1.0);
 		//return float4(EncodeSphereMap(surface.normal), surface.specularAmount, surface.specularPower == 0 ? 1.0 : surface.specularPower);
-	
-	if (gVisualizeDepth)
-		return float4((pin.PosH.z / pin.PosH.w).xxx, 1.0);
 
 	// Interpolating normal can unnormalize it, so normalize it.
 	//pin.NormalW = normalize(pin.NormalW);
@@ -180,11 +177,9 @@ Gbuffer GbufferPS(VertexOut pin)
 	Gbuffer gbuffer;
 	SurfaceData surface = ComputeSurfaceDataFromGeometry(pin, gDiffuseMap, gTextureSampler);
 	
-	gbuffer.Position = float4(pin.PosW, 1.0);
-	gbuffer.Albedo   = surface.albedo;
-	gbuffer.Normal   = float4(surface.normal, 1.0);
-	gbuffer.Specular = float2(surface.specularAmount, surface.specularPower);
-	gbuffer.Depth    = 1.0 - pin.PosH.z/pin.PosH.w;
+	gbuffer.Position        = pin.PosW;
+	gbuffer.Albedo          = surface.albedo;
+	gbuffer.Normal_Specular = float4(EncodeSphereMap(surface.normal), surface.specularAmount, surface.specularPower);
 	return gbuffer;
 }
 

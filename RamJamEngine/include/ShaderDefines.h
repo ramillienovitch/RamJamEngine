@@ -1,6 +1,8 @@
 #ifndef SHADER_DEFINES_H
 #define SHADER_DEFINES_H
 
+#define SHADER_DEBUG 1
+
 #define MSAA_SAMPLES 4
 
 #define MAX_LIGHTS_POWER 12

@@ -123,7 +123,7 @@ void DX11RenderingAPI::Initialize(int windowWidth, int windowHeight)
 // #endif
 
 	//--------------------
-	InitSwapChain(1);
+	InitSwapChain();
 	//--------------------
 
 	IDXGIDevice*  dxgiDevice  = nullptr;
@@ -197,13 +197,13 @@ void DX11RenderingAPI::Initialize(int windowWidth, int windowHeight)
 	TwAddVarRW(bar, "Use Texture",  TW_TYPE_BOOLCPP, &mScene.mbUseTexture, NULL);
 	TwAddVarRW(bar, "Use Blending", TW_TYPE_BOOLCPP, &mScene.mbUseBlending, NULL);
 	TwAddSeparator(bar, NULL, NULL); //===============================================
-	TwAddVarRW(bar, "Show Position Only",  TW_TYPE_BOOLCPP, &mScene.mbOnlyPosition,   NULL);
-	TwAddVarRW(bar, "Show Albedo Only",    TW_TYPE_BOOLCPP, &mScene.mbOnlyAlbedo,     NULL);
-	TwAddVarRW(bar, "Show Normal Only",    TW_TYPE_BOOLCPP, &mScene.mbOnlyNormals,    NULL);
-	TwAddVarRW(bar, "Show Specular Only ", TW_TYPE_BOOLCPP, &mScene.mbOnlySpecular,   NULL);
-	TwAddVarRW(bar, "Show Depth Only",     TW_TYPE_BOOLCPP, &mScene.mbOnlyDepth,      NULL);
-	TwAddVarRW(bar, "Use Face Normals",    TW_TYPE_BOOLCPP, &mScene.mbUseFaceNormals, NULL);
-	TwAddVarRW(bar, "Use Fog",             TW_TYPE_BOOLCPP, &mScene.mbUseFog,         NULL);
+	TwAddVarRW(bar, "Show Position Only",  TW_TYPE_BOOLCPP, &mScene.mbOnlyPosition,         NULL);
+	TwAddVarRW(bar, "Show Albedo Only",    TW_TYPE_BOOLCPP, &mScene.mbOnlyAlbedo,           NULL);
+	TwAddVarRW(bar, "Show Normal Only",    TW_TYPE_BOOLCPP, &mScene.mbOnlyNormals,          NULL);
+	TwAddVarRW(bar, "Show Specular Only ", TW_TYPE_BOOLCPP, &mScene.mbOnlySpecular,         NULL);
+	TwAddVarRW(bar, "Per Sample Shading",  TW_TYPE_BOOLCPP, &mScene.mbViewPerSampleShading, NULL);
+	TwAddVarRW(bar, "Use Face Normals",    TW_TYPE_BOOLCPP, &mScene.mbUseFaceNormals,       NULL);
+	TwAddVarRW(bar, "Use Fog",             TW_TYPE_BOOLCPP, &mScene.mbUseFog,               NULL);
 	TwAddVarRW(bar, "Fog Color", TW_TYPE_COLOR4F, &mScene.mFogColor, NULL);
 	TwAddVarRW(bar, "Fog Start", TW_TYPE_FLOAT, &mScene.mFogStart, "min=10 max=100");
 	TwAddVarRW(bar, "Fog Range", TW_TYPE_FLOAT, &mScene.mFogRange, "min=20 max=500");
@@ -443,7 +443,7 @@ void DX11RenderingAPI::RenderForward()
 	PROFILE_GPU_START(L"Render Forward");
 
 	mDX11Device->md3dImmediateContext->OMSetRenderTargets(1, &mBackbufferRTV, mDepthBuffer->GetDepthStencil());
-	mDX11Device->md3dImmediateContext->ClearRenderTargetView(mBackbufferRTV, DirectX::Colors::LightSteelBlue);
+	mDX11Device->md3dImmediateContext->ClearRenderTargetView(mBackbufferRTV, DirectX::Colors::Black);
 	mDX11Device->md3dImmediateContext->ClearDepthStencilView(mDepthBuffer->GetDepthStencil(), D3D11_CLEAR_DEPTH|D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 	DrawGizmos();
@@ -537,6 +537,7 @@ void DX11RenderingAPI::RenderGBuffer()
 	DX11Effects::BasicFX->SetViewProj(view*proj);
 	DX11Effects::BasicFX->SetProj(proj);
 	DX11Effects::BasicFX->SetSamplerState(DX11CommonStates::sCurrentSamplerState);
+	DX11Effects::BasicFX->UseFaceNormals(mScene.mbUseFaceNormals);
 
 	//ID3DX11EffectTechnique* activeTech = DX11Effects::BasicFX->BasicTech;
 	ID3DX11EffectTechnique* activeTech = DX11Effects::BasicFX->DeferredTech;
@@ -588,8 +589,8 @@ void DX11RenderingAPI::RenderPostProcess()
 	DX11Effects::PostProcessFX->OnlyPosition( mScene.mbOnlyPosition);
 	DX11Effects::PostProcessFX->OnlyAlbedo(   mScene.mbOnlyAlbedo);
 	DX11Effects::PostProcessFX->OnlyNormals(  mScene.mbOnlyNormals);
-	DX11Effects::PostProcessFX->OnlyDepth(    mScene.mbOnlyDepth);
 	DX11Effects::PostProcessFX->OnlySpecular( mScene.mbOnlySpecular);
+	DX11Effects::PostProcessFX->SetPerSampleShading(mScene.mbViewPerSampleShading);
 	DX11Effects::PostProcessFX->SetFogColor(      mScene.mFogColor);
 	DX11Effects::PostProcessFX->SetFogStart(      mScene.mFogStart);
 	DX11Effects::PostProcessFX->SetFogRange(      mScene.mFogRange);
@@ -838,34 +839,37 @@ void DX11RenderingAPI::BuildScreenQuad()
 }
 
 //////////////////////////////////////////////////////////////////////////
-void DX11RenderingAPI::BuildDepthBuffer()
+void DX11RenderingAPI::BuildDepthBuffer(DXGI_SAMPLE_DESC sampleDesc)
 {
 	RJE_SAFE_DELETE(mDepthBuffer);
-	mDepthBuffer = rje_new Depth2D( mDX11Device->md3dDevice, mWindowWidth, mWindowHeight);
+	mDepthBuffer = rje_new Depth2D( mDX11Device->md3dDevice, mWindowWidth, mWindowHeight, D3D11_BIND_DEPTH_STENCIL, sampleDesc, MSAA_Samples > 1);
 }
 
 //////////////////////////////////////////////////////////////////////////
-void DX11RenderingAPI::BuildGBuffer()
+void DX11RenderingAPI::BuildGBuffer(DXGI_SAMPLE_DESC sampleDesc)
 {
 	u32 gBufferWidth  = mWindowWidth;
 	u32 gBufferHeight = mWindowHeight;
 
 	// Create/recreate any textures related to screen size
+	for (std::size_t i = 0; i < mGBuffer.size(); ++i)
+	{
+		RJE_SAFE_DELETE(mGBuffer[i]);
+	}
 	mGBuffer.resize(0);
 	mGBufferRTV.resize(0);
 	mGBufferSRV.resize(0);
 
 	// === G-Buffer ===
-	// Position / Albedo / Normal / Specular / Depth
-	mGBuffer.push_back(rje_new Texture2D( mDX11Device->md3dDevice, gBufferWidth, gBufferHeight, DXGI_FORMAT_R16G16B16A16_FLOAT));
-	mGBuffer.push_back(rje_new Texture2D( mDX11Device->md3dDevice, gBufferWidth, gBufferHeight, DXGI_FORMAT_R8G8B8A8_UNORM));
-	mGBuffer.push_back(rje_new Texture2D( mDX11Device->md3dDevice, gBufferWidth, gBufferHeight, DXGI_FORMAT_R16G16B16A16_FLOAT));
-	mGBuffer.push_back(rje_new Texture2D( mDX11Device->md3dDevice, gBufferWidth, gBufferHeight, DXGI_FORMAT_R16G16_FLOAT));
-	mGBuffer.push_back(rje_new Texture2D( mDX11Device->md3dDevice, gBufferWidth, gBufferHeight, DXGI_FORMAT_R32_FLOAT));
+	// Position / Albedo / Normal_Specular
+	mGBuffer.push_back(rje_new Texture2D( mDX11Device->md3dDevice, gBufferWidth, gBufferHeight, DXGI_FORMAT_R32G32B32A32_FLOAT , D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE, sampleDesc));
+	mGBuffer.push_back(rje_new Texture2D( mDX11Device->md3dDevice, gBufferWidth, gBufferHeight, DXGI_FORMAT_R8G8B8A8_UNORM     , D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE, sampleDesc));
+	mGBuffer.push_back(rje_new Texture2D( mDX11Device->md3dDevice, gBufferWidth, gBufferHeight, DXGI_FORMAT_R32G32B32A32_FLOAT , D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE, sampleDesc));
 
 	// Set up GBuffer resource list
 	mGBufferRTV.resize(mGBuffer.size(), 0);
 	mGBufferSRV.resize(mGBuffer.size(), 0);
+	//mGBufferSRV.resize(mGBuffer.size()+1, 0);
 	for (std::size_t i = 0; i < mGBuffer.size(); ++i)
 	{
 		mGBufferRTV[i] = mGBuffer[i]->GetRenderTarget();
@@ -908,8 +912,11 @@ void DX11RenderingAPI::ResizeWindow(int newSizeWidth, int newSizeHeight)
 
 	mDX11Device->md3dImmediateContext->RSSetViewports(1, &mScreenViewport);
 
-	BuildDepthBuffer();
-	BuildGBuffer();
+	DXGI_SAMPLE_DESC sampleDesc;
+	sampleDesc.Count   = MSAA_Samples;
+	sampleDesc.Quality = 0;
+	BuildDepthBuffer(sampleDesc);
+	BuildGBuffer(sampleDesc);
 
 	// The window resized, so update the aspect ratio and recompute the projection matrix.
 	mCamera->mSettings.AspectRatio = (float)newSizeWidth / (float)newSizeWidth;

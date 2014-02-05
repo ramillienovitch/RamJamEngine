@@ -81,8 +81,8 @@ struct PostProcessEffect : public Effect
 	HRESULT OnlyPosition(BOOL state)                                     { return ViewPosition->SetBool(state != 0); }
 	HRESULT OnlyAlbedo(BOOL state)                                       { return ViewAlbedo->SetBool(state != 0); }
 	HRESULT OnlyNormals(BOOL state)                                      { return ViewNormals->SetBool(state != 0); }
-	HRESULT OnlyDepth(BOOL state)                                        { return ViewDepth->SetBool(state != 0); }
 	HRESULT OnlySpecular(BOOL state)                                     { return ViewSpecular->SetBool(state != 0); }
+	HRESULT SetPerSampleShading(BOOL state)                              { return ViewPerSamplerShading->SetBool(state != 0); }
 	HRESULT SetFogState(BOOL state)                                      { return FogEnabled->SetBool(state != 0); }
 	HRESULT SetTextureState(BOOL state)                                  { return TextureEnabled->SetBool(state != 0); }
 	HRESULT SetFogColor(const Vector4& v)                                { return FogColor->SetFloatVector(reinterpret_cast<const float*>(&v)); }
@@ -103,7 +103,7 @@ struct PostProcessEffect : public Effect
 	ID3DX11EffectScalarVariable*			ViewAlbedo;
 	ID3DX11EffectScalarVariable*			ViewNormals;
 	ID3DX11EffectScalarVariable*			ViewSpecular;
-	ID3DX11EffectScalarVariable*			ViewDepth;
+	ID3DX11EffectScalarVariable*			ViewPerSamplerShading;
 	ID3DX11EffectScalarVariable*			TextureEnabled;
 	ID3DX11EffectVectorVariable*			FogColor;
 	ID3DX11EffectScalarVariable*			FogEnabled;
