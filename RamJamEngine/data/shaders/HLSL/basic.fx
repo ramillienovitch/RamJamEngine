@@ -31,32 +31,8 @@ VertexOut VS(VertexIn vin)
 //////////////////////////////////////////////////////////////////////////
 float4 PS(VertexOut pin) : SV_Target
 {
-	/*
-	#define SAMPLES 16
-	Texture2DMS< float3, SAMPLES > gTexture;
-	float4 main( uint2 pos )
-	{
-	float3 color = 0.0f;
-	for( uint sample = 0; sample < SAMPLES; ++sample )
-	{
-	color += gTexture.Load( pos, sample );
-	}
-	color /= float( SAMPLES);
-	return float4( color, 1.0f );
-	}
-	*/
-
-	SurfaceData surface = ComputeSurfaceDataFromGeometry(pin, gDiffuseMap, gTextureSampler);
-	if (gVisualizeAlbedo)
-		return surface.albedo;
-	
-	if (gVisualizeNormals)
-		return float4(surface.normal, 1.0);
-		//return float4(EncodeSphereMap(surface.normal), surface.specularAmount, surface.specularPower == 0 ? 1.0 : surface.specularPower);
-
 	// Interpolating normal can unnormalize it, so normalize it.
-	//pin.NormalW = normalize(pin.NormalW);
-	pin.NormalW = surface.normal;
+	pin.NormalW = normalize(pin.NormalW);
 
 	// The toEye vector is used in lighting.
 	float3 toEye = gEyePosW - pin.PosW;
@@ -94,7 +70,6 @@ float4 PS(VertexOut pin) : SV_Target
 	// Start with a sum of zero. 
 	float4 diffuse     = float4(0.0f, 0.0f, 0.0f, 0.0f);
 	float4 spec        = float4(0.0f, 0.0f, 0.0f, 0.0f);
-	float4 coloredSpec = float4(0.0f, 0.0f, 0.0f, 0.0f);
 
 	// Sum the light contribution from each light source.  
 	float4 D, S;
@@ -111,9 +86,8 @@ float4 PS(VertexOut pin) : SV_Target
 		DirectionalLight light = gDirLights[dirLightIdx];
 		ComputeDirectionalLight(mat, light, pin.NormalW, toEye, D, S);
 
-		diffuse     += D;
-		spec        += S;
-		coloredSpec += S * float4(light.Color, 1.0);
+		diffuse += D;
+		spec    += S * float4(light.Color, 1.0);
 	}
 
 	// Point Lighting
@@ -123,9 +97,8 @@ float4 PS(VertexOut pin) : SV_Target
 		PointLight light = gPointLights[pointLightIdx];
 		ComputePointLight(mat, light, pin.PosW, pin.NormalW, toEye, D, S);
 
-		diffuse     += D;
-		spec        += S;
-		coloredSpec += S * float4(light.Color, 1.0);
+		diffuse += D;
+		spec    += S * float4(light.Color, 1.0);
 	}
 
 	// Spot Lighting
@@ -135,16 +108,12 @@ float4 PS(VertexOut pin) : SV_Target
 		SpotLight light = gSpotLights[spotLightIdx];
 		ComputeSpotLight(mat, light, pin.PosW, pin.NormalW, toEye, D, S);
 
-		diffuse     += D;
-		spec        += S;
-		coloredSpec += S * float4(light.Color, 1.0);
+		diffuse += D;
+		spec    += S * float4(light.Color, 1.0);
 	}
-
-	if (gVisualizeSpecular)
-		return spec;
-
+	
 	// Modulate with late add.
-	litColor = texColor*(gAmbientLightColor + diffuse) + coloredSpec;
+	litColor = texColor*(gAmbientLightColor + diffuse) + spec;
 
 	//
 	// Fogging
@@ -176,10 +145,11 @@ Gbuffer GbufferPS(VertexOut pin)
 {
 	Gbuffer gbuffer;
 	SurfaceData surface = ComputeSurfaceDataFromGeometry(pin, gDiffuseMap, gTextureSampler);
-	
-	gbuffer.Position        = pin.PosW;
-	gbuffer.Albedo          = surface.albedo;
-	gbuffer.Normal_Specular = float4(EncodeSphereMap(surface.normal), surface.specularAmount, surface.specularPower);
+
+	gbuffer.Position = surface.positionView;
+	gbuffer.Albedo   = surface.albedo;
+	gbuffer.Normal   = surface.normal;
+	gbuffer.Specular = float2(surface.specularAmount, surface.specularPower);
 	return gbuffer;
 }
 

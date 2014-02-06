@@ -583,7 +583,7 @@ void DX11RenderingAPI::RenderPostProcess()
 
 	mDX11Device->md3dImmediateContext->OMSetRenderTargets(1, &mBackbufferRTV, 0);
 	mDX11Device->md3dImmediateContext->ClearRenderTargetView(mBackbufferRTV, DirectX::Colors::Black);
-	//mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_Solid);
+	mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_Solid);
 
 	DX11Effects::PostProcessFX->SetEyePosW(mCamera->mTrf.Position);
 	DX11Effects::PostProcessFX->OnlyPosition( mScene.mbOnlyPosition);
@@ -861,10 +861,11 @@ void DX11RenderingAPI::BuildGBuffer(DXGI_SAMPLE_DESC sampleDesc)
 	mGBufferSRV.resize(0);
 
 	// === G-Buffer ===
-	// Position / Albedo / Normal_Specular
+	// Position / Albedo / Normal / Specular
 	mGBuffer.push_back(rje_new Texture2D( mDX11Device->md3dDevice, gBufferWidth, gBufferHeight, DXGI_FORMAT_R32G32B32A32_FLOAT , D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE, sampleDesc));
 	mGBuffer.push_back(rje_new Texture2D( mDX11Device->md3dDevice, gBufferWidth, gBufferHeight, DXGI_FORMAT_R8G8B8A8_UNORM     , D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE, sampleDesc));
 	mGBuffer.push_back(rje_new Texture2D( mDX11Device->md3dDevice, gBufferWidth, gBufferHeight, DXGI_FORMAT_R32G32B32A32_FLOAT , D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE, sampleDesc));
+	mGBuffer.push_back(rje_new Texture2D( mDX11Device->md3dDevice, gBufferWidth, gBufferHeight, DXGI_FORMAT_R32G32_FLOAT ,       D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE, sampleDesc));
 
 	// Set up GBuffer resource list
 	mGBufferRTV.resize(mGBuffer.size(), 0);

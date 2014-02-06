@@ -20,8 +20,7 @@ struct QuadOut
 };
 
 Texture2D	gTexture;
-//Texture2D	gGbuffer[3] : register(t0);
-Texture2DMS<float4, MSAA_SAMPLES>	gGbuffer[3] : register(t0);
+Texture2DMS<float4, MSAA_SAMPLES>	gGbuffer[4] : register(t0);
 
 SamplerState samAnisotropic
 {
@@ -69,7 +68,7 @@ float4 ResolveDeferredPS(QuadOut input) : SV_Target
 	SurfaceData averagedData = AverageMSAASamples(surfaceSamples);
 	if (gVisualizePosition)		return float4(averagedData.positionView, 1.0);
 	if (gVisualizeAlbedo)		return averagedData.albedo;
-	if (gVisualizeNormals)		return float4(DecodeSphereMap(averagedData.normal.xy), 1.0);
+	if (gVisualizeNormals)		return float4(averagedData.normal, 1.0);
 	if (gVisualizeSpecular)		return float4(averagedData.specularAmount, averagedData.specularPower, 0.0, 1.0);
 #endif
 
@@ -96,14 +95,13 @@ float4 ResolveDeferredPS(QuadOut input) : SV_Target
 				DirectionalLight light = gDirLights[dirLightIdx];
 				for (uint sample = 0; sample < MSAA_SAMPLES; ++sample)
 				{
-					AccumulateDirBRDF(surfaceSamples[sample], light, toEye, lit);
+					AccumulateDirBRDF(surfaceSamples[sample], light, toEye, lit, MSAA_SAMPLES);
 				}
-				lit *= rcp(MSAA_SAMPLES);
 			}
 			else
 			{
 				DirectionalLight light = gDirLights[dirLightIdx];
-				AccumulateDirBRDF(surfaceSamples[0], light, toEye, lit);
+				AccumulateDirBRDF(surfaceSamples[0], light, toEye, lit, 1);
 			}
 		}
 		gPointLights.GetDimensions(totalLights, dummy);
@@ -142,9 +140,16 @@ float4 ResolveDeferredPS(QuadOut input) : SV_Target
 		}
 	}
 
-	float4 litColor = float4(lit, 1.0) + gAmbientLightColor;
+	float4 averagedAlbedo = float4(0.0, 0.0, 0.0, 0.0);
+	for (uint sample = 0; sample < MSAA_SAMPLES; ++sample)
+	{
+		averagedAlbedo += surfaceSamples[sample].albedo;
+	}
+	averagedAlbedo *= rcp(MSAA_SAMPLES);
 
-	if( gUseFog )
+	float4 litColor = averagedAlbedo * gAmbientLightColor + float4(lit, 1.0);
+
+	[flatten] if( gUseFog )
 	{
 		float fogLerp = saturate( (distToEye - gFogStart) / gFogRange ); 
 

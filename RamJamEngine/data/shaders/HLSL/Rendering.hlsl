@@ -26,9 +26,10 @@ struct VertexOut
 //-------------------
 struct Gbuffer
 {
-	float3 Position        : SV_TARGET0;
-	float4 Albedo          : SV_TARGET1;
-	float4 Normal_Specular : SV_TARGET2;
+	float3 Position : SV_TARGET0;
+	float4 Albedo   : SV_TARGET1;
+	float3 Normal   : SV_TARGET2;
+	float2 Specular : SV_TARGET3;
 };
 
 //-------------------
@@ -103,17 +104,12 @@ SurfaceData ComputeSurfaceDataFromGeometry(VertexOut input, Texture2D gTexture, 
 	surface.positionViewDY = ddy_coarse(surface.positionView);
 
 	// Optionally use face normal instead of shading normal
-	float3 faceNormal = ComputeFaceNormal(input.PosW);
-	surface.normal = normalize(gUseFaceNormals? faceNormal : input.NormalW);
-
-	surface.albedo = gTexture.Sample(sam, input.Tex);
-	//surface.albedo.rgb = gUseLightingOnly ? float3(1.0f, 1.0f, 1.0f) : surface.albedo.rgb;
-	surface.albedo.rgb = surface.albedo.rgb;
+	surface.normal = normalize(gUseFaceNormals? ComputeFaceNormal(input.PosW) : input.NormalW);
 
 	// Map NULL diffuse textures to white
 	uint2 textureDim;
 	gTexture.GetDimensions(textureDim.x, textureDim.y);
-	surface.albedo = (textureDim.x == 0U ? float4(1.0f, 1.0f, 1.0f, 1.0f) : surface.albedo);
+	surface.albedo = (textureDim.x == 0U ? float4(1.0f, 1.0f, 1.0f, 1.0f) : gTexture.Sample(sam, input.Tex));
 
 	surface.specularAmount = gMatSpecularAmount;
 	surface.specularPower  = gMatSpecularPower;
@@ -121,13 +117,14 @@ SurfaceData ComputeSurfaceDataFromGeometry(VertexOut input, Texture2D gTexture, 
 	return surface;
 }
 
-SurfaceData ComputeSurfaceDataFromGBufferSample(Texture2DMS<float4, MSAA_SAMPLES> gGbuffer[3], uint2 positionViewport, uint sampleIndex)
+SurfaceData ComputeSurfaceDataFromGBufferSample(Texture2DMS<float4, MSAA_SAMPLES> gGbuffer[4], uint2 positionViewport, uint sampleIndex)
 {
 	// Load the raw data from the GBuffer
 	Gbuffer rawData;
-	rawData.Position        = gGbuffer[0].Load( positionViewport, sampleIndex).xyz;
-	rawData.Albedo          = gGbuffer[1].Load( positionViewport, sampleIndex);
-	rawData.Normal_Specular = gGbuffer[2].Load( positionViewport, sampleIndex);
+	rawData.Position = gGbuffer[0].Load( positionViewport, sampleIndex).xyz;
+	rawData.Albedo   = gGbuffer[1].Load( positionViewport, sampleIndex);
+	rawData.Normal   = gGbuffer[2].Load( positionViewport, sampleIndex).xyz;
+	rawData.Specular = gGbuffer[3].Load( positionViewport, sampleIndex).xy;
 
 	// Decode into reasonable outputs
 	SurfaceData data;
@@ -136,16 +133,16 @@ SurfaceData ComputeSurfaceDataFromGBufferSample(Texture2DMS<float4, MSAA_SAMPLES
 	data.positionViewDX = ddx_coarse(data.positionView);
 	data.positionViewDY = ddy_coarse(data.positionView);
 
-	data.normal = DecodeSphereMap(rawData.Normal_Specular.xy);
+	data.normal = rawData.Normal;
 	data.albedo = rawData.Albedo;
 
-	data.specularAmount = rawData.Normal_Specular.z;
-	data.specularPower  = rawData.Normal_Specular.w;
+	data.specularAmount = rawData.Specular.x;
+	data.specularPower  = rawData.Specular.y;
 
 	return data;
 }
 
-void ComputeSurfaceDataFromGBufferAllSamples(Texture2DMS<float4, MSAA_SAMPLES> gGbuffer[3], uint2 positionViewport, out SurfaceData surface[MSAA_SAMPLES])
+void ComputeSurfaceDataFromGBufferAllSamples(Texture2DMS<float4, MSAA_SAMPLES> gGbuffer[4], uint2 positionViewport, out SurfaceData surface[MSAA_SAMPLES])
 {
 	// Load data for each sample
 	// Most of this time only a small amount of this data is actually used so unrolling
