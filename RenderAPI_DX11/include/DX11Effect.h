@@ -146,6 +146,21 @@ struct ColorEffect : public Effect
 	ID3DX11EffectMatrixVariable*	ViewProj;
 };
 
+//////////////////////////////////////////////////////////////////////////
+
+struct SkyboxEffect : public Effect
+{
+	SkyboxEffect(ID3D11Device* device, const std::string& filename);
+	~SkyboxEffect();
+
+	void SetWorldViewProj(Matrix44& M)             { WorldViewProj->SetMatrix(reinterpret_cast<const float*>(&M)); }
+	void SetCubeMap(ID3D11ShaderResourceView* tex) { CubeMap->SetResource(tex); }
+
+	ID3DX11EffectTechnique*					SkyboxForwardTech;
+	ID3DX11EffectMatrixVariable*			WorldViewProj;
+	ID3DX11EffectShaderResourceVariable*	CubeMap;
+};
+
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -158,4 +173,5 @@ struct DX11Effects
 	static ColorEffect*           ColorFX;
 	static SpriteEffect*          SpriteFX;
 	static PostProcessEffect*     PostProcessFX;
+	static SkyboxEffect*          SkyboxFX;
 };

@@ -70,6 +70,7 @@ float4 ResolveDeferredPS(QuadOut input) : SV_Target
 	if (gVisualizeAlbedo)		return averagedData.albedo;
 	if (gVisualizeNormals)		return float4(averagedData.normal, 1.0);
 	if (gVisualizeSpecular)		return float4(averagedData.specularAmount, averagedData.specularPower, 0.0, 1.0);
+	//return float4(averagedData.zDepth, averagedData.zDepth, averagedData.zDepth, 1.0);
 #endif
 
 	//////////////////////////////////////////////////////////////////////////
@@ -139,19 +140,31 @@ float4 ResolveDeferredPS(QuadOut input) : SV_Target
 			}
 		}
 	}
-
-	float4 averagedAlbedo = float4(0.0, 0.0, 0.0, 0.0);
-	for (uint sample = 0; sample < MSAA_SAMPLES; ++sample)
+	
+	float4 litColor = float4(0.0, 0.0, 0.0, 0.0);
+	[branch] if (perSampleShading)
 	{
-		averagedAlbedo += surfaceSamples[sample].albedo;
+		for (uint sample = 0; sample < MSAA_SAMPLES; ++sample)
+		{
+			[branch] if (dot(surfaceSamples[sample].normal, float3(1.0,1.0,1.0)) == 0.0)
+				litColor += surfaceSamples[sample].albedo;
+			else
+				litColor += surfaceSamples[sample].albedo * gAmbientLightColor + float4(lit, 1.0);
+		}
+		litColor *= rcp(MSAA_SAMPLES);
 	}
-	averagedAlbedo *= rcp(MSAA_SAMPLES);
-
-	float4 litColor = averagedAlbedo * gAmbientLightColor + float4(lit, 1.0);
+	else
+	{
+		[branch] if (dot(surfaceSamples[0].normal, float3(1.0,1.0,1.0)) == 0.0)
+			litColor = surfaceSamples[0].albedo;
+		else
+			litColor = surfaceSamples[0].albedo * gAmbientLightColor + float4(lit, 1.0);
+	}
+	//float4 litColor = averagedAlbedo * gAmbientLightColor + float4(lit, 1.0);
 
 	[flatten] if( gUseFog )
 	{
-		float fogLerp = saturate( (distToEye - gFogStart) / gFogRange ); 
+		float fogLerp = saturate( (distToEye - gFogStart) / gFogRange );
 
 		// Blend the fog color and the lit color.
 		litColor = lerp(litColor, gFogColor, fogLerp);

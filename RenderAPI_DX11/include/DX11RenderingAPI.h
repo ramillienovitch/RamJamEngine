@@ -44,8 +44,6 @@ struct DX11RenderingAPI : GraphicAPI
 	// shortcut for System::Instance()->mScene
 	Scene& mScene;
 
-	ID3D11ShaderResourceView*  mRjeLogo;
-
 	enum LightMode
 	{
 		Directional,
@@ -80,8 +78,12 @@ struct DX11RenderingAPI : GraphicAPI
 
 	//---------------
 
-	ID3D11Buffer* mScreenQuadVB;
-	ID3D11Buffer* mScreenQuadIB;
+	ID3D11Buffer*				mScreenQuadVB;
+	ID3D11Buffer*				mScreenQuadIB;
+	ID3D11Buffer*				mSkyboxVB;
+	ID3D11Buffer*				mSkyboxIB;
+	ID3D11ShaderResourceView*	mSkyboxSRV;
+	ID3D11ShaderResourceView*	mRjeLogo;
 	
 	//////////////////////////////////////////////////////////////////////////
 
@@ -102,6 +104,7 @@ struct DX11RenderingAPI : GraphicAPI
 	void ResizeWindow();
 	//---------------
 	void BuildScreenQuad();
+	void BuildSkybox();
 	void BuildDepthBuffer(DXGI_SAMPLE_DESC sampleDesc);
 	void BuildGBuffer(    DXGI_SAMPLE_DESC sampleDesc);
 	//---------------
@@ -119,6 +122,7 @@ struct DX11RenderingAPI : GraphicAPI
 	void RenderForward();
 	void RenderGBuffer();
 	void RenderPostProcess();
+	void RenderSkybox();
 };
 
 //////////////////////////////////////////////////////////////////////////

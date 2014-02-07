@@ -26,10 +26,10 @@ struct VertexOut
 //-------------------
 struct Gbuffer
 {
-	float3 Position : SV_TARGET0;
-	float4 Albedo   : SV_TARGET1;
-	float3 Normal   : SV_TARGET2;
-	float2 Specular : SV_TARGET3;
+	float4 Albedo       : SV_TARGET0;
+	float3 Position     : SV_TARGET1;
+	float4 Normal_Depth : SV_TARGET2;
+	float2 Specular     : SV_TARGET3;
 };
 
 //-------------------
@@ -43,6 +43,7 @@ struct SurfaceData
 	float4 albedo;
 	float  specularAmount;       // Treated as a multiplier on albedo
 	float  specularPower;
+	float  zDepth;
 };
 
 //--------------------------------------------------------------------------------------
@@ -109,7 +110,7 @@ SurfaceData ComputeSurfaceDataFromGeometry(VertexOut input, Texture2D gTexture, 
 	// Map NULL diffuse textures to white
 	uint2 textureDim;
 	gTexture.GetDimensions(textureDim.x, textureDim.y);
-	surface.albedo = (textureDim.x == 0U ? float4(1.0f, 1.0f, 1.0f, 1.0f) : gTexture.Sample(sam, input.Tex));
+	surface.albedo = (textureDim.x == 0U ? float4(1.0f, 1.0f, 1.0f, 1.0f) : gTexture.Sample(sam, input.Tex) * gMatAlbedo);
 
 	surface.specularAmount = gMatSpecularAmount;
 	surface.specularPower  = gMatSpecularPower;
@@ -121,10 +122,10 @@ SurfaceData ComputeSurfaceDataFromGBufferSample(Texture2DMS<float4, MSAA_SAMPLES
 {
 	// Load the raw data from the GBuffer
 	Gbuffer rawData;
-	rawData.Position = gGbuffer[0].Load( positionViewport, sampleIndex).xyz;
-	rawData.Albedo   = gGbuffer[1].Load( positionViewport, sampleIndex);
-	rawData.Normal   = gGbuffer[2].Load( positionViewport, sampleIndex).xyz;
-	rawData.Specular = gGbuffer[3].Load( positionViewport, sampleIndex).xy;
+	rawData.Albedo       = gGbuffer[0].Load( positionViewport, sampleIndex);
+	rawData.Position     = gGbuffer[1].Load( positionViewport, sampleIndex).xyz;
+	rawData.Normal_Depth = gGbuffer[2].Load( positionViewport, sampleIndex);
+	rawData.Specular     = gGbuffer[3].Load( positionViewport, sampleIndex).xy;
 
 	// Decode into reasonable outputs
 	SurfaceData data;
@@ -133,11 +134,13 @@ SurfaceData ComputeSurfaceDataFromGBufferSample(Texture2DMS<float4, MSAA_SAMPLES
 	data.positionViewDX = ddx_coarse(data.positionView);
 	data.positionViewDY = ddy_coarse(data.positionView);
 
-	data.normal = rawData.Normal;
+	data.normal = rawData.Normal_Depth.xyz;
 	data.albedo = rawData.Albedo;
 
 	data.specularAmount = rawData.Specular.x;
 	data.specularPower  = rawData.Specular.y;
+
+	data.zDepth = rawData.Normal_Depth.w;
 
 	return data;
 }
@@ -170,6 +173,9 @@ bool RequiresPerSampleShading(SurfaceData surface[MSAA_SAMPLES])
 
 		// Also flag places where the normal is different
 		perSample = perSample || dot(surface[i].normal, surface[0].normal) < minNormalDot;
+
+		// We use the normal value as a mask to display the skybox do not use per sample shading on skybox
+		perSample = perSample && !(dot(surface[i].normal, float3(1.0,1.0,1.0)) == 0.0);
 	}
 
 	return perSample;
@@ -187,6 +193,7 @@ SurfaceData AverageMSAASamples(SurfaceData surface[MSAA_SAMPLES])
 	surfaceOut.albedo         = surface[0].albedo;
 	surfaceOut.specularAmount = surface[0].specularAmount;
 	surfaceOut.specularPower  = surface[0].specularPower;
+	surfaceOut.zDepth         = surface[0].zDepth;
 	[unroll] for (uint i = 1; i < MSAA_SAMPLES; ++i)
 	{
 		surfaceOut.positionView   += surface[i].positionView;
@@ -194,6 +201,7 @@ SurfaceData AverageMSAASamples(SurfaceData surface[MSAA_SAMPLES])
 		surfaceOut.albedo         += surface[i].albedo;
 		surfaceOut.specularAmount += surface[i].specularAmount;
 		surfaceOut.specularPower  += surface[i].specularPower;
+		surfaceOut.zDepth         += surface[i].zDepth;
 	}
 	float rcpMSAA = rcp(MSAA_SAMPLES);
 	surfaceOut.positionView   *= rcpMSAA;
@@ -201,6 +209,7 @@ SurfaceData AverageMSAASamples(SurfaceData surface[MSAA_SAMPLES])
 	surfaceOut.albedo         *= rcpMSAA;
 	surfaceOut.specularAmount *= rcpMSAA;
 	surfaceOut.specularPower  *= rcpMSAA;
+	surfaceOut.zDepth         *= rcpMSAA;
 
 	return surfaceOut;
 }

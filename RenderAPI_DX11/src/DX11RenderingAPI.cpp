@@ -20,7 +20,13 @@ DX11RenderingAPI::DX11RenderingAPI(Scene& scene) : mScene(scene)
 	mProfilerFont = nullptr;
 	mSpriteBatch  = nullptr;
 	//-----------
-	mRjeLogo = nullptr;
+	mRjeLogo  = nullptr;
+	mSkyboxVB = nullptr;
+	//-----------
+	mScreenQuadVB = nullptr;
+	mScreenQuadIB = nullptr;
+	mSkyboxVB     = nullptr;
+	mSkyboxIB     = nullptr;
 	//-----------
 	mBlendFactorR = 0.5f;
 	mBlendFactorG = 0.5f;
@@ -164,6 +170,7 @@ void DX11RenderingAPI::Initialize(int windowWidth, int windowHeight)
 	RJE_CHECK_FOR_SUCCESS(mSpriteBatch-> Initialize(mDX11Device->md3dDevice, mDX11Device->md3dImmediateContext));
 
 	DX11TextureManager::Instance()->LoadTexture("rje_logo", &mRjeLogo);
+	DX11TextureManager::Instance()->LoadTexture("skybox", &mSkyboxSRV);
 	DX11TextureManager::Instance()->Create2DTextureFixedColor(1, RJE_COLOR::Color::TransDarkGray, "_transparentGray");
 	DX11TextureManager::Instance()->Create2DTextureFixedColor(1, RJE_COLOR::Color::White,         "_default");
 	//----------
@@ -176,6 +183,7 @@ void DX11RenderingAPI::Initialize(int windowWidth, int windowHeight)
 	SetActiveSpotLights(0);
 	//-----------
 	BuildScreenQuad();
+	BuildSkybox();
 
 	//////////////////////////////////////////////////////////////////////////
 	// AntTweak Bars
@@ -394,11 +402,13 @@ void DX11RenderingAPI::DrawScene()
 	if (mScene.mbDeferredRendering)
 	{
 		RenderGBuffer();
+		RenderSkybox();
 		RenderPostProcess();
 	}
 	else
 	{
 		RenderForward();
+		RenderSkybox();
 	}
 
 	float blendFactor[4] = {mBlendFactorR, mBlendFactorG, mBlendFactorB, mBlendFactorA};
@@ -623,6 +633,39 @@ void DX11RenderingAPI::RenderPostProcess()
 }
 
 //////////////////////////////////////////////////////////////////////////
+void DX11RenderingAPI::RenderSkybox()
+{
+	Vector3 eyePos = mCamera->mTrf.Position;
+	Matrix44 T = Matrix44::Translation(eyePos);
+
+	Matrix44 view = mCamera->mView;
+	Matrix44 proj = *(mCamera->mCurrentProjectionMatrix);
+	Matrix44 WVP  = T*view*proj;
+
+	DX11Effects::SkyboxFX->SetWorldViewProj(WVP);
+	DX11Effects::SkyboxFX->SetCubeMap(mSkyboxSRV);
+
+	u32 stride = sizeof(PosNormTanTex);
+	u32 offset = 0;
+	mDX11Device->md3dImmediateContext->IASetVertexBuffers(0, 1, &mSkyboxVB, &stride, &offset);
+	mDX11Device->md3dImmediateContext->IASetIndexBuffer(mSkyboxIB, DXGI_FORMAT_R32_UINT, 0);
+	mDX11Device->md3dImmediateContext->IASetInputLayout(DX11InputLayouts::PosNormalTanTex);
+	mDX11Device->md3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	D3DX11_TECHNIQUE_DESC techDesc;
+	DX11Effects::SkyboxFX->SkyboxForwardTech->GetDesc( &techDesc );
+
+	for(u32 p = 0; p < techDesc.Passes; ++p)
+	{
+		ID3DX11EffectPass* pass = DX11Effects::SkyboxFX->SkyboxForwardTech->GetPassByIndex(p);
+
+		pass->Apply(0, mDX11Device->md3dImmediateContext);
+
+		mDX11Device->md3dImmediateContext->DrawIndexed(36, 0, 0);
+	}
+}
+
+//////////////////////////////////////////////////////////////////////////
 void DX11RenderingAPI::DrawGizmos()
 {
 	PROFILE_CPU("Draw Gizmos");
@@ -662,11 +705,20 @@ void DX11RenderingAPI::DrawConsole()
 	CD3D11_RECT rect( 0, -consoleElevation, System::Instance()->mScreenWidth, CONSOLE_HEIGHT-consoleElevation);
 	CD3D11_RECT rectLogo( System::Instance()->mScreenWidth - 220, 40-consoleElevation, System::Instance()->mScreenWidth - 30, 160-consoleElevation);
 	
+	if (mScene.mbDeferredRendering)
+	{
+		mSpriteBatch->DrawTexture2D(DX11TextureManager::Instance()->mTextures["_transparentGray"], mDX11Device->md3dImmediateContext, rect,     0xffffffff);
+		mSpriteBatch->DrawTexture2D(mRjeLogo,                                                      mDX11Device->md3dImmediateContext, rectLogo, 0xffffffff);
+	}
+	
 	mSpriteBatch->DrawInfoText(      *mConsoleFont, Console::Instance()->mConsoleBuffer, textPos);
 	mSpriteBatch->DrawConsoleCommand(*mConsoleFont, cmd, cmdPos);
 
-	mSpriteBatch->DrawTexture2D(mRjeLogo,                                                      mDX11Device->md3dImmediateContext, rectLogo, 0xffffffff);
-	mSpriteBatch->DrawTexture2D(DX11TextureManager::Instance()->mTextures["_transparentGray"], mDX11Device->md3dImmediateContext, rect,     0xffffffff);
+	if (!mScene.mbDeferredRendering)
+	{
+		mSpriteBatch->DrawTexture2D(mRjeLogo,                                                      mDX11Device->md3dImmediateContext, rectLogo, 0xffffffff);
+		mSpriteBatch->DrawTexture2D(DX11TextureManager::Instance()->mTextures["_transparentGray"], mDX11Device->md3dImmediateContext, rect,     0xffffffff);
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -774,6 +826,9 @@ void DX11RenderingAPI::Shutdown()
 
 	RJE_SAFE_RELEASE(mScreenQuadVB);
 	RJE_SAFE_RELEASE(mScreenQuadIB);
+	RJE_SAFE_RELEASE(mSkyboxVB);
+	RJE_SAFE_RELEASE(mSkyboxIB);
+	RJE_SAFE_RELEASE(mSkyboxSRV);
 
 	RJE_SAFE_DELETE(mSpriteBatch);
 	RJE_SAFE_DELETE(mConsoleFont);
@@ -839,6 +894,44 @@ void DX11RenderingAPI::BuildScreenQuad()
 }
 
 //////////////////////////////////////////////////////////////////////////
+void DX11RenderingAPI::BuildSkybox()
+{
+	MeshData::Data<PosNormTanTex> skyboxData;
+
+	GeometryGenerator geoGen;
+	geoGen.CreateBox(1, 1, 1, skyboxData);
+
+	std::vector<PosNormTanTex> vertices(skyboxData.Vertices.size());
+
+	for(u32 i = 0; i < skyboxData.Vertices.size(); ++i)
+	{
+		vertices[i].Position = skyboxData.Vertices[i].Position;
+		vertices[i].Normal   = skyboxData.Vertices[i].Normal;
+		vertices[i].TexC     = skyboxData.Vertices[i].TexC;
+	}
+
+	D3D11_BUFFER_DESC vbd;
+	vbd.Usage          = D3D11_USAGE_IMMUTABLE;
+	vbd.ByteWidth      = (u32) (sizeof(PosNormTanTex) * skyboxData.Vertices.size());
+	vbd.BindFlags      = D3D11_BIND_VERTEX_BUFFER;
+	vbd.CPUAccessFlags = 0;
+	vbd.MiscFlags      = 0;
+	D3D11_SUBRESOURCE_DATA vinitData;
+	vinitData.pSysMem = &vertices[0];
+	RJE_CHECK_FOR_SUCCESS(mDX11Device->md3dDevice->CreateBuffer(&vbd, &vinitData, &mSkyboxVB));
+	//-----------
+	D3D11_BUFFER_DESC ibd;
+	ibd.Usage          = D3D11_USAGE_IMMUTABLE;
+	ibd.ByteWidth      = (u32) (sizeof(u32) * skyboxData.Indices.size());
+	ibd.BindFlags      = D3D11_BIND_INDEX_BUFFER;
+	ibd.CPUAccessFlags = 0;
+	ibd.MiscFlags      = 0;
+	D3D11_SUBRESOURCE_DATA iinitData;
+	iinitData.pSysMem = &skyboxData.Indices[0];
+	RJE_CHECK_FOR_SUCCESS(mDX11Device->md3dDevice->CreateBuffer(&ibd, &iinitData, &mSkyboxIB));
+}
+
+//////////////////////////////////////////////////////////////////////////
 void DX11RenderingAPI::BuildDepthBuffer(DXGI_SAMPLE_DESC sampleDesc)
 {
 	RJE_SAFE_DELETE(mDepthBuffer);
@@ -862,8 +955,8 @@ void DX11RenderingAPI::BuildGBuffer(DXGI_SAMPLE_DESC sampleDesc)
 
 	// === G-Buffer ===
 	// Position / Albedo / Normal / Specular
-	mGBuffer.push_back(rje_new Texture2D( mDX11Device->md3dDevice, gBufferWidth, gBufferHeight, DXGI_FORMAT_R32G32B32A32_FLOAT , D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE, sampleDesc));
 	mGBuffer.push_back(rje_new Texture2D( mDX11Device->md3dDevice, gBufferWidth, gBufferHeight, DXGI_FORMAT_R8G8B8A8_UNORM     , D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE, sampleDesc));
+	mGBuffer.push_back(rje_new Texture2D( mDX11Device->md3dDevice, gBufferWidth, gBufferHeight, DXGI_FORMAT_R32G32B32A32_FLOAT , D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE, sampleDesc));
 	mGBuffer.push_back(rje_new Texture2D( mDX11Device->md3dDevice, gBufferWidth, gBufferHeight, DXGI_FORMAT_R32G32B32A32_FLOAT , D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE, sampleDesc));
 	mGBuffer.push_back(rje_new Texture2D( mDX11Device->md3dDevice, gBufferWidth, gBufferHeight, DXGI_FORMAT_R32G32_FLOAT ,       D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE, sampleDesc));
 

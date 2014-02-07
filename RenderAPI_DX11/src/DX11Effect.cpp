@@ -155,10 +155,24 @@ ColorEffect::~ColorEffect(){}
 
 //////////////////////////////////////////////////////////////////////////
 
-BasicEffect*           DX11Effects::BasicFX         = nullptr;
-ColorEffect*           DX11Effects::ColorFX         = nullptr;
-SpriteEffect*          DX11Effects::SpriteFX        = nullptr;
-PostProcessEffect*     DX11Effects::PostProcessFX   = nullptr;
+SkyboxEffect::SkyboxEffect(ID3D11Device* device, const std::string& filename)
+	: Effect(device, filename)
+{
+	SkyboxForwardTech  = mFX->GetTechniqueByName("SkyboxTech");
+	WorldViewProj      = mFX->GetVariableByName("gWorldViewProj")->AsMatrix();
+	CubeMap            = mFX->GetVariableByName("gCubeMap")->AsShaderResource();
+
+}
+
+SkyboxEffect::~SkyboxEffect(){}
+
+//////////////////////////////////////////////////////////////////////////
+
+BasicEffect*           DX11Effects::BasicFX       = nullptr;
+ColorEffect*           DX11Effects::ColorFX       = nullptr;
+SpriteEffect*          DX11Effects::SpriteFX      = nullptr;
+PostProcessEffect*     DX11Effects::PostProcessFX = nullptr;
+SkyboxEffect*          DX11Effects::SkyboxFX      = nullptr;
 
 void DX11Effects::InitAll(ID3D11Device* device)
 {
@@ -175,6 +189,9 @@ void DX11Effects::InitAll(ID3D11Device* device)
 	//-------------
 	shaderPath = System::Instance()->mDataPath + CIniFile::GetValue("color", "shaders", System::Instance()->mResourcesPath);
 	ColorFX = rje_new ColorEffect(device, shaderPath);
+	//-------------
+	shaderPath = System::Instance()->mDataPath + CIniFile::GetValue("skybox", "shaders", System::Instance()->mResourcesPath);
+	SkyboxFX = rje_new SkyboxEffect(device, shaderPath);
 }
 
 void DX11Effects::DestroyAll()
@@ -183,4 +200,5 @@ void DX11Effects::DestroyAll()
 	RJE_SAFE_DELETE(SpriteFX);
 	RJE_SAFE_DELETE(ColorFX);
 	RJE_SAFE_DELETE(PostProcessFX);
+	RJE_SAFE_DELETE(SkyboxFX);
 }

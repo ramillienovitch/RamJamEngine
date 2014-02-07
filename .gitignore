@@ -167,3 +167,4 @@ profiler*.txt
 
 # Engine Builds and associated files
 Builds/
+*.cfg
