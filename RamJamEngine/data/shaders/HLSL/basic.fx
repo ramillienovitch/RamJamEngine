@@ -30,7 +30,7 @@ VertexOut VS(VertexIn vin)
  
 //////////////////////////////////////////////////////////////////////////
 float4 PS(VertexOut pin) : SV_Target
-{
+{	
 	// Interpolating normal can unnormalize it, so normalize it.
 	pin.NormalW = normalize(pin.NormalW);
 
@@ -148,7 +148,7 @@ Gbuffer GbufferPS(VertexOut pin)
 
 	gbuffer.Position     = surface.position;
 	gbuffer.Albedo       = surface.albedo;
-	gbuffer.Normal_Depth = float4(surface.normal, 1-pin.PosH.z/pin.PosH.w);
+	gbuffer.Normal_Depth = float4(surface.normal, 1-(pin.PosH.z/pin.PosH.w));
 	gbuffer.Specular     = float2(surface.specularAmount, surface.specularPower);
 	return gbuffer;
 }

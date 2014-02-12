@@ -46,16 +46,16 @@ DX11RenderingAPI::DX11RenderingAPI(Scene& scene) : mScene(scene)
 	{
 		float radius = RJE::Math::Rand(0.0f,1.0f);
 		mPointLightsRadius[i]    = sqrt(radius) * 30.0f;
-		mPointLightsHeight[i]    = RJE::Math::Rand(0.0f, 10.0f);
+		mPointLightsHeight[i]    = 0.5f;//RJE::Math::Rand(0.0f, 10.0f);
 		mPointLightsAngle[i]     = RJE::Math::Rand(0.0f,RJE::Math::Pi_Two_f);
-		mPointLightsAnimSpeed[i] = RJE::Math::Rand(0.1f,2.0f);
+		mPointLightsAnimSpeed[i] = 0.0f;//RJE::Math::Rand(0.1f,2.0f);
 		//--------
 		mWorkingDirLights[i].Color     = Vector3(0.5f, 0.5f, 0.5f);
 		mWorkingDirLights[i].Direction = Vector3(0.57735f, -0.57735f, 0.57735f);
 		//--------
 		mWorkingPointLights[i].Color     = Color::GetRandomVector3RGBNorm();
-		mWorkingPointLights[i].Range     = RJE::Math::Rand(1.0f,5.0f);
-		mWorkingPointLights[i].Intensity = mWorkingPointLights[i].Range * 0.2f;
+		mWorkingPointLights[i].Range     = RJE::Math::Rand(1.0f,2.5f);
+		mWorkingPointLights[i].Intensity = mWorkingPointLights[i].Range * 0.4f;
 		//--------
 		mWorkingSpotLights[i].Color     = Vector3(0.5f, 0.5f, 0.5f);
 		mWorkingSpotLights[i].Spot      = RJE::Math::Deg2Rad_f * 45.0f;
@@ -616,7 +616,7 @@ void DX11RenderingAPI::ComputeLighting()
 
 	D3DX11_TECHNIQUE_DESC techDesc;
 	DX11Effects::TiledDeferredFX->TiledDeferredTech->GetDesc( &techDesc );
-	//DX11Effects::TiledDeferredFX->SetEyePosW(mCamera->mTrf.Position);
+	DX11Effects::TiledDeferredFX->SetEyePosW(mCamera->mTrf.Position);
 	DX11Effects::TiledDeferredFX->SetNearFar(Vector2(mCamera->mSettings.NearZ, mCamera->mSettings.FarZ));
 	DX11Effects::TiledDeferredFX->SetView(view);
 	DX11Effects::TiledDeferredFX->SetProj(proj);

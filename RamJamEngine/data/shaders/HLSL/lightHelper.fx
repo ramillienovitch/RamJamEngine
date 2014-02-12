@@ -269,11 +269,11 @@ void AccumulateSpotBRDF(SurfaceData surface, SpotLight light, float3 toEye, inou
 	}
 }
 
-void AccumulateBRDF(SurfaceData surface, PointLight light, inout float3 lit)
+void AccumulateBRDF(SurfaceData surface, PointLight light, float3 toEye, inout float3 lit)
 {
-	float3 lightPosView =  mul(float4(light.Position, 1.0f), gView).xyz;
-	float3 lightDir       = surface.position - lightPosView;
-	//float3 lightDir       = surface.position - light.Position;
+	//float3 lightPosView =  mul(float4(light.Position, 1.0f), gView).xyz;
+	//float3 lightDir       = surface.position - lightPosView;
+	float3 lightDir       = surface.position - light.Position;
 	float distanceToLight = length(lightDir);
 
 	[branch] if (distanceToLight < light.Range)
@@ -284,8 +284,8 @@ void AccumulateBRDF(SurfaceData surface, PointLight light, inout float3 lit)
 
 		float3 litDiffuse = float3(0.0f, 0.0f, 0.0f);
 		float3 litSpecular = float3(0.0f, 0.0f, 0.0f);
-		//AccumulatePhongBRDF(surface.normal, lightDir, toEye, attenuation * light.Color, surface.specularPower, litDiffuse, litSpecular);
-		AccumulatePhongBRDF(surface.normal, lightDir, normalize(surface.position), attenuation * light.Color, surface.specularPower, litDiffuse, litSpecular);
+		AccumulatePhongBRDF(surface.normal, lightDir, toEye, attenuation * light.Color, surface.specularPower, litDiffuse, litSpecular);
+		//AccumulatePhongBRDF(surface.normal, lightDir, normalize(surface.position), attenuation * light.Color, surface.specularPower, litDiffuse, litSpecular);
 
 		//lit += surface.albedo.rgb * (litDiffuse + surface.specularAmount * litSpecular);
 		lit += surface.albedo.rgb * litDiffuse + surface.specularAmount * litSpecular;

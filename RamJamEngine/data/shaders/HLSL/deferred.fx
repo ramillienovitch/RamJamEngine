@@ -55,6 +55,10 @@ void ComputeShaderTileCS(uint3 groupId          : SV_GroupID,
 	SurfaceData surfaceSamples[MSAA_SAMPLES];
 	ComputeSurfaceDataFromGBufferAllSamples(gGbuffer, globalCoords, surfaceSamples);
 
+	float3 toEye = gEyePosW - surfaceSamples[0].position;
+	float distToEye = length(toEye); 
+	toEye = normalize(toEye);
+
 	// Work out Z bounds for our samples
 	float minZSample = gNearFar.y;
 	float maxZSample = gNearFar.x;
@@ -62,10 +66,12 @@ void ComputeShaderTileCS(uint3 groupId          : SV_GroupID,
 		[unroll] for (uint sample = 0; sample < MSAA_SAMPLES; ++sample)
 		{
 			// Avoid shading skybox/background or otherwise invalid pixels
-			//float3 samplePosView = mul(float4(surfaceSamples[sample].position, 1.0f), gView).xyz;
-			//float viewSpaceZ = samplePosView.z;
-			float viewSpaceZ = surfaceSamples[sample].position.z;
-			bool validPixel = viewSpaceZ >= gNearFar.x && viewSpaceZ < gNearFar.y;
+			float3 samplePosView = mul(float4(surfaceSamples[sample].position, 1.0f), gView).xyz;
+			float viewSpaceZ = samplePosView.z;
+			//float viewSpaceZ = surfaceSamples[sample].position.z;
+			//bool validPixel = viewSpaceZ >= gNearFar.x && viewSpaceZ < gNearFar.y;
+			float depth = surfaceSamples[sample].zDepth;
+			bool validPixel = /*depth >= 0.0 &&*/ depth < 1.0;
 			[flatten] if (validPixel)
 			{
 				minZSample = min(minZSample, viewSpaceZ);
@@ -190,7 +196,7 @@ void ComputeShaderTileCS(uint3 groupId          : SV_GroupID,
 					for (uint tileLightIndex = 0; tileLightIndex < numLights; ++tileLightIndex)
 					{
 						PointLight light = gPointLights[sTileLightIndices[tileLightIndex]];
-						AccumulateBRDF(surfaceSamples[0], light, lit);
+						AccumulateBRDF(surfaceSamples[0], light, toEye,lit);
 					}
 
 					// Write sample 0 result
@@ -211,7 +217,7 @@ void ComputeShaderTileCS(uint3 groupId          : SV_GroupID,
 							for (uint tileLightIndex = 0; tileLightIndex < numLights; ++tileLightIndex)
 							{
 								PointLight light = gPointLights[sTileLightIndices[tileLightIndex]];
-								AccumulateBRDF(surfaceSamples[sample], light, litSample);
+								AccumulateBRDF(surfaceSamples[sample], light, toEye, litSample);
 							}
 							WriteSample(globalCoords, sample, float4(litSample, 1.0f));
 						}
@@ -259,7 +265,7 @@ void ComputeShaderTileCS(uint3 groupId          : SV_GroupID,
 		for (uint tileLightIndex = 0; tileLightIndex < numLights; ++tileLightIndex)
 		{
 			PointLight light = gPointLights[sTileLightIndices[tileLightIndex]];
-			AccumulateBRDF(surface, light, lit);
+			AccumulateBRDF(surface, light, toEye,lit);
 		}
 		WriteSample(sampleCoords, sampleIndex, float4(lit, 1.0f));
 	}

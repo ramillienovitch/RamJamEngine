@@ -110,8 +110,8 @@ uint GetFramebufferSampleAddress(uint2 coords, uint sampleIndex)
 SurfaceData ComputeSurfaceDataFromGeometry(VertexOut input, Texture2D gTexture, SamplerState sam)
 {
 	SurfaceData surface;
-	surface.position = mul(float4(input.PosW, 1.0f), gView).xyz;
-	//surface.position = input.PosW;
+	//surface.position = mul(float4(input.PosW, 1.0f), gView).xyz;
+	surface.position = input.PosW;
 
 	// These arguably aren't really useful in this path since they are really only used to
 	// derive shading frequencies and composite derivatives but might as well compute them
@@ -199,7 +199,7 @@ bool RequiresPerSampleShading(SurfaceData surface[MSAA_SAMPLES])
 		perSample = perSample || dot(surface[i].normal, surface[0].normal) < minNormalDot;
 
 		// We use the normal value as a mask to display the skybox do not use per sample shading on skybox
-		//perSample = perSample && !(dot(surface[i].normal, float3(1.0,1.0,1.0)) == 0.0);
+		perSample = perSample && !(dot(surface[i].normal, float3(1.0,1.0,1.0)) == 0.0);
 	}
 
 	return perSample;
