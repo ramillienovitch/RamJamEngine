@@ -146,9 +146,9 @@ Gbuffer GbufferPS(VertexOut pin)
 	Gbuffer gbuffer;
 	SurfaceData surface = ComputeSurfaceDataFromGeometry(pin, gDiffuseMap, gTextureSampler);
 
-	gbuffer.Position     = surface.positionView;
+	gbuffer.Position     = surface.position;
 	gbuffer.Albedo       = surface.albedo;
-	gbuffer.Normal_Depth = float4(surface.normal, pin.PosH.z/pin.PosH.w);
+	gbuffer.Normal_Depth = float4(surface.normal, 1-pin.PosH.z/pin.PosH.w);
 	gbuffer.Specular     = float2(surface.specularAmount, surface.specularPower);
 	return gbuffer;
 }

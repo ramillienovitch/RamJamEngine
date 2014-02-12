@@ -6,6 +6,8 @@
 DX11Mesh*				DX11Mesh::sInstance      = nullptr;
 ID3D11Device*			DX11Mesh::sDevice        = nullptr;
 ID3D11DeviceContext*	DX11Mesh::sDeviceContext = nullptr;
+u32		DX11Mesh::sTotalVertexCount    = 0;
+u32		DX11Mesh::sTotalPrimitiveCount = 0;
 
 //////////////////////////////////////////////////////////////////////////
 DX11Mesh::DX11Mesh()
@@ -22,6 +24,9 @@ void DX11Mesh::SetDevice(ID3D11Device* device, ID3D11DeviceContext* deviceContex
 {
 	sDevice        = device;
 	sDeviceContext = deviceContext;
+	//--------
+	sTotalVertexCount    = 0;
+	sTotalPrimitiveCount = 0;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -182,6 +187,10 @@ void DX11Mesh::LoadModelFromFile(std::string filePath)
 	}
 	fread(&mVertexTotalCount,  sizeof(u32), 1, fIn);
 	fread(&modelTriangleCount, sizeof(u32), 1, fIn);
+	//---------
+	sTotalVertexCount    += mVertexTotalCount;
+	sTotalPrimitiveCount += modelTriangleCount;
+	//---------
 	mIndexTotalCount  = 3*modelTriangleCount;
 	mInputLayout = MeshData::RJE_InputLayout::RJE_IL_PosNormTanTex;
 
@@ -373,6 +382,11 @@ void DX11Mesh::LoadPrimitive(MeshData::Data<PosNormTanTex>& meshData)
 	mIndexTotalCount  = (u32) meshData.Indices.size();
 	mDataSize    = (u32) sizeof(MeshData::PosNormTanTex);
 	mByteWidth   = mDataSize * mVertexTotalCount;
+
+	//---------
+	sTotalVertexCount    += mVertexTotalCount;
+	sTotalPrimitiveCount += mIndexTotalCount/3;
+	//---------
 
 	mVertexData = rje_new char[mByteWidth];
 	mIndexData  = rje_new u32[mIndexTotalCount];

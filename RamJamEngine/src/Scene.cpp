@@ -20,6 +20,7 @@ Scene::Scene()
 	mbOnlyAlbedo     = false;
 	mbOnlyNormals    = false;
 	mbOnlySpecular   = false;
+	mbViewLightCount = false;
 	mbViewPerSampleShading = false;
 }
 

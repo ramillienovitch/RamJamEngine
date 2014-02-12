@@ -21,6 +21,7 @@ BasicEffect::BasicEffect(ID3D11Device* device, const std::string& filename)
 {
 	BasicTech         = mFX->GetTechniqueByName("Basic");
 	DeferredTech      = mFX->GetTechniqueByName("Deferred");
+	View              = mFX->GetVariableByName("gView")->AsMatrix();
 	ViewProj          = mFX->GetVariableByName("gViewProj")->AsMatrix();
 	Proj              = mFX->GetVariableByName("gProj")->AsMatrix();
 	World             = mFX->GetVariableByName("gWorld")->AsMatrix();
@@ -109,13 +110,31 @@ PostProcessEffect::PostProcessEffect(ID3D11Device* device, const std::string& fi
 	PostProcessTech       = mFX->GetTechniqueByName("PostProcess");
 	ResolveDeferredTech   = mFX->GetTechniqueByName("ResolveDeferred");
 	TextureMap            = mFX->GetVariableByName("gTexture")->AsShaderResource();
+	Litbuffer             = mFX->GetVariableByName("gLitTexture")->AsShaderResource();
+	FrameBufferSizeX      = mFX->GetVariableByName("gFramebufferSizeX")->AsScalar();
+	FrameBufferSizeY      = mFX->GetVariableByName("gFramebufferSizeY")->AsScalar();
+}
+
+PostProcessEffect::~PostProcessEffect(){}
+
+//////////////////////////////////////////////////////////////////////////
+
+TiledDeferredEffect::TiledDeferredEffect(ID3D11Device* device, const std::string& filename)
+	: Effect(device, filename)
+{
+	TiledDeferredTech     = mFX->GetTechniqueByName("TiledDeferred");
 	GBuffer               = mFX->GetVariableByName("gGbuffer")->AsShaderResource();
+	LitBuffer             = mFX->GetVariableByName("gLitBuffer")->AsUnorderedAccessView();
 	EyePosW               = mFX->GetVariableByName("gEyePosW")->AsVector();
+	NearFar               = mFX->GetVariableByName("gNearFar")->AsVector();
+	Proj                  = mFX->GetVariableByName("gProj")->AsMatrix();
+	View                  = mFX->GetVariableByName("gView")->AsMatrix();
 	ViewPosition          = mFX->GetVariableByName("gVisualizePosition")->AsScalar();
 	ViewAlbedo            = mFX->GetVariableByName("gVisualizeAlbedo")->AsScalar();
 	ViewNormals           = mFX->GetVariableByName("gVisualizeNormals")->AsScalar();
 	ViewSpecular          = mFX->GetVariableByName("gVisualizeSpecular")->AsScalar();
 	ViewPerSamplerShading = mFX->GetVariableByName("gVisualizePerSampleShading")->AsScalar();
+	ViewLightCount        = mFX->GetVariableByName("gVisualizeLightCount")->AsScalar();
 	FogColor              = mFX->GetVariableByName("gFogColor")->AsVector();
 	FogEnabled            = mFX->GetVariableByName("gUseFog")->AsScalar();
 	TextureEnabled        = mFX->GetVariableByName("gUseTexture")->AsScalar();
@@ -125,9 +144,11 @@ PostProcessEffect::PostProcessEffect(ID3D11Device* device, const std::string& fi
 	AmbientLight          = mFX->GetVariableByName("gAmbientLightColor")->AsVector();
 	PointLights           = mFX->GetVariableByName("gPointLights")->AsShaderResource();
 	SpotLights            = mFX->GetVariableByName("gSpotLights")->AsShaderResource();
+	FrameBufferSizeX      = mFX->GetVariableByName("gFramebufferSizeX")->AsScalar();
+	FrameBufferSizeY      = mFX->GetVariableByName("gFramebufferSizeY")->AsScalar();
 }
 
-PostProcessEffect::~PostProcessEffect(){}
+TiledDeferredEffect::~TiledDeferredEffect(){}
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -168,11 +189,12 @@ SkyboxEffect::~SkyboxEffect(){}
 
 //////////////////////////////////////////////////////////////////////////
 
-BasicEffect*           DX11Effects::BasicFX       = nullptr;
-ColorEffect*           DX11Effects::ColorFX       = nullptr;
-SpriteEffect*          DX11Effects::SpriteFX      = nullptr;
-PostProcessEffect*     DX11Effects::PostProcessFX = nullptr;
-SkyboxEffect*          DX11Effects::SkyboxFX      = nullptr;
+BasicEffect*           DX11Effects::BasicFX         = nullptr;
+ColorEffect*           DX11Effects::ColorFX         = nullptr;
+SpriteEffect*          DX11Effects::SpriteFX        = nullptr;
+PostProcessEffect*     DX11Effects::PostProcessFX   = nullptr;
+SkyboxEffect*          DX11Effects::SkyboxFX        = nullptr;
+TiledDeferredEffect*   DX11Effects::TiledDeferredFX = nullptr;
 
 void DX11Effects::InitAll(ID3D11Device* device)
 {
@@ -192,6 +214,9 @@ void DX11Effects::InitAll(ID3D11Device* device)
 	//-------------
 	shaderPath = System::Instance()->mDataPath + CIniFile::GetValue("skybox", "shaders", System::Instance()->mResourcesPath);
 	SkyboxFX = rje_new SkyboxEffect(device, shaderPath);
+	//-------------
+	shaderPath = System::Instance()->mDataPath + CIniFile::GetValue("tiled", "shaders", System::Instance()->mResourcesPath);
+	TiledDeferredFX = rje_new TiledDeferredEffect(device, shaderPath);
 }
 
 void DX11Effects::DestroyAll()
@@ -201,4 +226,5 @@ void DX11Effects::DestroyAll()
 	RJE_SAFE_DELETE(ColorFX);
 	RJE_SAFE_DELETE(PostProcessFX);
 	RJE_SAFE_DELETE(SkyboxFX);
+	RJE_SAFE_DELETE(TiledDeferredFX);
 }

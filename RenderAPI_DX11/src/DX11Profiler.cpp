@@ -248,6 +248,19 @@ void DX11Profiler::GetProfilerInfo()
 // 		ConcatText(WStringToString(name).c_str());
 // 		ConcatTextAndAlign("Input Assembler Primitives", SCREEN_WHITE, true);	itoa((int)profile.mInfos.Info_Rendering.IAPrimitives		, buf, 32, 10);		ConcatText(buf, SCREEN_WHITE, true);
 // 		ConcatTextAndAlign("Rasterized Primitives",      SCREEN_WHITE, true);	itoa((int)profile.mInfos.Info_Rendering.rasterizerPrimitives, buf, 32, 10);		ConcatText(buf, SCREEN_WHITE, true);
+		
+		//---------------
+		ConcatTextAndAlign("Total Vertex Count", 5, SCREEN_WHITE, true);
+		itoa((int)DX11Mesh::sTotalVertexCount , buf, 32, 10);
+		ConcatText(" : ", SCREEN_WHITE, true);
+		ConcatText(buf, SCREEN_WHITE, true);
+		ConcatText("\n", SCREEN_WHITE, true);
+		//---------------
+		ConcatTextAndAlign("Total Primitives Count", 5, SCREEN_WHITE, true);
+		itoa((int)DX11Mesh::sTotalPrimitiveCount , buf, 32, 10);
+		ConcatText(" : ", SCREEN_WHITE, true);
+		ConcatText(buf, SCREEN_WHITE, true);
+		ConcatText("\n", SCREEN_WHITE, true);
 		//---------------
 		ConcatTextAndAlign("Rendered Primitives", 5, SCREEN_WHITE, true);
 		itoa((int)profile.mInfos.Info_Rendering.renderedPrimitives , buf, 32, 10);

@@ -5,10 +5,12 @@ cbuffer cbPerFrame : register (b0)
 {
 	float4 gAmbientLightColor;
 	//-----------
-	float4x4 gViewProj;
+	float4x4 gView;
 	float4x4 gProj;
+	float4x4 gViewProj;
 	//-----------
 	float3 gEyePosW;
+	float2 gNearFar;
 	//-----------
 	float  gFogStart;
 	float  gFogRange;
@@ -19,6 +21,10 @@ cbuffer cbPerFrame : register (b0)
 	bool gVisualizeNormals;
 	bool gVisualizeSpecular;
 	bool gVisualizePerSampleShading;
+	bool gVisualizeLightCount;
+	//-----------
+	uint gFramebufferSizeX;
+	uint gFramebufferSizeY;
 	//-----------
 	bool   gUseFaceNormals;
 	bool   gUseFog;

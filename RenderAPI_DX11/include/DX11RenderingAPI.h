@@ -26,6 +26,10 @@ struct DX11RenderingAPI : GraphicAPI
 	std::vector<Texture2D*>					mGBuffer;
 	std::vector<ID3D11RenderTargetView*>	mGBufferRTV;
 	std::vector<ID3D11ShaderResourceView*>	mGBufferSRV;
+	StructuredBuffer<uint2Color>*			mLitBuffer;
+	//Texture2D* mLitBuffer;
+	ID3D11UnorderedAccessView*	mLitBufferUAV;
+	ID3D11ShaderResourceView*	mLitBufferSRV;
 	//---------------
 
 #if defined(RJE_DEBUG)  
@@ -65,9 +69,6 @@ struct DX11RenderingAPI : GraphicAPI
 	u32 mDirLightCount;
 	u32 mPointLightCount;
 	u32 mSpotLightCount;
-
-	Matrix44 mView;
-	Matrix44 mProj;
 
 	//---------------
 
@@ -123,6 +124,7 @@ struct DX11RenderingAPI : GraphicAPI
 	void RenderGBuffer();
 	void RenderPostProcess();
 	void RenderSkybox();
+	void ComputeLighting();
 };
 
 //////////////////////////////////////////////////////////////////////////

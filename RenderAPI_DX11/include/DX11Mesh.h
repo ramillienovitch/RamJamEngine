@@ -6,6 +6,9 @@
 struct DX11Mesh : Mesh
 {
 	//--------
+	static u32 sTotalVertexCount;
+	static u32 sTotalPrimitiveCount;
+	//--------
 	static ID3D11Device*		sDevice;
 	static ID3D11DeviceContext*	sDeviceContext;
 	//--------

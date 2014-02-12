@@ -42,6 +42,7 @@ struct Scene
 	BOOL	mbOnlyNormals;
 	BOOL	mbOnlySpecular;
 	BOOL	mbViewPerSampleShading;
+	BOOL	mbViewLightCount;
 	//-----------------------------------------------
 	
 	Scene();

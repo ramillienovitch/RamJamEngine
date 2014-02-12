@@ -33,7 +33,9 @@ DX11RenderingAPI::DX11RenderingAPI(Scene& scene) : mScene(scene)
 	mBlendFactorB = 0.5f;
 	mBlendFactorA = 1.0f;
 	//-----------
-	
+	mLitBuffer = nullptr;
+	//-----------
+
 	// Light Specs
 	mLightMode = LightMode::Point;
 	mDirLights   = nullptr;
@@ -43,8 +45,8 @@ DX11RenderingAPI::DX11RenderingAPI(Scene& scene) : mScene(scene)
 	for (int i = 0; i < MAX_LIGHTS; i++)
 	{
 		float radius = RJE::Math::Rand(0.0f,1.0f);
-		mPointLightsRadius[i]    = sqrt(radius) * 15.0f;
-		mPointLightsHeight[i]    = RJE::Math::Rand(0.0f,10.0f);
+		mPointLightsRadius[i]    = sqrt(radius) * 30.0f;
+		mPointLightsHeight[i]    = RJE::Math::Rand(0.0f, 10.0f);
 		mPointLightsAngle[i]     = RJE::Math::Rand(0.0f,RJE::Math::Pi_Two_f);
 		mPointLightsAnimSpeed[i] = RJE::Math::Rand(0.1f,2.0f);
 		//--------
@@ -52,8 +54,8 @@ DX11RenderingAPI::DX11RenderingAPI(Scene& scene) : mScene(scene)
 		mWorkingDirLights[i].Direction = Vector3(0.57735f, -0.57735f, 0.57735f);
 		//--------
 		mWorkingPointLights[i].Color     = Color::GetRandomVector3RGBNorm();
-		mWorkingPointLights[i].Range     = RJE::Math::Rand(1.0f,8.0f);
-		mWorkingPointLights[i].Intensity = mWorkingPointLights[i].Range * 0.1f;
+		mWorkingPointLights[i].Range     = RJE::Math::Rand(1.0f,5.0f);
+		mWorkingPointLights[i].Intensity = mWorkingPointLights[i].Range * 0.2f;
 		//--------
 		mWorkingSpotLights[i].Color     = Vector3(0.5f, 0.5f, 0.5f);
 		mWorkingSpotLights[i].Spot      = RJE::Math::Deg2Rad_f * 45.0f;
@@ -210,6 +212,7 @@ void DX11RenderingAPI::Initialize(int windowWidth, int windowHeight)
 	TwAddVarRW(bar, "Show Normal Only",    TW_TYPE_BOOLCPP, &mScene.mbOnlyNormals,          NULL);
 	TwAddVarRW(bar, "Show Specular Only ", TW_TYPE_BOOLCPP, &mScene.mbOnlySpecular,         NULL);
 	TwAddVarRW(bar, "Per Sample Shading",  TW_TYPE_BOOLCPP, &mScene.mbViewPerSampleShading, NULL);
+	TwAddVarRW(bar, "View Ligh Count",     TW_TYPE_BOOLCPP, &mScene.mbViewLightCount,       NULL);
 	TwAddVarRW(bar, "Use Face Normals",    TW_TYPE_BOOLCPP, &mScene.mbUseFaceNormals,       NULL);
 	TwAddVarRW(bar, "Use Fog",             TW_TYPE_BOOLCPP, &mScene.mbUseFog,               NULL);
 	TwAddVarRW(bar, "Fog Color", TW_TYPE_COLOR4F, &mScene.mFogColor, NULL);
@@ -320,7 +323,7 @@ void DX11RenderingAPI::UpdateScene( float dt )
 			else if (mLightMode == LightMode::Point)
 			{
 				if (mPointLightCount < MAX_LIGHTS)
-					SetActivePointLights(mPointLightCount + 1);
+					SetActivePointLights(mPointLightCount + 10);
 			}
 			else if (mLightMode == LightMode::Spot)
 			{
@@ -338,7 +341,7 @@ void DX11RenderingAPI::UpdateScene( float dt )
 			else if (mLightMode == LightMode::Point)
 			{
 				if (mPointLightCount > 0)
-					SetActivePointLights(mPointLightCount - 1);
+					SetActivePointLights(mPointLightCount - 10);
 			}
 			else if (mLightMode == LightMode::Spot)
 			{
@@ -372,6 +375,9 @@ void DX11RenderingAPI::UpdateScene( float dt )
 			mWorkingPointLights[i].Position.x = mPointLightsRadius[i] * cosf(mPointLightsAngle[i] + timer * mPointLightsAnimSpeed[i] );
 			mWorkingPointLights[i].Position.y = mPointLightsHeight[i];
 			mWorkingPointLights[i].Position.z = mPointLightsRadius[i] * sinf(mPointLightsAngle[i] + timer * mPointLightsAnimSpeed[i] );
+// 			Matrix44 transView = mCamera->mView;
+// 			transView.Transpose();
+// 			mWorkingPointLights[i].Position = transView* mWorkingPointLights[i].Position;
 			light[i] = mWorkingPointLights[i];
 		}
 		mPointLights->Unmap(mDX11Device->md3dImmediateContext);
@@ -402,7 +408,16 @@ void DX11RenderingAPI::DrawScene()
 	if (mScene.mbDeferredRendering)
 	{
 		RenderGBuffer();
-		RenderSkybox();
+		//RenderSkybox();
+
+		mDX11Device->md3dImmediateContext->OMSetRenderTargets(1, &mBackbufferRTV, 0);
+		mDX11Device->md3dImmediateContext->ClearRenderTargetView(mBackbufferRTV, DirectX::Colors::Black);
+		mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_Solid);
+
+		ID3D11ShaderResourceView* nullViews[5] = {0, 0, 0, 0, 0};
+		mDX11Device->md3dImmediateContext->PSSetShaderResources(0, 5, nullViews);
+
+		ComputeLighting();
 		RenderPostProcess();
 	}
 	else
@@ -471,6 +486,7 @@ void DX11RenderingAPI::RenderForward()
 	Matrix44 proj     = *(mCamera->mCurrentProjectionMatrix);
 
 	// Set per frame constants.
+	DX11Effects::BasicFX->SetView(view);
 	DX11Effects::BasicFX->SetViewProj(view*proj);
 	DX11Effects::BasicFX->SetProj(proj);
 	DX11Effects::BasicFX->SetEyePosW(mCamera->mTrf.Position);
@@ -545,9 +561,16 @@ void DX11RenderingAPI::RenderGBuffer()
 
 	// Set per frame constants.
 	DX11Effects::BasicFX->SetViewProj(view*proj);
+	DX11Effects::BasicFX->SetView(view);
 	DX11Effects::BasicFX->SetProj(proj);
 	DX11Effects::BasicFX->SetSamplerState(DX11CommonStates::sCurrentSamplerState);
-	DX11Effects::BasicFX->UseFaceNormals(mScene.mbUseFaceNormals);
+	DX11Effects::BasicFX->SetEyePosW(mCamera->mTrf.Position);
+	DX11Effects::BasicFX->SetFogColor(    mScene.mFogColor);
+	DX11Effects::BasicFX->SetFogStart(    mScene.mFogStart);
+	DX11Effects::BasicFX->SetFogRange(    mScene.mFogRange);
+	DX11Effects::BasicFX->SetFogState(    mScene.mbUseFog);
+	DX11Effects::BasicFX->UseFaceNormals( mScene.mbUseFaceNormals);
+	DX11Effects::BasicFX->SetTextureState(mScene.mbUseTexture);
 
 	//ID3DX11EffectTechnique* activeTech = DX11Effects::BasicFX->BasicTech;
 	ID3DX11EffectTechnique* activeTech = DX11Effects::BasicFX->DeferredTech;
@@ -583,6 +606,62 @@ void DX11RenderingAPI::RenderGBuffer()
 }
 
 //////////////////////////////////////////////////////////////////////////
+void DX11RenderingAPI::ComputeLighting()
+{
+	PROFILE_CPU("Compute Lighting");
+	PROFILE_GPU_START(L"Compute Lighting");
+
+	Matrix44 view     = mCamera->mView;
+	Matrix44 proj     = *(mCamera->mCurrentProjectionMatrix);
+
+	D3DX11_TECHNIQUE_DESC techDesc;
+	DX11Effects::TiledDeferredFX->TiledDeferredTech->GetDesc( &techDesc );
+	//DX11Effects::TiledDeferredFX->SetEyePosW(mCamera->mTrf.Position);
+	DX11Effects::TiledDeferredFX->SetNearFar(Vector2(mCamera->mSettings.NearZ, mCamera->mSettings.FarZ));
+	DX11Effects::TiledDeferredFX->SetView(view);
+	DX11Effects::TiledDeferredFX->SetProj(proj);
+// 	DX11Effects::TiledDeferredFX->OnlyPosition( mScene.mbOnlyPosition);
+// 	DX11Effects::TiledDeferredFX->OnlyAlbedo(   mScene.mbOnlyAlbedo);
+// 	DX11Effects::TiledDeferredFX->OnlyNormals(  mScene.mbOnlyNormals);
+// 	DX11Effects::TiledDeferredFX->OnlySpecular( mScene.mbOnlySpecular);
+	DX11Effects::TiledDeferredFX->SetPerSampleShading(mScene.mbViewPerSampleShading);
+	DX11Effects::TiledDeferredFX->VisualizeLightCount(mScene.mbViewLightCount);
+// 	DX11Effects::TiledDeferredFX->SetFogColor(      mScene.mFogColor);
+// 	DX11Effects::TiledDeferredFX->SetFogStart(      mScene.mFogStart);
+// 	DX11Effects::TiledDeferredFX->SetFogRange(      mScene.mFogRange);
+// 	DX11Effects::TiledDeferredFX->SetFogState(      mScene.mbUseFog);
+// 	DX11Effects::TiledDeferredFX->SetTextureState(  mScene.mbUseTexture);
+	//DX11Effects::TiledDeferredFX->SetAmbientLight(mScene.mAmbientLightColor);
+	DX11Effects::TiledDeferredFX->SetDirLights(  mDirLights->GetShaderResource());
+	DX11Effects::TiledDeferredFX->SetPointLights(mPointLights->GetShaderResource());
+	DX11Effects::TiledDeferredFX->SetSpotLights( mSpotLights->GetShaderResource());
+	DX11Effects::TiledDeferredFX->SetFrameBufferSize(mWindowWidth, mWindowHeight);
+	for(UINT p = 0; p < techDesc.Passes; ++p)
+	{
+		DX11Effects::TiledDeferredFX->SetGBuffer(mGBufferSRV);
+		DX11Effects::TiledDeferredFX->TiledDeferredTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
+
+		ID3D11UnorderedAccessView *litBufferUAV = mLitBuffer->GetUnorderedAccess();
+		mDX11Device->md3dImmediateContext->CSSetUnorderedAccessViews(0, 1, &litBufferUAV, 0);
+
+		u32 dispatchWidth  = (mWindowWidth  + COMPUTE_SHADER_TILE_GROUP_DIM - 1) / COMPUTE_SHADER_TILE_GROUP_DIM;
+		u32 dispatchHeight = (mWindowHeight + COMPUTE_SHADER_TILE_GROUP_DIM - 1) / COMPUTE_SHADER_TILE_GROUP_DIM;
+		mDX11Device->md3dImmediateContext->Dispatch(dispatchWidth, dispatchHeight, 1);
+	}
+
+	// Unbind the input texture from the CS for good housekeeping.
+	ID3D11ShaderResourceView* nullSRV[5] = { 0, 0, 0, 0, 0 };
+	mDX11Device->md3dImmediateContext->CSSetShaderResources( 0, 5, nullSRV );
+
+	// Unbind output from compute shader (we are going to use this output as an input in the next pass, 
+	// and a resource cannot be both an output and input at the same time.
+	ID3D11UnorderedAccessView* nullUAV[1] = { 0 };
+	mDX11Device->md3dImmediateContext->CSSetUnorderedAccessViews( 0, 1, nullUAV, 0 );
+
+	PROFILE_GPU_END(L"Compute Lighting");
+}
+
+//////////////////////////////////////////////////////////////////////////
 void DX11RenderingAPI::RenderPostProcess()
 {
 	PROFILE_CPU("Render Post Process");
@@ -595,39 +674,21 @@ void DX11RenderingAPI::RenderPostProcess()
 	mDX11Device->md3dImmediateContext->ClearRenderTargetView(mBackbufferRTV, DirectX::Colors::Black);
 	mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_Solid);
 
-	DX11Effects::PostProcessFX->SetEyePosW(mCamera->mTrf.Position);
-	DX11Effects::PostProcessFX->OnlyPosition( mScene.mbOnlyPosition);
-	DX11Effects::PostProcessFX->OnlyAlbedo(   mScene.mbOnlyAlbedo);
-	DX11Effects::PostProcessFX->OnlyNormals(  mScene.mbOnlyNormals);
-	DX11Effects::PostProcessFX->OnlySpecular( mScene.mbOnlySpecular);
-	DX11Effects::PostProcessFX->SetPerSampleShading(mScene.mbViewPerSampleShading);
-	DX11Effects::PostProcessFX->SetFogColor(      mScene.mFogColor);
-	DX11Effects::PostProcessFX->SetFogStart(      mScene.mFogStart);
-	DX11Effects::PostProcessFX->SetFogRange(      mScene.mFogRange);
-	DX11Effects::PostProcessFX->SetFogState(      mScene.mbUseFog);
-	DX11Effects::PostProcessFX->SetTextureState(  mScene.mbUseTexture);
-	DX11Effects::PostProcessFX->SetAmbientLight(mScene.mAmbientLightColor);
-	DX11Effects::PostProcessFX->SetDirLights(  mDirLights->GetShaderResource());
-	DX11Effects::PostProcessFX->SetPointLights(mPointLights->GetShaderResource());
-	DX11Effects::PostProcessFX->SetSpotLights( mSpotLights->GetShaderResource());
+	DX11Effects::PostProcessFX->SetFrameBufferSize(mWindowWidth, mWindowHeight);
+	DX11Effects::PostProcessFX->SetLitBuffer(mLitBuffer->GetShaderResource());
 
-	ID3DX11EffectTechnique* PostProcessTech = DX11Effects::PostProcessFX->ResolveDeferredTech;
+	ID3DX11EffectTechnique* DeferredTech = DX11Effects::PostProcessFX->ResolveDeferredTech;
 	D3DX11_TECHNIQUE_DESC techDesc;
 
-	PostProcessTech->GetDesc( &techDesc );
+	DeferredTech->GetDesc( &techDesc );
 	for(UINT p = 0; p < techDesc.Passes; ++p)
 	{
 		mDX11Device->md3dImmediateContext->IASetVertexBuffers(0, 1, &mScreenQuadVB, &stride, &offset);
 		mDX11Device->md3dImmediateContext->IASetIndexBuffer(mScreenQuadIB, DXGI_FORMAT_R32_UINT, 0);
 
-		//DX11Effects::PostProcessFX->SetTextureMap(mRjeLogo);
-		DX11Effects::PostProcessFX->SetGuffer(mGBufferSRV);
-
-		PostProcessTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
+		DeferredTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
 		mDX11Device->md3dImmediateContext->DrawIndexed(6, 0, 0);
 	}
-	ID3D11ShaderResourceView* nullViews[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-	mDX11Device->md3dImmediateContext->PSSetShaderResources(0, 5, nullViews);
 
 	PROFILE_GPU_END(L"Render Post Process");
 }
@@ -784,21 +845,21 @@ void DX11RenderingAPI::Draw2dElements()
 //////////////////////////////////////////////////////////////////////////
 void DX11RenderingAPI::SetActiveDirLights(u32 activeLights)
 {
-	mDirLightCount = activeLights;
+	mDirLightCount = RJE::Math::Clamp(activeLights, u32(0), u32(MAX_LIGHTS));
 	RJE_SAFE_DELETE(mDirLights);
 	mDirLights = rje_new StructuredBuffer<DirectionalLight>(mDX11Device->md3dDevice, activeLights, D3D11_BIND_SHADER_RESOURCE, true);
 }
 //-------------------------
 void DX11RenderingAPI::SetActivePointLights(u32 activeLights)
 {
-	mPointLightCount = activeLights;
+	mPointLightCount = RJE::Math::Clamp(activeLights, u32(0), u32(MAX_LIGHTS));
 	RJE_SAFE_DELETE(mPointLights);
 	mPointLights = rje_new StructuredBuffer<PointLight>(mDX11Device->md3dDevice, activeLights, D3D11_BIND_SHADER_RESOURCE, true);
 }
 //-------------------------
 void DX11RenderingAPI::SetActiveSpotLights(u32 activeLights)
 {
-	mSpotLightCount = activeLights;
+	mSpotLightCount = RJE::Math::Clamp(activeLights, u32(0), u32(MAX_LIGHTS));
 	RJE_SAFE_DELETE(mSpotLights);
 	mSpotLights = rje_new StructuredBuffer<SpotLight>(mDX11Device->md3dDevice, activeLights, D3D11_BIND_SHADER_RESOURCE, true);
 }
@@ -819,6 +880,8 @@ void DX11RenderingAPI::Shutdown()
 	DX11Effects     ::DestroyAll();
 	DX11InputLayouts::DestroyAll();
 	DX11CommonStates::DestroyAll();
+
+	RJE_SAFE_DELETE(mLitBuffer);
 
 	RJE_SAFE_DELETE(mDirLights);
 	RJE_SAFE_DELETE(mPointLights);
@@ -971,6 +1034,11 @@ void DX11RenderingAPI::BuildGBuffer(DXGI_SAMPLE_DESC sampleDesc)
 	}
 	// Depth buffer is the last SRV that we use for reading
 	//mGBufferSRV.back() = mDepthBuffer->GetShaderResource();
+
+	RJE_SAFE_DELETE(mLitBuffer);
+	mLitBuffer = rje_new StructuredBuffer<uint2Color>(mDX11Device->md3dDevice, gBufferWidth*gBufferHeight*MSAA_Samples , D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE);
+	//mLitBuffer = rje_new StructuredBuffer<uint2Color>(mDX11Device->md3dDevice, gBufferWidth*gBufferHeight, D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE);
+	//mLitBuffer = rje_new Texture2D( mDX11Device->md3dDevice, gBufferWidth, gBufferHeight, DXGI_FORMAT_R8G8B8A8_UNORM     , D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE);
 }
 
 //////////////////////////////////////////////////////////////////////////
