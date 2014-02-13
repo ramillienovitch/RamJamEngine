@@ -108,11 +108,7 @@ PostProcessEffect::PostProcessEffect(ID3D11Device* device, const std::string& fi
 	: Effect(device, filename)
 {
 	PostProcessTech       = mFX->GetTechniqueByName("PostProcess");
-	ResolveDeferredTech   = mFX->GetTechniqueByName("ResolveDeferred");
 	TextureMap            = mFX->GetVariableByName("gTexture")->AsShaderResource();
-	Litbuffer             = mFX->GetVariableByName("gLitTexture")->AsShaderResource();
-	FrameBufferSizeX      = mFX->GetVariableByName("gFramebufferSizeX")->AsScalar();
-	FrameBufferSizeY      = mFX->GetVariableByName("gFramebufferSizeY")->AsScalar();
 }
 
 PostProcessEffect::~PostProcessEffect(){}
@@ -129,10 +125,6 @@ TiledDeferredEffect::TiledDeferredEffect(ID3D11Device* device, const std::string
 	NearFar               = mFX->GetVariableByName("gNearFar")->AsVector();
 	Proj                  = mFX->GetVariableByName("gProj")->AsMatrix();
 	View                  = mFX->GetVariableByName("gView")->AsMatrix();
-	ViewPosition          = mFX->GetVariableByName("gVisualizePosition")->AsScalar();
-	ViewAlbedo            = mFX->GetVariableByName("gVisualizeAlbedo")->AsScalar();
-	ViewNormals           = mFX->GetVariableByName("gVisualizeNormals")->AsScalar();
-	ViewSpecular          = mFX->GetVariableByName("gVisualizeSpecular")->AsScalar();
 	ViewPerSamplerShading = mFX->GetVariableByName("gVisualizePerSampleShading")->AsScalar();
 	ViewLightCount        = mFX->GetVariableByName("gVisualizeLightCount")->AsScalar();
 	FogColor              = mFX->GetVariableByName("gFogColor")->AsVector();
@@ -179,10 +171,19 @@ ColorEffect::~ColorEffect(){}
 SkyboxEffect::SkyboxEffect(ID3D11Device* device, const std::string& filename)
 	: Effect(device, filename)
 {
-	SkyboxForwardTech  = mFX->GetTechniqueByName("SkyboxTech");
+	SkyboxForwardTech  = mFX->GetTechniqueByName("SkyboxForward");
+	SkyboxDeferredTech = mFX->GetTechniqueByName("SkyboxDeferred");
 	WorldViewProj      = mFX->GetVariableByName("gWorldViewProj")->AsMatrix();
 	CubeMap            = mFX->GetVariableByName("gCubeMap")->AsShaderResource();
-
+	Litbuffer          = mFX->GetVariableByName("gLitTexture")->AsShaderResource();
+	GBuffer            = mFX->GetVariableByName("gGbuffer")->AsShaderResource();
+	ViewPosition       = mFX->GetVariableByName("gVisualizePosition")->AsScalar();
+	ViewAlbedo         = mFX->GetVariableByName("gVisualizeAlbedo")->AsScalar();
+	ViewNormals        = mFX->GetVariableByName("gVisualizeNormals")->AsScalar();
+	ViewDepth          = mFX->GetVariableByName("gVisualizeDepth")->AsScalar();
+	ViewSpecular       = mFX->GetVariableByName("gVisualizeSpecular")->AsScalar();
+	FrameBufferSizeX   = mFX->GetVariableByName("gFramebufferSizeX")->AsScalar();
+	FrameBufferSizeY   = mFX->GetVariableByName("gFramebufferSizeY")->AsScalar();
 }
 
 SkyboxEffect::~SkyboxEffect(){}

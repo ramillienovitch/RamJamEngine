@@ -19,6 +19,7 @@ cbuffer cbPerFrame : register (b0)
 	bool gVisualizePosition;
 	bool gVisualizeAlbedo;
 	bool gVisualizeNormals;
+	bool gVisualizeDepth;
 	bool gVisualizeSpecular;
 	bool gVisualizePerSampleShading;
 	bool gVisualizeLightCount;

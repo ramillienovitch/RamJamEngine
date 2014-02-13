@@ -121,10 +121,12 @@ struct DX11RenderingAPI : GraphicAPI
 	//////////////////////////////////////////////////////////////////////////
 
 	void RenderForward();
+	//-----------
 	void RenderGBuffer();
-	void RenderPostProcess();
-	void RenderSkybox();
 	void ComputeLighting();
+	//-----------
+	void RenderSkybox(BOOL deferredRendering);
+	void RenderPostProcess();
 };
 
 //////////////////////////////////////////////////////////////////////////

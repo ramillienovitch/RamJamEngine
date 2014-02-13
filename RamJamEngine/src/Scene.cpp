@@ -16,11 +16,14 @@ Scene::Scene()
 	mbUseBlending    = true;
 	mbWireframe      = false;
 	mbUseFaceNormals = false;
-	mbOnlyPosition   = false;
-	mbOnlyAlbedo     = false;
-	mbOnlyNormals    = false;
-	mbOnlySpecular   = false;
-	mbViewLightCount = false;
+	//------
+	mbOnlyPosition = false;
+	mbOnlyAlbedo   = false;
+	mbOnlyNormals  = false;
+	mbOnlyDepth    = false;
+	mbOnlySpecular = false;
+	//------
+	mbViewLightCount       = false;
 	mbViewPerSampleShading = false;
 }
 

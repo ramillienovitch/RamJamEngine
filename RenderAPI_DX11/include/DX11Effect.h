@@ -84,16 +84,10 @@ struct PostProcessEffect : public Effect
 	PostProcessEffect(ID3D11Device* device, const std::string& filename);
 	~PostProcessEffect();
 
-	HRESULT SetTextureMap(ID3D11ShaderResourceView* tex)                  { return TextureMap->SetResource(tex); }
-	HRESULT SetLitBuffer(ID3D11ShaderResourceView* litbuffer)             { return Litbuffer->SetResource(litbuffer); }
-	void    SetFrameBufferSize(u32 width, u32 height)                     { FrameBufferSizeX->SetInt(width); FrameBufferSizeY->SetInt(height); }
+	HRESULT SetTextureMap(ID3D11ShaderResourceView* tex)	{ return TextureMap->SetResource(tex); }
 	
 	ID3DX11EffectTechnique*					PostProcessTech;
-	ID3DX11EffectTechnique*					ResolveDeferredTech;
 	ID3DX11EffectShaderResourceVariable*	TextureMap;
-	ID3DX11EffectShaderResourceVariable*	Litbuffer;
-	ID3DX11EffectScalarVariable*			FrameBufferSizeX;
-	ID3DX11EffectScalarVariable*			FrameBufferSizeY;
 };
 
 //////////////////////////////////////////////////////////////////////////
@@ -107,10 +101,6 @@ struct TiledDeferredEffect : public Effect
 	HRESULT SetNearFar(const Vector2& v)                                  { return NearFar->SetFloatVector(reinterpret_cast<const float*>(&v)); }
 	HRESULT SetProj(Matrix44& M)                                          { return Proj->SetMatrix(reinterpret_cast<const float*>(&M)); }
 	HRESULT SetView(Matrix44& M)                                          { return View->SetMatrix(reinterpret_cast<const float*>(&M)); }
-	HRESULT OnlyPosition(BOOL state)                                      { return ViewPosition->SetBool(state != 0); }
-	HRESULT OnlyAlbedo(BOOL state)                                        { return ViewAlbedo->SetBool(state != 0); }
-	HRESULT OnlyNormals(BOOL state)                                       { return ViewNormals->SetBool(state != 0); }
-	HRESULT OnlySpecular(BOOL state)                                      { return ViewSpecular->SetBool(state != 0); }
 	HRESULT SetPerSampleShading(BOOL state)                               { return ViewPerSamplerShading->SetBool(state != 0); }
 	HRESULT VisualizeLightCount(BOOL state)                               { return ViewLightCount->SetBool(state != 0); }
 	HRESULT SetFogState(BOOL state)                                       { return FogEnabled->SetBool(state != 0); }
@@ -132,10 +122,6 @@ struct TiledDeferredEffect : public Effect
 	ID3DX11EffectVectorVariable*			NearFar;
 	ID3DX11EffectMatrixVariable*			Proj;
 	ID3DX11EffectMatrixVariable*			View;
-	ID3DX11EffectScalarVariable*			ViewPosition;
-	ID3DX11EffectScalarVariable*			ViewAlbedo;
-	ID3DX11EffectScalarVariable*			ViewNormals;
-	ID3DX11EffectScalarVariable*			ViewSpecular;
 	ID3DX11EffectScalarVariable*			ViewPerSamplerShading;
 	ID3DX11EffectScalarVariable*			ViewLightCount;
 	ID3DX11EffectScalarVariable*			TextureEnabled;
@@ -189,12 +175,30 @@ struct SkyboxEffect : public Effect
 	SkyboxEffect(ID3D11Device* device, const std::string& filename);
 	~SkyboxEffect();
 
-	void SetWorldViewProj(Matrix44& M)             { WorldViewProj->SetMatrix(reinterpret_cast<const float*>(&M)); }
-	void SetCubeMap(ID3D11ShaderResourceView* tex) { CubeMap->SetResource(tex); }
+	HRESULT SetWorldViewProj(Matrix44& M)                                 { return WorldViewProj->SetMatrix(reinterpret_cast<const float*>(&M)); }
+	HRESULT SetCubeMap(ID3D11ShaderResourceView* tex)                     { return CubeMap->SetResource(tex); }
+	HRESULT SetGBuffer(std::vector<ID3D11ShaderResourceView*> gBufferSRV) { return GBuffer->SetResourceArray(&gBufferSRV.front(), 0, (u32)gBufferSRV.size()); }
+	HRESULT SetLitBuffer(ID3D11ShaderResourceView* litbuffer)             { return Litbuffer->SetResource(litbuffer); }
+	HRESULT OnlyPosition(BOOL state)                                      { return ViewPosition->SetBool(state != 0); }
+	HRESULT OnlyAlbedo(BOOL state)                                        { return ViewAlbedo->SetBool(state != 0); }
+	HRESULT OnlyNormals(BOOL state)                                       { return ViewNormals->SetBool(state != 0); }
+	HRESULT OnlyDepth(BOOL state)                                         { return ViewDepth->SetBool(state != 0); }
+	HRESULT OnlySpecular(BOOL state)                                      { return ViewSpecular->SetBool(state != 0); }
+	void    SetFrameBufferSize(u32 width, u32 height)                     { FrameBufferSizeX->SetInt(width); FrameBufferSizeY->SetInt(height); }
 
 	ID3DX11EffectTechnique*					SkyboxForwardTech;
+	ID3DX11EffectTechnique*					SkyboxDeferredTech;
 	ID3DX11EffectMatrixVariable*			WorldViewProj;
 	ID3DX11EffectShaderResourceVariable*	CubeMap;
+	ID3DX11EffectShaderResourceVariable*	GBuffer;
+	ID3DX11EffectShaderResourceVariable*	Litbuffer;
+	ID3DX11EffectScalarVariable*			FrameBufferSizeX;
+	ID3DX11EffectScalarVariable*			FrameBufferSizeY;
+	ID3DX11EffectScalarVariable*			ViewPosition;
+	ID3DX11EffectScalarVariable*			ViewAlbedo;
+	ID3DX11EffectScalarVariable*			ViewNormals;
+	ID3DX11EffectScalarVariable*			ViewDepth;
+	ID3DX11EffectScalarVariable*			ViewSpecular;
 };
 
 

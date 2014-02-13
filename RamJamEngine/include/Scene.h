@@ -40,6 +40,7 @@ struct Scene
 	BOOL	mbOnlyPosition;
 	BOOL	mbOnlyAlbedo;
 	BOOL	mbOnlyNormals;
+	BOOL	mbOnlyDepth;
 	BOOL	mbOnlySpecular;
 	BOOL	mbViewPerSampleShading;
 	BOOL	mbViewLightCount;

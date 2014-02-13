@@ -207,14 +207,15 @@ void DX11RenderingAPI::Initialize(int windowWidth, int windowHeight)
 	TwAddVarRW(bar, "Use Texture",  TW_TYPE_BOOLCPP, &mScene.mbUseTexture, NULL);
 	TwAddVarRW(bar, "Use Blending", TW_TYPE_BOOLCPP, &mScene.mbUseBlending, NULL);
 	TwAddSeparator(bar, NULL, NULL); //===============================================
-	TwAddVarRW(bar, "Show Position Only",  TW_TYPE_BOOLCPP, &mScene.mbOnlyPosition,         NULL);
-	TwAddVarRW(bar, "Show Albedo Only",    TW_TYPE_BOOLCPP, &mScene.mbOnlyAlbedo,           NULL);
-	TwAddVarRW(bar, "Show Normal Only",    TW_TYPE_BOOLCPP, &mScene.mbOnlyNormals,          NULL);
-	TwAddVarRW(bar, "Show Specular Only ", TW_TYPE_BOOLCPP, &mScene.mbOnlySpecular,         NULL);
-	TwAddVarRW(bar, "Per Sample Shading",  TW_TYPE_BOOLCPP, &mScene.mbViewPerSampleShading, NULL);
-	TwAddVarRW(bar, "View Ligh Count",     TW_TYPE_BOOLCPP, &mScene.mbViewLightCount,       NULL);
-	TwAddVarRW(bar, "Use Face Normals",    TW_TYPE_BOOLCPP, &mScene.mbUseFaceNormals,       NULL);
-	TwAddVarRW(bar, "Use Fog",             TW_TYPE_BOOLCPP, &mScene.mbUseFog,               NULL);
+	TwAddVarRW(bar, "Show World Position Only", TW_TYPE_BOOLCPP, &mScene.mbOnlyPosition,         NULL);
+	TwAddVarRW(bar, "Show Albedo Only",         TW_TYPE_BOOLCPP, &mScene.mbOnlyAlbedo,           NULL);
+	TwAddVarRW(bar, "Show Normal Only",         TW_TYPE_BOOLCPP, &mScene.mbOnlyNormals,          NULL);
+	TwAddVarRW(bar, "Show Depth Only",          TW_TYPE_BOOLCPP, &mScene.mbOnlyDepth,            NULL);
+	TwAddVarRW(bar, "Show Specular Only ",      TW_TYPE_BOOLCPP, &mScene.mbOnlySpecular,         NULL);
+	TwAddVarRW(bar, "Per Sample Shading",       TW_TYPE_BOOLCPP, &mScene.mbViewPerSampleShading, NULL);
+	TwAddVarRW(bar, "View Light Count",         TW_TYPE_BOOLCPP, &mScene.mbViewLightCount,       NULL);
+	TwAddVarRW(bar, "Use Face Normals",         TW_TYPE_BOOLCPP, &mScene.mbUseFaceNormals,       NULL);
+	TwAddVarRW(bar, "Use Fog",                  TW_TYPE_BOOLCPP, &mScene.mbUseFog,               NULL);
 	TwAddVarRW(bar, "Fog Color", TW_TYPE_COLOR4F, &mScene.mFogColor, NULL);
 	TwAddVarRW(bar, "Fog Start", TW_TYPE_FLOAT, &mScene.mFogStart, "min=10 max=100");
 	TwAddVarRW(bar, "Fog Range", TW_TYPE_FLOAT, &mScene.mFogRange, "min=20 max=500");
@@ -375,9 +376,6 @@ void DX11RenderingAPI::UpdateScene( float dt )
 			mWorkingPointLights[i].Position.x = mPointLightsRadius[i] * cosf(mPointLightsAngle[i] + timer * mPointLightsAnimSpeed[i] );
 			mWorkingPointLights[i].Position.y = mPointLightsHeight[i];
 			mWorkingPointLights[i].Position.z = mPointLightsRadius[i] * sinf(mPointLightsAngle[i] + timer * mPointLightsAnimSpeed[i] );
-// 			Matrix44 transView = mCamera->mView;
-// 			transView.Transpose();
-// 			mWorkingPointLights[i].Position = transView* mWorkingPointLights[i].Position;
 			light[i] = mWorkingPointLights[i];
 		}
 		mPointLights->Unmap(mDX11Device->md3dImmediateContext);
@@ -408,22 +406,13 @@ void DX11RenderingAPI::DrawScene()
 	if (mScene.mbDeferredRendering)
 	{
 		RenderGBuffer();
-		//RenderSkybox();
-
-		mDX11Device->md3dImmediateContext->OMSetRenderTargets(1, &mBackbufferRTV, 0);
-		mDX11Device->md3dImmediateContext->ClearRenderTargetView(mBackbufferRTV, DirectX::Colors::Black);
-		mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_Solid);
-
-		ID3D11ShaderResourceView* nullViews[5] = {0, 0, 0, 0, 0};
-		mDX11Device->md3dImmediateContext->PSSetShaderResources(0, 5, nullViews);
-
 		ComputeLighting();
-		RenderPostProcess();
+		RenderSkybox(true);
 	}
 	else
 	{
 		RenderForward();
-		RenderSkybox();
+		RenderSkybox(false);
 	}
 
 	float blendFactor[4] = {mBlendFactorR, mBlendFactorG, mBlendFactorB, mBlendFactorA};
@@ -602,6 +591,13 @@ void DX11RenderingAPI::RenderGBuffer()
 		mDX11Device->md3dImmediateContext->OMSetBlendState(0, blendFactor, 0xffffffff);
 	}
 
+	mDX11Device->md3dImmediateContext->OMSetRenderTargets(1, &mBackbufferRTV, 0);
+	mDX11Device->md3dImmediateContext->ClearRenderTargetView(mBackbufferRTV, DirectX::Colors::Black);
+	mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_Solid);
+
+	ID3D11ShaderResourceView* nullViews[5] = {0, 0, 0, 0, 0};
+	mDX11Device->md3dImmediateContext->PSSetShaderResources(0, 5, nullViews);
+
 	PROFILE_GPU_END(L"Render G Buffer");
 }
 
@@ -620,18 +616,13 @@ void DX11RenderingAPI::ComputeLighting()
 	DX11Effects::TiledDeferredFX->SetNearFar(Vector2(mCamera->mSettings.NearZ, mCamera->mSettings.FarZ));
 	DX11Effects::TiledDeferredFX->SetView(view);
 	DX11Effects::TiledDeferredFX->SetProj(proj);
-// 	DX11Effects::TiledDeferredFX->OnlyPosition( mScene.mbOnlyPosition);
-// 	DX11Effects::TiledDeferredFX->OnlyAlbedo(   mScene.mbOnlyAlbedo);
-// 	DX11Effects::TiledDeferredFX->OnlyNormals(  mScene.mbOnlyNormals);
-// 	DX11Effects::TiledDeferredFX->OnlySpecular( mScene.mbOnlySpecular);
 	DX11Effects::TiledDeferredFX->SetPerSampleShading(mScene.mbViewPerSampleShading);
 	DX11Effects::TiledDeferredFX->VisualizeLightCount(mScene.mbViewLightCount);
 // 	DX11Effects::TiledDeferredFX->SetFogColor(      mScene.mFogColor);
 // 	DX11Effects::TiledDeferredFX->SetFogStart(      mScene.mFogStart);
 // 	DX11Effects::TiledDeferredFX->SetFogRange(      mScene.mFogRange);
 // 	DX11Effects::TiledDeferredFX->SetFogState(      mScene.mbUseFog);
-// 	DX11Effects::TiledDeferredFX->SetTextureState(  mScene.mbUseTexture);
-	//DX11Effects::TiledDeferredFX->SetAmbientLight(mScene.mAmbientLightColor);
+// 	DX11Effects::TiledDeferredFX->SetAmbientLight(mScene.mAmbientLightColor);
 	DX11Effects::TiledDeferredFX->SetDirLights(  mDirLights->GetShaderResource());
 	DX11Effects::TiledDeferredFX->SetPointLights(mPointLights->GetShaderResource());
 	DX11Effects::TiledDeferredFX->SetSpotLights( mSpotLights->GetShaderResource());
@@ -674,10 +665,9 @@ void DX11RenderingAPI::RenderPostProcess()
 	mDX11Device->md3dImmediateContext->ClearRenderTargetView(mBackbufferRTV, DirectX::Colors::Black);
 	mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_Solid);
 
-	DX11Effects::PostProcessFX->SetFrameBufferSize(mWindowWidth, mWindowHeight);
-	DX11Effects::PostProcessFX->SetLitBuffer(mLitBuffer->GetShaderResource());
+	DX11Effects::PostProcessFX->SetTextureMap(mRjeLogo);
 
-	ID3DX11EffectTechnique* DeferredTech = DX11Effects::PostProcessFX->ResolveDeferredTech;
+	ID3DX11EffectTechnique* DeferredTech = DX11Effects::PostProcessFX->PostProcessTech;
 	D3DX11_TECHNIQUE_DESC techDesc;
 
 	DeferredTech->GetDesc( &techDesc );
@@ -694,17 +684,17 @@ void DX11RenderingAPI::RenderPostProcess()
 }
 
 //////////////////////////////////////////////////////////////////////////
-void DX11RenderingAPI::RenderSkybox()
+void DX11RenderingAPI::RenderSkybox(BOOL deferredRendering)
 {
+	PROFILE_CPU("Render Skybox");
+	PROFILE_GPU_START(L"Render Skybox");
+
 	Vector3 eyePos = mCamera->mTrf.Position;
 	Matrix44 T = Matrix44::Translation(eyePos);
 
 	Matrix44 view = mCamera->mView;
 	Matrix44 proj = *(mCamera->mCurrentProjectionMatrix);
 	Matrix44 WVP  = T*view*proj;
-
-	DX11Effects::SkyboxFX->SetWorldViewProj(WVP);
-	DX11Effects::SkyboxFX->SetCubeMap(mSkyboxSRV);
 
 	u32 stride = sizeof(PosNormTanTex);
 	u32 offset = 0;
@@ -714,16 +704,41 @@ void DX11RenderingAPI::RenderSkybox()
 	mDX11Device->md3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	D3DX11_TECHNIQUE_DESC techDesc;
-	DX11Effects::SkyboxFX->SkyboxForwardTech->GetDesc( &techDesc );
+	ID3DX11EffectTechnique* skyboxTech;
+	if (deferredRendering)
+	{
+		skyboxTech = DX11Effects::SkyboxFX->SkyboxDeferredTech;
+		DX11Effects::SkyboxFX->OnlyPosition(mScene.mbOnlyPosition);
+		DX11Effects::SkyboxFX->OnlyAlbedo(  mScene.mbOnlyAlbedo);
+		DX11Effects::SkyboxFX->OnlyNormals( mScene.mbOnlyNormals);
+		DX11Effects::SkyboxFX->OnlyDepth(   mScene.mbOnlyDepth);
+		DX11Effects::SkyboxFX->OnlySpecular(mScene.mbOnlySpecular);
+		DX11Effects::SkyboxFX->SetGBuffer(mGBufferSRV);
+		DX11Effects::SkyboxFX->SetFrameBufferSize(mWindowWidth, mWindowHeight);
+		DX11Effects::SkyboxFX->SetLitBuffer(mLitBuffer->GetShaderResource());
+	}
+	else
+	{
+		skyboxTech = DX11Effects::SkyboxFX->SkyboxForwardTech;
+	}
+	skyboxTech->GetDesc( &techDesc );
+
+	DX11Effects::SkyboxFX->SetWorldViewProj(WVP);
+	DX11Effects::SkyboxFX->SetCubeMap(mSkyboxSRV);
 
 	for(u32 p = 0; p < techDesc.Passes; ++p)
 	{
-		ID3DX11EffectPass* pass = DX11Effects::SkyboxFX->SkyboxForwardTech->GetPassByIndex(p);
+		ID3DX11EffectPass* pass = skyboxTech->GetPassByIndex(p);
 
 		pass->Apply(0, mDX11Device->md3dImmediateContext);
 
 		mDX11Device->md3dImmediateContext->DrawIndexed(36, 0, 0);
 	}
+
+	ID3D11ShaderResourceView* nullSRV[6] = { 0, 0, 0, 0, 0, 0 };
+	mDX11Device->md3dImmediateContext->PSSetShaderResources( 0, 6, nullSRV );
+	
+	PROFILE_GPU_END(L"Render Skybox");
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -1017,7 +1032,7 @@ void DX11RenderingAPI::BuildGBuffer(DXGI_SAMPLE_DESC sampleDesc)
 	mGBufferSRV.resize(0);
 
 	// === G-Buffer ===
-	// Position / Albedo / Normal / Specular
+	// Albedo / Position / Normal / Specular
 	mGBuffer.push_back(rje_new Texture2D( mDX11Device->md3dDevice, gBufferWidth, gBufferHeight, DXGI_FORMAT_R8G8B8A8_UNORM     , D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE, sampleDesc));
 	mGBuffer.push_back(rje_new Texture2D( mDX11Device->md3dDevice, gBufferWidth, gBufferHeight, DXGI_FORMAT_R32G32B32A32_FLOAT , D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE, sampleDesc));
 	mGBuffer.push_back(rje_new Texture2D( mDX11Device->md3dDevice, gBufferWidth, gBufferHeight, DXGI_FORMAT_R32G32B32A32_FLOAT , D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE, sampleDesc));
@@ -1037,8 +1052,6 @@ void DX11RenderingAPI::BuildGBuffer(DXGI_SAMPLE_DESC sampleDesc)
 
 	RJE_SAFE_DELETE(mLitBuffer);
 	mLitBuffer = rje_new StructuredBuffer<uint2Color>(mDX11Device->md3dDevice, gBufferWidth*gBufferHeight*MSAA_Samples , D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE);
-	//mLitBuffer = rje_new StructuredBuffer<uint2Color>(mDX11Device->md3dDevice, gBufferWidth*gBufferHeight, D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE);
-	//mLitBuffer = rje_new Texture2D( mDX11Device->md3dDevice, gBufferWidth, gBufferHeight, DXGI_FORMAT_R8G8B8A8_UNORM     , D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE);
 }
 
 //////////////////////////////////////////////////////////////////////////
