@@ -83,14 +83,18 @@ float4 SkyboxDeferredPS(SkyboxOut pin) : SV_Target
 			lit += UnpackRGBA16(gLitTexture[GetFramebufferSampleAddress(coords, sampleIndex)]).xyz;
 	}
 
-	//If necessary, add skybox contribution
-	[branch] if (skyboxSamples > 0)
+#if SHADER_DEBUG
+	[flatten] if (!gVisualizeLightCount)
+#endif
 	{
-		float3 skybox = gCubeMap.Sample(samTriLinearSam, pin.PosL).xyz;
-		// Tone map and accumulate
-		lit += skyboxSamples * skybox;
+		//If necessary, add skybox contribution
+		[branch] if (skyboxSamples > 0)
+		{
+			float3 skybox = gCubeMap.Sample(samTriLinearSam, pin.PosL).xyz;
+			// Tone map and accumulate
+			lit += skyboxSamples * skybox;
+		}
 	}
-
 	// Resolve MSAA samples (simple box filter)
 	return float4(lit * rcp(MSAA_SAMPLES), 1.0f);
 }

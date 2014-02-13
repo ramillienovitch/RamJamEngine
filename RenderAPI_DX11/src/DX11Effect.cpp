@@ -182,6 +182,7 @@ SkyboxEffect::SkyboxEffect(ID3D11Device* device, const std::string& filename)
 	ViewNormals        = mFX->GetVariableByName("gVisualizeNormals")->AsScalar();
 	ViewDepth          = mFX->GetVariableByName("gVisualizeDepth")->AsScalar();
 	ViewSpecular       = mFX->GetVariableByName("gVisualizeSpecular")->AsScalar();
+	ViewLightCount     = mFX->GetVariableByName("gVisualizeLightCount")->AsScalar();
 	FrameBufferSizeX   = mFX->GetVariableByName("gFramebufferSizeX")->AsScalar();
 	FrameBufferSizeY   = mFX->GetVariableByName("gFramebufferSizeY")->AsScalar();
 }

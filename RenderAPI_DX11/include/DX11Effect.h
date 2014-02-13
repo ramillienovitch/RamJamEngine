@@ -184,6 +184,7 @@ struct SkyboxEffect : public Effect
 	HRESULT OnlyNormals(BOOL state)                                       { return ViewNormals->SetBool(state != 0); }
 	HRESULT OnlyDepth(BOOL state)                                         { return ViewDepth->SetBool(state != 0); }
 	HRESULT OnlySpecular(BOOL state)                                      { return ViewSpecular->SetBool(state != 0); }
+	HRESULT VisualizeLightCount(BOOL state)                               { return ViewLightCount->SetBool(state != 0); }
 	void    SetFrameBufferSize(u32 width, u32 height)                     { FrameBufferSizeX->SetInt(width); FrameBufferSizeY->SetInt(height); }
 
 	ID3DX11EffectTechnique*					SkyboxForwardTech;
@@ -199,6 +200,7 @@ struct SkyboxEffect : public Effect
 	ID3DX11EffectScalarVariable*			ViewNormals;
 	ID3DX11EffectScalarVariable*			ViewDepth;
 	ID3DX11EffectScalarVariable*			ViewSpecular;
+	ID3DX11EffectScalarVariable*			ViewLightCount;
 };
 
 

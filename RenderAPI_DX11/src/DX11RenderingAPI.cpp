@@ -207,8 +207,8 @@ void DX11RenderingAPI::Initialize(int windowWidth, int windowHeight)
 	TwAddVarRW(bar, "Use Texture",  TW_TYPE_BOOLCPP, &mScene.mbUseTexture, NULL);
 	TwAddVarRW(bar, "Use Blending", TW_TYPE_BOOLCPP, &mScene.mbUseBlending, NULL);
 	TwAddSeparator(bar, NULL, NULL); //===============================================
-	TwAddVarRW(bar, "Show World Position Only", TW_TYPE_BOOLCPP, &mScene.mbOnlyPosition,         NULL);
 	TwAddVarRW(bar, "Show Albedo Only",         TW_TYPE_BOOLCPP, &mScene.mbOnlyAlbedo,           NULL);
+	TwAddVarRW(bar, "Show World Position Only", TW_TYPE_BOOLCPP, &mScene.mbOnlyPosition,         NULL);
 	TwAddVarRW(bar, "Show Normal Only",         TW_TYPE_BOOLCPP, &mScene.mbOnlyNormals,          NULL);
 	TwAddVarRW(bar, "Show Depth Only",          TW_TYPE_BOOLCPP, &mScene.mbOnlyDepth,            NULL);
 	TwAddVarRW(bar, "Show Specular Only ",      TW_TYPE_BOOLCPP, &mScene.mbOnlySpecular,         NULL);
@@ -625,7 +625,7 @@ void DX11RenderingAPI::ComputeLighting()
 // 	DX11Effects::TiledDeferredFX->SetAmbientLight(mScene.mAmbientLightColor);
 	DX11Effects::TiledDeferredFX->SetDirLights(  mDirLights->GetShaderResource());
 	DX11Effects::TiledDeferredFX->SetPointLights(mPointLights->GetShaderResource());
-	DX11Effects::TiledDeferredFX->SetSpotLights( mSpotLights->GetShaderResource());
+	//DX11Effects::TiledDeferredFX->SetSpotLights( mSpotLights->GetShaderResource());
 	DX11Effects::TiledDeferredFX->SetFrameBufferSize(mWindowWidth, mWindowHeight);
 	for(UINT p = 0; p < techDesc.Passes; ++p)
 	{
@@ -713,6 +713,7 @@ void DX11RenderingAPI::RenderSkybox(BOOL deferredRendering)
 		DX11Effects::SkyboxFX->OnlyNormals( mScene.mbOnlyNormals);
 		DX11Effects::SkyboxFX->OnlyDepth(   mScene.mbOnlyDepth);
 		DX11Effects::SkyboxFX->OnlySpecular(mScene.mbOnlySpecular);
+		DX11Effects::SkyboxFX->VisualizeLightCount(mScene.mbViewLightCount);
 		DX11Effects::SkyboxFX->SetGBuffer(mGBufferSRV);
 		DX11Effects::SkyboxFX->SetFrameBufferSize(mWindowWidth, mWindowHeight);
 		DX11Effects::SkyboxFX->SetLitBuffer(mLitBuffer->GetShaderResource());
