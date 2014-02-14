@@ -180,7 +180,7 @@ void DX11RenderingAPI::Initialize(int windowWidth, int windowHeight)
 	DX11Drawable::SetShader(DX11Effects::BasicFX);
 	DX11Drawable::SetShaderGizmo(DX11Effects::ColorFX);
 	//-----------
-	SetActivePointLights(0);
+	SetActivePointLights(4096);
 	SetActiveDirLights(1);
 	SetActiveSpotLights(0);
 	//-----------
@@ -319,17 +319,17 @@ void DX11RenderingAPI::UpdateScene( float dt )
 			if (mLightMode == LightMode::Directional)
 			{
 				if (mDirLightCount < MAX_LIGHTS)
-					SetActiveDirLights(mDirLightCount + 1);
+					SetActiveDirLights((int)mDirLightCount + 1);
 			}
 			else if (mLightMode == LightMode::Point)
 			{
 				if (mPointLightCount < MAX_LIGHTS)
-					SetActivePointLights(mPointLightCount + 10);
+					SetActivePointLights((int)mPointLightCount + 20);
 			}
 			else if (mLightMode == LightMode::Spot)
 			{
 				if (mSpotLightCount < MAX_LIGHTS)
-					SetActiveSpotLights(mSpotLightCount + 1);
+					SetActiveSpotLights((int)mSpotLightCount + 1);
 			}
 		}
 		if (Input::Instance()->GetKeyboardDown(Subtract))
@@ -337,17 +337,17 @@ void DX11RenderingAPI::UpdateScene( float dt )
 			if (mLightMode == LightMode::Directional)
 			{
 				if (mDirLightCount > 0)
-					SetActiveDirLights(mDirLightCount - 1);
+					SetActiveDirLights((int)mDirLightCount - 1);
 			}
 			else if (mLightMode == LightMode::Point)
 			{
 				if (mPointLightCount > 0)
-					SetActivePointLights(mPointLightCount - 10);
+					SetActivePointLights((int)mPointLightCount - 20);
 			}
 			else if (mLightMode == LightMode::Spot)
 			{
 				if (mSpotLightCount > 0)
-					SetActiveSpotLights(mSpotLightCount - 1);
+					SetActiveSpotLights((int)mSpotLightCount - 1);
 			}
 		}
 	}
@@ -859,25 +859,25 @@ void DX11RenderingAPI::Draw2dElements()
 
 
 //////////////////////////////////////////////////////////////////////////
-void DX11RenderingAPI::SetActiveDirLights(u32 activeLights)
+void DX11RenderingAPI::SetActiveDirLights(int activeLights)
 {
-	mDirLightCount = RJE::Math::Clamp(activeLights, u32(0), u32(MAX_LIGHTS));
+	mDirLightCount = (u32) RJE::Math::Clamp(activeLights, 0, MAX_LIGHTS);
 	RJE_SAFE_DELETE(mDirLights);
-	mDirLights = rje_new StructuredBuffer<DirectionalLight>(mDX11Device->md3dDevice, activeLights, D3D11_BIND_SHADER_RESOURCE, true);
+	mDirLights = rje_new StructuredBuffer<DirectionalLight>(mDX11Device->md3dDevice, mDirLightCount, D3D11_BIND_SHADER_RESOURCE, true);
 }
 //-------------------------
-void DX11RenderingAPI::SetActivePointLights(u32 activeLights)
+void DX11RenderingAPI::SetActivePointLights(int activeLights)
 {
-	mPointLightCount = RJE::Math::Clamp(activeLights, u32(0), u32(MAX_LIGHTS));
+	mPointLightCount = (u32) RJE::Math::Clamp(activeLights, 0, MAX_LIGHTS);
 	RJE_SAFE_DELETE(mPointLights);
-	mPointLights = rje_new StructuredBuffer<PointLight>(mDX11Device->md3dDevice, activeLights, D3D11_BIND_SHADER_RESOURCE, true);
+	mPointLights = rje_new StructuredBuffer<PointLight>(mDX11Device->md3dDevice, mPointLightCount, D3D11_BIND_SHADER_RESOURCE, true);
 }
 //-------------------------
-void DX11RenderingAPI::SetActiveSpotLights(u32 activeLights)
+void DX11RenderingAPI::SetActiveSpotLights(int activeLights)
 {
-	mSpotLightCount = RJE::Math::Clamp(activeLights, u32(0), u32(MAX_LIGHTS));
+	mSpotLightCount = (u32) RJE::Math::Clamp(activeLights, 0, MAX_LIGHTS);
 	RJE_SAFE_DELETE(mSpotLights);
-	mSpotLights = rje_new StructuredBuffer<SpotLight>(mDX11Device->md3dDevice, activeLights, D3D11_BIND_SHADER_RESOURCE, true);
+	mSpotLights = rje_new StructuredBuffer<SpotLight>(mDX11Device->md3dDevice, mSpotLightCount, D3D11_BIND_SHADER_RESOURCE, true);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -1035,9 +1035,9 @@ void DX11RenderingAPI::BuildGBuffer(DXGI_SAMPLE_DESC sampleDesc)
 	// === G-Buffer ===
 	// Albedo / Position / Normal / Specular
 	mGBuffer.push_back(rje_new Texture2D( mDX11Device->md3dDevice, gBufferWidth, gBufferHeight, DXGI_FORMAT_R8G8B8A8_UNORM     , D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE, sampleDesc));
-	mGBuffer.push_back(rje_new Texture2D( mDX11Device->md3dDevice, gBufferWidth, gBufferHeight, DXGI_FORMAT_R32G32B32A32_FLOAT , D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE, sampleDesc));
-	mGBuffer.push_back(rje_new Texture2D( mDX11Device->md3dDevice, gBufferWidth, gBufferHeight, DXGI_FORMAT_R32G32B32A32_FLOAT , D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE, sampleDesc));
-	mGBuffer.push_back(rje_new Texture2D( mDX11Device->md3dDevice, gBufferWidth, gBufferHeight, DXGI_FORMAT_R32G32_FLOAT ,       D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE, sampleDesc));
+	mGBuffer.push_back(rje_new Texture2D( mDX11Device->md3dDevice, gBufferWidth, gBufferHeight, DXGI_FORMAT_R16G16B16A16_FLOAT , D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE, sampleDesc));
+	mGBuffer.push_back(rje_new Texture2D( mDX11Device->md3dDevice, gBufferWidth, gBufferHeight, DXGI_FORMAT_R16G16B16A16_FLOAT , D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE, sampleDesc));
+	mGBuffer.push_back(rje_new Texture2D( mDX11Device->md3dDevice, gBufferWidth, gBufferHeight, DXGI_FORMAT_R16G16_FLOAT ,       D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE, sampleDesc));
 
 	// Set up GBuffer resource list
 	mGBufferRTV.resize(mGBuffer.size(), 0);

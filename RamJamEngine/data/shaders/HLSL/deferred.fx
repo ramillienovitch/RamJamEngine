@@ -38,7 +38,7 @@ uint2 UnpackCoords(uint coords)
 }
 
 //////////////////////////////////////////////////////////////////////////
-[numthreads(16, 16, 1)]
+[numthreads(COMPUTE_SHADER_TILE_GROUP_DIM, COMPUTE_SHADER_TILE_GROUP_DIM, 1)]
 void ComputeShaderTileCS(uint3 groupId          : SV_GroupID,
 						 uint3 dispatchThreadId : SV_DispatchThreadID,
 						 uint3 groupThreadId    : SV_GroupThreadID)
@@ -56,8 +56,7 @@ void ComputeShaderTileCS(uint3 groupId          : SV_GroupID,
 	ComputeSurfaceDataFromGBufferAllSamples(gGbuffer, globalCoords, surfaceSamples);
 
 	float3 toEye = gEyePosW - surfaceSamples[0].position;
-	float distToEye = length(toEye); 
-	toEye = normalize(toEye);
+	toEye *= rcp(length(toEye));
 
 	// Work out Z bounds for our samples
 	float minZSample = gNearFar.y;
@@ -178,77 +177,75 @@ void ComputeShaderTileCS(uint3 groupId          : SV_GroupID,
 		bool perSampleShading = RequiresPerSampleShading(surfaceSamples);
 
 #if SHADER_DEBUG
-		bool debug = gVisualizeLightCount || gVisualizePerSampleShading;
-		if (debug)
+		[branch] if (gVisualizeLightCount)
 		{
-			[branch] if (gVisualizeLightCount)
+			[unroll] for (uint sample = 0; sample < MSAA_SAMPLES; ++sample)
 			{
-				[unroll] for (uint sample = 0; sample < MSAA_SAMPLES; ++sample)
-				{
-					WriteSample(globalCoords, sample, (float(sTileNumLights) / 255.0f).xxxx);
-				}
-			}
-			else
-			{
-				[branch] if (gVisualizePerSampleShading && perSampleShading)
-				{
-					[unroll] for (uint sample = 0; sample < MSAA_SAMPLES; ++sample)
-					{
-						WriteSample(globalCoords, sample, float4(1, 0, 0, 1));
-					}
-				}
+				WriteSample(globalCoords, sample, (float(sTileNumLights) / 255.0f).xxxx);
 			}
 		}
 		else
-#endif		
-		{
-			float3 lit = float3(0.0f, 0.0f, 0.0f);
-			for (uint tileLightIndex = 0; tileLightIndex < numPointLights; ++tileLightIndex)
-			{
-				PointLight light = gPointLights[sTileLightIndices[tileLightIndex]];
-				AccumulatePointBRDF(surfaceSamples[0], light, toEye,lit);
-			}
-			for (uint dirLightIdx = 0; dirLightIdx < numDirLights; ++dirLightIdx)
-			{
-				DirectionalLight light = gDirLights[dirLightIdx];
-				AccumulateDirBRDF(surfaceSamples[0], light, toEye,lit);
-			}
-
-			// Write sample 0 result
-			WriteSample(globalCoords, 0, float4(lit, 1.0f));
-
-			[branch] if (perSampleShading)
-			{
-#if DEFER_PER_SAMPLE
-				// Create a list of pixels that need per-sample shading
-				uint listIndex;
-				InterlockedAdd(sNumPerSamplePixels, 1, listIndex);
-				sPerSamplePixels[listIndex] = PackCoords(globalCoords);
-#else
-				// Shade the other samples for this pixel
-				for (uint sample = 1; sample < MSAA_SAMPLES; ++sample)
-				{
-					float3 litSample = float3(0.0f, 0.0f, 0.0f);
-					for (uint tileLightIndex = 0; tileLightIndex < numPointLights; ++tileLightIndex)
-					{
-						PointLight light = gPointLights[sTileLightIndices[tileLightIndex]];
-						AccumulatePointBRDF(surfaceSamples[sample], light, toEye, litSample);
-					}
-					for (uint dirLightIdx = 0; dirLightIdx < numDirLights; ++dirLightIdx)
-					{
-						DirectionalLight light = gDirLights[dirLightIdx];
-						AccumulateDirBRDF(surfaceSamples[sample], light, toEye,lit);
-					}
-					WriteSample(globalCoords, sample, float4(litSample, 1.0f));
-				}
 #endif
-			}
-			else 
+		{
+#if SHADER_DEBUG
+			[branch] if (gVisualizePerSampleShading && perSampleShading)
 			{
-				// Otherwise per-pixel shading, so splat the result to all samples
-				[unroll] for (uint sample = 1; sample < MSAA_SAMPLES; ++sample)
+				[unroll] for (uint sample = 0; sample < MSAA_SAMPLES; ++sample)
 				{
-					WriteSample(globalCoords, sample, float4(lit, 1.0f));
+					WriteSample(globalCoords, sample, float4(1, 0, 0, 1));
+				}
+			}
+			else
+#endif
+			{
+				float3 lit = float3(0.0f, 0.0f, 0.0f);
+				for (uint tileLightIndex = 0; tileLightIndex < numPointLights; ++tileLightIndex)
+				{
+					PointLight light = gPointLights[sTileLightIndices[tileLightIndex]];
+					AccumulatePointBRDF(surfaceSamples[0], light, toEye,lit);
+				}
+				for (uint dirLightIdx = 0; dirLightIdx < numDirLights; ++dirLightIdx)
+				{
+					DirectionalLight light = gDirLights[dirLightIdx];
+					AccumulateDirBRDF(surfaceSamples[0], light, toEye,lit);
+				}
+
+				// Write sample 0 result
+				WriteSample(globalCoords, 0, float4(lit, 1.0f));
+
+				[branch] if (perSampleShading)
+				{
+#if DEFER_PER_SAMPLE
+					// Create a list of pixels that need per-sample shading
+					uint listIndex;
+					InterlockedAdd(sNumPerSamplePixels, 1, listIndex);
+					sPerSamplePixels[listIndex] = PackCoords(globalCoords);
+#else
+					// Shade the other samples for this pixel
+					for (uint sample = 1; sample < MSAA_SAMPLES; ++sample)
+					{
+						float3 litSample = float3(0.0f, 0.0f, 0.0f);
+						for (uint tileLightIndex = 0; tileLightIndex < numPointLights; ++tileLightIndex)
+						{
+							PointLight light = gPointLights[sTileLightIndices[tileLightIndex]];
+							AccumulatePointBRDF(surfaceSamples[sample], light, toEye, litSample);
+						}
+						for (uint dirLightIdx = 0; dirLightIdx < numDirLights; ++dirLightIdx)
+						{
+							DirectionalLight light = gDirLights[dirLightIdx];
+							AccumulateDirBRDF(surfaceSamples[sample], light, toEye,lit);
+						}
+						WriteSample(globalCoords, sample, float4(litSample, 1.0f));
+					}
+#endif
+				}
+				else 
+				{
+					// Otherwise per-pixel shading, so splat the result to all samples
+					[unroll] for (uint sample = 1; sample < MSAA_SAMPLES; ++sample)
+					{
+						WriteSample(globalCoords, sample, float4(lit, 1.0f));
+					}
 				}
 			}
 		}

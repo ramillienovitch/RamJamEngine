@@ -114,9 +114,9 @@ struct DX11RenderingAPI : GraphicAPI
 	void DrawProfiler();
 	void Draw2dElements();
 	//---------------
-	void SetActiveDirLights(u32 activeLights);
-	void SetActivePointLights(u32 activeLights);
-	void SetActiveSpotLights(u32 activeLights);
+	void SetActiveDirLights(  int activeLights);
+	void SetActivePointLights(int activeLights);
+	void SetActiveSpotLights( int activeLights);
 
 	//////////////////////////////////////////////////////////////////////////
 
