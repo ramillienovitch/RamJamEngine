@@ -256,7 +256,7 @@ void DX11Profiler::GetProfilerInfo()
 		ConcatText(buf, SCREEN_WHITE, true);
 		ConcatText("\n", SCREEN_WHITE, true);
 		//---------------
-		ConcatTextAndAlign("Total Primitives Count", 5, SCREEN_WHITE, true);
+		ConcatTextAndAlign("Total Prim Count", 5, SCREEN_WHITE, true);
 		itoa((int)DX11Mesh::sTotalPrimitiveCount , buf, 32, 10);
 		ConcatText(" : ", SCREEN_WHITE, true);
 		ConcatText(buf, SCREEN_WHITE, true);

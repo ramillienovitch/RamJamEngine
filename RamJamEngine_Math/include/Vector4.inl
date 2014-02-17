@@ -1,5 +1,8 @@
 //////////////////////////////////////////////////////////////////////////
 
+#include "MathHelper.h"
+#include "Debug.h"
+
 //-------------------------
 template <typename Real>
 const Vector4_T<Real> Vector4_T<Real>::zero	= Vector4_T<Real>();

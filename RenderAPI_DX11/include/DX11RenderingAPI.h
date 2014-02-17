@@ -27,10 +27,14 @@ struct DX11RenderingAPI : GraphicAPI
 	std::vector<ID3D11RenderTargetView*>	mGBufferRTV;
 	std::vector<ID3D11ShaderResourceView*>	mGBufferSRV;
 	StructuredBuffer<uint2Color>*			mLitBuffer;
-	//Texture2D* mLitBuffer;
-	ID3D11UnorderedAccessView*	mLitBufferUAV;
-	ID3D11ShaderResourceView*	mLitBufferSRV;
+	ID3D11UnorderedAccessView*				mLitBufferUAV;
+	ID3D11ShaderResourceView*				mLitBufferSRV;
 	//---------------
+	BOOL            mbUseFrustumCulling;
+	BoundingBox     mAABB;
+	BoundingFrustum mCameraFrustum;
+	u32             mRenderedSubsets;
+	u32             mTotalSubsets;
 
 #if defined(RJE_DEBUG)  
 	IDXGIDebug*			md3dDebug;
@@ -48,14 +52,6 @@ struct DX11RenderingAPI : GraphicAPI
 	// shortcut for System::Instance()->mScene
 	Scene& mScene;
 
-	enum LightMode
-	{
-		Directional,
-		Point,
-		Spot
-	};
-
-	LightMode mLightMode;
 	StructuredBuffer<DirectionalLight>*		mDirLights;
 	StructuredBuffer<PointLight>*			mPointLights;
 	StructuredBuffer<SpotLight>*			mSpotLights;
@@ -66,9 +62,9 @@ struct DX11RenderingAPI : GraphicAPI
 	DirectionalLight				mWorkingDirLights[MAX_LIGHTS];
 	PointLight						mWorkingPointLights[MAX_LIGHTS];
 	SpotLight						mWorkingSpotLights[MAX_LIGHTS];
-	u32 mDirLightCount;
-	u32 mPointLightCount;
-	u32 mSpotLightCount;
+	u32 mDirLightCount,   mDirLightUICount;
+	u32 mPointLightCount, mPointLightUICount;
+	u32 mSpotLightCount,  mSpotLightUICount;
 
 	//---------------
 
@@ -114,6 +110,9 @@ struct DX11RenderingAPI : GraphicAPI
 	void DrawProfiler();
 	void Draw2dElements();
 	//---------------
+	void ComputeFrustumFlags();
+	void ClearFrustumFlags();
+	//---------------
 	void SetActiveDirLights(  int activeLights);
 	void SetActivePointLights(int activeLights);
 	void SetActiveSpotLights( int activeLights);
@@ -132,3 +131,4 @@ struct DX11RenderingAPI : GraphicAPI
 //////////////////////////////////////////////////////////////////////////
 // AntTweak Bar CallBacks. TODO: find a way to avoid duplication :(
 void TW_CALL TwSetWireframe(void *clientData);
+void TW_CALL TwClearFrustumFlags(void *clientData);

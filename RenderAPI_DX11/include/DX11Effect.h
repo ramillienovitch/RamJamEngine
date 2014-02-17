@@ -116,7 +116,6 @@ struct TiledDeferredEffect : public Effect
 
 	ID3DX11EffectTechnique*						TiledDeferredTech;
 	ID3DX11EffectShaderResourceVariable*		GBuffer;
-	ID3DX11EffectUnorderedAccessViewVariable*	LitBuffer;
 	//-------
 	ID3DX11EffectVectorVariable*			EyePosW;
 	ID3DX11EffectVectorVariable*			NearFar;

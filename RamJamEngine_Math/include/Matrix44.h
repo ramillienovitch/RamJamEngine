@@ -47,8 +47,8 @@ struct Matrix44_T
 	//---------------------------
 	BOOL IsIdentity() const;
 	//---------------------------
-	static void	Decompose(OUT Vector3_T<Real>& position, OUT Vector3_T<Real>& scale, OUT Quaternion_T<Real>& rotation);
-	static void	DecomposeNoScale(OUT Vector3_T<Real>& position, OUT Quaternion_T<Real>& rotation);
+	void	Decompose(OUT Vector3_T<Real>& position, OUT Vector3_T<Real>& scale, OUT Quaternion_T<Real>& rotation);
+	void	DecomposeNoScale(OUT Vector3_T<Real>& position, OUT Quaternion_T<Real>& rotation);
 	//---------------------------
 	static Matrix44_T&	FromEulerAngles(Matrix44_T<Real>& m, Real x, Real y, Real z);
 	static Matrix44_T&	FromEulerAngles(Matrix44_T<Real>& m, Vector3_T<Real> euler);

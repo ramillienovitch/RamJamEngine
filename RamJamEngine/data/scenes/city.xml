@@ -122,30 +122,6 @@
 		</mesh>
 	</gameobject>
 	<gameobject>
-		<name>cart1</name>
-		<transform>
-			<position x="-15" y="0" z="-8.5"/>
-			<rotation x="0" y="110" z="0"/>
-			<scale    x="0.008" y="0.008" z="0.008"/>
-		</transform>
-		<mesh>
-			<file>cart.mesh</file>
-			<materialLib>Cart\cart.matlib</materialLib>
-		</mesh>
-	</gameobject>
-	<gameobject>
-		<name>cart2</name>
-		<transform>
-			<position x="-7" y="0.25" z="0.5"/>
-			<rotation x="0" y="0" z="90"/>
-			<scale    x="0.008" y="0.008" z="0.008"/>
-		</transform>
-		<mesh>
-			<file>cart.mesh</file>
-			<materialLib>Cart\cart.matlib</materialLib>
-		</mesh>
-	</gameobject>
-	<gameobject>
 		<name>roadblock1</name>
 		<transform>
 			<position x="3" y="0" z="-8.7"/>

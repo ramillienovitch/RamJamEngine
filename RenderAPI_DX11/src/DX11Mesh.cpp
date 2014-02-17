@@ -207,10 +207,49 @@ void DX11Mesh::LoadModelFromFile(std::string filePath)
 	mVertexData = rje_new char[mByteWidth];
 	mIndexData  = rje_new u32[mIndexTotalCount];
 
-	float dummy = 0;
-	for(u64 i = 0; i < mVertexTotalCount*11; ++i)		// 3float => Position + 3float => Normal + 3float Tangent + 2float => Tex
+	//---------------
+	// Data Layout (in that order)
+	// Position (xyz)
+	// Normal   (xyz)
+	// Tangent  (xyz)
+	// TexCoord (uv)
+	// Total : 11 floats
+	//---------------
+	const u32 layoutElementCount = 11;
+	float data = 0;
+	u32 currentVertex = 0;
+	u32 currentSubset = 0;
+	// AABB Min Max points
+	Vector3 vMin = Vector3(RJE::Math::Infinity_f, RJE::Math::Infinity_f, RJE::Math::Infinity_f);
+	Vector3 vMax = -vMin;
+	Vector3 vTemp;
+	for(u32 i = 0; i < mVertexTotalCount*layoutElementCount; ++i)
 	{
-		fread(&dummy, 4, 1, fIn);	memcpy((float*)mVertexData+i, &dummy, 4);
+		// Store geometric data
+		fread(&data, 4, 1, fIn);
+		memcpy((float*)mVertexData+i, &data, 4);
+
+		// Compute AABB
+		if (i % layoutElementCount == 0)	// Position x
+			vTemp.x = data;
+		if (i % layoutElementCount == 1)	// Position y
+			vTemp.y = data;
+		if (i % layoutElementCount == 2)	// Position z
+		{
+			vTemp.z = data;
+			vMin = Vector3::Min(vMin, vTemp);
+			vMax = Vector3::Max(vMax, vTemp);
+		}
+
+		currentVertex = i / layoutElementCount;
+		if (currentVertex+1 == mSubsets[currentSubset].mVertexStart + mSubsets[currentSubset].mVertexCount)
+		{
+			mSubsets[currentSubset].mCenter  = 0.5f*(vMin+vMax);
+			mSubsets[currentSubset].mExtents = 0.5f*(vMax-vMin);
+			vMin = Vector3(RJE::Math::Infinity_f, RJE::Math::Infinity_f, RJE::Math::Infinity_f);
+			vMax = -vMin;
+			++currentSubset;
+		}
 	}
 	for(u32 i = 0; i < modelTriangleCount; ++i)
 	{
@@ -384,6 +423,15 @@ void DX11Mesh::LoadPrimitive(MeshData::Data<PosNormTanTex>& meshData)
 	mByteWidth   = mDataSize * mVertexTotalCount;
 
 	//---------
+	mSubsetCount = 1;
+	mSubsets = rje_new Subset[mSubsetCount];
+	mSubsets[0].mVertexStart = 0;
+	mSubsets[0].mIndexStart  = 0;
+	mSubsets[0].mVertexCount = mVertexTotalCount;
+	mSubsets[0].mIndexCount  = mIndexTotalCount;
+	//---------
+
+	//---------
 	sTotalVertexCount    += mVertexTotalCount;
 	sTotalPrimitiveCount += mIndexTotalCount/3;
 	//---------
@@ -391,6 +439,9 @@ void DX11Mesh::LoadPrimitive(MeshData::Data<PosNormTanTex>& meshData)
 	mVertexData = rje_new char[mByteWidth];
 	mIndexData  = rje_new u32[mIndexTotalCount];
 
+	// AABB Min Max points
+	Vector3 vMin = Vector3(RJE::Math::Infinity_f, RJE::Math::Infinity_f, RJE::Math::Infinity_f);
+	Vector3 vMax = -vMin;
 	for (u32 i=0; i<mVertexTotalCount; ++i)
 	{
 		memcpy((float*)mVertexData+11*i+0,  &meshData.Vertices[i].Position.x, 4);
@@ -404,7 +455,13 @@ void DX11Mesh::LoadPrimitive(MeshData::Data<PosNormTanTex>& meshData)
 		memcpy((float*)mVertexData+11*i+8,  &meshData.Vertices[i].TangentU.z, 4);
 		memcpy((float*)mVertexData+11*i+9,  &meshData.Vertices[i].TexC.x,     4);
 		memcpy((float*)mVertexData+11*i+10, &meshData.Vertices[i].TexC.y,     4);
+
+		// Compute AABB
+		vMin = Vector3::Min(vMin, meshData.Vertices[i].Position);
+		vMax = Vector3::Max(vMax, meshData.Vertices[i].Position);
 	}
+	mSubsets[0].mCenter  = 0.5f*(vMin+vMax);
+	mSubsets[0].mExtents = 0.5f*(vMax-vMin);
 	for (u32 j=0; j<mIndexTotalCount; ++j)
 	{
 		memcpy(&mIndexData[j], &meshData.Indices[j], 4);

@@ -18,10 +18,16 @@ struct Mesh
 	struct Subset
 	{
 		u32 mVertexStart;
-		u32 mIndexStart;
 		u32 mVertexCount;
+		//--------------
+		u32 mIndexStart;
 		u32 mIndexCount;
+		//--------------
+		Vector3 mCenter;
+		Vector3 mExtents;
+		BOOL    mbIsInFrustum;
 	};
+
 	Subset*	mSubsets;
 	u32		mSubsetCount;
 

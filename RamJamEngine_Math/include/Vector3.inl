@@ -195,6 +195,13 @@ FORCEINLINE Vector3_T<Real> Vector3_T<Real>::Cross(const Vector3_T& v1, const Ve
 template <typename Real>
 FORCEINLINE Real Vector3_T<Real>::Dot(const Vector3_T& v1, const Vector3_T& v2)
 { return v1.x*v2.x + v1.y*v2.y + v1.z*v2.z; }
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+template <typename Real>
+FORCEINLINE Vector3_T<Real> Vector3_T<Real>::Scale(const Vector3_T& v1, const Vector3_T& v2)
+{ return Vector3_T<Real>(v1.x*v2.x, v1.y*v2.y, v1.z*v2.z); }
+//----------------------------------------------------------------------
 
 //----------------------------------------------------------------------
 template <typename Real>
@@ -207,6 +214,34 @@ FORCEINLINE Real Vector3_T<Real>::AngleBetween(const Vector3_T& v1, const Vector
 	return angle;
 }
 //----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+template <typename Real>
+FORCEINLINE Vector3_T<Real> Vector3_T<Real>::Min(const Vector3_T<Real>& v1, const Vector3_T<Real>& v2)
+{
+	Vector3_T<Real> out;
+
+	out.x = v1.x < v2.x ? v1.x : v2.x;
+	out.y = v1.y < v2.y ? v1.y : v2.y;
+	out.z = v1.z < v2.z ? v1.z : v2.z;
+
+	return out;
+}
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+template <typename Real>
+FORCEINLINE Vector3_T<Real> Vector3_T<Real>::Max(const Vector3_T<Real>& v1, const Vector3_T<Real>& v2)
+{
+	Vector3_T<Real> out;
+
+	out.x = v1.x > v2.x ? v1.x : v2.x;
+	out.y = v1.y > v2.y ? v1.y : v2.y;
+	out.z = v1.z > v2.z ? v1.z : v2.z;
+
+	return out;
+}
+//---------------------------------------------------------------------
 
 //----------------------------------------------------------------------
 template <typename Real>

@@ -332,12 +332,14 @@ FORCEINLINE void Matrix44_T<Real>::Decompose(OUT Vector3_T<Real>& position, OUT 
 	if(scale.z)		vRows[2] /= scale.z;
 
 	// build a 3x3 rotation matrix
-	Vector3_T<Real> m(	vRows[0].x,vRows[1].x,vRows[2].x,
-						vRows[0].y,vRows[1].y,vRows[2].y,
-						vRows[0].z,vRows[1].z,vRows[2].z);
+	Matrix44_T<Real> m(	vRows[0].x,vRows[1].x,vRows[2].x, 0,
+						vRows[0].y,vRows[1].y,vRows[2].y, 0,
+						vRows[0].z,vRows[1].z,vRows[2].z, 0,
+						0         , 0        , 0        , 1);
 
 	// and generate the rotation quaternion from it
 	rotation = Quaternion_T<Real>(m);
+	rotation.Conjugate();
 }
 //----------------------------------------------------------------------
 template <typename Real>

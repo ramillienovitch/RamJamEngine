@@ -15,6 +15,7 @@ DX11RenderingAPI::DX11RenderingAPI(Scene& scene) : mScene(scene)
 	ZeroMemory(&mScreenViewport, sizeof(D3D11_VIEWPORT));
 	//-----------
 	VSyncEnabled = false;
+	mbUseFrustumCulling = true;
 	//-----------
 	mConsoleFont  = nullptr;
 	mProfilerFont = nullptr;
@@ -37,7 +38,6 @@ DX11RenderingAPI::DX11RenderingAPI(Scene& scene) : mScene(scene)
 	//-----------
 
 	// Light Specs
-	mLightMode = LightMode::Point;
 	mDirLights   = nullptr;
 	mPointLights = nullptr;
 	mSpotLights  = nullptr;
@@ -180,12 +180,17 @@ void DX11RenderingAPI::Initialize(int windowWidth, int windowHeight)
 	DX11Drawable::SetShader(DX11Effects::BasicFX);
 	DX11Drawable::SetShaderGizmo(DX11Effects::ColorFX);
 	//-----------
-	SetActivePointLights(4096);
-	SetActiveDirLights(1);
+	SetActivePointLights(0);
+	SetActiveDirLights(0);
 	SetActiveSpotLights(0);
+	//-----------
+	mDirLightUICount   = 1;
+	mPointLightUICount = MAX_LIGHTS;
+	mSpotLightUICount  = 0;
 	//-----------
 	BuildScreenQuad();
 	BuildSkybox();
+	//-----------
 
 	//////////////////////////////////////////////////////////////////////////
 	// AntTweak Bars
@@ -197,8 +202,11 @@ void DX11RenderingAPI::Initialize(int windowWidth, int windowHeight)
 	TwDefine("Scene iconified=true ");
 	int barSize[2] = {300, 400};
 	TwSetParam(bar, NULL, "size", TW_PARAM_INT32, 2, barSize);
-	TwAddVarRW(bar, "V-Sync Enabled", TW_TYPE_BOOLCPP, &VSyncEnabled, NULL);
-	TwAddVarRW(bar, "Render Deferred",  TW_TYPE_BOOLCPP, &mScene.mbDeferredRendering, NULL);
+	TwAddVarRW(bar, "V-Sync Enabled",      TW_TYPE_BOOLCPP, &VSyncEnabled, NULL);
+	TwAddVarRW(bar, "Render Deferred",     TW_TYPE_BOOLCPP, &mScene.mbDeferredRendering, NULL);
+	TwAddSeparator(bar, NULL, NULL); //===============================================
+	TwAddVarRW(bar, "Use Frustum Culling", TW_TYPE_BOOLCPP, &mbUseFrustumCulling, NULL);
+	TwAddButton(bar, "Clear Frustum Flags", TwClearFrustumFlags, this, NULL);
 	TwAddSeparator(bar, NULL, NULL); //===============================================
 	TwAddButton(bar, "Toggle Wireframe", TwSetWireframe, this, NULL);
 	TwAddSeparator(bar, NULL, NULL); //===============================================
@@ -224,6 +232,15 @@ void DX11RenderingAPI::Initialize(int windowWidth, int windowHeight)
 	TwAddVarRW(bar, "Blend Factor Green", TW_TYPE_FLOAT, &mBlendFactorG, "min=0 max=1 step=0.05");
 	TwAddVarRW(bar, "Blend Factor Blue",  TW_TYPE_FLOAT, &mBlendFactorB, "min=0 max=1 step=0.05");
 	TwAddVarRW(bar, "Blend Factor Alpha", TW_TYPE_FLOAT, &mBlendFactorA, "min=0 max=1 step=0.05");
+	//-----------
+	TwBar *lightBar = TwNewBar("Lighting");
+	TwDefine("Lighting iconified=true ");
+	TwSetParam(lightBar, NULL, "size",  TW_PARAM_INT32, 2, barSize);
+
+	TwAddSeparator(lightBar, NULL, NULL); //===============================================
+	TwAddVarRW(lightBar, "Dir   Light Count", TW_TYPE_UINT32, &mDirLightUICount,   "min=0 max=4096 step=8");
+	TwAddVarRW(lightBar, "Point Light Count", TW_TYPE_UINT32, &mPointLightUICount, "min=0 max=4096 step=8");
+	TwAddVarRW(lightBar, "Spot  Light Count", TW_TYPE_UINT32, &mSpotLightUICount,  "min=0 max=4096 step=8");
 	//-----------
 	TwBar *gameObjectBar = TwNewBar("GameObject");
 	TwDefine("GameObject iconified=true ");
@@ -305,52 +322,17 @@ void DX11RenderingAPI::UpdateScene( float dt )
 	// Inputs modifiers : TODO: Get these out of DX11RenderingAPI !
 	if (!Console::Instance()->IsActive())
 	{
-		if (Input::Instance()->GetKeyboardDown(Keyboard1))	mLightMode = LightMode::Directional;
-		if (Input::Instance()->GetKeyboardDown(Keyboard2))	mLightMode = LightMode::Point;
-		if (Input::Instance()->GetKeyboardDown(Keyboard3))	mLightMode = LightMode::Spot;
 		if (Input::Instance()->GetKeyboardDown(A))			DX11CommonStates::sCurrentSamplerState    = DX11CommonStates::sSamplerState_Anisotropic;
 		if (Input::Instance()->GetKeyboardDown(L))			DX11CommonStates::sCurrentSamplerState    = DX11CommonStates::sSamplerState_Linear;
 		if (Input::Instance()->GetKeyboardDown(U))			DX11CommonStates::sCurrentBlendState      = DX11CommonStates::sBlendState_BlendFactor;
 		if (Input::Instance()->GetKeyboardDown(I))			DX11CommonStates::sCurrentBlendState      = DX11CommonStates::sBlendState_AlphaToCoverage;
 		if (Input::Instance()->GetKeyboardDown(O))			DX11CommonStates::sCurrentBlendState      = DX11CommonStates::sBlendState_Transparent;
 		if (Input::Instance()->GetKeyboardDown(P))			DX11CommonStates::sCurrentBlendState      = DX11CommonStates::sBlendState_Opaque;
-		if (Input::Instance()->GetKeyboardDown(Add))
-		{
-			if (mLightMode == LightMode::Directional)
-			{
-				if (mDirLightCount < MAX_LIGHTS)
-					SetActiveDirLights((int)mDirLightCount + 1);
-			}
-			else if (mLightMode == LightMode::Point)
-			{
-				if (mPointLightCount < MAX_LIGHTS)
-					SetActivePointLights((int)mPointLightCount + 20);
-			}
-			else if (mLightMode == LightMode::Spot)
-			{
-				if (mSpotLightCount < MAX_LIGHTS)
-					SetActiveSpotLights((int)mSpotLightCount + 1);
-			}
-		}
-		if (Input::Instance()->GetKeyboardDown(Subtract))
-		{
-			if (mLightMode == LightMode::Directional)
-			{
-				if (mDirLightCount > 0)
-					SetActiveDirLights((int)mDirLightCount - 1);
-			}
-			else if (mLightMode == LightMode::Point)
-			{
-				if (mPointLightCount > 0)
-					SetActivePointLights((int)mPointLightCount - 20);
-			}
-			else if (mLightMode == LightMode::Spot)
-			{
-				if (mSpotLightCount > 0)
-					SetActiveSpotLights((int)mSpotLightCount - 1);
-			}
-		}
 	}
+
+	if (mDirLightUICount   != mDirLightCount)			SetActiveDirLights(mDirLightUICount);
+	if (mPointLightUICount != mPointLightCount)			SetActivePointLights(mPointLightUICount);
+	if (mSpotLightUICount  != mSpotLightCount)			SetActiveSpotLights(mSpotLightUICount);
 
 	static float timer = 0.0f;
 	timer += dt*0.5f;
@@ -403,17 +385,19 @@ void DX11RenderingAPI::DrawScene()
 	PROFILE_GPU_START(L"Render Scene");
 	PROFILE_GPU_START_DEEP(L"DEEP Scene");
 
+	if (mbUseFrustumCulling)
+		ComputeFrustumFlags();
+
 	if (mScene.mbDeferredRendering)
 	{
 		RenderGBuffer();
 		ComputeLighting();
-		RenderSkybox(true);
 	}
 	else
 	{
 		RenderForward();
-		RenderSkybox(false);
 	}
+	RenderSkybox(mScene.mbDeferredRendering);
 
 	float blendFactor[4] = {mBlendFactorR, mBlendFactorG, mBlendFactorB, mBlendFactorA};
 	mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_Solid);
@@ -561,7 +545,6 @@ void DX11RenderingAPI::RenderGBuffer()
 	DX11Effects::BasicFX->UseFaceNormals( mScene.mbUseFaceNormals);
 	DX11Effects::BasicFX->SetTextureState(mScene.mbUseTexture);
 
-	//ID3DX11EffectTechnique* activeTech = DX11Effects::BasicFX->BasicTech;
 	ID3DX11EffectTechnique* activeTech = DX11Effects::BasicFX->DeferredTech;
 
 	D3DX11_TECHNIQUE_DESC techDesc;
@@ -594,9 +577,6 @@ void DX11RenderingAPI::RenderGBuffer()
 	mDX11Device->md3dImmediateContext->OMSetRenderTargets(1, &mBackbufferRTV, 0);
 	mDX11Device->md3dImmediateContext->ClearRenderTargetView(mBackbufferRTV, DirectX::Colors::Black);
 	mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_Solid);
-
-	ID3D11ShaderResourceView* nullViews[5] = {0, 0, 0, 0, 0};
-	mDX11Device->md3dImmediateContext->PSSetShaderResources(0, 5, nullViews);
 
 	PROFILE_GPU_END(L"Render G Buffer");
 }
@@ -743,6 +723,65 @@ void DX11RenderingAPI::RenderSkybox(BOOL deferredRendering)
 }
 
 //////////////////////////////////////////////////////////////////////////
+void DX11RenderingAPI::ComputeFrustumFlags()
+{
+	PROFILE_CPU("Compute Frustum Flag");
+
+	mTotalSubsets    = 0;
+	mRenderedSubsets = 0;
+
+	Matrix44 invView = mCamera->mView;
+	invView.Inverse();
+
+	for(const unique_ptr<GameObject>& gameobject : mScene.mGameObjects)
+	{
+		Matrix44 invWorld = gameobject->mTransform.WorldMatrixNoScale();	// we scale the AABB
+		invWorld.Inverse();
+
+		// View space to the object's local space.
+		Matrix44 toLocal = invView*invWorld;
+
+		// Transform the camera frustum from view space to the object's local space.
+		BoundingFrustum localFrustum;
+		mCameraFrustum.Transform(localFrustum, toLocal);
+
+		// Retrieve the object AABB and test frustum intersection
+		BoundingBox aabb;
+		for (u32 iSubset=0 ; iSubset<gameobject->mDrawable.mMesh->mSubsetCount; ++iSubset)
+		{
+			aabb.Center  = Vector3::Scale(gameobject->mTransform.Scale, gameobject->mDrawable.mMesh->mSubsets[iSubset].mCenter);
+			aabb.Extents = Vector3::Scale(gameobject->mTransform.Scale, gameobject->mDrawable.mMesh->mSubsets[iSubset].mExtents);
+			
+			// Perform the box/frustum intersection test in local space.
+			if (localFrustum.Intersects(aabb))
+			{
+				gameobject->mDrawable.mMesh->mSubsets[iSubset].mbIsInFrustum = true;
+				++mRenderedSubsets;
+			}
+			else
+			{
+				gameobject->mDrawable.mMesh->mSubsets[iSubset].mbIsInFrustum = false;
+			}
+			++mTotalSubsets;
+		}
+	}
+}
+
+//////////////////////////////////////////////////////////////////////////
+void DX11RenderingAPI::ClearFrustumFlags()
+{
+	for(const unique_ptr<GameObject>& gameobject : mScene.mGameObjects)
+	{
+		for (u32 iSubset=0 ; iSubset<gameobject->mDrawable.mMesh->mSubsetCount; ++iSubset)
+		{
+			gameobject->mDrawable.mMesh->mSubsets[iSubset].mbIsInFrustum = true;
+			++mRenderedSubsets;
+			++mTotalSubsets;
+		}
+	}
+}
+
+//////////////////////////////////////////////////////////////////////////
 void DX11RenderingAPI::DrawGizmos()
 {
 	PROFILE_CPU("Draw Gizmos");
@@ -826,9 +865,12 @@ void DX11RenderingAPI::DrawProfiler()
 	{
 #if RJE_PROFILE_GPU
 		DX11Profiler::sInstance.GetProfilerInfo();
+		std::wstring frustumCullingInfo = L"Frustum Culling : " + ToString(mRenderedSubsets) +  L" / " + ToString(mTotalSubsets);
+		mSpriteBatch->DrawString(*mProfilerFont, frustumCullingInfo, profileInfoPos, XMCOLOR(0xffffffff));
+		profileInfoPos.y += 40;
 		mSpriteBatch->DrawInfoText(*mProfilerFont, DX11Profiler::sInstance.mProfileInfoString, profileInfoPos);
 		profileInfoPos.x += 350;
-		profileInfoPos.y = 125;
+		profileInfoPos.y = 165;
 		mSpriteBatch->DrawInfoText(*mProfilerFont, DX11Profiler::sInstance.mProfileDeepInfoString, profileInfoPos);
 #else
 		mSpriteBatch->DrawInfoText(*mProfilerFont, "GPU Profiling Not Enabled", profileInfoPos);
@@ -850,11 +892,8 @@ void DX11RenderingAPI::Draw2dElements()
 {
 	POINT textPos = {10, 10};
 
-	std::wstring lightStat;
-	if (mLightMode == LightMode::Point)			lightStat = L" Number of point lights : "       + ToString(mPointLightCount);
-	if (mLightMode == LightMode::Directional)	lightStat = L" Number of directional lights : " + ToString(mDirLightCount);
-	if (mLightMode == LightMode::Spot)			lightStat = L" Number of spot lights : "        + ToString(mSpotLightCount);
-	mSpriteBatch->DrawString(*mProfilerFont, lightStat, textPos, XMCOLOR(0xffffffff));
+	std::wstring text = L"Welcome to the RamJam Engine";
+	//mSpriteBatch->DrawString(*mProfilerFont, text, textPos, XMCOLOR(0xffffffff));
 }
 
 
@@ -1095,8 +1134,10 @@ void DX11RenderingAPI::ResizeWindow(int newSizeWidth, int newSizeHeight)
 	BuildGBuffer(sampleDesc);
 
 	// The window resized, so update the aspect ratio and recompute the projection matrix.
-	mCamera->mSettings.AspectRatio = (float)newSizeWidth / (float)newSizeWidth;
+	mCamera->mSettings.AspectRatio = (float)newSizeWidth / (float)newSizeHeight;
 	mCamera->UpdateProjMatrix((float)newSizeWidth, (float)newSizeHeight);
+
+	BoundingFrustum::CreateFromMatrix(mCameraFrustum, *mCamera->mCurrentProjectionMatrix);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -1131,4 +1172,10 @@ void TW_CALL TwSetWireframe(void *clientData)
 {
 	DX11RenderingAPI* api = static_cast<DX11RenderingAPI*>(clientData);
 	api->SetWireframe(!api->mScene.mbWireframe);
+}
+
+void TW_CALL TwClearFrustumFlags(void *clientData)
+{
+	DX11RenderingAPI* api = static_cast<DX11RenderingAPI*>(clientData);
+	api->ClearFrustumFlags();
 }

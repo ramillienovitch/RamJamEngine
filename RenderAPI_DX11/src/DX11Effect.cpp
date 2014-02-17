@@ -120,7 +120,6 @@ TiledDeferredEffect::TiledDeferredEffect(ID3D11Device* device, const std::string
 {
 	TiledDeferredTech     = mFX->GetTechniqueByName("TiledDeferred");
 	GBuffer               = mFX->GetVariableByName("gGbuffer")->AsShaderResource();
-	LitBuffer             = mFX->GetVariableByName("gLitBuffer")->AsUnorderedAccessView();
 	EyePosW               = mFX->GetVariableByName("gEyePosW")->AsVector();
 	NearFar               = mFX->GetVariableByName("gNearFar")->AsVector();
 	Proj                  = mFX->GetVariableByName("gProj")->AsMatrix();
