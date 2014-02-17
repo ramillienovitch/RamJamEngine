@@ -43,6 +43,8 @@ struct Vector3_T
 	void		Set (Real x, Real y, Real z);
 	Real		SqrMagnitude();
 	Real		Magnitude();
+	Real		Min();
+	Real		Max();
 	//---------------
 	Vector3_T&	Normalize();
 	Vector3_T&	Scale(const Vector3_T& v);

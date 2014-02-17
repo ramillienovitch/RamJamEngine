@@ -246,6 +246,7 @@ void DX11Mesh::LoadModelFromFile(std::string filePath)
 		{
 			mSubsets[currentSubset].mCenter  = 0.5f*(vMin+vMax);
 			mSubsets[currentSubset].mExtents = 0.5f*(vMax-vMin);
+			mSubsets[currentSubset].mRadius = mSubsets[currentSubset].mExtents.Magnitude();
 			vMin = Vector3(RJE::Math::Infinity_f, RJE::Math::Infinity_f, RJE::Math::Infinity_f);
 			vMax = -vMin;
 			++currentSubset;
@@ -462,6 +463,7 @@ void DX11Mesh::LoadPrimitive(MeshData::Data<PosNormTanTex>& meshData)
 	}
 	mSubsets[0].mCenter  = 0.5f*(vMin+vMax);
 	mSubsets[0].mExtents = 0.5f*(vMax-vMin);
+	mSubsets[0].mRadius = mSubsets[0].mExtents.Magnitude();
 	for (u32 j=0; j<mIndexTotalCount; ++j)
 	{
 		memcpy(&mIndexData[j], &meshData.Indices[j], 4);

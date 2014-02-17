@@ -30,11 +30,15 @@ struct DX11RenderingAPI : GraphicAPI
 	ID3D11UnorderedAccessView*				mLitBufferUAV;
 	ID3D11ShaderResourceView*				mLitBufferSRV;
 	//---------------
+	
+	//---------------
 	BOOL            mbUseFrustumCulling;
+	BOOL            mbUseAABB;	// if not, use Bounding Sphere
 	BoundingBox     mAABB;
 	BoundingFrustum mCameraFrustum;
 	u32             mRenderedSubsets;
 	u32             mTotalSubsets;
+	//---------------
 
 #if defined(RJE_DEBUG)  
 	IDXGIDebug*			md3dDebug;

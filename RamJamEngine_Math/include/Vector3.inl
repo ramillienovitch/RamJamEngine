@@ -147,6 +147,18 @@ FORCEINLINE Real Vector3_T<Real>::Magnitude()
 
 //----------------------------------------------------------------------
 template <typename Real>
+FORCEINLINE Real Vector3_T<Real>::Min()
+{ return x>y ? (y>z ? z : y) : (x>z ? z : x); }
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+template <typename Real>
+FORCEINLINE Real Vector3_T<Real>::Max()
+{ return x>y ? (x>z ? x : z) : (y>z ? y : z); }
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+template <typename Real>
 FORCEINLINE Vector3_T<Real>& Vector3_T<Real>::Normalize()
 {
 	Real mag = Magnitude(); 

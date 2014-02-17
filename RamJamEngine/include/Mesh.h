@@ -25,6 +25,7 @@ struct Mesh
 		//--------------
 		Vector3 mCenter;
 		Vector3 mExtents;
+		float   mRadius;
 		BOOL    mbIsInFrustum;
 	};
 

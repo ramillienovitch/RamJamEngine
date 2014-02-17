@@ -211,7 +211,7 @@ void AccumulateDirBRDF(SurfaceData surface, DirectionalLight light, float3 toEye
 							surface.specularPower,
 							litDiffuse, litSpecular);
 
-	lit += surface.albedo.rgb * litDiffuse + surface.specularAmount * litSpecular;
+	lit += surface.albedo.rgb * (gAmbientLightColor.rgb+litDiffuse) + surface.specularAmount * litSpecular;
 }
 
 void AccumulateSpotBRDF(SurfaceData surface, SpotLight light, float3 toEye, inout float3 lit)

@@ -16,6 +16,7 @@ DX11RenderingAPI::DX11RenderingAPI(Scene& scene) : mScene(scene)
 	//-----------
 	VSyncEnabled = false;
 	mbUseFrustumCulling = true;
+	mbUseAABB           = true;
 	//-----------
 	mConsoleFont  = nullptr;
 	mProfilerFont = nullptr;
@@ -206,6 +207,7 @@ void DX11RenderingAPI::Initialize(int windowWidth, int windowHeight)
 	TwAddVarRW(bar, "Render Deferred",     TW_TYPE_BOOLCPP, &mScene.mbDeferredRendering, NULL);
 	TwAddSeparator(bar, NULL, NULL); //===============================================
 	TwAddVarRW(bar, "Use Frustum Culling", TW_TYPE_BOOLCPP, &mbUseFrustumCulling, NULL);
+	TwAddVarRW(bar, "Use AABB",            TW_TYPE_BOOLCPP, &mbUseAABB, NULL);
 	TwAddButton(bar, "Clear Frustum Flags", TwClearFrustumFlags, this, NULL);
 	TwAddSeparator(bar, NULL, NULL); //===============================================
 	TwAddButton(bar, "Toggle Wireframe", TwSetWireframe, this, NULL);
@@ -602,7 +604,7 @@ void DX11RenderingAPI::ComputeLighting()
 // 	DX11Effects::TiledDeferredFX->SetFogStart(      mScene.mFogStart);
 // 	DX11Effects::TiledDeferredFX->SetFogRange(      mScene.mFogRange);
 // 	DX11Effects::TiledDeferredFX->SetFogState(      mScene.mbUseFog);
-// 	DX11Effects::TiledDeferredFX->SetAmbientLight(mScene.mAmbientLightColor);
+	DX11Effects::TiledDeferredFX->SetAmbientLight(mScene.mAmbientLightColor);
 	DX11Effects::TiledDeferredFX->SetDirLights(  mDirLights->GetShaderResource());
 	DX11Effects::TiledDeferredFX->SetPointLights(mPointLights->GetShaderResource());
 	//DX11Effects::TiledDeferredFX->SetSpotLights( mSpotLights->GetShaderResource());
@@ -745,15 +747,25 @@ void DX11RenderingAPI::ComputeFrustumFlags()
 		BoundingFrustum localFrustum;
 		mCameraFrustum.Transform(localFrustum, toLocal);
 
-		// Retrieve the object AABB and test frustum intersection
-		BoundingBox aabb;
 		for (u32 iSubset=0 ; iSubset<gameobject->mDrawable.mMesh->mSubsetCount; ++iSubset)
 		{
-			aabb.Center  = Vector3::Scale(gameobject->mTransform.Scale, gameobject->mDrawable.mMesh->mSubsets[iSubset].mCenter);
-			aabb.Extents = Vector3::Scale(gameobject->mTransform.Scale, gameobject->mDrawable.mMesh->mSubsets[iSubset].mExtents);
+			BOOL inFrustum = false;
+			if (mbUseAABB)
+			{
+				BoundingBox aabb;
+				aabb.Center  = Vector3::Scale(gameobject->mTransform.Scale, gameobject->mDrawable.mMesh->mSubsets[iSubset].mCenter);
+				aabb.Extents = Vector3::Scale(gameobject->mTransform.Scale, gameobject->mDrawable.mMesh->mSubsets[iSubset].mExtents);
+				inFrustum = localFrustum.Intersects(aabb);
+			}
+			else
+			{
+				BoundingSphere bs;
+				bs.Center = Vector3::Scale(gameobject->mTransform.Scale, gameobject->mDrawable.mMesh->mSubsets[iSubset].mCenter);
+				bs.Radius = gameobject->mTransform.Scale.Max() * gameobject->mDrawable.mMesh->mSubsets[iSubset].mRadius;
+				inFrustum = localFrustum.Intersects(bs);
+			}
 			
-			// Perform the box/frustum intersection test in local space.
-			if (localFrustum.Intersects(aabb))
+			if (inFrustum)
 			{
 				gameobject->mDrawable.mMesh->mSubsets[iSubset].mbIsInFrustum = true;
 				++mRenderedSubsets;
