@@ -13,15 +13,18 @@ struct Scene
 {
 	SceneLoader				mSceneLoader;
 	std::vector<unique_ptr<GameObject>> mGameObjects;
-	
+	GameObject*							mEditorGameobject;
+
 	//-----------------------------------------------
-	// Editor Values
+	// Gameobject Editor Settings
+	u32				mCurrentEditorGOIdx, mCurrentEditorGOIdxUI;
 	Transform*		mGameObjectEditorTransform;
 	std::string		mGameObjectEditorName;
 	Vector3			mGameObjectEditorPos;
 	Vector3			mGameObjectEditorScale;
 	TwQuaternion	mGameObjectEditorRot;
 	Color			mGameObjectEditorColor;
+	BOOL			mbEnableGizmo;
 	//-----------------------------------------------
 
 	//-----------------------------------------------
@@ -47,5 +50,11 @@ struct Scene
 	//-----------------------------------------------
 	
 	Scene();
+	~Scene();
+	//---------
+	void Init();
 	void LoadFromFile(const char* pFile);
+	void ChangeCurrentEditorGO(u32& idx);
+	//---------
+	void Update();
 };

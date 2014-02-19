@@ -158,6 +158,12 @@ FORCEINLINE Real Vector4_T<Real>::Magnitude()
 
 //----------------------------------------------------------------------
 template <typename Real>
+FORCEINLINE Real Vector4_T<Real>::Dot(const Vector4_T& v1, const Vector4_T& v2)
+{ return v1.w*v2.w + v1.x*v2.x + v1.y*v2.y + v1.z*v2.z; }
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+template <typename Real>
 FORCEINLINE Vector4_T<Real>& Vector4_T<Real>::Normalize()
 {
 	Real mag = Magnitude(); 

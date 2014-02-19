@@ -35,6 +35,9 @@ Console::Console()
 	// ----- Rendering -----
 	CommandList["wireframe"] = SetWireframe;
 	CommandList["msaa"] = SetMSAA;
+	CommandList["instantiateModel"]     = InstantiateModel;
+	CommandList["instantiatePrimitive"] = InstantiatePrimitive;
+	CommandList["loadScene"] = LoadScene;
 	// ------- Time -------
 	CommandList["time"] = Time;
 }
@@ -410,6 +413,43 @@ void SetMSAA(char* command /* = nullptr */)
 		else if (command[0] == '8')		System::Instance()->mGraphicAPI->SetMSAA(8);
 	}
 	else Console::Instance()->ConcatText(" -> Bad Parameter. Command usage : msaa [1|2|4|8]");
+}
+//-----------------------------
+void InstantiateModel(char* command /* = nullptr */)
+{
+	if (command == nullptr)
+	{
+		Console::Instance()->ConcatText(" -> Bad Parameter. Command usage : instantiateModel \"filename\"");
+		return;
+	}
+	
+	string filename(command);
+	System::Instance()->mGraphicAPI->InstantiateModel(filename);
+}
+//-----------------------------
+void InstantiatePrimitive(char* command /* = nullptr */)
+{
+	if (command == nullptr)
+	{
+		Console::Instance()->ConcatText(" -> Bad Parameter. Command usage : instantiatePrimitive \"name\"");
+		return;
+	}
+
+	string name(command);
+	System::Instance()->mGraphicAPI->InstantiatePrimitive(name);
+}
+//-----------------------------
+void LoadScene(char* command /* = nullptr */)
+{
+	if (command == nullptr)
+	{
+		Console::Instance()->ConcatText(" -> Bad Parameter. Command usage : loadScene \"scene\"");
+		return;
+	}
+
+	string name(command);
+	string scene = System::Instance()->mDataPath + "scenes\\" + name + ".xml";
+	System::Instance()->mScene.LoadFromFile(scene.c_str());
 }
 
 

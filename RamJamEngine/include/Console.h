@@ -113,7 +113,10 @@ void CleanConsole(char* command = nullptr);
 // ------- Core -------
 void Exit        (char* command = nullptr);
 // ----- Rendering -----
-void SetWireframe(char* command = nullptr);
-void SetMSAA     (char* command = nullptr);
+void SetWireframe        (char* command = nullptr);
+void SetMSAA             (char* command = nullptr);
+void InstantiateModel    (char* command = nullptr);
+void InstantiatePrimitive(char* command = nullptr);
+void LoadScene           (char* command = nullptr);
 // ------- Time -------
 void Time        (char* command = nullptr);

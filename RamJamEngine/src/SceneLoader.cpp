@@ -6,6 +6,8 @@ using namespace rapidxml;
 //////////////////////////////////////////////////////////////////////////
 void SceneLoader::LoadFromFile( const char* pFilename, std::vector<unique_ptr<GameObject>>& gameobjects )
 {
+	gameobjects.resize(0);
+
 	file<>			xmlFile(pFilename);
 	xml_document<>	xmlDoc;
 	

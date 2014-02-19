@@ -54,7 +54,8 @@ System::System()
 #else
 	mGraphicAPI = rje_new OglWrapper();
 #endif
-	mGraphicAPI->mCamera = rje_new Camera();
+	mGraphicAPI->mCamera       = rje_new Camera();
+	mGraphicAPI->mShadowCamera = rje_new Camera();
 }
 System::~System(){}
 
@@ -83,6 +84,7 @@ BOOL System::Initialize(int nCmdShow)
 	// Load the Scene file
 	string scenePath = mDataPath + CIniFile::GetValue("scene", "scenes", mResourcesPath);
 	mScene.LoadFromFile(scenePath.c_str());
+	mScene.Init();
 
 	return true;
 }
@@ -93,6 +95,7 @@ void System::Shutdown()
 	ShutdownWindows();
 
 	RJE_SAFE_DELETE(mGraphicAPI->mCamera);
+	RJE_SAFE_DELETE(mGraphicAPI->mShadowCamera);
 	mGraphicAPI->Shutdown();
 	RJE_SAFE_DELETE(mGraphicAPI);
 
@@ -294,6 +297,7 @@ LRESULT CALLBACK System::MessageHandler(HWND hwnd, UINT umsg, WPARAM wparam, LPA
 BOOL System::UpdateScene(float dt)
 {
 	PROFILE_CPU("Update Scene");
+	mScene.Update();
 	mGraphicAPI->mCamera->Update();
 	mGraphicAPI->UpdateScene(dt);
 	return true;

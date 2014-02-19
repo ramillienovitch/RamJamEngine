@@ -45,6 +45,8 @@ struct Vector4_T
 	Real		SqrMagnitude();
 	Real		Magnitude();
 	//---------------
+	static Real		Dot(const Vector4_T& v1, const Vector4_T& v2);
+	//---------------
 	Vector4_T&	Normalize();
 	Vector4_T&	Scale(const Vector4_T& v);
 };

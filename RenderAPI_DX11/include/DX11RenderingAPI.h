@@ -98,6 +98,8 @@ struct DX11RenderingAPI : GraphicAPI
 
 	virtual void SetWireframe(BOOL state);
 	virtual void SetMSAA(u32 MSAAsamples);
+	virtual void InstantiateModel(string filename);
+	virtual void InstantiatePrimitive(string name);
 
 	//////////////////////////////////////////////////////////////////////////
 

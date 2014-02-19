@@ -246,10 +246,12 @@ void DX11RenderingAPI::Initialize(int windowWidth, int windowHeight)
 	//-----------
 	TwBar *gameObjectBar = TwNewBar("GameObject");
 	TwDefine("GameObject iconified=true ");
+	TwAddVarRW(gameObjectBar, "GameObject ", TW_TYPE_UINT32,    &mScene.mCurrentEditorGOIdxUI,  "min=0 step=1");
+	TwAddVarRW(gameObjectBar, "View Gizmo ", TW_TYPE_BOOLCPP,   &mScene.mbEnableGizmo, NULL);
 	TwSetParam(gameObjectBar, NULL, "size",  TW_PARAM_INT32, 2, barSize);
 	TwAddVarRO(gameObjectBar, "Name",        TW_TYPE_STDSTRING, &mScene.mGameObjectEditorName,  "opened=true");
 	TwAddVarRW(gameObjectBar, "Position",    TW_TYPE_DIR3F,     &mScene.mGameObjectEditorPos,   "opened=true");
-	TwAddVarRW(gameObjectBar, "Rotation",    TW_TYPE_QUAT4F,    &mScene.mGameObjectEditorRot,   "opened=true");
+	TwAddVarRW(gameObjectBar, "Rotation",    TW_TYPE_QUAT4F,    &mScene.mGameObjectEditorRot,   "opened=true axisx=-x axisy=y axisz=z");
 	TwAddVarRW(gameObjectBar, "Scale",       TW_TYPE_DIR3F,     &mScene.mGameObjectEditorScale, "opened=true");
 	TwAddVarRW(gameObjectBar, "Gizmo Color", TW_TYPE_COLOR32,   &mScene.mGameObjectEditorColor, "opened=true colorOrder=argb");
 }
@@ -308,19 +310,6 @@ void DX11RenderingAPI::InitSwapChain(u32 msaaSamples /*=4*/)
 //////////////////////////////////////////////////////////////////////////
 void DX11RenderingAPI::UpdateScene( float dt )
 {
-	//-------------------------------------
-	Transform tempTrf;
-	tempTrf.Rotation									= mScene.mGameObjectEditorRot;
-	tempTrf.Scale										= mScene.mGameObjectEditorScale;
-	tempTrf.Position									= mScene.mGameObjectEditorPos;
-	mScene.mGameObjectEditorTransform->Position			= mScene.mGameObjectEditorPos;
-	mScene.mGameObjectEditorTransform->Rotation			= mScene.mGameObjectEditorRot;
-	mScene.mGameObjectEditorTransform->Scale			= mScene.mGameObjectEditorScale;
-	mScene.mGameObjectEditorTransform->WorldMat			= tempTrf.WorldMatrix();
-	mScene.mGameObjectEditorTransform->WorldMatNoScale	= tempTrf.WorldMatrixNoScale();
-	mScene.mGameObjects[0]->mDrawable.mGizmoColor		= mScene.mGameObjectEditorColor;
-	//-------------------------------------
-	
 	// Inputs modifiers : TODO: Get these out of DX11RenderingAPI !
 	if (!Console::Instance()->IsActive())
 	{
@@ -394,12 +383,14 @@ void DX11RenderingAPI::DrawScene()
 	{
 		RenderGBuffer();
 		ComputeLighting();
+		RenderSkybox(true);
+		DrawGizmos();
 	}
 	else
 	{
 		RenderForward();
+		RenderSkybox(false);
 	}
-	RenderSkybox(mScene.mbDeferredRendering);
 
 	float blendFactor[4] = {mBlendFactorR, mBlendFactorG, mBlendFactorB, mBlendFactorA};
 	mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_Solid);
@@ -520,8 +511,6 @@ void DX11RenderingAPI::RenderGBuffer()
 	for (ID3D11RenderTargetView* rtv : mGBufferRTV)
 		mDX11Device->md3dImmediateContext->ClearRenderTargetView(rtv, DirectX::Colors::Black);
 	mDX11Device->md3dImmediateContext->ClearDepthStencilView(mDepthBuffer->GetDepthStencil(), D3D11_CLEAR_DEPTH|D3D11_CLEAR_STENCIL, 1.0f, 0);
-
-	DrawGizmos();
 
 	mDX11Device->md3dImmediateContext->IASetInputLayout(DX11InputLayouts::PosNormalTanTex);
 	mDX11Device->md3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -737,6 +726,9 @@ void DX11RenderingAPI::ComputeFrustumFlags()
 
 	for(const unique_ptr<GameObject>& gameobject : mScene.mGameObjects)
 	{
+		if (gameobject->mDrawable.mMesh == nullptr)
+			continue;
+
 		Matrix44 invWorld = gameobject->mTransform.WorldMatrixNoScale();	// we scale the AABB
 		invWorld.Inverse();
 
@@ -813,6 +805,12 @@ void DX11RenderingAPI::DrawGizmos()
 	{
 		if (gizmo->mDrawable.mGizmo)
 			gizmo->mDrawable.RenderGizmo(DX11Effects::ColorFX->ColorTech->GetPassByIndex(0));
+	}
+
+	if (mScene.mbEnableGizmo)
+	{
+		mScene.mEditorGameobject->mTransform = mScene.mGameObjects[mScene.mCurrentEditorGOIdx]->mTransform;
+		mScene.mEditorGameobject->mDrawable.RenderGizmo(DX11Effects::ColorFX->ColorTech->GetPassByIndex(0));
 	}
 
 	PROFILE_GPU_END(L"Render Gizmos");
@@ -1174,6 +1172,36 @@ void DX11RenderingAPI::SetMSAA(u32 MSAASamples)
 {
 	InitSwapChain(MSAASamples);
 	System::Instance()->OnResize();
+}
+
+//////////////////////////////////////////////////////////////////////////
+void DX11RenderingAPI::InstantiateModel(string filename)
+{
+	unique_ptr<GameObject> gameobject (new GameObject);
+	string meshPath     = System::Instance()->mDataPath + "models\\" + filename + ".mesh";
+	string materialPath = filename + "\\" + filename + ".matlib";
+	//-----
+	gameobject->mName = filename;
+	gameobject->mDrawable.mMesh = rje_new DX11Mesh;
+	gameobject->mDrawable.mMesh->LoadModelFromFile(meshPath);
+	gameobject->mDrawable.mMesh->LoadMaterialLibraryFromFile(materialPath);
+	mScene.mGameObjects.push_back(std::move(gameobject));
+}
+
+//////////////////////////////////////////////////////////////////////////
+void DX11RenderingAPI::InstantiatePrimitive(string name)
+{
+	unique_ptr<GameObject> gameobject (new GameObject);
+	gameobject->mName = name;
+	gameobject->mDrawable.mMesh = rje_new DX11Mesh;
+
+	if (name == "cube")			gameobject->mDrawable.mMesh->LoadBox(1, 1, 1);
+	if (name == "sphere")		gameobject->mDrawable.mMesh->LoadGeoSphere(1, 3);
+	if (name == "cylinder")		gameobject->mDrawable.mMesh->LoadCylinder(0.5, 0.5, 2, 20, 1);
+	if (name == "grid")			gameobject->mDrawable.mMesh->LoadGrid(10, 10, 2, 2);
+	
+	gameobject->mDrawable.mMesh->LoadMaterialFromFile("_Default\\default.mat");
+	mScene.mGameObjects.push_back(std::move(gameobject));
 }
 
 

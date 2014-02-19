@@ -55,6 +55,7 @@ struct Camera
 
 	void SetCameraOrtho(BOOL);
 
+	void Init(CameraSettings settings, BOOL ortho);
 	void Update();
 
 	void UpdateViewMatrix();
