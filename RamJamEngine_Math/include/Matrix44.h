@@ -30,6 +30,7 @@ struct Matrix44_T
 	Matrix44_T		operator -  (const Matrix44_T&);
 	Matrix44_T		operator *  (const Matrix44_T&);
 	Vector3_T<Real>	operator *  (const Vector3_T<Real>&);
+	Vector4_T<Real>	operator *  (const Vector4_T<Real>&);
 	Matrix44_T&		operator *= (const Matrix44_T&);
 	Matrix44_T&		operator =  (const Matrix44_T&);
 	Matrix44_T&		operator =  (const DirectX::XMMATRIX&);
@@ -63,9 +64,11 @@ struct Matrix44_T
 	//---------------------------
 	static Matrix44_T	LookAt(Vector3_T<Real> pos, Vector3_T<Real> dir, Vector3_T<Real> up);
 	static Matrix44_T	LookAt(Vector3_T<Real> pos, Vector3_T<Real> dir);
+	static void			LookAt(Matrix44_T& mOut, Vector3_T<Real> pos, Vector3_T<Real> dir);
 	//---------------------------
 	static Matrix44_T	PerspectiveFov(Real Fov, Real AspectRatio, Real NearZ, Real FarZ);
 	static Matrix44_T	Orthographic(Real ViewWidth, Real ViewHeight, Real NearZ, Real FarZ);
+	static void			Orthographic(Matrix44_T& mOut, Real ViewWidth, Real ViewHeight, Real NearZ, Real FarZ);
 	//---------------------------
 	// Transformation Matrix for the reflection with the plane equation Ax+By+Cz+D=0.
 	static Matrix44_T	Reflection(Vector4_T<Real> planeEquation);

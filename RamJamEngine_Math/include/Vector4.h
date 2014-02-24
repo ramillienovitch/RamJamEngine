@@ -44,8 +44,14 @@ struct Vector4_T
 	void		Set (Real w, Real x, Real y, Real z);
 	Real		SqrMagnitude();
 	Real		Magnitude();
+	Real		Min();
+	Real		Max();
+	Vector4_T	Minimize(const Vector4_T& v1, const Vector4_T& v2);
+	Vector4_T	Maximize(const Vector4_T& v1, const Vector4_T& v2);
 	//---------------
-	static Real		Dot(const Vector4_T& v1, const Vector4_T& v2);
+	static Real			Dot(const Vector4_T& v1, const Vector4_T& v2);
+	static Vector4_T	Min(const Vector4_T& v1, const Vector4_T& v2);
+	static Vector4_T	Max(const Vector4_T& v1, const Vector4_T& v2);
 	//---------------
 	Vector4_T&	Normalize();
 	Vector4_T&	Scale(const Vector4_T& v);

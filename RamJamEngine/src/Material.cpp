@@ -16,6 +16,19 @@ Material::~Material()
 }
 
 //////////////////////////////////////////////////////////////////////////
+void Material::DefaultMaterial()
+{
+	AddPropertyFloat("SpecularAmount", 0.0f);
+	AddPropertyFloat("SpecularPower",  0.0f);
+
+	// Texture
+	Vector2 tiling = Vector2(1.0f, 1.0);
+	Vector2 offset = Vector2(0.0f, 0.0);
+	float rotation = 0.0f;
+	AddPropertyTexture("Texture_Diffuse", DX11TextureManager::Instance()->mTextures["_default"], tiling, offset, rotation);
+}
+
+//////////////////////////////////////////////////////////////////////////
 void Material::LoadPropertiesFromFile( std::string filename )
 {
 	std::string shaderName = CIniFile::GetValue("Name", "shader");

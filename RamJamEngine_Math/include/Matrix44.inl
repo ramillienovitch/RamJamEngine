@@ -110,6 +110,17 @@ FORCEINLINE Vector3_T<Real> Matrix44_T<Real>::operator * ( const Vector3_T<Real>
 
 //----------------------------------------------------------------------
 template <typename Real>
+FORCEINLINE Vector4_T<Real> Matrix44_T<Real>::operator * ( const Vector4_T<Real>& pVector )
+{
+	return Vector4_T<Real> (	m11 * pVector.w + m12 * pVector.x + m13 * pVector.y + m14 * pVector.z,
+								m21 * pVector.w + m22 * pVector.x + m23 * pVector.y + m24 * pVector.z,
+								m31 * pVector.w + m32 * pVector.x + m33 * pVector.y + m34 * pVector.z,
+								m41 * pVector.w + m42 * pVector.x + m43 * pVector.y + m44 * pVector.z);
+}
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+template <typename Real>
 FORCEINLINE Matrix44_T<Real>& Matrix44_T<Real>::operator*=( const Matrix44_T<Real>& matIn )
 { *this = *this*matIn; return *this; }
 //---------------------------------------------------------------------
@@ -522,6 +533,10 @@ FORCEINLINE Matrix44_T<Real> Matrix44_T<Real>::LookAt(Vector3_T<Real> pos, Vecto
 template <typename Real>
 FORCEINLINE Matrix44_T<Real> Matrix44_T<Real>::LookAt(Vector3_T<Real> pos, Vector3_T<Real> dir)
 { return LookAt(pos, dir, Vector3_T<Real>(0,1,0)); }
+//----------------------------------------------
+template <typename Real>
+FORCEINLINE void Matrix44_T<Real>::LookAt(Matrix44_T<Real>& mOut, Vector3_T<Real> pos, Vector3_T<Real> dir)
+{ mOut = LookAt(pos, dir, Vector3_T<Real>(0,1,0)); }
 //----------------------------------------------------------------------
 
 //----------------------------------------------------------------------
@@ -564,6 +579,24 @@ FORCEINLINE Matrix44_T<Real> Matrix44_T<Real>::Orthographic(Real ViewWidth, Real
 	out.m31 = Zero;			out.m32 = Zero;				out.m33 = fRange;			out.m34 = Zero;
 	out.m41 = Zero;			out.m42 = Zero;				out.m43 = -fRange * NearZ;	out.m44 = One;
 	return out;
+}
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+template <typename Real>
+FORCEINLINE void Matrix44_T<Real>::Orthographic(Matrix44_T<Real>& mOut, Real ViewWidth, Real ViewHeight, Real NearZ, Real FarZ)
+{
+	RJE_ASSERT(!RJE::Math::IsZero(ViewWidth));
+	RJE_ASSERT(!RJE::Math::IsZero(ViewHeight));
+
+	Real One    = static_cast<Real>(1.0);
+	Real Zero   = static_cast<Real>(0.0);
+	Real fRange = One / (FarZ-NearZ);
+
+	mOut.m11 = 2/ViewWidth;		mOut.m12 = Zero;				mOut.m13 = Zero;				mOut.m14 = Zero;
+	mOut.m21 = Zero;			mOut.m22 = 2/ViewHeight;		mOut.m23 = Zero;				mOut.m24 = Zero;
+	mOut.m31 = Zero;			mOut.m32 = Zero;				mOut.m33 = fRange;				mOut.m34 = Zero;
+	mOut.m41 = Zero;			mOut.m42 = Zero;				mOut.m43 = -fRange * NearZ;		mOut.m44 = One;
 }
 //----------------------------------------------------------------------
 

@@ -83,6 +83,8 @@ struct Material
 	void LoadPropertiesFromFile  (std::string filename);
 	void SetPropertiesFromFactory(std::string shaderName);
 	//-------
+	void DefaultMaterial();
+	//-------
 	void AddProperty       (std::string propertyName, MaterialPropertyType propertyType, u64 propertyDataLength, void* propertyData);
 	void AddPropertyInt    (std::string propertyName, int     propertyData);
 	void AddPropertyBool   (std::string propertyName, BOOL    propertyData);

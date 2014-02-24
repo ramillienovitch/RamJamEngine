@@ -158,9 +158,51 @@ FORCEINLINE Real Vector4_T<Real>::Magnitude()
 
 //----------------------------------------------------------------------
 template <typename Real>
+FORCEINLINE Real Vector4_T<Real>::Min()
+{ return w>x ? (x>y ? (y>z ? z : y) : (x>z ? z : x)) : (w>y ? (y>z ? z : y) : (w>z ? z : w)); }
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+template <typename Real>
+FORCEINLINE Real Vector4_T<Real>::Max()
+{ return w>x ? (w>y ? (w>z ? w : z) : (y>z ? y : z)) : (x>y ? (x>z ? x : z) : (y>z ? y : z)); }
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+template <typename Real>
 FORCEINLINE Real Vector4_T<Real>::Dot(const Vector4_T& v1, const Vector4_T& v2)
 { return v1.w*v2.w + v1.x*v2.x + v1.y*v2.y + v1.z*v2.z; }
 //----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+template <typename Real>
+FORCEINLINE Vector4_T<Real> Vector4_T<Real>::Min(const Vector4_T<Real>& v1, const Vector4_T<Real>& v2)
+{
+	Vector4_T<Real> out;
+
+	out.w = v1.w < v2.w ? v1.w : v2.w;
+	out.x = v1.x < v2.x ? v1.x : v2.x;
+	out.y = v1.y < v2.y ? v1.y : v2.y;
+	out.z = v1.z < v2.z ? v1.z : v2.z;
+
+	return out;
+}
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+template <typename Real>
+FORCEINLINE Vector4_T<Real> Vector4_T<Real>::Max(const Vector4_T<Real>& v1, const Vector4_T<Real>& v2)
+{
+	Vector4_T<Real> out;
+
+	out.w = v1.w > v2.w ? v1.w : v2.w;
+	out.x = v1.x > v2.x ? v1.x : v2.x;
+	out.y = v1.y > v2.y ? v1.y : v2.y;
+	out.z = v1.z > v2.z ? v1.z : v2.z;
+
+	return out;
+}
+//---------------------------------------------------------------------
 
 //----------------------------------------------------------------------
 template <typename Real>

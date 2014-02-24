@@ -46,10 +46,10 @@ DX11RenderingAPI::DX11RenderingAPI(Scene& scene) : mScene(scene)
 	for (int i = 0; i < MAX_LIGHTS; i++)
 	{
 		float radius = RJE::Math::Rand(0.0f,1.0f);
-		mPointLightsRadius[i]    = sqrt(radius) * 30.0f;
-		mPointLightsHeight[i]    = 0.5f;//RJE::Math::Rand(0.0f, 10.0f);
+		mPointLightsRadius[i]    = sqrt(radius) * 15.0f;
+		mPointLightsHeight[i]    = /*0.5f;//*/RJE::Math::Rand(0.0f, 10.0f);
 		mPointLightsAngle[i]     = RJE::Math::Rand(0.0f,RJE::Math::Pi_Two_f);
-		mPointLightsAnimSpeed[i] = 0.0f;//RJE::Math::Rand(0.1f,2.0f);
+		mPointLightsAnimSpeed[i] = RJE::Math::Rand(0.1f,2.0f);
 		//--------
 		mWorkingDirLights[i].Color     = Vector3(0.5f, 0.5f, 0.5f);
 		mWorkingDirLights[i].Direction = Vector3(0.57735f, -0.57735f, 0.57735f);
@@ -189,6 +189,9 @@ void DX11RenderingAPI::Initialize(int windowWidth, int windowHeight)
 	mPointLightUICount = MAX_LIGHTS;
 	mSpotLightUICount  = 0;
 	//-----------
+	mLightSphereMat.DefaultMaterial();
+	//-----------
+	BuildLightSpheres();
 	BuildScreenQuad();
 	BuildSkybox();
 	//-----------
@@ -240,9 +243,11 @@ void DX11RenderingAPI::Initialize(int windowWidth, int windowHeight)
 	TwSetParam(lightBar, NULL, "size",  TW_PARAM_INT32, 2, barSize);
 
 	TwAddSeparator(lightBar, NULL, NULL); //===============================================
-	TwAddVarRW(lightBar, "Dir   Light Count", TW_TYPE_UINT32, &mDirLightUICount,   "min=0 max=4096 step=8");
-	TwAddVarRW(lightBar, "Point Light Count", TW_TYPE_UINT32, &mPointLightUICount, "min=0 max=4096 step=8");
-	TwAddVarRW(lightBar, "Spot  Light Count", TW_TYPE_UINT32, &mSpotLightUICount,  "min=0 max=4096 step=8");
+	TwAddVarRW(lightBar, "Animate Point Lights", TW_TYPE_BOOLCPP, &mScene.mbAnimateLights,   NULL);
+	TwAddVarRW(lightBar, "Draw Light Spheres",   TW_TYPE_BOOLCPP, &mScene.mbDrawLightSphere, NULL);
+	TwAddVarRW(lightBar, "Dir   Light Count",    TW_TYPE_UINT32,  &mDirLightUICount,   "min=0 max=4096 step=8");
+	TwAddVarRW(lightBar, "Point Light Count",    TW_TYPE_UINT32,  &mPointLightUICount, "min=0 max=4096 step=8");
+	TwAddVarRW(lightBar, "Spot  Light Count",    TW_TYPE_UINT32,  &mSpotLightUICount,  "min=0 max=4096 step=8");
 	//-----------
 	TwBar *gameObjectBar = TwNewBar("GameObject");
 	TwDefine("GameObject iconified=true ");
@@ -346,9 +351,11 @@ void DX11RenderingAPI::UpdateScene( float dt )
 		PointLight* light = mPointLights->MapDiscard(mDX11Device->md3dImmediateContext);
 		for (u32 i = 0; i < mPointLightCount; ++i)
 		{
-			mWorkingPointLights[i].Position.x = mPointLightsRadius[i] * cosf(mPointLightsAngle[i] + timer * mPointLightsAnimSpeed[i] );
+			float speed = mScene.mbAnimateLights ? mPointLightsAnimSpeed[i] : 0.0f;
+
+			mWorkingPointLights[i].Position.x = mPointLightsRadius[i] * cosf(mPointLightsAngle[i] + timer * speed );
 			mWorkingPointLights[i].Position.y = mPointLightsHeight[i];
-			mWorkingPointLights[i].Position.z = mPointLightsRadius[i] * sinf(mPointLightsAngle[i] + timer * mPointLightsAnimSpeed[i] );
+			mWorkingPointLights[i].Position.z = mPointLightsRadius[i] * sinf(mPointLightsAngle[i] + timer * speed );
 			light[i] = mWorkingPointLights[i];
 		}
 		mPointLights->Unmap(mDX11Device->md3dImmediateContext);
@@ -493,6 +500,29 @@ void DX11RenderingAPI::RenderForward()
 				gameobject_transparent->mDrawable.Render(activeTech->GetPassByIndex(p), false);
 		}
 
+		// Render the light sphere if requested
+		if (mScene.mbDrawLightSphere)
+		{
+			UINT stride = sizeof(PosNormTanTex);
+			UINT offset = 0;
+
+			RJE_CHECK_FOR_SUCCESS(DX11Effects::BasicFX->SetMaterial(&mLightSphereMat));
+			for(u32 i = 0; i < mPointLightCount; ++i)
+			{
+				Transform lightTrf;
+				Matrix44 lightWorld;
+				lightTrf.Position = mWorkingPointLights[i].Position;
+				lightWorld = lightTrf.WorldMatrix();
+
+				RJE_CHECK_FOR_SUCCESS(DX11Effects::BasicFX->SetWorld(lightWorld));
+				mDX11Device->md3dImmediateContext->IASetVertexBuffers(0, 1, &mLightSpheresVB, &stride, &offset);
+				mDX11Device->md3dImmediateContext->IASetIndexBuffer(mLightSpheresIB, DXGI_FORMAT_R32_UINT, 0);
+
+				activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
+				mDX11Device->md3dImmediateContext->DrawIndexed(mLightSphereIndexCount, 0, 0);
+			}
+		}
+
 		// Restore default render states
 		mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sCurrentRasterizerState);
 		mDX11Device->md3dImmediateContext->OMSetBlendState(0, blendFactor, 0xffffffff);
@@ -558,6 +588,29 @@ void DX11RenderingAPI::RenderGBuffer()
 
 			if (gameobject_transparent->mDrawable.mMesh)
 				gameobject_transparent->mDrawable.Render(activeTech->GetPassByIndex(p), false);
+		}
+
+		// Render the light sphere if requested
+		if (mScene.mbDrawLightSphere)
+		{
+			UINT stride = sizeof(PosNormTanTex);
+			UINT offset = 0;
+
+			RJE_CHECK_FOR_SUCCESS(DX11Effects::BasicFX->SetMaterial(&mLightSphereMat));
+			for(u32 i = 0; i < mPointLightCount; ++i)
+			{
+				Transform lightTrf;
+				Matrix44 lightWorld;
+				lightTrf.Position = mWorkingPointLights[i].Position;
+				lightWorld = lightTrf.WorldMatrix();
+
+				RJE_CHECK_FOR_SUCCESS(DX11Effects::BasicFX->SetWorld(lightWorld));
+				mDX11Device->md3dImmediateContext->IASetVertexBuffers(0, 1, &mLightSpheresVB, &stride, &offset);
+				mDX11Device->md3dImmediateContext->IASetIndexBuffer(mLightSpheresIB, DXGI_FORMAT_R32_UINT, 0);
+
+				activeTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
+				mDX11Device->md3dImmediateContext->DrawIndexed(mLightSphereIndexCount, 0, 0);
+			}
 		}
 
 		// Restore default render states
@@ -952,6 +1005,8 @@ void DX11RenderingAPI::Shutdown()
 	RJE_SAFE_DELETE(mPointLights);
 	RJE_SAFE_DELETE(mSpotLights);
 
+	RJE_SAFE_RELEASE(mLightSpheresVB);
+	RJE_SAFE_RELEASE(mLightSpheresIB);
 	RJE_SAFE_RELEASE(mScreenQuadVB);
 	RJE_SAFE_RELEASE(mScreenQuadIB);
 	RJE_SAFE_RELEASE(mSkyboxVB);
@@ -981,6 +1036,46 @@ void DX11RenderingAPI::Shutdown()
 	RJE_SAFE_DELETE(mDepthBuffer);
 	RJE_SAFE_DELETE(mDX11CommonStates);
 	RJE_SAFE_DELETE(mDX11Device);
+}
+
+//////////////////////////////////////////////////////////////////////////
+void DX11RenderingAPI::BuildLightSpheres()
+{
+	MeshData::Data<PosNormTanTex> sphere;
+
+	GeometryGenerator geoGen;
+	geoGen.CreateGeosphere(0.1f, 4, sphere);
+
+	std::vector<PosNormTanTex> vertices(sphere.Vertices.size());
+
+	mLightSphereIndexCount = (u32)sphere.Indices.size();
+
+	for(u32 i = 0; i < sphere.Vertices.size(); ++i)
+	{
+		vertices[i].Position = sphere.Vertices[i].Position;
+		vertices[i].Normal   = sphere.Vertices[i].Normal;
+		vertices[i].TexC     = sphere.Vertices[i].TexC;
+	}
+
+	D3D11_BUFFER_DESC vbd;
+	vbd.Usage          = D3D11_USAGE_IMMUTABLE;
+	vbd.ByteWidth      = (u32) (sizeof(PosNormTanTex) * sphere.Vertices.size());
+	vbd.BindFlags      = D3D11_BIND_VERTEX_BUFFER;
+	vbd.CPUAccessFlags = 0;
+	vbd.MiscFlags      = 0;
+	D3D11_SUBRESOURCE_DATA vinitData;
+	vinitData.pSysMem = &vertices[0];
+	RJE_CHECK_FOR_SUCCESS(mDX11Device->md3dDevice->CreateBuffer(&vbd, &vinitData, &mLightSpheresVB));
+	//-----------
+	D3D11_BUFFER_DESC ibd;
+	ibd.Usage          = D3D11_USAGE_IMMUTABLE;
+	ibd.ByteWidth      = (u32) (sizeof(u32) * sphere.Indices.size());
+	ibd.BindFlags      = D3D11_BIND_INDEX_BUFFER;
+	ibd.CPUAccessFlags = 0;
+	ibd.MiscFlags      = 0;
+	D3D11_SUBRESOURCE_DATA iinitData;
+	iinitData.pSysMem = &sphere.Indices[0];
+	RJE_CHECK_FOR_SUCCESS(mDX11Device->md3dDevice->CreateBuffer(&ibd, &iinitData, &mLightSpheresIB));
 }
 
 //////////////////////////////////////////////////////////////////////////

@@ -39,6 +39,9 @@ struct Scene
 	BOOL	mbUseFog;
 	BOOL	mbWireframe;
 	//---------
+	BOOL	mbDrawLightSphere;
+	BOOL	mbAnimateLights;
+	//---------
 	BOOL	mbUseFaceNormals;
 	BOOL	mbOnlyPosition;
 	BOOL	mbOnlyAlbedo;
@@ -47,6 +50,12 @@ struct Scene
 	BOOL	mbOnlySpecular;
 	BOOL	mbViewPerSampleShading;
 	BOOL	mbViewLightCount;
+	//---------
+	BOOL	mbViewLightSpace;
+	BOOL	mbViewPartitions;
+	BOOL	mbTightPartitionBounds;
+	BOOL	mbEdgeSoftening;
+	float	mbEdgeSofteningAmount;
 	//-----------------------------------------------
 	
 	Scene();

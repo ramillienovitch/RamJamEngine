@@ -69,6 +69,7 @@ struct DX11RenderingAPI : GraphicAPI
 	u32 mDirLightCount,   mDirLightUICount;
 	u32 mPointLightCount, mPointLightUICount;
 	u32 mSpotLightCount,  mSpotLightUICount;
+	Material mLightSphereMat;
 
 	//---------------
 
@@ -79,6 +80,10 @@ struct DX11RenderingAPI : GraphicAPI
 
 	//---------------
 
+	ID3D11Buffer*				mLightSpheresVB;
+	ID3D11Buffer*				mLightSpheresIB;
+	u32							mLightSphereIndexCount;
+	//---------
 	ID3D11Buffer*				mScreenQuadVB;
 	ID3D11Buffer*				mScreenQuadIB;
 	ID3D11Buffer*				mSkyboxVB;
@@ -106,6 +111,7 @@ struct DX11RenderingAPI : GraphicAPI
 	void InitSwapChain(u32 msaaSamples = 4);
 	void ResizeWindow();
 	//---------------
+	void BuildLightSpheres();
 	void BuildScreenQuad();
 	void BuildSkybox();
 	void BuildDepthBuffer(DXGI_SAMPLE_DESC sampleDesc);
@@ -131,6 +137,7 @@ struct DX11RenderingAPI : GraphicAPI
 	void ComputeLighting();
 	//-----------
 	void RenderSkybox(BOOL deferredRendering);
+	void RenderLightSpheres();
 	void RenderPostProcess();
 };
 

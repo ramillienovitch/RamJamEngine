@@ -23,8 +23,17 @@ Scene::Scene()
 	mbOnlyDepth    = false;
 	mbOnlySpecular = false;
 	//------
+	mbDrawLightSphere = false;
+	mbAnimateLights   = false;
+	//------
 	mbViewLightCount       = false;
 	mbViewPerSampleShading = false;
+	//------
+	mbViewLightSpace       = false;
+	mbViewPartitions       = false;
+	mbTightPartitionBounds = false;
+	mbEdgeSoftening        = true;
+	mbEdgeSofteningAmount  = 0.02f;
 	//------
 	
 	mCurrentEditorGOIdx   = 0;
