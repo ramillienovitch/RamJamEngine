@@ -26,8 +26,6 @@ struct Scene
 	Color			mGameObjectEditorColor;
 	BOOL			mbEnableGizmo;
 	//-----------------------------------------------
-
-	//-----------------------------------------------
 	// Scene parameters
 	BOOL	mbDeferredRendering;
 	Vector4	mAmbientLightColor;
@@ -41,6 +39,8 @@ struct Scene
 	//---------
 	BOOL	mbDrawLightSphere;
 	BOOL	mbAnimateLights;
+	BOOL	mbDrawSun;
+	BOOL	mbAnimateSun;
 	//---------
 	BOOL	mbUseFaceNormals;
 	BOOL	mbOnlyPosition;
@@ -51,19 +51,26 @@ struct Scene
 	BOOL	mbViewPerSampleShading;
 	BOOL	mbViewLightCount;
 	//---------
+	BOOL	mbAlignLightToFrustum;
 	BOOL	mbViewLightSpace;
 	BOOL	mbViewPartitions;
 	BOOL	mbTightPartitionBounds;
 	BOOL	mbEdgeSoftening;
 	float	mbEdgeSofteningAmount;
+	//---------
+	// Scene Bounding Volume Info
+	Vector3 mSceneCenter;
+	Vector3 mSceneExtents;
+	float   mSceneRadius;
 	//-----------------------------------------------
-	
 	Scene();
 	~Scene();
 	//---------
 	void Init();
 	void LoadFromFile(const char* pFile);
+	//---------
 	void ChangeCurrentEditorGO(u32& idx);
+	void ComputeSceneExtents();
 	//---------
 	void Update();
 };

@@ -26,7 +26,7 @@ Camera::Camera()
 	mSettings.FOV         = 60;
 	mSettings.OrthoZoom   = 0.01f;
 	mSettings.NearZ       = 0.01f;
-	mSettings.FarZ        = 1000.0f;
+	mSettings.FarZ        = 300.0f;
 	mSettings.AspectRatio = 1.77777777777777777f;	// Default 16/9
 
 	mLastMousePos.x  = 0;

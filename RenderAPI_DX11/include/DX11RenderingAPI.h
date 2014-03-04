@@ -56,21 +56,22 @@ struct DX11RenderingAPI : GraphicAPI
 	// shortcut for System::Instance()->mScene
 	Scene& mScene;
 
+	//---------------
 	StructuredBuffer<DirectionalLight>*		mDirLights;
 	StructuredBuffer<PointLight>*			mPointLights;
 	StructuredBuffer<SpotLight>*			mSpotLights;
-	float							mPointLightsRadius[MAX_LIGHTS];
-	float							mPointLightsHeight[MAX_LIGHTS];
-	float							mPointLightsAngle[MAX_LIGHTS];
+	//---------------
+	float							mPointLightsRadius   [MAX_LIGHTS];
+	float							mPointLightsHeight   [MAX_LIGHTS];
+	float							mPointLightsAngle    [MAX_LIGHTS];
 	float							mPointLightsAnimSpeed[MAX_LIGHTS];
-	DirectionalLight				mWorkingDirLights[MAX_LIGHTS];
+	DirectionalLight				mWorkingDirLights  [MAX_LIGHTS];
 	PointLight						mWorkingPointLights[MAX_LIGHTS];
-	SpotLight						mWorkingSpotLights[MAX_LIGHTS];
+	SpotLight						mWorkingSpotLights [MAX_LIGHTS];
 	u32 mDirLightCount,   mDirLightUICount;
 	u32 mPointLightCount, mPointLightUICount;
 	u32 mSpotLightCount,  mSpotLightUICount;
 	Material mLightSphereMat;
-
 	//---------------
 
 	float mBlendFactorR;
@@ -117,10 +118,13 @@ struct DX11RenderingAPI : GraphicAPI
 	void BuildDepthBuffer(DXGI_SAMPLE_DESC sampleDesc);
 	void BuildGBuffer(    DXGI_SAMPLE_DESC sampleDesc);
 	//---------------
+	void DrawLightSpheres(ID3DX11EffectTechnique* activeTech, u32 pass, BOOL bSun = false);
 	void DrawGizmos();
 	void DrawConsole();
 	void DrawProfiler();
 	void Draw2dElements();
+	//---------------
+	void UpdateShadowCamera();
 	//---------------
 	void ComputeFrustumFlags();
 	void ClearFrustumFlags();

@@ -24,18 +24,20 @@ Scene::Scene()
 	mbOnlySpecular = false;
 	//------
 	mbDrawLightSphere = false;
+	mbDrawSun         = false;
 	mbAnimateLights   = false;
+	mbAnimateSun      = false;
 	//------
 	mbViewLightCount       = false;
 	mbViewPerSampleShading = false;
 	//------
+	mbAlignLightToFrustum  = false;
 	mbViewLightSpace       = false;
 	mbViewPartitions       = false;
 	mbTightPartitionBounds = false;
 	mbEdgeSoftening        = true;
 	mbEdgeSofteningAmount  = 0.02f;
 	//------
-	
 	mCurrentEditorGOIdx   = 0;
 	mCurrentEditorGOIdxUI = 0;
 	mbEnableGizmo = false;
@@ -75,6 +77,10 @@ void Scene::Init()
 	mEditorGameobject->mDrawable.mGizmo->LoadAxisArrows(Vector3::right, Vector3::up, Vector3::forward);
 	mEditorGameobject->mDrawable.mGizmoColor = Color::White;
 	mEditorGameobject->mTransform = mGameObjects[mCurrentEditorGOIdx]->mTransform;
+
+	//-------
+
+	ComputeSceneExtents();
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -89,6 +95,35 @@ void Scene::ChangeCurrentEditorGO(u32& idx)
 	mGameObjectEditorPos		= mGameObjectEditorTransform->Position;
 	mGameObjectEditorScale		= mGameObjectEditorTransform->Scale;
 	mGameObjectEditorColor		= mGameObjects[mCurrentEditorGOIdx]->mDrawable.mGizmoColor;
+}
+
+//////////////////////////////////////////////////////////////////////////
+void Scene::ComputeSceneExtents()
+{
+	Vector3 mSceneMin = Vector3(RJE::Math::Infinity_f, RJE::Math::Infinity_f, RJE::Math::Infinity_f);
+	Vector3 mSceneMax = -mSceneMin;
+
+	for(const unique_ptr<GameObject>& gameobject : mGameObjects)
+	{
+		if (gameobject->mDrawable.mMesh)
+		{
+			for (u32 iSubset=0 ; iSubset<gameobject->mDrawable.mMesh->mSubsetCount; ++iSubset)
+			{
+				Vector3 minAABB = gameobject->mDrawable.mMesh->mSubsets[iSubset].mCenter - gameobject->mDrawable.mMesh->mSubsets[iSubset].mExtents;
+				Vector3 maxAABB = gameobject->mDrawable.mMesh->mSubsets[iSubset].mCenter + gameobject->mDrawable.mMesh->mSubsets[iSubset].mExtents;
+				minAABB = Vector3::Scale(minAABB, gameobject->mTransform.Scale);
+				maxAABB = Vector3::Scale(maxAABB, gameobject->mTransform.Scale);
+				minAABB += gameobject->mTransform.Position;
+				maxAABB += gameobject->mTransform.Position;
+				mSceneMin = Vector3::Min(mSceneMin, minAABB);
+				mSceneMax = Vector3::Max(mSceneMax, maxAABB);
+			}
+		}
+	}
+
+	mSceneCenter  = 0.5f*(mSceneMin+mSceneMax);
+	mSceneExtents = 0.5f*(mSceneMax-mSceneMin);
+	mSceneRadius  = mSceneExtents.Magnitude();
 }
 
 //////////////////////////////////////////////////////////////////////////
