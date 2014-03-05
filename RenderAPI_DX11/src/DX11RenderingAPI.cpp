@@ -430,7 +430,7 @@ void DX11RenderingAPI::DrawScene()
 	}
 
 	RenderShadowDepth();
-	RenderScreenQuad(mShadowDepthTexture->GetShaderResource(), true, mShadowTextureDim, mShadowTextureDim);
+	//RenderScreenQuad(mShadowDepthTexture->GetShaderResource(), true, mShadowTextureDim, mShadowTextureDim);
 
 	float blendFactor[4] = {mBlendFactorR, mBlendFactorG, mBlendFactorB, mBlendFactorA};
 	mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_Solid);
@@ -832,7 +832,6 @@ void DX11RenderingAPI::RenderShadowDepth()
 	activeTech->GetDesc( &techDesc );
 	for(u32 p = 0; p < techDesc.Passes; ++p)
 	{
-		// Draw the opaque geometry
 		for(const unique_ptr<GameObject>& gameobject : mScene.mGameObjects)
 		{
 			if (gameobject->mDrawable.mMesh)
@@ -842,44 +841,18 @@ void DX11RenderingAPI::RenderShadowDepth()
 				gameobject->mDrawable.Render(activeTech->GetPassByIndex(p));
 				for (u32 iSubset=0 ; iSubset<gameobject->mDrawable.mMesh->mSubsetCount; ++iSubset)
 				{
-					if (gameobject->mDrawable.mMesh->mMaterial[iSubset]->mIsOpaque)
-					{
-						RJE_CHECK_FOR_SUCCESS(activeTech->GetPassByIndex(p)->Apply(NULL, gameobject->mDrawable.mMesh->sDeviceContext));
-						gameobject->mDrawable.mMesh->Render(iSubset);
-					}
+					RJE_CHECK_FOR_SUCCESS(activeTech->GetPassByIndex(p)->Apply(NULL, gameobject->mDrawable.mMesh->sDeviceContext));
+					gameobject->mDrawable.mMesh->Render(iSubset);
 				}
 			}
 		}
-		// Draw the transparent geometry
-		for(const unique_ptr<GameObject>& gameobject_transparent : mScene.mGameObjects)
-		{
-			if (mScene.mbUseBlending)
-				mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_CullNone);
-			//mDX11Device->md3dImmediateContext->OMSetBlendState(DX11CommonStates::sCurrentBlendState, blendFactor, 0xffffffff);
-
-			if (gameobject_transparent->mDrawable.mMesh)
-			{
-				DX11Effects::ShadowMapFX->SetWorldViewProj(gameobject_transparent->mTransform.WorldMat*view*proj);
-				DX11Effects::ShadowMapFX->SetTexTransform(Id);
-				for (u32 iSubset=0 ; iSubset<gameobject_transparent->mDrawable.mMesh->mSubsetCount; ++iSubset)
-				{
-					if (!gameobject_transparent->mDrawable.mMesh->mMaterial[iSubset]->mIsOpaque)
-					{
-						RJE_CHECK_FOR_SUCCESS(activeTech->GetPassByIndex(p)->Apply(NULL, gameobject_transparent->mDrawable.mMesh->sDeviceContext));
-						gameobject_transparent->mDrawable.mMesh->Render(iSubset);
-					}
-				}
-			}
-		}
-
-		// Restore default render states
-		mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sCurrentRasterizerState);
-		mDX11Device->md3dImmediateContext->OMSetBlendState(0, blendFactor, 0xffffffff);
 	}
 
 	//-------------------------------------------------------------------------
 
+	mDX11Device->md3dImmediateContext->OMSetBlendState(0, blendFactor, 0xffffffff);
 	mDX11Device->md3dImmediateContext->OMSetRenderTargets(1, &mBackbufferRTV, 0);
+	mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sCurrentRasterizerState);
 	mDX11Device->md3dImmediateContext->RSSetViewports(1, &mScreenViewport);
 
 	PROFILE_GPU_END(L"Render Shadow Map");
