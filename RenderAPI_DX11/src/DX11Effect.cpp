@@ -108,7 +108,11 @@ PostProcessEffect::PostProcessEffect(ID3D11Device* device, const std::string& fi
 	: Effect(device, filename)
 {
 	PostProcessTech       = mFX->GetTechniqueByName("PostProcess");
+	PostProcessMSTech     = mFX->GetTechniqueByName("PostProcessMS");
 	TextureMap            = mFX->GetVariableByName("gTexture")->AsShaderResource();
+	TextureMapMS          = mFX->GetVariableByName("gTextureMS")->AsShaderResource();
+	FrameBufferSizeX      = mFX->GetVariableByName("gTextureSizeX")->AsScalar();
+	FrameBufferSizeY      = mFX->GetVariableByName("gTextureSizeY")->AsScalar();
 }
 
 PostProcessEffect::~PostProcessEffect(){}
@@ -190,12 +194,25 @@ SkyboxEffect::~SkyboxEffect(){}
 
 //////////////////////////////////////////////////////////////////////////
 
+ShadowMapEffect::ShadowMapEffect(ID3D11Device* device, const std::string& filename)
+	: Effect(device, filename)
+{
+	ShadowMapTech          = mFX->GetTechniqueByName("ShadowMap");
+	WorldViewProj          = mFX->GetVariableByName("gWVP")->AsMatrix();
+	TextureTrf             = mFX->GetVariableByName("gDiffuseMapTransform")->AsMatrix();
+}
+
+ShadowMapEffect::~ShadowMapEffect(){}
+
+//////////////////////////////////////////////////////////////////////////
+
 BasicEffect*           DX11Effects::BasicFX         = nullptr;
 ColorEffect*           DX11Effects::ColorFX         = nullptr;
 SpriteEffect*          DX11Effects::SpriteFX        = nullptr;
 PostProcessEffect*     DX11Effects::PostProcessFX   = nullptr;
 SkyboxEffect*          DX11Effects::SkyboxFX        = nullptr;
 TiledDeferredEffect*   DX11Effects::TiledDeferredFX = nullptr;
+ShadowMapEffect*       DX11Effects::ShadowMapFX     = nullptr;
 
 void DX11Effects::InitAll(ID3D11Device* device)
 {
@@ -218,6 +235,9 @@ void DX11Effects::InitAll(ID3D11Device* device)
 	//-------------
 	shaderPath = System::Instance()->mDataPath + CIniFile::GetValue("tiled", "shaders", System::Instance()->mResourcesPath);
 	TiledDeferredFX = rje_new TiledDeferredEffect(device, shaderPath);
+	//-------------
+	shaderPath = System::Instance()->mDataPath + CIniFile::GetValue("shadowmap", "shaders", System::Instance()->mResourcesPath);
+	ShadowMapFX = rje_new ShadowMapEffect(device, shaderPath);
 }
 
 void DX11Effects::DestroyAll()
@@ -228,4 +248,5 @@ void DX11Effects::DestroyAll()
 	RJE_SAFE_DELETE(PostProcessFX);
 	RJE_SAFE_DELETE(SkyboxFX);
 	RJE_SAFE_DELETE(TiledDeferredFX);
+	RJE_SAFE_DELETE(ShadowMapFX);
 }

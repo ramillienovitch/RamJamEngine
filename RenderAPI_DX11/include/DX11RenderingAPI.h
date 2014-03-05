@@ -30,6 +30,12 @@ struct DX11RenderingAPI : GraphicAPI
 	ID3D11UnorderedAccessView*				mLitBufferUAV;
 	ID3D11ShaderResourceView*				mLitBufferSRV;
 	//---------------
+
+	//---------------
+	u32				mShadowTextureDim;
+	D3D11_VIEWPORT	mShadowViewport;
+	Depth2D*		mShadowDepthTexture;
+	//---------------
 	
 	//---------------
 	BOOL            mbUseFrustumCulling;
@@ -115,7 +121,7 @@ struct DX11RenderingAPI : GraphicAPI
 	void BuildLightSpheres();
 	void BuildScreenQuad();
 	void BuildSkybox();
-	void BuildDepthBuffer(DXGI_SAMPLE_DESC sampleDesc);
+	void BuildDepthBuffers(DXGI_SAMPLE_DESC sampleDesc);
 	void BuildGBuffer(    DXGI_SAMPLE_DESC sampleDesc);
 	//---------------
 	void DrawLightSpheres(ID3DX11EffectTechnique* activeTech, u32 pass, BOOL bSun = false);
@@ -142,7 +148,8 @@ struct DX11RenderingAPI : GraphicAPI
 	//-----------
 	void RenderSkybox(BOOL deferredRendering);
 	void RenderLightSpheres();
-	void RenderPostProcess();
+	void RenderScreenQuad(ID3D11ShaderResourceView* srv, BOOL bMultiSampled=false, u32 width=0, u32 height=0);
+	void RenderShadowDepth();
 };
 
 //////////////////////////////////////////////////////////////////////////

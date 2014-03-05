@@ -8,13 +8,16 @@ DX11RenderingAPI::~DX11RenderingAPI() {}
 DX11RenderingAPI::DX11RenderingAPI(Scene& scene) : mScene(scene)
 {
 	mDX11Device    = nullptr;
-	mDepthBuffer   = nullptr;
 	mSwapChain     = nullptr;
-	mBackbufferRTV = nullptr;
+	//-----------
+	mDepthBuffer        = nullptr;
+	mShadowDepthTexture = nullptr;
+	mBackbufferRTV      = nullptr;
+	//-----------
 	md3dDriverType = D3D_DRIVER_TYPE_HARDWARE;
 	ZeroMemory(&mScreenViewport, sizeof(D3D11_VIEWPORT));
 	//-----------
-	VSyncEnabled = false;
+	VSyncEnabled        = false;
 	mbUseFrustumCulling = true;
 	mbUseAABB           = true;
 	//-----------
@@ -37,6 +40,13 @@ DX11RenderingAPI::DX11RenderingAPI(Scene& scene) : mScene(scene)
 	//-----------
 	mLitBuffer = nullptr;
 	//-----------
+	mShadowTextureDim = 2048;
+	mShadowViewport.Width    = static_cast<float>(mShadowTextureDim);
+	mShadowViewport.Height   = static_cast<float>(mShadowTextureDim);
+	mShadowViewport.MinDepth = 0.0f;
+	mShadowViewport.MaxDepth = 1.0f;
+	mShadowViewport.TopLeftX = 0.0f;
+	mShadowViewport.TopLeftY = 0.0f;
 
 	// Light Specs
 	mDirLights   = nullptr;
@@ -419,6 +429,9 @@ void DX11RenderingAPI::DrawScene()
 		RenderSkybox(false);
 	}
 
+	RenderShadowDepth();
+	RenderScreenQuad(mShadowDepthTexture->GetShaderResource(), true, mShadowTextureDim, mShadowTextureDim);
+
 	float blendFactor[4] = {mBlendFactorR, mBlendFactorG, mBlendFactorB, mBlendFactorA};
 	mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_Solid);
 	mDX11Device->md3dImmediateContext->OMSetBlendState(DX11CommonStates::sBlendState_AlphaToCoverage, blendFactor, 0xffffffff);
@@ -679,7 +692,7 @@ void DX11RenderingAPI::ComputeLighting()
 }
 
 //////////////////////////////////////////////////////////////////////////
-void DX11RenderingAPI::RenderPostProcess()
+void DX11RenderingAPI::RenderScreenQuad(ID3D11ShaderResourceView* srv, BOOL bMultiSampled/*=false*/, u32 width/*=0*/, u32 height/*=0*/)
 {
 	PROFILE_CPU("Render Post Process");
 	PROFILE_GPU_START(L"Render Post Process");
@@ -691,20 +704,33 @@ void DX11RenderingAPI::RenderPostProcess()
 	mDX11Device->md3dImmediateContext->ClearRenderTargetView(mBackbufferRTV, DirectX::Colors::Black);
 	mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_Solid);
 
-	DX11Effects::PostProcessFX->SetTextureMap(mRjeLogo);
+	ID3DX11EffectTechnique* PostProcessTech;
+	if (bMultiSampled)
+	{
+		DX11Effects::PostProcessFX->SetTextureMapMS(srv);
+		DX11Effects::PostProcessFX->SetFrameBufferSize(width, height);
+		PostProcessTech = DX11Effects::PostProcessFX->PostProcessMSTech;
+	}
+	else
+	{
+		DX11Effects::PostProcessFX->SetTextureMap(srv);
+		PostProcessTech = DX11Effects::PostProcessFX->PostProcessTech;
+	}
 
-	ID3DX11EffectTechnique* DeferredTech = DX11Effects::PostProcessFX->PostProcessTech;
 	D3DX11_TECHNIQUE_DESC techDesc;
 
-	DeferredTech->GetDesc( &techDesc );
+	PostProcessTech->GetDesc( &techDesc );
 	for(UINT p = 0; p < techDesc.Passes; ++p)
 	{
 		mDX11Device->md3dImmediateContext->IASetVertexBuffers(0, 1, &mScreenQuadVB, &stride, &offset);
 		mDX11Device->md3dImmediateContext->IASetIndexBuffer(mScreenQuadIB, DXGI_FORMAT_R32_UINT, 0);
 
-		DeferredTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
+		PostProcessTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
 		mDX11Device->md3dImmediateContext->DrawIndexed(6, 0, 0);
 	}
+
+	ID3D11ShaderResourceView* nullSRV[1] = { 0 };
+	mDX11Device->md3dImmediateContext->PSSetShaderResources( 0, 1, nullSRV);
 
 	PROFILE_GPU_END(L"Render Post Process");
 }
@@ -766,6 +792,97 @@ void DX11RenderingAPI::RenderSkybox(BOOL deferredRendering)
 	mDX11Device->md3dImmediateContext->PSSetShaderResources( 0, 6, nullSRV );
 	
 	PROFILE_GPU_END(L"Render Skybox");
+}
+
+//////////////////////////////////////////////////////////////////////////
+void DX11RenderingAPI::RenderShadowDepth()
+{
+	PROFILE_CPU("Render Shadow Map");
+	PROFILE_GPU_START(L"Render Shadow Map");
+
+	// Clear shadow depth buffer
+	mDX11Device->md3dImmediateContext->ClearDepthStencilView(mShadowDepthTexture->GetDepthStencil(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+
+	mDX11Device->md3dImmediateContext->IASetInputLayout(DX11InputLayouts::PosNormalTanTex);
+
+	mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_CullNone);
+	mDX11Device->md3dImmediateContext->RSSetViewports(1, &mShadowViewport);
+
+	mDX11Device->md3dImmediateContext->OMSetRenderTargets(0, 0, mShadowDepthTexture->GetDepthStencil());
+	//mDX11Device->md3dImmediateContext->OMSetBlendState(DX11CommonStates::sBlendState_AlphaToCoverage, 0, 0xFFFFFFFF);
+	mDX11Device->md3dImmediateContext->OMSetBlendState(0, 0, 0xFFFFFFFF);
+
+	//-------------------------------------------------------------------------
+	mDX11Device->md3dImmediateContext->IASetInputLayout(DX11InputLayouts::PosNormalTanTex);
+	mDX11Device->md3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	float blendFactor[4] = {mBlendFactorR, mBlendFactorG, mBlendFactorB, mBlendFactorA};
+
+	mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sCurrentRasterizerState);
+
+	// Set constants
+	Matrix44 view= mShadowCamera->mView;
+	Matrix44 proj= mShadowCamera->mOrthoProj;
+
+	ID3DX11EffectTechnique* activeTech = DX11Effects::ShadowMapFX->ShadowMapTech;
+
+	D3DX11_TECHNIQUE_DESC techDesc;
+	Matrix44 Id = Matrix44::identity;
+
+	activeTech->GetDesc( &techDesc );
+	for(u32 p = 0; p < techDesc.Passes; ++p)
+	{
+		// Draw the opaque geometry
+		for(const unique_ptr<GameObject>& gameobject : mScene.mGameObjects)
+		{
+			if (gameobject->mDrawable.mMesh)
+			{
+				DX11Effects::ShadowMapFX->SetWorldViewProj(gameobject->mTransform.WorldMat*view*proj);
+				DX11Effects::ShadowMapFX->SetTexTransform(Id);
+				gameobject->mDrawable.Render(activeTech->GetPassByIndex(p));
+				for (u32 iSubset=0 ; iSubset<gameobject->mDrawable.mMesh->mSubsetCount; ++iSubset)
+				{
+					if (gameobject->mDrawable.mMesh->mMaterial[iSubset]->mIsOpaque)
+					{
+						RJE_CHECK_FOR_SUCCESS(activeTech->GetPassByIndex(p)->Apply(NULL, gameobject->mDrawable.mMesh->sDeviceContext));
+						gameobject->mDrawable.mMesh->Render(iSubset);
+					}
+				}
+			}
+		}
+		// Draw the transparent geometry
+		for(const unique_ptr<GameObject>& gameobject_transparent : mScene.mGameObjects)
+		{
+			if (mScene.mbUseBlending)
+				mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_CullNone);
+			//mDX11Device->md3dImmediateContext->OMSetBlendState(DX11CommonStates::sCurrentBlendState, blendFactor, 0xffffffff);
+
+			if (gameobject_transparent->mDrawable.mMesh)
+			{
+				DX11Effects::ShadowMapFX->SetWorldViewProj(gameobject_transparent->mTransform.WorldMat*view*proj);
+				DX11Effects::ShadowMapFX->SetTexTransform(Id);
+				for (u32 iSubset=0 ; iSubset<gameobject_transparent->mDrawable.mMesh->mSubsetCount; ++iSubset)
+				{
+					if (!gameobject_transparent->mDrawable.mMesh->mMaterial[iSubset]->mIsOpaque)
+					{
+						RJE_CHECK_FOR_SUCCESS(activeTech->GetPassByIndex(p)->Apply(NULL, gameobject_transparent->mDrawable.mMesh->sDeviceContext));
+						gameobject_transparent->mDrawable.mMesh->Render(iSubset);
+					}
+				}
+			}
+		}
+
+		// Restore default render states
+		mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sCurrentRasterizerState);
+		mDX11Device->md3dImmediateContext->OMSetBlendState(0, blendFactor, 0xffffffff);
+	}
+
+	//-------------------------------------------------------------------------
+
+	mDX11Device->md3dImmediateContext->OMSetRenderTargets(1, &mBackbufferRTV, 0);
+	mDX11Device->md3dImmediateContext->RSSetViewports(1, &mScreenViewport);
+
+	PROFILE_GPU_END(L"Render Shadow Map");
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -1093,6 +1210,7 @@ void DX11RenderingAPI::Shutdown()
 		RJE_SAFE_DELETE(tex2D);
 
 	RJE_SAFE_DELETE(mDepthBuffer);
+	RJE_SAFE_DELETE(mShadowDepthTexture);
 	RJE_SAFE_DELETE(mDX11CommonStates);
 	RJE_SAFE_DELETE(mDX11Device);
 }
@@ -1214,10 +1332,13 @@ void DX11RenderingAPI::BuildSkybox()
 }
 
 //////////////////////////////////////////////////////////////////////////
-void DX11RenderingAPI::BuildDepthBuffer(DXGI_SAMPLE_DESC sampleDesc)
+void DX11RenderingAPI::BuildDepthBuffers(DXGI_SAMPLE_DESC sampleDesc)
 {
 	RJE_SAFE_DELETE(mDepthBuffer);
-	mDepthBuffer = rje_new Depth2D( mDX11Device->md3dDevice, mWindowWidth, mWindowHeight, D3D11_BIND_DEPTH_STENCIL, sampleDesc, MSAA_Samples > 1);
+	RJE_SAFE_DELETE(mShadowDepthTexture);
+	
+	mDepthBuffer        = rje_new Depth2D( mDX11Device->md3dDevice, mWindowWidth, mWindowHeight, D3D11_BIND_DEPTH_STENCIL, sampleDesc, MSAA_Samples > 1);
+	mShadowDepthTexture = rje_new Depth2D( mDX11Device->md3dDevice, mShadowTextureDim, mShadowTextureDim, D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE, sampleDesc);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -1294,7 +1415,7 @@ void DX11RenderingAPI::ResizeWindow(int newSizeWidth, int newSizeHeight)
 	DXGI_SAMPLE_DESC sampleDesc;
 	sampleDesc.Count   = MSAA_Samples;
 	sampleDesc.Quality = 0;
-	BuildDepthBuffer(sampleDesc);
+	BuildDepthBuffers(sampleDesc);
 	BuildGBuffer(sampleDesc);
 
 	// The window resized, so update the aspect ratio and recompute the projection matrix.

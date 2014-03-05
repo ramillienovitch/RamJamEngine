@@ -85,9 +85,15 @@ struct PostProcessEffect : public Effect
 	~PostProcessEffect();
 
 	HRESULT SetTextureMap(ID3D11ShaderResourceView* tex)	{ return TextureMap->SetResource(tex); }
+	HRESULT SetTextureMapMS(ID3D11ShaderResourceView* tex)	{ return TextureMapMS->SetResource(tex); }
+	void    SetFrameBufferSize(u32 width, u32 height)		{ FrameBufferSizeX->SetInt(width); FrameBufferSizeY->SetInt(height); }
 	
 	ID3DX11EffectTechnique*					PostProcessTech;
+	ID3DX11EffectTechnique*					PostProcessMSTech;
 	ID3DX11EffectShaderResourceVariable*	TextureMap;
+	ID3DX11EffectShaderResourceVariable*	TextureMapMS;
+	ID3DX11EffectScalarVariable*			FrameBufferSizeX;
+	ID3DX11EffectScalarVariable*			FrameBufferSizeY;
 };
 
 //////////////////////////////////////////////////////////////////////////
@@ -202,6 +208,21 @@ struct SkyboxEffect : public Effect
 	ID3DX11EffectScalarVariable*			ViewLightCount;
 };
 
+//////////////////////////////////////////////////////////////////////////
+
+struct ShadowMapEffect : public Effect
+{
+	ShadowMapEffect(ID3D11Device* device, const std::string& filename);
+	~ShadowMapEffect();
+
+	HRESULT SetWorldViewProj(Matrix44& M)   { return WorldViewProj->SetMatrix(reinterpret_cast<const float*>(&M)); }
+	HRESULT SetTexTransform(Matrix44& M)    { return TextureTrf->SetMatrix(reinterpret_cast<const float*>(&M)); }
+	
+	ID3DX11EffectTechnique*					ShadowMapTech;
+	ID3DX11EffectMatrixVariable*			WorldViewProj;
+	ID3DX11EffectMatrixVariable*			TextureTrf;
+};
+
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -216,4 +237,5 @@ struct DX11Effects
 	static PostProcessEffect*   PostProcessFX;
 	static SkyboxEffect*        SkyboxFX;
 	static TiledDeferredEffect* TiledDeferredFX;
+	static ShadowMapEffect*     ShadowMapFX;
 };
