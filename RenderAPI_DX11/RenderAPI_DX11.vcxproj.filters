@@ -69,6 +69,9 @@
     <ClInclude Include="..\RamJamEngine\include\ShaderDefines.h">
       <Filter>Resource Files\Shaders</Filter>
     </ClInclude>
+    <ClInclude Include="include\DX11SDSM.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\DX11Device.cpp">
@@ -107,6 +110,9 @@
     <ClCompile Include="src\DX11Texture2D.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\DX11SDSM.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="..\RamJamEngine\data\shaders\HLSL\color.fx">
@@ -134,6 +140,12 @@
       <Filter>Resource Files\Shaders</Filter>
     </FxCompile>
     <FxCompile Include="..\RamJamEngine\data\shaders\HLSL\shadowMap.fx">
+      <Filter>Resource Files\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\RamJamEngine\data\shaders\HLSL\sdsm.fx">
+      <Filter>Resource Files\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\RamJamEngine\data\shaders\HLSL\evsmBlur.fx">
       <Filter>Resource Files\Shaders</Filter>
     </FxCompile>
   </ItemGroup>

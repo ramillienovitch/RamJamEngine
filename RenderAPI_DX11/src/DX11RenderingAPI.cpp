@@ -38,15 +38,14 @@ DX11RenderingAPI::DX11RenderingAPI(Scene& scene) : mScene(scene)
 	mBlendFactorB = 0.5f;
 	mBlendFactorA = 1.0f;
 	//-----------
-	mLitBuffer = nullptr;
+	mLitBuffer             = nullptr;
+	mShadowEVSMTexture     = nullptr;
+	mShadowEVSMBlurTexture = nullptr;
 	//-----------
-	mShadowTextureDim = 2048;
-	mShadowViewport.Width    = static_cast<float>(mShadowTextureDim);
-	mShadowViewport.Height   = static_cast<float>(mShadowTextureDim);
-	mShadowViewport.MinDepth = 0.0f;
-	mShadowViewport.MaxDepth = 1.0f;
-	mShadowViewport.TopLeftX = 0.0f;
-	mShadowViewport.TopLeftY = 0.0f;
+	mSDSMPartitions.mPartitionBuffer       = nullptr;
+	mSDSMPartitions.mPartitionBounds       = nullptr;
+	//-----------
+	mShadowTextureDim = 1024;
 
 	// Light Specs
 	mDirLights   = nullptr;
@@ -142,7 +141,7 @@ void DX11RenderingAPI::Initialize(int windowWidth, int windowHeight)
 // #endif
 
 	//--------------------
-	InitSwapChain();
+	InitSwapChain(MSAA_SAMPLES);
 	//--------------------
 
 	IDXGIDevice*  dxgiDevice  = nullptr;
@@ -276,7 +275,7 @@ void DX11RenderingAPI::Initialize(int windowWidth, int windowHeight)
 }
 
 //////////////////////////////////////////////////////////////////////////
-void DX11RenderingAPI::InitSwapChain(u32 msaaSamples /*=4*/)
+void DX11RenderingAPI::InitSwapChain(u32 msaaSamples)
 {
 	HWND hMainWnd = System::Instance()->mHWnd;
 	MSAA_Samples = msaaSamples;
@@ -666,18 +665,16 @@ void DX11RenderingAPI::ComputeLighting()
 	DX11Effects::TiledDeferredFX->SetPointLights(mPointLights->GetShaderResource());
 	//DX11Effects::TiledDeferredFX->SetSpotLights( mSpotLights->GetShaderResource());
 	DX11Effects::TiledDeferredFX->SetFrameBufferSize(mWindowWidth, mWindowHeight);
-	for(UINT p = 0; p < techDesc.Passes; ++p)
-	{
-		DX11Effects::TiledDeferredFX->SetGBuffer(mGBufferSRV);
-		DX11Effects::TiledDeferredFX->TiledDeferredTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
+	DX11Effects::TiledDeferredFX->SetGBuffer(mGBufferSRV);
 
-		ID3D11UnorderedAccessView *litBufferUAV = mLitBuffer->GetUnorderedAccess();
-		mDX11Device->md3dImmediateContext->CSSetUnorderedAccessViews(0, 1, &litBufferUAV, 0);
+	DX11Effects::TiledDeferredFX->TiledDeferredTech->GetPassByIndex(0)->Apply(0, mDX11Device->md3dImmediateContext);
 
-		u32 dispatchWidth  = (mWindowWidth  + COMPUTE_SHADER_TILE_GROUP_DIM - 1) / COMPUTE_SHADER_TILE_GROUP_DIM;
-		u32 dispatchHeight = (mWindowHeight + COMPUTE_SHADER_TILE_GROUP_DIM - 1) / COMPUTE_SHADER_TILE_GROUP_DIM;
-		mDX11Device->md3dImmediateContext->Dispatch(dispatchWidth, dispatchHeight, 1);
-	}
+	ID3D11UnorderedAccessView *litBufferUAV = mLitBuffer->GetUnorderedAccess();
+	mDX11Device->md3dImmediateContext->CSSetUnorderedAccessViews(0, 1, &litBufferUAV, 0);
+
+	u32 dispatchWidth  = (mWindowWidth  + COMPUTE_SHADER_TILE_GROUP_DIM - 1) / COMPUTE_SHADER_TILE_GROUP_DIM;
+	u32 dispatchHeight = (mWindowHeight + COMPUTE_SHADER_TILE_GROUP_DIM - 1) / COMPUTE_SHADER_TILE_GROUP_DIM;
+	mDX11Device->md3dImmediateContext->Dispatch(dispatchWidth, dispatchHeight, 1);
 
 	// Unbind the input texture from the CS for good housekeeping.
 	ID3D11ShaderResourceView* nullSRV[5] = { 0, 0, 0, 0, 0 };
@@ -805,7 +802,7 @@ void DX11RenderingAPI::RenderShadowDepth()
 
 	mDX11Device->md3dImmediateContext->IASetInputLayout(DX11InputLayouts::PosNormalTanTex);
 
-	mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_CullNone);
+	mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_ShadowMap);
 	mDX11Device->md3dImmediateContext->RSSetViewports(1, &mShadowViewport);
 
 	mDX11Device->md3dImmediateContext->OMSetRenderTargets(0, 0, mShadowDepthTexture->GetDepthStencil());
@@ -1149,6 +1146,8 @@ void DX11RenderingAPI::Shutdown()
 	DX11CommonStates::DestroyAll();
 
 	RJE_SAFE_DELETE(mLitBuffer);
+	RJE_SAFE_DELETE(mSDSMPartitions.mPartitionBuffer);
+	RJE_SAFE_DELETE(mSDSMPartitions.mPartitionBounds);
 
 	RJE_SAFE_DELETE(mDirLights);
 	RJE_SAFE_DELETE(mPointLights);
@@ -1181,6 +1180,9 @@ void DX11RenderingAPI::Shutdown()
 
 	for(Texture2D* tex2D : mGBuffer)
 		RJE_SAFE_DELETE(tex2D);
+
+	RJE_SAFE_DELETE(mShadowEVSMTexture);
+	RJE_SAFE_DELETE(mShadowEVSMBlurTexture);
 
 	RJE_SAFE_DELETE(mDepthBuffer);
 	RJE_SAFE_DELETE(mShadowDepthTexture);
@@ -1349,7 +1351,24 @@ void DX11RenderingAPI::BuildGBuffer(DXGI_SAMPLE_DESC sampleDesc)
 	//mGBufferSRV.back() = mDepthBuffer->GetShaderResource();
 
 	RJE_SAFE_DELETE(mLitBuffer);
-	mLitBuffer = rje_new StructuredBuffer<uint2Color>(mDX11Device->md3dDevice, gBufferWidth*gBufferHeight*MSAA_Samples , D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE);
+	mLitBuffer = rje_new StructuredBuffer<uint2Color>(mDX11Device->md3dDevice, gBufferWidth*gBufferHeight*MSAA_Samples);
+}
+
+//////////////////////////////////////////////////////////////////////////
+void DX11RenderingAPI::BuildShadowTextures(DXGI_SAMPLE_DESC sampleDesc)
+{
+	RJE_SAFE_DELETE(mShadowEVSMTexture);
+	RJE_SAFE_DELETE(mShadowEVSMBlurTexture);
+	RJE_SAFE_DELETE(mSDSMPartitions.mPartitionBuffer);
+	RJE_SAFE_DELETE(mSDSMPartitions.mPartitionBounds);
+
+	// PartitionsPerPass EVSM textures (full mip chain each)   &   Temporary texture for blurring (no mip chain needed)
+	mShadowEVSMTexture     = rje_new Texture2D(mDX11Device->md3dDevice, mShadowTextureDim, mShadowTextureDim, DXGI_FORMAT_R32G32B32A32_FLOAT, D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE, 0, 1);
+	mShadowEVSMBlurTexture = rje_new Texture2D(mDX11Device->md3dDevice, mShadowTextureDim, mShadowTextureDim, DXGI_FORMAT_R32G32B32A32_FLOAT, D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE, 1, 1);
+
+	// Build The partition StructuredBuffers
+	mSDSMPartitions.mPartitionBuffer = rje_new StructuredBuffer<Partition>(  mDX11Device->md3dDevice, PARTITIONS);
+	mSDSMPartitions.mPartitionBounds = rje_new StructuredBuffer<BoundsFloat>(mDX11Device->md3dDevice, PARTITIONS);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -1382,14 +1401,23 @@ void DX11RenderingAPI::ResizeWindow(int newSizeWidth, int newSizeHeight)
 	mScreenViewport.Height   = static_cast<float>(newSizeHeight);
 	mScreenViewport.MinDepth = 0.0f;
 	mScreenViewport.MaxDepth = 1.0f;
+	//------------
+	mShadowViewport.Width    = static_cast<float>(mShadowTextureDim);
+	mShadowViewport.Height   = static_cast<float>(mShadowTextureDim);
+	mShadowViewport.MinDepth = 0.0f;
+	mShadowViewport.MaxDepth = 1.0f;
+	mShadowViewport.TopLeftX = 0.0f;
+	mShadowViewport.TopLeftY = 0.0f;
+	//------------
 
 	mDX11Device->md3dImmediateContext->RSSetViewports(1, &mScreenViewport);
 
 	DXGI_SAMPLE_DESC sampleDesc;
 	sampleDesc.Count   = MSAA_Samples;
 	sampleDesc.Quality = 0;
-	BuildDepthBuffers(sampleDesc);
-	BuildGBuffer(sampleDesc);
+	BuildDepthBuffers(  sampleDesc);
+	BuildGBuffer(       sampleDesc);
+	BuildShadowTextures(sampleDesc);
 
 	// The window resized, so update the aspect ratio and recompute the projection matrix.
 	mCamera->mSettings.AspectRatio = (float)newSizeWidth / (float)newSizeHeight;

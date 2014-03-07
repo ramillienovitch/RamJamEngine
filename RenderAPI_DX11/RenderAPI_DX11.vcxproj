@@ -88,6 +88,7 @@
     <ClInclude Include="include\DX11InputLayout.h" />
     <ClInclude Include="include\DX11Mesh.h" />
     <ClInclude Include="include\DX11Profiler.h" />
+    <ClInclude Include="include\DX11SDSM.h" />
     <ClInclude Include="include\DX11SpriteBatch.h" />
     <ClInclude Include="include\DX11RenderingAPI.h" />
     <ClInclude Include="include\DX11StructuredBuffer.h" />
@@ -103,6 +104,7 @@
     <ClCompile Include="src\DX11FontSheet.cpp" />
     <ClCompile Include="src\DX11InputLayout.cpp" />
     <ClCompile Include="src\DX11Mesh.cpp" />
+    <ClCompile Include="src\DX11SDSM.cpp" />
     <ClCompile Include="src\DX11SpriteBatch.cpp" />
     <ClCompile Include="src\DX11RenderingAPI.cpp" />
     <ClCompile Include="src\DX11Profiler.cpp" />
@@ -137,6 +139,14 @@
       <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">..\RamJamEngine\data\shaders\HLSL\%(Filename).cso</ObjectFileOutput>
       <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|x64'">..\RamJamEngine\data\shaders\HLSL\%(Filename).cso</ObjectFileOutput>
     </FxCompile>
+    <FxCompile Include="..\RamJamEngine\data\shaders\HLSL\evsmBlur.fx">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Effect</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Effect</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.0</ShaderModel>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">..\RamJamEngine\data\shaders\HLSL\%(Filename).cso</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|x64'">..\RamJamEngine\data\shaders\HLSL\%(Filename).cso</ObjectFileOutput>
+    </FxCompile>
     <FxCompile Include="..\RamJamEngine\data\shaders\HLSL\lightHelper.fx">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Effect</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
@@ -154,6 +164,14 @@
       <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|x64'">..\RamJamEngine\data\shaders\HLSL\%(Filename).cso</ObjectFileOutput>
     </FxCompile>
     <FxCompile Include="..\RamJamEngine\data\shaders\HLSL\Rendering.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Effect</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Effect</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.0</ShaderModel>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">..\RamJamEngine\data\shaders\HLSL\%(Filename).cso</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|x64'">..\RamJamEngine\data\shaders\HLSL\%(Filename).cso</ObjectFileOutput>
+    </FxCompile>
+    <FxCompile Include="..\RamJamEngine\data\shaders\HLSL\sdsm.fx">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Effect</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Effect</ShaderType>

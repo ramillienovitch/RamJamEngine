@@ -85,17 +85,16 @@ HRESULT DX11CommonStates::CreateDepthStencilState(ID3D11Device* device,
 }
 
 //////////////////////////////////////////////////////////////////////////
-HRESULT DX11CommonStates::CreateRasterizerState(ID3D11Device* device, D3D11_CULL_MODE cullMode, D3D11_FILL_MODE fillMode, _Out_ ID3D11RasterizerState** pResult)
+HRESULT DX11CommonStates::CreateRasterizerState(ID3D11Device* device, _Out_ ID3D11RasterizerState** pResult, D3D11_CULL_MODE cullMode, D3D11_FILL_MODE fillMode, BOOL DepthClip = true, BOOL MultiSampled = true)
 {
 	D3D11_RASTERIZER_DESC desc;
 	ZeroMemory(&desc, sizeof(desc));
 
 	desc.CullMode          = cullMode;
 	desc.FillMode          = fillMode;
-	desc.DepthClipEnable   = true;
-	desc.MultisampleEnable = true;
+	desc.DepthClipEnable   = DepthClip;
+	desc.MultisampleEnable = MultiSampled;
 	//desc.AntialiasedLineEnable = false;
-	//desc.AntialiasedLineEnable = true;
 
 	HRESULT hr = device->CreateRasterizerState(&desc, pResult);
 
@@ -148,7 +147,7 @@ HRESULT DX11CommonStates::LightingBlend(ID3D11Device* pDevice, ID3D11BlendState*
 { return CreateBlendState(pDevice, pResult, false, false, true, D3D11_BLEND_ONE, D3D11_BLEND_ONE, D3D11_BLEND_ONE, D3D11_BLEND_ONE); }
 
 HRESULT DX11CommonStates::AlphaBlend(ID3D11Device* pDevice, ID3D11BlendState** pResult)
-{ return CreateBlendState(pDevice, pResult, false, false, true, D3D11_BLEND_ONE, D3D11_BLEND_ONE, D3D11_BLEND_INV_SRC_ALPHA, D3D11_BLEND_INV_SRC_ALPHA); }
+{ return CreateBlendState(pDevice, pResult, false, false, true, D3D11_BLEND_SRC_ALPHA, D3D11_BLEND_SRC_ALPHA, D3D11_BLEND_INV_SRC_ALPHA, D3D11_BLEND_INV_SRC_ALPHA); }
 
 HRESULT DX11CommonStates::BlendFactor(ID3D11Device* pDevice, ID3D11BlendState** pResult)
 { return CreateBlendState(pDevice, pResult, false, false, true, D3D11_BLEND_BLEND_FACTOR, D3D11_BLEND_BLEND_FACTOR, D3D11_BLEND_INV_BLEND_FACTOR, D3D11_BLEND_INV_BLEND_FACTOR); }
@@ -202,17 +201,19 @@ HRESULT DX11CommonStates::NoDoubleBlend(ID3D11Device* pDevice, ID3D11DepthStenci
 // Rasterizer states
 //--------------------------------------------------------------------------------------
 HRESULT DX11CommonStates::CullNone(ID3D11Device* pDevice, ID3D11RasterizerState** pResult)
-{ return CreateRasterizerState(pDevice, D3D11_CULL_NONE, D3D11_FILL_SOLID, pResult); }
+{ return CreateRasterizerState(pDevice, pResult, D3D11_CULL_NONE, D3D11_FILL_SOLID); }
 
 HRESULT DX11CommonStates::CullClockwise(ID3D11Device* pDevice, ID3D11RasterizerState** pResult)
-{ return CreateRasterizerState(pDevice, D3D11_CULL_FRONT, D3D11_FILL_SOLID, pResult); }
+{ return CreateRasterizerState(pDevice, pResult, D3D11_CULL_FRONT, D3D11_FILL_SOLID); }
 
 HRESULT DX11CommonStates::CullCounterClockwise(ID3D11Device* pDevice, ID3D11RasterizerState** pResult)
-{ return CreateRasterizerState(pDevice, D3D11_CULL_BACK, D3D11_FILL_SOLID, pResult); }
+{ return CreateRasterizerState(pDevice, pResult, D3D11_CULL_BACK, D3D11_FILL_SOLID); }
 
 HRESULT DX11CommonStates::Wireframe(ID3D11Device* pDevice, ID3D11RasterizerState** pResult)
-{ return CreateRasterizerState(pDevice, D3D11_CULL_BACK, D3D11_FILL_WIREFRAME, pResult); }
+{ return CreateRasterizerState(pDevice, pResult, D3D11_CULL_BACK, D3D11_FILL_WIREFRAME); }
 
+HRESULT DX11CommonStates::ShadowMap(ID3D11Device* pDevice, ID3D11RasterizerState** pResult)
+{ return CreateRasterizerState(pDevice, pResult, D3D11_CULL_NONE, D3D11_FILL_SOLID, false); }
 
 //--------------------------------------------------------------------------------------
 // Sampler states
@@ -240,6 +241,7 @@ HRESULT DX11CommonStates::AnisotropicClamp(ID3D11Device* pDevice, ID3D11SamplerS
 void DX11CommonStates::InitAll(ID3D11Device* device)
 {
 	RJE_CHECK_FOR_SUCCESS(Wireframe(           device, &sRasterizerState_Wireframe));
+	RJE_CHECK_FOR_SUCCESS(ShadowMap(           device, &sRasterizerState_ShadowMap));
 	RJE_CHECK_FOR_SUCCESS(CullClockwise(       device, &sRasterizerState_CullClockwise));
 	RJE_CHECK_FOR_SUCCESS(CullCounterClockwise(device, &sRasterizerState_Solid));
 	RJE_CHECK_FOR_SUCCESS(CullNone(            device, &sRasterizerState_CullNone));
@@ -297,6 +299,7 @@ void DX11CommonStates::DestroyAll()
 	RJE_SAFE_RELEASE(sRasterizerState_CullNone);
 	RJE_SAFE_RELEASE(sRasterizerState_CullClockwise);
 	RJE_SAFE_RELEASE(sRasterizerState_Wireframe);
+	RJE_SAFE_RELEASE(sRasterizerState_ShadowMap);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -305,6 +308,7 @@ ID3D11RasterizerState*	DX11CommonStates::sRasterizerState_Solid         = nullpt
 ID3D11RasterizerState*	DX11CommonStates::sRasterizerState_Wireframe     = nullptr;
 ID3D11RasterizerState*	DX11CommonStates::sRasterizerState_CullNone      = nullptr;
 ID3D11RasterizerState*	DX11CommonStates::sRasterizerState_CullClockwise = nullptr;
+ID3D11RasterizerState*	DX11CommonStates::sRasterizerState_ShadowMap     = nullptr;
 ID3D11RasterizerState*	DX11CommonStates::sCurrentRasterizerState        = nullptr;
 
 ID3D11SamplerState*	DX11CommonStates::sSamplerState_Anisotropic = nullptr;

@@ -47,6 +47,46 @@ struct SurfaceData
 };
 
 //--------------------------------------------------------------------------------------
+struct Partition
+{
+	float intervalBegin;
+	float intervalEnd;
+
+	// These are given in texture coordinate [0, 1] space
+	float3 scale;
+	float3 bias;
+};
+
+// This version of the structure is useful for atomic operations (asuint(), etc)
+// Must match layout of structure above!!
+struct PartitionUint
+{
+	uint intervalBegin;
+	uint intervalEnd;
+
+	// These are given in texture coordinate [0, 1] space
+	uint3 scale;
+	uint3 bias;
+};
+
+//-------------------
+// Uint version of the bounds structure for atomic usage
+// NOTE: This version cannot represent negative numbers!
+struct BoundsUint
+{
+	uint3 minCoord;
+	uint3 maxCoord;
+};
+
+// Float version of structure for convenient
+// NOTE: We still tend to maintain the non-negative semantics of the above for consistency
+struct BoundsFloat
+{
+	float3 minCoord;
+	float3 maxCoord;
+};
+
+//--------------------------------------------------------------------------------------
 cbuffer cbPerObject
 {
 	float4x4 gWorld;
@@ -236,5 +276,24 @@ SurfaceData AverageMSAASamples(SurfaceData surface[MSAA_SAMPLES])
 	surfaceOut.zDepth         *= rcpMSAA;
 
 	return surfaceOut;
+}
+
+float3 ProjectIntoLightTexCoord(float3 positionView)
+{
+	float4 positionLight = mul(float4(positionView, 1.0f), gCameraViewToLightProj);
+		float3 texCoord = (positionLight.xyz / positionLight.w) * float3(0.5f, -0.5f, 1.0f) + float3(0.5f, 0.5f, 0.0f);
+		return texCoord;
+}
+
+// Get The light space Texture Coordinates from the World Space position and the view matrix
+void ComputeLightTexCoord(SurfaceData data, float4x4 view, out float3 lightTexCoord, out float3 lightTexCoordDX, out float3 lightTexCoordDY)
+{
+	float3 positionView   = mul(float4(data.position, 1.0f), view).xyz;
+	float3 positionViewDX = mul(float4(data.positionDX, 1.0f), view).xyz;
+	float3 positionViewDY = mul(float4(data.positionDY, 1.0f), view).xyz;
+	float deltaPixels = 2.0f;
+	lightTexCoord   = (ProjectIntoLightTexCoord(positionView));
+	lightTexCoordDX = (ProjectIntoLightTexCoord(positionView + deltaPixels * positionViewDX) - lightTexCoord) / deltaPixels;
+	lightTexCoordDY = (ProjectIntoLightTexCoord(positionView + deltaPixels * positionViewDY) - lightTexCoord) / deltaPixels;
 }
 #endif

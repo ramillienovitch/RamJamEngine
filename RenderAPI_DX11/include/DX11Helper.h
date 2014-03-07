@@ -61,5 +61,6 @@ using namespace DirectX;
 #include "DX11TextureManager.h"
 #include "DX11Texture2D.h"
 #include "DX11Mesh.h"
+#include "DX11SDSM.h"
 #include "../../DirectXTex/DirectXTex.h"
 //////////////////////////////////////////////////////////////////////////

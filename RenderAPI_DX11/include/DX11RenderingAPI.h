@@ -31,10 +31,20 @@ struct DX11RenderingAPI : GraphicAPI
 	ID3D11ShaderResourceView*				mLitBufferSRV;
 	//---------------
 
-	//---------------
+	//----------------------
+	//------- SDSM --------
+	DX11SDSM		mSDSMPartitions;
 	u32				mShadowTextureDim;
 	D3D11_VIEWPORT	mShadowViewport;
 	Depth2D*		mShadowDepthTexture;
+	Texture2D*		mShadowEVSMTexture;
+	Texture2D*		mShadowEVSMBlurTexture;
+	//---- Shader Constants
+	Vector4 mLightSpaceBorder;
+	Vector4 mMaxScale;
+	float   mDilationFactor;
+	u32     mScatterTileDim;
+	u32     mReduceTileDim;
 	//---------------
 	
 	//---------------
@@ -115,14 +125,15 @@ struct DX11RenderingAPI : GraphicAPI
 
 	//////////////////////////////////////////////////////////////////////////
 
-	void InitSwapChain(u32 msaaSamples = 4);
+	void InitSwapChain(u32 msaaSamples);
 	void ResizeWindow();
 	//---------------
 	void BuildLightSpheres();
 	void BuildScreenQuad();
 	void BuildSkybox();
-	void BuildDepthBuffers(DXGI_SAMPLE_DESC sampleDesc);
-	void BuildGBuffer(    DXGI_SAMPLE_DESC sampleDesc);
+	void BuildDepthBuffers(  DXGI_SAMPLE_DESC sampleDesc);
+	void BuildGBuffer(       DXGI_SAMPLE_DESC sampleDesc);
+	void BuildShadowTextures(DXGI_SAMPLE_DESC sampleDesc);
 	//---------------
 	void DrawLightSpheres(ID3DX11EffectTechnique* activeTech, u32 pass, BOOL bSun = false);
 	void DrawGizmos();
@@ -149,7 +160,18 @@ struct DX11RenderingAPI : GraphicAPI
 	void RenderSkybox(BOOL deferredRendering);
 	void RenderLightSpheres();
 	void RenderScreenQuad(ID3D11ShaderResourceView* srv, BOOL bMultiSampled=false, u32 width=0, u32 height=0);
+
+	//////////////////////////////////////////////////////////////////////////
+
 	void RenderShadowDepth();
+	void AccumulateLighting( ID3D11RenderTargetView* backBuffer, ID3D11ShaderResourceView* shadowSRV, ID3D11ShaderResourceView* partitionSRV);
+	void ConvertToEVSM( ID3D11ShaderResourceView* depthInput, ID3D11RenderTargetView* evsmOutput, ID3D11ShaderResourceView* partitionSRV);
+	
+	//-----------
+	// EVSM Edge softening
+	void BoxBlurPass(	ID3D11ShaderResourceView* input, ID3D11RenderTargetView* output, ID3D11ShaderResourceView* partitionSRV,
+						u32 partitionIndex, const D3D11_VIEWPORT* viewport, const Vector2& filterSize, unsigned int dimension);
+	void BoxBlur(Texture2D* texture, u32 textureElement, Texture2D* temp, u32 partitionIndex, ID3D11ShaderResourceView* partitionSRV, const Vector2& filterSize);
 };
 
 //////////////////////////////////////////////////////////////////////////

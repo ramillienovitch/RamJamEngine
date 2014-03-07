@@ -8,6 +8,7 @@ cbuffer cbPerFrame : register (b0)
 	float4x4 gView;
 	float4x4 gProj;
 	float4x4 gViewProj;
+	float4x4 gCameraViewToLightProj;
 	//-----------
 	float3 gEyePosW;
 	float2 gNearFar;

@@ -4,7 +4,7 @@
 
 struct DX11CommonStates 
 {
-	static HRESULT CreateRasterizerState(ID3D11Device* device, D3D11_CULL_MODE cullMode, D3D11_FILL_MODE fillMode, _Out_ ID3D11RasterizerState** pResult);
+	static HRESULT CreateRasterizerState(ID3D11Device* device, _Out_ ID3D11RasterizerState** pResult, D3D11_CULL_MODE cullMode, D3D11_FILL_MODE fillMode, BOOL DepthClip, BOOL MultiSampled);
 	static HRESULT CreateSamplerState(ID3D11Device* device, D3D11_FILTER filter, D3D11_TEXTURE_ADDRESS_MODE addressMode, _Out_ ID3D11SamplerState** pResult);
 	static HRESULT CreateDepthStencilState(	ID3D11Device* device,
 											_Out_ ID3D11DepthStencilState** pResult,
@@ -58,6 +58,7 @@ struct DX11CommonStates
 	static HRESULT CullClockwise(       ID3D11Device*, ID3D11RasterizerState**);
 	static HRESULT CullCounterClockwise(ID3D11Device*, ID3D11RasterizerState**);
 	static HRESULT Wireframe(           ID3D11Device*, ID3D11RasterizerState**);
+	static HRESULT ShadowMap(           ID3D11Device*, ID3D11RasterizerState**);
 
 	// Sampler states.
 	static HRESULT PointWrap(       ID3D11Device*, ID3D11SamplerState**);
@@ -76,6 +77,7 @@ struct DX11CommonStates
 	static ID3D11RasterizerState*	sRasterizerState_CullNone;
 	static ID3D11RasterizerState*	sRasterizerState_CullClockwise;
 	static ID3D11RasterizerState*	sRasterizerState_Wireframe;
+	static ID3D11RasterizerState*	sRasterizerState_ShadowMap;
 	static ID3D11RasterizerState*	sCurrentRasterizerState;
 
 	static ID3D11SamplerState*	sSamplerState_Anisotropic;
