@@ -35,8 +35,14 @@ Scene::Scene()
 	mbViewLightSpace       = false;
 	mbViewPartitions       = false;
 	mbTightPartitionBounds = false;
-	mbEdgeSoftening        = true;
-	mbEdgeSofteningAmount  = 0.02f;
+	mbEdgeSoftening        = false;
+	mEdgeSofteningAmount    = 0.02f;
+	mMaxEdgeSofteningFilter = 16.0f;
+	//------
+	mbUsePositiveExponent = true;
+	mbUseNegativeExponent = true;
+	mPositiveExponent     = 800.0f;
+	mNegativeExponent     = 100.0f;
 	//------
 	mCurrentEditorGOIdx   = 0;
 	mCurrentEditorGOIdxUI = 0;

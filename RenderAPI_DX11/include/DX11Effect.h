@@ -215,14 +215,104 @@ struct ShadowMapEffect : public Effect
 	ShadowMapEffect(ID3D11Device* device, const std::string& filename);
 	~ShadowMapEffect();
 
-	HRESULT SetWorldViewProj(Matrix44& M)   { return WorldViewProj->SetMatrix(reinterpret_cast<const float*>(&M)); }
-	HRESULT SetTexTransform(Matrix44& M)    { return TextureTrf->SetMatrix(reinterpret_cast<const float*>(&M)); }
+	HRESULT SetWorldViewProj(Matrix44& M)									{ return WorldViewProj->SetMatrix(reinterpret_cast<const float*>(&M)); }
+	HRESULT SetView(Matrix44& M)											{ return View->SetMatrix(reinterpret_cast<const float*>(&M)); }
+	HRESULT SetViewToLightProj(Matrix44& M)									{ return ViewToLightProj->SetMatrix(reinterpret_cast<const float*>(&M)); }
+	HRESULT SetPartitionsSRV(ID3D11ShaderResourceView* p)					{ return Partitions->SetResource(p); }
+	HRESULT SetCurrentPartitions(u32 partition)								{ return CurrentPartition->SetInt(partition); }
+	HRESULT SetGBuffer(std::vector<ID3D11ShaderResourceView*> gBufferSRV)	{ return GBuffer->SetResourceArray(&gBufferSRV.front(), 0, (u32)gBufferSRV.size()); }
+	HRESULT SetAmbientLight(const Vector4& v)								{ return AmbientLight->SetFloatVector(reinterpret_cast<const float*>(&v)); }
+	HRESULT SetDirLights(ID3D11ShaderResourceView* lights)					{ return DirLights->SetResource(lights); }
+	HRESULT SetShadowArray(ID3D11ShaderResourceView* shadowarray)			{ return ShadowArray->SetResource(shadowarray); }
+	HRESULT SetEyePosW(const Vector3& v)									{ return EyePosW->SetFloatVector(reinterpret_cast<const float*>(&v)); }
+	HRESULT SetExponents(float positive, float negative)					{ PositiveExponents->SetFloat(positive); return NegativeExponents->SetFloat(negative); }
+	HRESULT SetExponentsState(BOOL positive, BOOL negative)					{ UsePositiveExponents->SetBool(positive != 0); return UseNegativeExponents->SetBool(negative != 0); }
+	HRESULT VisualizePartitions(BOOL state)									{ return ViewPartitions->SetBool(state != 0); }
 	
 	ID3DX11EffectTechnique*					ShadowMapTech;
+	ID3DX11EffectTechnique*					AccumShadowTech;
+	ID3DX11EffectVectorVariable*			EyePosW;
 	ID3DX11EffectMatrixVariable*			WorldViewProj;
-	ID3DX11EffectMatrixVariable*			TextureTrf;
+	ID3DX11EffectShaderResourceVariable*	Partitions;
+	ID3DX11EffectShaderResourceVariable*	GBuffer;
+	ID3DX11EffectShaderResourceVariable*	DirLights;
+	ID3DX11EffectShaderResourceVariable*	ShadowArray;
+	ID3DX11EffectScalarVariable*			CurrentPartition;
+	ID3DX11EffectVectorVariable*			AmbientLight;
+	ID3DX11EffectMatrixVariable*			View;
+	ID3DX11EffectMatrixVariable*			ViewToLightProj;
+	ID3DX11EffectScalarVariable*			PositiveExponents;
+	ID3DX11EffectScalarVariable*			NegativeExponents;
+	ID3DX11EffectScalarVariable*			UsePositiveExponents;
+	ID3DX11EffectScalarVariable*			UseNegativeExponents;
+	ID3DX11EffectScalarVariable*			ViewPartitions;
 };
 
+//////////////////////////////////////////////////////////////////////////
+
+struct SDSMEffect : public Effect
+{
+	SDSMEffect(ID3D11Device* device, const std::string& filename);
+	~SDSMEffect();
+
+	HRESULT SetLightSpaceBorder(const Vector4& v)				{ return LightSpaceBorder->SetFloatVector(reinterpret_cast<const float*>(&v)); }
+	HRESULT SetMaxScale(const Vector4& v)						{ return MaxScale->SetFloatVector(reinterpret_cast<const float*>(&v)); }
+	HRESULT SetDilationFactor(float f)							{ return DilationFactor->SetFloat(f); }
+	HRESULT SetReduceTileDim(u32 u)								{ return ReduceTimeDim->SetInt(u); }
+	HRESULT SetNearFar(const Vector2& v)						{ return NearFar->SetFloatVector(reinterpret_cast<const float*>(&v)); }
+	HRESULT SetView(Matrix44& M)								{ return View->SetMatrix(reinterpret_cast<const float*>(&M)); }
+	HRESULT SetViewToLightProj(Matrix44& M)						{ return ViewToLightProj->SetMatrix(reinterpret_cast<const float*>(&M)); }
+	HRESULT SetPartitionsSRV(ID3D11ShaderResourceView* p)		{ return Partitions->SetResource(p); }
+	HRESULT SetPartitionBoundsSRV(ID3D11ShaderResourceView* p)	{ return PartitionsBounds->SetResource(p); }
+
+	ID3DX11EffectTechnique*		ClearZBoundsTech;
+	ID3DX11EffectTechnique*		ClearPartitionBoundsTech;
+	ID3DX11EffectTechnique*		ReduceBoundsTech;
+	ID3DX11EffectTechnique*		ReduceZBoundsTech;
+	ID3DX11EffectTechnique*		ComputePartitionsTech;
+	ID3DX11EffectTechnique*		ComputeCustomPartitionsTech;
+
+	ID3DX11EffectVectorVariable*	LightSpaceBorder;
+	ID3DX11EffectVectorVariable*	MaxScale;
+	ID3DX11EffectScalarVariable*	DilationFactor;
+	ID3DX11EffectScalarVariable*	ReduceTimeDim;
+	ID3DX11EffectVectorVariable*	NearFar;
+	ID3DX11EffectMatrixVariable*	View;
+	ID3DX11EffectMatrixVariable*	ViewToLightProj;
+
+	ID3DX11EffectShaderResourceVariable*	Partitions;
+	ID3DX11EffectShaderResourceVariable*	PartitionsBounds;
+};
+
+//////////////////////////////////////////////////////////////////////////
+
+struct EVSMBlurEffect : public Effect
+{
+	EVSMBlurEffect(ID3D11Device* device, const std::string& filename);
+	~EVSMBlurEffect();
+
+	ID3DX11EffectTechnique*		EVSMBlurTech;
+};
+
+//////////////////////////////////////////////////////////////////////////
+
+struct EVSMConvertEffect : public Effect
+{
+	EVSMConvertEffect(ID3D11Device* device, const std::string& filename);
+	~EVSMConvertEffect();
+
+	HRESULT SetShadowMap(ID3D11ShaderResourceView* shadowmap)			{ return ShadowMap->SetResource(shadowmap); }
+	HRESULT SetPartitionSRV(ID3D11ShaderResourceView* partitionSRV)		{ return Partitions->SetResource(partitionSRV); }
+	HRESULT SetCurrentPartitions(u32 partition)							{ return CurrentPartition->SetInt(partition); }
+	HRESULT SetExponents(float positive, float negative)				{ PositiveExponents->SetFloat(positive); return NegativeExponents->SetFloat(negative); }
+
+	ID3DX11EffectTechnique*		EVSMConvertTech;
+	ID3DX11EffectShaderResourceVariable*	ShadowMap;
+	ID3DX11EffectShaderResourceVariable*	Partitions;
+	ID3DX11EffectScalarVariable*			CurrentPartition;
+	ID3DX11EffectScalarVariable*			PositiveExponents;
+	ID3DX11EffectScalarVariable*			NegativeExponents;
+};
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -238,4 +328,7 @@ struct DX11Effects
 	static SkyboxEffect*        SkyboxFX;
 	static TiledDeferredEffect* TiledDeferredFX;
 	static ShadowMapEffect*     ShadowMapFX;
+	static SDSMEffect*          SDSMFX;
+	static EVSMBlurEffect*      EVSMBlurFX;
+	static EVSMConvertEffect*   EVSMConvertFX;
 };

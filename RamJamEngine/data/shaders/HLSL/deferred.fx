@@ -204,7 +204,7 @@ void ComputeShaderTileCS(uint3 groupId          : SV_GroupID,
 					PointLight light = gPointLights[sTileLightIndices[tileLightIndex]];
 					AccumulatePointBRDF(surfaceSamples[0], light, toEye,lit);
 				}
-				for (uint dirLightIdx = 0; dirLightIdx < numDirLights; ++dirLightIdx)
+				for (uint dirLightIdx = 1; dirLightIdx < numDirLights; ++dirLightIdx)
 				{
 					DirectionalLight light = gDirLights[dirLightIdx];
 					AccumulateDirBRDF(surfaceSamples[0], light, toEye,lit);
@@ -230,7 +230,7 @@ void ComputeShaderTileCS(uint3 groupId          : SV_GroupID,
 							PointLight light = gPointLights[sTileLightIndices[tileLightIndex]];
 							AccumulatePointBRDF(surfaceSamples[sample], light, toEye, litSample);
 						}
-						for (uint dirLightIdx = 0; dirLightIdx < numDirLights; ++dirLightIdx)
+						for (uint dirLightIdx = 1; dirLightIdx < numDirLights; ++dirLightIdx)
 						{
 							DirectionalLight light = gDirLights[dirLightIdx];
 							AccumulateDirBRDF(surfaceSamples[sample], light, toEye,lit);
@@ -275,7 +275,7 @@ void ComputeShaderTileCS(uint3 groupId          : SV_GroupID,
 			PointLight light = gPointLights[sTileLightIndices[tileLightIndex]];
 			AccumulatePointBRDF(surface, light, toEye,lit);
 		}
-		for (uint dirLightIdx = 0; dirLightIdx < numDirLights; ++dirLightIdx)
+		for (uint dirLightIdx = 1; dirLightIdx < numDirLights; ++dirLightIdx)
 		{
 			DirectionalLight light = gDirLights[dirLightIdx];
 			AccumulateDirBRDF(surface, light, toEye,lit);

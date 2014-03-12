@@ -39,12 +39,6 @@ struct DX11RenderingAPI : GraphicAPI
 	Depth2D*		mShadowDepthTexture;
 	Texture2D*		mShadowEVSMTexture;
 	Texture2D*		mShadowEVSMBlurTexture;
-	//---- Shader Constants
-	Vector4 mLightSpaceBorder;
-	Vector4 mMaxScale;
-	float   mDilationFactor;
-	u32     mScatterTileDim;
-	u32     mReduceTileDim;
 	//---------------
 	
 	//---------------
@@ -163,9 +157,10 @@ struct DX11RenderingAPI : GraphicAPI
 
 	//////////////////////////////////////////////////////////////////////////
 
-	void RenderShadowDepth();
-	void AccumulateLighting( ID3D11RenderTargetView* backBuffer, ID3D11ShaderResourceView* shadowSRV, ID3D11ShaderResourceView* partitionSRV);
-	void ConvertToEVSM( ID3D11ShaderResourceView* depthInput, ID3D11RenderTargetView* evsmOutput, ID3D11ShaderResourceView* partitionSRV);
+	ID3D11ShaderResourceView* ComputeSDSMPartitions();
+	void RenderShadowDepth(ID3D11ShaderResourceView* partitionSRV, u32 currentPartition);
+	void ConvertToEVSM( ID3D11ShaderResourceView* depthInput, ID3D11RenderTargetView* evsmOutput, ID3D11ShaderResourceView* partitionSRV, u32 partitionIndex);
+	void AccumulateLighting( ID3D11RenderTargetView* backBuffer, ID3D11ShaderResourceView* shadowSRV, ID3D11ShaderResourceView* partitionSRV, u32 partitionIndex);
 	
 	//-----------
 	// EVSM Edge softening

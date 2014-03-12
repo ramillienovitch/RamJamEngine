@@ -24,6 +24,7 @@ cbuffer cbPerFrame : register (b0)
 	bool gVisualizeSpecular;
 	bool gVisualizePerSampleShading;
 	bool gVisualizeLightCount;
+	bool gVisualizePartitions;
 	//-----------
 	uint gFramebufferSizeX;
 	uint gFramebufferSizeY;
@@ -32,6 +33,13 @@ cbuffer cbPerFrame : register (b0)
 	bool   gUseFog;
 	bool   gUseTexture;
 	bool   gUseAlphaClip;
+	//-----------
+	bool gUsePositiveExponent;
+	bool gUseNegativeExponent;
+	float gPositiveExponent;
+	float gNegativeExponent;
+	//-----------
+	uint gCurrentPartition;
 };
 
 #endif

@@ -197,12 +197,77 @@ SkyboxEffect::~SkyboxEffect(){}
 ShadowMapEffect::ShadowMapEffect(ID3D11Device* device, const std::string& filename)
 	: Effect(device, filename)
 {
-	ShadowMapTech          = mFX->GetTechniqueByName("ShadowMap");
-	WorldViewProj          = mFX->GetVariableByName("gWVP")->AsMatrix();
-	TextureTrf             = mFX->GetVariableByName("gDiffuseMapTransform")->AsMatrix();
+	ShadowMapTech        = mFX->GetTechniqueByName("ShadowMap");
+	AccumShadowTech      = mFX->GetTechniqueByName("AccumulateShadow");
+	WorldViewProj        = mFX->GetVariableByName("gWVP")->AsMatrix();
+	EyePosW              = mFX->GetVariableByName("gEyePosW")->AsVector();
+	Partitions           = mFX->GetVariableByName("gPartitions")->AsShaderResource();
+	CurrentPartition     = mFX->GetVariableByName("gCurrentPartition")->AsScalar();
+	GBuffer              = mFX->GetVariableByName("gGbuffer")->AsShaderResource();
+	DirLights            = mFX->GetVariableByName("gDirLights")->AsShaderResource();
+	AmbientLight         = mFX->GetVariableByName("gAmbientLightColor")->AsVector();
+	ShadowArray          = mFX->GetVariableByName("gShadowTexture")->AsShaderResource();
+	View                 = mFX->GetVariableByName("gView")->AsMatrix();
+	ViewToLightProj      = mFX->GetVariableByName("gCameraViewToLightProj")->AsMatrix();
+	PositiveExponents    = mFX->GetVariableByName("gPositiveExponent")->AsScalar();
+	NegativeExponents    = mFX->GetVariableByName("gNegativeExponent")->AsScalar();
+	UsePositiveExponents = mFX->GetVariableByName("gUsePositiveExponent")->AsScalar();
+	UseNegativeExponents = mFX->GetVariableByName("gUseNegativeExponent")->AsScalar();
+	ViewPartitions       = mFX->GetVariableByName("gVisualizePartitions")->AsScalar();
 }
 
 ShadowMapEffect::~ShadowMapEffect(){}
+
+//////////////////////////////////////////////////////////////////////////
+
+SDSMEffect::SDSMEffect(ID3D11Device* device, const std::string& filename)
+	: Effect(device, filename)
+{
+	ClearZBoundsTech            = mFX->GetTechniqueByName("ClearZBounds");
+	ClearPartitionBoundsTech    = mFX->GetTechniqueByName("ClearPartitionBounds");
+	ReduceBoundsTech            = mFX->GetTechniqueByName("ReduceBoundsFromGBuffer");
+	ReduceZBoundsTech           = mFX->GetTechniqueByName("ReduceZBoundsFromGBuffer");
+	ComputePartitionsTech       = mFX->GetTechniqueByName("ComputePartitionsFromZBounds");
+	ComputeCustomPartitionsTech = mFX->GetTechniqueByName("ComputeCustomPartitions");
+	//----
+	LightSpaceBorder = mFX->GetVariableByName("mLightSpaceBorder")->AsVector();
+	MaxScale         = mFX->GetVariableByName("mMaxScale")->AsVector();
+	DilationFactor   = mFX->GetVariableByName("mDilationFactor")->AsScalar();
+	ReduceTimeDim    = mFX->GetVariableByName("mReduceTileDim")->AsScalar();
+	NearFar          = mFX->GetVariableByName("gNearFar")->AsVector();
+	View             = mFX->GetVariableByName("gView")->AsMatrix();
+	ViewToLightProj  = mFX->GetVariableByName("gCameraViewToLightProj")->AsMatrix();
+	Partitions       = mFX->GetVariableByName("gPartitionsReadOnly")->AsShaderResource();
+	PartitionsBounds = mFX->GetVariableByName("gPartitionBoundsReadOnly")->AsShaderResource();
+}
+
+SDSMEffect::~SDSMEffect(){}
+
+//////////////////////////////////////////////////////////////////////////
+
+EVSMBlurEffect::EVSMBlurEffect(ID3D11Device* device, const std::string& filename)
+	: Effect(device, filename)
+{
+	EVSMBlurTech = mFX->GetTechniqueByName("EVSMBlur");
+}
+
+EVSMBlurEffect::~EVSMBlurEffect(){}
+
+//////////////////////////////////////////////////////////////////////////
+
+EVSMConvertEffect::EVSMConvertEffect(ID3D11Device* device, const std::string& filename)
+	: Effect(device, filename)
+{
+	EVSMConvertTech   = mFX->GetTechniqueByName("EVSMConvert");
+	ShadowMap         = mFX->GetVariableByName("gShadowDepthTextureMS")->AsShaderResource();
+	Partitions        = mFX->GetVariableByName("gPartitions")->AsShaderResource();
+	CurrentPartition  = mFX->GetVariableByName("gCurrentPartition")->AsScalar();
+	PositiveExponents = mFX->GetVariableByName("gPositiveExponent")->AsScalar();
+	NegativeExponents = mFX->GetVariableByName("gNegativeExponent")->AsScalar();
+
+}
+
+EVSMConvertEffect::~EVSMConvertEffect(){}
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -213,6 +278,11 @@ PostProcessEffect*     DX11Effects::PostProcessFX   = nullptr;
 SkyboxEffect*          DX11Effects::SkyboxFX        = nullptr;
 TiledDeferredEffect*   DX11Effects::TiledDeferredFX = nullptr;
 ShadowMapEffect*       DX11Effects::ShadowMapFX     = nullptr;
+SDSMEffect*            DX11Effects::SDSMFX          = nullptr;
+EVSMBlurEffect*        DX11Effects::EVSMBlurFX      = nullptr;
+EVSMConvertEffect*     DX11Effects::EVSMConvertFX   = nullptr;
+
+//////////////////////////////////////////////////////////////////////////
 
 void DX11Effects::InitAll(ID3D11Device* device)
 {
@@ -238,6 +308,15 @@ void DX11Effects::InitAll(ID3D11Device* device)
 	//-------------
 	shaderPath = System::Instance()->mDataPath + CIniFile::GetValue("shadowmap", "shaders", System::Instance()->mResourcesPath);
 	ShadowMapFX = rje_new ShadowMapEffect(device, shaderPath);
+	//-------------
+	shaderPath = System::Instance()->mDataPath + CIniFile::GetValue("sdsm", "shaders", System::Instance()->mResourcesPath);
+	SDSMFX = rje_new SDSMEffect(device, shaderPath);
+	//-------------
+	shaderPath = System::Instance()->mDataPath + CIniFile::GetValue("evsmblur", "shaders", System::Instance()->mResourcesPath);
+	EVSMBlurFX = rje_new EVSMBlurEffect(device, shaderPath);
+	//-------------
+	shaderPath = System::Instance()->mDataPath + CIniFile::GetValue("evsmconvert", "shaders", System::Instance()->mResourcesPath);
+	EVSMConvertFX = rje_new EVSMConvertEffect(device, shaderPath);
 }
 
 void DX11Effects::DestroyAll()
@@ -249,4 +328,7 @@ void DX11Effects::DestroyAll()
 	RJE_SAFE_DELETE(SkyboxFX);
 	RJE_SAFE_DELETE(TiledDeferredFX);
 	RJE_SAFE_DELETE(ShadowMapFX);
+	RJE_SAFE_DELETE(SDSMFX);
+	RJE_SAFE_DELETE(EVSMBlurFX);
+	RJE_SAFE_DELETE(EVSMConvertFX);
 }

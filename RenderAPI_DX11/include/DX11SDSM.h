@@ -36,9 +36,11 @@ struct DX11SDSM
 	StructuredBuffer<Partition>*   mPartitionBuffer;
 	StructuredBuffer<BoundsFloat>* mPartitionBounds;
 	//---------------
-	ID3D11ShaderResourceView* ComputePartitionsFromGBuffer(const Vector3& lightSpaceBorder, const Vector3& maxScale);
-	void UpdateShaderConstants(/*SDSMEffect* fx*/);
-	void ReducePartitionBounds();
+	ID3D11ShaderResourceView* ComputePartitionsFromGBuffer(	ID3D11DeviceContext* dc,
+															u32 gbufferTexturesNum, ID3D11ShaderResourceView** gbufferTextures,
+															const Vector3& lightSpaceBorder, const Vector3& maxScale, u32 screenWidth, u32 screenHeight);
+	void UpdateShaderConstants();
+	void UnbindResources(ID3D11DeviceContext *d3dDeviceContext);
 	//---------------
 	DX11SDSM();
 };

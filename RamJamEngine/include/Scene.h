@@ -56,7 +56,13 @@ struct Scene
 	BOOL	mbViewPartitions;
 	BOOL	mbTightPartitionBounds;
 	BOOL	mbEdgeSoftening;
-	float	mbEdgeSofteningAmount;
+	float	mEdgeSofteningAmount;
+	float	mMaxEdgeSofteningFilter;
+	//---------
+	BOOL	mbUsePositiveExponent;
+	BOOL	mbUseNegativeExponent;
+	float	mPositiveExponent;
+	float	mNegativeExponent;
 	//---------
 	// Scene Bounding Volume Info
 	Vector3 mSceneCenter;

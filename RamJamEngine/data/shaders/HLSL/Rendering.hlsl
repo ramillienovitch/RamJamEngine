@@ -281,11 +281,11 @@ SurfaceData AverageMSAASamples(SurfaceData surface[MSAA_SAMPLES])
 float3 ProjectIntoLightTexCoord(float3 positionView)
 {
 	float4 positionLight = mul(float4(positionView, 1.0f), gCameraViewToLightProj);
-		float3 texCoord = (positionLight.xyz / positionLight.w) * float3(0.5f, -0.5f, 1.0f) + float3(0.5f, 0.5f, 0.0f);
-		return texCoord;
+	float3 texCoord = (positionLight.xyz / positionLight.w) * float3(0.5f, -0.5f, 1.0f) + float3(0.5f, 0.5f, 0.0f);
+	return texCoord;
 }
 
-// Get The light space Texture Coordinates from the World Space position and the view matrix
+// Get the light space Texture Coordinates from the world space position and the view matrix
 void ComputeLightTexCoord(SurfaceData data, float4x4 view, out float3 lightTexCoord, out float3 lightTexCoordDX, out float3 lightTexCoordDY)
 {
 	float3 positionView   = mul(float4(data.position, 1.0f), view).xyz;

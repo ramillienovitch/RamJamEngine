@@ -8,9 +8,9 @@
 
 struct DirectionalLight
 {
-	float3 Color;
-	float3 Direction;
-	float2 pad;
+	float4 Color;
+	float4 Direction;
+	//float2 pad;
 };
 
 struct PointLight
@@ -58,7 +58,7 @@ void ComputeDirectionalLight(Material mat, DirectionalLight L,
 	spec    = float4(0.0f, 0.0f, 0.0f, 0.0f);
 
 	// The light vector aims opposite the direction the light rays travel.
-	float3 lightVec = -L.Direction;
+	float3 lightVec = -L.Direction.xyz;
 
 	// Add diffuse and specular term, provided the surface is in 
 	// the line of site of the light.
@@ -72,7 +72,7 @@ void ComputeDirectionalLight(Material mat, DirectionalLight L,
 		float3 v         = reflect(-lightVec, normal);
 		float specFactor = pow(max(dot(v, toEye), 0.0f), (mat.SpecularPower<1.0 ? 1.0 : mat.SpecularPower));
 
-		float3 diff = diffuseFactor * mat.Albedo.rgb * L.Color;
+		float3 diff = diffuseFactor * mat.Albedo.rgb * L.Color.xyz;
 		diffuse = float4(diff,1.0);
 		spec    = float4((specFactor * mat.SpecularAmount).xxx, 1.0);
 	}
@@ -205,9 +205,9 @@ void AccumulateDirBRDF(SurfaceData surface, DirectionalLight light, float3 toEye
 	float3 litDiffuse  = float3(0.0f, 0.0f, 0.0f);
 	float3 litSpecular = float3(0.0f, 0.0f, 0.0f);
 	AccumulatePhongBRDF(	surface.normal,
-							normalize(light.Direction),
+							normalize(light.Direction.xyz),
 							toEye,
-							light.Color,
+							light.Color.xyz,
 							surface.specularPower,
 							litDiffuse, litSpecular);
 

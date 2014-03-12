@@ -148,6 +148,9 @@
     <FxCompile Include="..\RamJamEngine\data\shaders\HLSL\evsmBlur.fx">
       <Filter>Resource Files\Shaders</Filter>
     </FxCompile>
+    <FxCompile Include="..\RamJamEngine\data\shaders\HLSL\evsmConvert.fx">
+      <Filter>Resource Files\Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\RamJamEngine\data\shaders\HLSL\PerFrameConstants.hlsl">

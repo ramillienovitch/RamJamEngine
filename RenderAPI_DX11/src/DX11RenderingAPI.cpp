@@ -60,8 +60,8 @@ DX11RenderingAPI::DX11RenderingAPI(Scene& scene) : mScene(scene)
 		mPointLightsAngle[i]     = RJE::Math::Rand(0.0f,RJE::Math::Pi_Two_f);
 		mPointLightsAnimSpeed[i] = RJE::Math::Rand(0.1f,2.0f);
 		//--------
-		mWorkingDirLights[i].Color     = Vector3(0.5f, 0.5f, 0.5f);
-		mWorkingDirLights[i].Direction = Vector3(0.57735f, -0.57735f, 0.57735f);
+		mWorkingDirLights[i].Color     = Vector4(0.5f, 0.5f, 0.5f, 0.0f);
+		mWorkingDirLights[i].Direction = Vector4(0.57735f, -0.57735f, 0.57735f, 0.0f);
 		//--------
 		mWorkingPointLights[i].Color     = Color::GetRandomVector3RGBNorm();
 		mWorkingPointLights[i].Range     = RJE::Math::Rand(1.0f,2.5f);
@@ -261,6 +261,7 @@ void DX11RenderingAPI::Initialize(int windowWidth, int windowHeight)
 	TwAddSeparator(lightBar, NULL, NULL); //===============================================
 	TwAddVarRW(lightBar, "Align Light To Frustum", TW_TYPE_BOOLCPP, &mScene.mbAlignLightToFrustum, NULL);
 	TwAddVarRW(lightBar, "View Light Space",       TW_TYPE_BOOLCPP, &mScene.mbViewLightSpace,      NULL);
+	TwAddVarRW(lightBar, "View Partitions",        TW_TYPE_BOOLCPP, &mScene.mbViewPartitions,      NULL);
 	//-----------
 	TwBar *gameObjectBar = TwNewBar("GameObject");
 	TwDefine("GameObject iconified=true ");
@@ -356,7 +357,7 @@ void DX11RenderingAPI::UpdateScene( float dt )
 		if (mScene.mbAnimateSun)
 			sunAnimationSpeed += 0.25f*dt;
 		
-		Vector3 sunDir = Vector3(-1.0f * cosf(sunAnimationSpeed), -0.5f, -1.0f * sinf(sunAnimationSpeed));
+		Vector4 sunDir = Vector4(-1.0f * cosf(sunAnimationSpeed), -0.5f, -1.0f * sinf(sunAnimationSpeed), 0.0f);
 		sunDir.Normalize();
 		mWorkingDirLights[0].Direction = sunDir;
 		light[0] = mWorkingDirLights[0];
@@ -421,15 +422,35 @@ void DX11RenderingAPI::DrawScene()
 		ComputeLighting();
 		RenderSkybox(true);
 		DrawGizmos();
+
+		//----------------------------------
+
+		ID3D11ShaderResourceView* partitionSRV = ComputeSDSMPartitions();
+		for (u32 partitionIndex = 0; partitionIndex < PARTITIONS; ++partitionIndex)
+		{
+			RenderShadowDepth(partitionSRV, partitionIndex);
+			//RenderScreenQuad(mShadowDepthTexture->GetShaderResource(), true, mShadowTextureDim, mShadowTextureDim);
+			ConvertToEVSM(mShadowDepthTexture->GetShaderResource(), mShadowEVSMTexture->GetRenderTarget(0), partitionSRV, partitionIndex);
+// 			// Optionally blur the EVSM
+// 			if (mScene.mbEdgeSoftening)
+// 			{
+// 				Vector2 blurSizeLightSpace(0.0f, 0.0f);
+// 				blurSizeLightSpace.x = mScene.mEdgeSofteningAmount * 0.5f * mShadowCamera->mOrthoProj.m11;
+// 				blurSizeLightSpace.y = mScene.mEdgeSofteningAmount * 0.5f * mShadowCamera->mOrthoProj.m22;
+// 				BoxBlur(mShadowEVSMTexture, 0, mShadowEVSMBlurTexture, partitionIndex, partitionSRV, blurSizeLightSpace);
+// 			}
+// 
+			// Generate mipmaps (for all partitions in the array)
+			mDX11Device->md3dImmediateContext->GenerateMips(mShadowEVSMTexture->GetShaderResource());
+			// Lighting accumulation phase
+			AccumulateLighting(mBackbufferRTV, mShadowEVSMTexture->GetShaderResource(), partitionSRV, partitionIndex);
+		}
 	}
 	else
 	{
 		RenderForward();
 		RenderSkybox(false);
 	}
-
-	RenderShadowDepth();
-	//RenderScreenQuad(mShadowDepthTexture->GetShaderResource(), true, mShadowTextureDim, mShadowTextureDim);
 
 	float blendFactor[4] = {mBlendFactorR, mBlendFactorG, mBlendFactorB, mBlendFactorA};
 	mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_Solid);
@@ -648,8 +669,6 @@ void DX11RenderingAPI::ComputeLighting()
 	Matrix44 view     = mCamera->mView;
 	Matrix44 proj     = *(mCamera->mCurrentProjectionMatrix);
 
-	D3DX11_TECHNIQUE_DESC techDesc;
-	DX11Effects::TiledDeferredFX->TiledDeferredTech->GetDesc( &techDesc );
 	DX11Effects::TiledDeferredFX->SetEyePosW(mCamera->mTrf.Position);
 	DX11Effects::TiledDeferredFX->SetNearFar(Vector2(mCamera->mSettings.NearZ, mCamera->mSettings.FarZ));
 	DX11Effects::TiledDeferredFX->SetView(view);
@@ -792,7 +811,7 @@ void DX11RenderingAPI::RenderSkybox(BOOL deferredRendering)
 }
 
 //////////////////////////////////////////////////////////////////////////
-void DX11RenderingAPI::RenderShadowDepth()
+void DX11RenderingAPI::RenderShadowDepth(ID3D11ShaderResourceView* partitionSRV, u32 currentPartition)
 {
 	PROFILE_CPU("Render Shadow Map");
 	PROFILE_GPU_START(L"Render Shadow Map");
@@ -820,11 +839,12 @@ void DX11RenderingAPI::RenderShadowDepth()
 	// Set constants
 	Matrix44 view= mShadowCamera->mView;
 	Matrix44 proj= mShadowCamera->mOrthoProj;
-
+	
+	DX11Effects::ShadowMapFX->SetPartitionsSRV(partitionSRV);
+	DX11Effects::ShadowMapFX->SetCurrentPartitions(currentPartition);
 	ID3DX11EffectTechnique* activeTech = DX11Effects::ShadowMapFX->ShadowMapTech;
 
 	D3DX11_TECHNIQUE_DESC techDesc;
-	Matrix44 Id = Matrix44::identity;
 
 	activeTech->GetDesc( &techDesc );
 	for(u32 p = 0; p < techDesc.Passes; ++p)
@@ -834,8 +854,6 @@ void DX11RenderingAPI::RenderShadowDepth()
 			if (gameobject->mDrawable.mMesh)
 			{
 				DX11Effects::ShadowMapFX->SetWorldViewProj(gameobject->mTransform.WorldMat*view*proj);
-				DX11Effects::ShadowMapFX->SetTexTransform(Id);
-				gameobject->mDrawable.Render(activeTech->GetPassByIndex(p));
 				for (u32 iSubset=0 ; iSubset<gameobject->mDrawable.mMesh->mSubsetCount; ++iSubset)
 				{
 					RJE_CHECK_FOR_SUCCESS(activeTech->GetPassByIndex(p)->Apply(NULL, gameobject->mDrawable.mMesh->sDeviceContext));
@@ -852,15 +870,147 @@ void DX11RenderingAPI::RenderShadowDepth()
 	mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sCurrentRasterizerState);
 	mDX11Device->md3dImmediateContext->RSSetViewports(1, &mScreenViewport);
 
+	ID3D11ShaderResourceView* dummySRV[1] = {0};
+	mDX11Device->md3dImmediateContext->VSSetShaderResources(0, 1, dummySRV);
+
 	PROFILE_GPU_END(L"Render Shadow Map");
+}
+
+//////////////////////////////////////////////////////////////////////////
+ID3D11ShaderResourceView* DX11RenderingAPI::ComputeSDSMPartitions()
+{
+	PROFILE_CPU("Compute Partitions");
+	PROFILE_GPU_START(L"Compute Partitions");
+	
+	Matrix44 camViewInv = mCamera->mView;
+	camViewInv.Inverse();
+	Matrix44 cameraViewToLightProj = camViewInv * (mShadowCamera->mView*mShadowCamera->mOrthoProj);
+	DX11Effects::SDSMFX->SetNearFar(Vector2(mCamera->mSettings.NearZ, mCamera->mSettings.FarZ));
+	DX11Effects::SDSMFX->SetView(mCamera->mView);
+	DX11Effects::SDSMFX->SetViewToLightProj(cameraViewToLightProj);
+
+	// Work out blur size in [0,1] light space and the maximum scale we're willing to accept
+	// The partition scale clamping ensures that we don't end up with gigantic filter regions
+	// due to blurring... i.e. we have *way* too much resolution somewhere given how soft an
+	// edge is.
+	const float maxFloat = RJE::Math::Infinity_f;
+	Vector2 blurSizeLightSpace(0.0f, 0.0f);
+	Vector3 maxPartitionScale(maxFloat, maxFloat, maxFloat);
+	if (mScene.mbEdgeSoftening)
+	{
+		blurSizeLightSpace.x = mScene.mEdgeSofteningAmount * 0.5f * mShadowCamera->mOrthoProj.m11;
+		blurSizeLightSpace.y = mScene.mEdgeSofteningAmount * 0.5f * mShadowCamera->mOrthoProj.m22;
+
+		float maxBlurLightSpace = mScene.mMaxEdgeSofteningFilter / static_cast<float>(mShadowTextureDim);
+		maxPartitionScale.x = maxBlurLightSpace / blurSizeLightSpace.x;
+		maxPartitionScale.y = maxBlurLightSpace / blurSizeLightSpace.y;
+	}
+
+	// Work out partition border
+	Vector3 partitionBorderLightSpace(blurSizeLightSpace.x, blurSizeLightSpace.y, 1.0f);
+	partitionBorderLightSpace.z *= mShadowCamera->mOrthoProj.m33;
+	ID3D11ShaderResourceView* partitions = mSDSMPartitions.ComputePartitionsFromGBuffer(	mDX11Device->md3dImmediateContext,
+																							static_cast<u32>(mGBufferSRV.size()), &mGBufferSRV.front(),
+																							partitionBorderLightSpace, maxPartitionScale, 
+																							mWindowWidth, mWindowHeight);
+
+	PROFILE_GPU_END(L"Compute Partitions");
+
+	return partitions;
+}
+
+//////////////////////////////////////////////////////////////////////////
+void DX11RenderingAPI::ConvertToEVSM( ID3D11ShaderResourceView* depthInput, ID3D11RenderTargetView* evsmOutput, ID3D11ShaderResourceView* partitionSRV, u32 partitionIndex)
+{
+	PROFILE_CPU("Convert To EVSM");
+	PROFILE_GPU_START(L"Convert To EVSM");
+
+	UINT stride = sizeof(PosNormTanTex);
+	UINT offset = 0;
+
+	mDX11Device->md3dImmediateContext->OMSetRenderTargets(1, &evsmOutput, 0);
+	mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_Solid);
+
+	DX11Effects::EVSMConvertFX->SetShadowMap(depthInput);
+	DX11Effects::EVSMConvertFX->SetPartitionSRV(partitionSRV);
+	DX11Effects::EVSMConvertFX->SetCurrentPartitions(partitionIndex);
+	DX11Effects::EVSMConvertFX->SetExponents(mScene.mPositiveExponent, mScene.mNegativeExponent);
+
+	D3DX11_TECHNIQUE_DESC techDesc;
+
+	DX11Effects::EVSMConvertFX->EVSMConvertTech->GetDesc( &techDesc );
+	for(UINT p = 0; p < techDesc.Passes; ++p)
+	{
+		mDX11Device->md3dImmediateContext->IASetVertexBuffers(0, 1, &mScreenQuadVB, &stride, &offset);
+		mDX11Device->md3dImmediateContext->IASetIndexBuffer(mScreenQuadIB, DXGI_FORMAT_R32_UINT, 0);
+
+		DX11Effects::EVSMConvertFX->EVSMConvertTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
+		mDX11Device->md3dImmediateContext->DrawIndexed(6, 0, 0);
+	}
+
+	//mDX11Device->md3dImmediateContext->OMSetRenderTargets(0, 0, 0);
+	ID3D11ShaderResourceView* nullSRV[2] = { 0, 0 };
+	mDX11Device->md3dImmediateContext->PSSetShaderResources( 0, 2, nullSRV);
+
+	PROFILE_GPU_END(L"Convert To EVSM");
+}
+
+//////////////////////////////////////////////////////////////////////////
+void DX11RenderingAPI::AccumulateLighting( ID3D11RenderTargetView* backBuffer, ID3D11ShaderResourceView* shadowSRV, ID3D11ShaderResourceView* partitionSRV, u32 partitionIndex)
+{
+	PROFILE_CPU("Accumulate Lighting");
+	PROFILE_GPU_START(L"Accumulate Lighting");
+
+	UINT stride = sizeof(PosNormTanTex);
+	UINT offset = 0;
+
+	mDX11Device->md3dImmediateContext->OMSetRenderTargets(1, &backBuffer, 0);
+	mDX11Device->md3dImmediateContext->OMSetBlendState(DX11CommonStates::sBlendState_LightingBlend, 0, 0xFFFFFFFF);
+	mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_Solid);
+
+	Matrix44 camViewInv = mCamera->mView;
+	camViewInv.Inverse();
+	Matrix44 cameraViewToLightProj = camViewInv * (mShadowCamera->mView*mShadowCamera->mOrthoProj);
+
+	DX11Effects::ShadowMapFX->SetAmbientLight(mScene.mAmbientLightColor);
+	DX11Effects::ShadowMapFX->SetView(mCamera->mView);
+	DX11Effects::ShadowMapFX->SetViewToLightProj(cameraViewToLightProj);
+	DX11Effects::ShadowMapFX->SetPartitionsSRV(partitionSRV);
+	DX11Effects::ShadowMapFX->SetCurrentPartitions(partitionIndex);
+	DX11Effects::ShadowMapFX->SetGBuffer(mGBufferSRV);
+	DX11Effects::ShadowMapFX->SetDirLights(mDirLights->GetShaderResource());
+	DX11Effects::ShadowMapFX->SetShadowArray(shadowSRV);
+	DX11Effects::ShadowMapFX->SetEyePosW(mCamera->mTrf.Position);
+	DX11Effects::ShadowMapFX->SetExponents(mScene.mPositiveExponent, mScene.mNegativeExponent);
+	DX11Effects::ShadowMapFX->SetExponentsState(mScene.mbUsePositiveExponent, mScene.mbUseNegativeExponent);
+	DX11Effects::ShadowMapFX->VisualizePartitions(mScene.mbViewPartitions);
+
+	D3DX11_TECHNIQUE_DESC techDesc;
+
+	DX11Effects::ShadowMapFX->AccumShadowTech->GetDesc( &techDesc );
+	for(UINT p = 0; p < techDesc.Passes; ++p)
+	{
+		mDX11Device->md3dImmediateContext->IASetVertexBuffers(0, 1, &mScreenQuadVB, &stride, &offset);
+		mDX11Device->md3dImmediateContext->IASetIndexBuffer(mScreenQuadIB, DXGI_FORMAT_R32_UINT, 0);
+
+		DX11Effects::ShadowMapFX->AccumShadowTech->GetPassByIndex(p)->Apply(0, mDX11Device->md3dImmediateContext);
+		mDX11Device->md3dImmediateContext->DrawIndexed(6, 0, 0);
+	}
+
+	ID3D11ShaderResourceView* nullSRV[10] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+	mDX11Device->md3dImmediateContext->PSSetShaderResources( 0, 10, nullSRV);
+	//mDX11Device->md3dImmediateContext->OMSetRenderTargets(0, 0, 0);
+
+	PROFILE_GPU_END(L"Accumulate Lighting");
 }
 
 //////////////////////////////////////////////////////////////////////////
 void DX11RenderingAPI::UpdateShadowCamera()
 {
 	Vector3 camUp = mScene.mbAlignLightToFrustum ? mCamera->mTrf.Right() : Vector3::up;
+	Vector3 lightDir = Vector3(mWorkingDirLights[0].Direction.w, mWorkingDirLights[0].Direction.x, mWorkingDirLights[0].Direction.y);
 	mShadowCamera->mLookAt       = mScene.mSceneCenter;
-	mShadowCamera->mTrf.Position = -mScene.mSceneRadius * mWorkingDirLights[0].Direction + mScene.mSceneCenter;
+	mShadowCamera->mTrf.Position = -mScene.mSceneRadius * lightDir + mScene.mSceneCenter;
 	mShadowCamera->mUp           = camUp;
 	mShadowCamera->UpdateViewMatrix();
 
@@ -958,7 +1108,8 @@ void DX11RenderingAPI::DrawLightSpheres(ID3DX11EffectTechnique* activeTech, u32 
 	{
 		Transform lightTrf;
 		Matrix44 lightWorld;
-		lightTrf.Position = -mWorkingDirLights[0].Direction * 10.0f;
+		Vector3 lightDir = Vector3(mWorkingDirLights[0].Direction.w, mWorkingDirLights[0].Direction.x, mWorkingDirLights[0].Direction.y);
+		lightTrf.Position = -lightDir * 10.0f;
 		lightTrf.Scale    = 4.0f*Vector3::one;
 		lightWorld = lightTrf.WorldMatrix();
 

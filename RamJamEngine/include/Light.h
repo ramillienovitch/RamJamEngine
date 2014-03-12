@@ -7,6 +7,7 @@
 //   cannot straddle a 4D vector boundary.
 
 //////////////////////////////////////////////////////////////////////////
+RJE_ALIGNOF(16)
 struct DirectionalLight
 {
 	DirectionalLight()
@@ -14,10 +15,10 @@ struct DirectionalLight
 		ZeroMemory(this, sizeof(this));
 	}
 
-	Vector3 Color;
-	Vector3 Direction;
-	float pad1;
-	float pad2;
+	Vector4 Color;
+	Vector4 Direction;
+// 	float pad1;
+// 	float pad2;
 };
 
 //////////////////////////////////////////////////////////////////////////

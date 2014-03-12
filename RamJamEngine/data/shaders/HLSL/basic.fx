@@ -87,7 +87,7 @@ float4 PS(VertexOut pin) : SV_Target
 		ComputeDirectionalLight(mat, light, pin.NormalW, toEye, D, S);
 
 		diffuse += D;
-		spec    += S * float4(light.Color, 1.0);
+		spec    += S * float4(light.Color.xyz, 1.0);
 	}
 
 	// Point Lighting

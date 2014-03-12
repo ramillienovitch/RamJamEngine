@@ -12,10 +12,11 @@ struct Vector4_T
 	Real y;
 	Real z;
 
-	Vector4_T()                               : w()   , x(),    y(),    z()    {}
-	Vector4_T(Real val)                       : w(val), x(val), y(val), z(val) {}
-	Vector4_T(Real w, Real x, Real y, Real z) : w(w)  , x(x),   y(y),   z(z)   {}
-	Vector4_T(const Vector4_T& v)             : w(v.w), x(v.x), y(v.y), z(v.z) {}
+	Vector4_T()                                 : w()   , x(),    y(),    z()        {}
+	Vector4_T(Real val)                         : w(val), x(val), y(val), z(val)     {}
+	Vector4_T(Real w, Real x, Real y, Real z)   : w(w)  , x(x),   y(y),   z(z)       {}
+	Vector4_T(const Vector3_T<Real>& v, Real z) : w(v.x)  , x(v.y),   y(v.z),   z(z) {}
+	Vector4_T(const Vector4_T& v)               : w(v.w), x(v.x), y(v.y), z(v.z)     {}
 
 	static const Vector4_T zero;
 	static const Vector4_T one;
