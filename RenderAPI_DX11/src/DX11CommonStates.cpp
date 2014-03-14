@@ -144,7 +144,7 @@ HRESULT DX11CommonStates::AlphaToCoverage(ID3D11Device* pDevice, ID3D11BlendStat
 { return CreateBlendState(pDevice, pResult, true, false, false); }
 
 HRESULT DX11CommonStates::LightingBlend(ID3D11Device* pDevice, ID3D11BlendState** pResult)
-{ return CreateBlendState(pDevice, pResult, false, false, true, D3D11_BLEND_ONE, D3D11_BLEND_ONE, D3D11_BLEND_ONE, D3D11_BLEND_ONE); }
+{ return CreateBlendState(pDevice, pResult, false, false, true, D3D11_BLEND_ONE, D3D11_BLEND_ONE, D3D11_BLEND_ONE, D3D11_BLEND_ONE, D3D11_BLEND_OP_REV_SUBTRACT, D3D11_BLEND_OP_REV_SUBTRACT); }
 
 HRESULT DX11CommonStates::AlphaBlend(ID3D11Device* pDevice, ID3D11BlendState** pResult)
 { return CreateBlendState(pDevice, pResult, false, false, true, D3D11_BLEND_SRC_ALPHA, D3D11_BLEND_SRC_ALPHA, D3D11_BLEND_INV_SRC_ALPHA, D3D11_BLEND_INV_SRC_ALPHA); }

@@ -262,7 +262,7 @@ void ReduceBoundsFromGBufferCS(uint3 groupId : SV_GroupID, uint3 groupThreadId :
 					// Update relevant partition data for this thread
 					// This avoids the need for atomics since we're the only thread accessing this data
 					float3 lightTexCoord, dummy;
-					ComputeLightTexCoord(data, gView, lightTexCoord, dummy, dummy);
+					ComputeLightTexCoord(data, lightTexCoord, dummy, dummy);
 					boundsReduce[partition].minCoord = min(boundsReduce[partition].minCoord, lightTexCoord.xyz);
 					boundsReduce[partition].maxCoord = max(boundsReduce[partition].maxCoord, lightTexCoord.xyz);
 				}

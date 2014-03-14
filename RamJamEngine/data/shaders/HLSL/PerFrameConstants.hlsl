@@ -39,7 +39,8 @@ cbuffer cbPerFrame : register (b0)
 	float gPositiveExponent;
 	float gNegativeExponent;
 	//-----------
-	uint gCurrentPartition;
+	float gShadowStrength;
+	uint  gCurrentPartition;
 };
 
 #endif

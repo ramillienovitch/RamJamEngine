@@ -40,6 +40,7 @@ float2 GetEVSMExponents(Partition partition)
 	// and maintains consistency across partitions.
 	// Clamp to maximum range of fp32 to prevent overflow/underflow
 	return min(lightSpaceExponents / partition.scale.zz, float2(42.0f, 42.0f));
+	//return float2(42.0f, 42.0f);
 }
 
 // Input depth should be in [0, 1]
@@ -55,9 +56,9 @@ float2 WarpDepth(float depth, float2 exponents)
 float3 GetPartitionColor(uint p)
 {  
 	uint perm = (p % 7) + 1;
-	return float3(	perm & 1 ? 1.0f : 0.0f,
-					perm & 2 ? 1.0f : 0.0f,
-					perm & 4 ? 1.0f : 0.0f);
+	return float3(	perm & 1 ? 0.0f : 1.0f,
+					perm & 2 ? 0.0f : 1.0f,
+					perm & 4 ? 0.0f : 1.0f);
 }
 
 //--------------------------------------------------------------------------------------
@@ -147,20 +148,12 @@ QuadOut FullscreenVS(ShadowVertexIn vin)
 float4 AccumulateShadowPS(QuadOut input) : SV_Target
 {
 	SurfaceData surface = ComputeSurfaceDataFromGBufferSample(gGbuffer, uint2(input.PosH.xy), 0);
-
 	float3 lit = float3(0.0f, 0.0f, 0.0f);
 
 	// Early out if we don't fall into any of the relevant partitions
 	float3 samplePosView = mul(float4(surface.position, 1.0f), gView).xyz;
 	float viewSpaceZ     = samplePosView.z;
 	bool inAnyPartition  = ( viewSpaceZ >= gPartitions[gCurrentPartition].intervalBegin && viewSpaceZ < gPartitions[gCurrentPartition].intervalEnd && surface.zDepth < 1.0);
-
-	// Also early out if we're a back face
-	//float nDotL = saturate(dot(-mLightDir.xyz, surface.normal));
-	float3 contrib = float3(0.0f, 0.0f, 0.0f);
-	float3 toEye = gEyePosW - surface.position;
-	toEye *= rcp(length(toEye));
-	AccumulateDirBRDF(surface, gDirLights[0], toEye, contrib);
 
 	if (inAnyPartition) //&& nDotL > 0.0f)
 	{
@@ -169,16 +162,22 @@ float4 AccumulateShadowPS(QuadOut input) : SV_Target
 		if (viewSpaceZ < partition.intervalEnd)
 		{
 			float3 lightTexCoord, lightTexCoordDX, lightTexCoordDY;
-			ComputeLightTexCoord(surface, gView, lightTexCoord, lightTexCoordDX, lightTexCoordDY);
+			ComputeLightTexCoord(surface, lightTexCoord, lightTexCoordDX, lightTexCoordDY);
 			float3 texCoord   = lightTexCoord   * partition.scale.xyz + partition.bias.xyz;
 			float3 texCoordDX = lightTexCoordDX * partition.scale.xyz;
 			float3 texCoordDY = lightTexCoordDY * partition.scale.xyz;
 			float depth = clamp(texCoord.z, 0.0f, 1.0f);
 
+			// we use reverse subtract blending were the shadow contributes;
 			float shadowContrib = ShadowContribution(texCoord, texCoordDX, texCoordDY, depth, partition);
+			shadowContrib = 1-shadowContrib;
+			shadowContrib *= 0.2f*gShadowStrength;
+			//return float4(shadowContrib.xxx, 1.0);
 
+			float3 contrib = shadowContrib.xxx;
 			//float3 contrib = shadowContrib * (nDotL * surface.albedo.xyz);
-			contrib *= shadowContrib;
+			//contrib = shadowContrib < 0.9f ? contrib * (shadowContrib*2.0f*gShadowStrength) : contrib * shadowContrib;
+			//contrib *= shadowContrib;
 
 			if (gVisualizePartitions)
 			{
@@ -197,11 +196,14 @@ float4 AccumulateShadowPS(QuadOut input) : SV_Target
 	return float4(lit, 1.0f);
 }
 
+RasterizerState rsShadowMap { DepthClipEnable = false; };
+
 //////////////////////////////////////////////////////////////////////////
 technique11 ShadowMap
 {
 	pass P0
 	{
+		SetRasterizerState( rsShadowMap );
 		SetVertexShader( CompileShader( vs_5_0, ShadowVS() ) );
 		SetGeometryShader( NULL );
 		SetPixelShader( NULL );

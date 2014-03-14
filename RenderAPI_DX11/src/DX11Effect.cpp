@@ -209,6 +209,7 @@ ShadowMapEffect::ShadowMapEffect(ID3D11Device* device, const std::string& filena
 	ShadowArray          = mFX->GetVariableByName("gShadowTexture")->AsShaderResource();
 	View                 = mFX->GetVariableByName("gView")->AsMatrix();
 	ViewToLightProj      = mFX->GetVariableByName("gCameraViewToLightProj")->AsMatrix();
+	ShadowStrength       = mFX->GetVariableByName("gShadowStrength")->AsScalar();
 	PositiveExponents    = mFX->GetVariableByName("gPositiveExponent")->AsScalar();
 	NegativeExponents    = mFX->GetVariableByName("gNegativeExponent")->AsScalar();
 	UsePositiveExponents = mFX->GetVariableByName("gUsePositiveExponent")->AsScalar();

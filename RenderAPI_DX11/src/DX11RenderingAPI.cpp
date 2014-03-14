@@ -224,8 +224,6 @@ void DX11RenderingAPI::Initialize(int windowWidth, int windowHeight)
 	TwAddSeparator(bar, NULL, NULL); //===============================================
 	TwAddButton(bar, "Toggle Wireframe", TwSetWireframe, this, NULL);
 	TwAddSeparator(bar, NULL, NULL); //===============================================
-	TwAddVarRW(bar, "Ambient Color", TW_TYPE_COLOR4F, &mScene.mAmbientLightColor, NULL);
-	TwAddSeparator(bar, NULL, NULL); //===============================================
 	TwAddVarRW(bar, "Use Texture",  TW_TYPE_BOOLCPP, &mScene.mbUseTexture, NULL);
 	TwAddVarRW(bar, "Use Blending", TW_TYPE_BOOLCPP, &mScene.mbUseBlending, NULL);
 	TwAddSeparator(bar, NULL, NULL); //===============================================
@@ -250,14 +248,19 @@ void DX11RenderingAPI::Initialize(int windowWidth, int windowHeight)
 	TwBar *lightBar = TwNewBar("Lighting");
 	TwDefine("Lighting iconified=true ");
 	TwSetParam(lightBar, NULL, "size",  TW_PARAM_INT32, 2, barSize);
-	TwAddVarRW(lightBar, "Dir   Light Count",    TW_TYPE_UINT32,  &mDirLightUICount,   "min=0 max=4096 step=8");
-	TwAddVarRW(lightBar, "Point Light Count",    TW_TYPE_UINT32,  &mPointLightUICount, "min=0 max=4096 step=8");
-	TwAddVarRW(lightBar, "Spot  Light Count",    TW_TYPE_UINT32,  &mSpotLightUICount,  "min=0 max=4096 step=8");
+	TwAddVarRW(lightBar, "Ambient Color", TW_TYPE_COLOR4F, &mScene.mAmbientLightColor, NULL);
+	TwAddSeparator(lightBar, NULL, NULL); //===============================================
+	TwAddVarRW(lightBar, "Dir   Light Count", TW_TYPE_UINT32,  &mDirLightUICount,   "min=0 max=4096 step=8");
+	TwAddVarRW(lightBar, "Point Light Count", TW_TYPE_UINT32,  &mPointLightUICount, "min=0 max=4096 step=8");
+	TwAddVarRW(lightBar, "Spot  Light Count", TW_TYPE_UINT32,  &mSpotLightUICount,  "min=0 max=4096 step=8");
 	TwAddSeparator(lightBar, NULL, NULL); //===============================================
 	TwAddVarRW(lightBar, "Draw Light Spheres",   TW_TYPE_BOOLCPP, &mScene.mbDrawLightSphere, NULL);
 	TwAddVarRW(lightBar, "Draw Sun Sphere",      TW_TYPE_BOOLCPP, &mScene.mbDrawSun,         NULL);
 	TwAddVarRW(lightBar, "Animate Point Lights", TW_TYPE_BOOLCPP, &mScene.mbAnimateLights,   NULL);
 	TwAddVarRW(lightBar, "Animate Sun",          TW_TYPE_BOOLCPP, &mScene.mbAnimateSun,      NULL);
+	TwAddSeparator(lightBar, NULL, NULL); //===============================================
+	TwAddVarRW(lightBar, "Display Shadows", TW_TYPE_BOOLCPP, &mScene.mbDisplayShadows, NULL);
+	TwAddVarRW(lightBar, "Shadow Strength", TW_TYPE_FLOAT,   &mScene.mShadowStrength,  "min=0 max=1 step=0.05");
 	TwAddSeparator(lightBar, NULL, NULL); //===============================================
 	TwAddVarRW(lightBar, "Align Light To Frustum", TW_TYPE_BOOLCPP, &mScene.mbAlignLightToFrustum, NULL);
 	TwAddVarRW(lightBar, "View Light Space",       TW_TYPE_BOOLCPP, &mScene.mbViewLightSpace,      NULL);
@@ -332,7 +335,7 @@ void DX11RenderingAPI::UpdateScene( float dt )
 	// Inputs modifiers : TODO: Get these out of DX11RenderingAPI !
 	if (!Console::Instance()->IsActive())
 	{
-		if (Input::Instance()->GetKeyboardDown(A))			DX11CommonStates::sCurrentSamplerState    = DX11CommonStates::sSamplerState_Anisotropic;
+		if (Input::Instance()->GetKeyboardDown(M))			DX11CommonStates::sCurrentSamplerState    = DX11CommonStates::sSamplerState_Anisotropic;
 		if (Input::Instance()->GetKeyboardDown(L))			DX11CommonStates::sCurrentSamplerState    = DX11CommonStates::sSamplerState_Linear;
 		if (Input::Instance()->GetKeyboardDown(U))			DX11CommonStates::sCurrentBlendState      = DX11CommonStates::sBlendState_BlendFactor;
 		if (Input::Instance()->GetKeyboardDown(I))			DX11CommonStates::sCurrentBlendState      = DX11CommonStates::sBlendState_AlphaToCoverage;
@@ -355,7 +358,7 @@ void DX11RenderingAPI::UpdateScene( float dt )
 		// The first directional light is the sun used for shadows (i.e. the sun)
 		static float sunAnimationSpeed = 0.0f;
 		if (mScene.mbAnimateSun)
-			sunAnimationSpeed += 0.25f*dt;
+			sunAnimationSpeed += 0.1f*dt;
 		
 		Vector4 sunDir = Vector4(-1.0f * cosf(sunAnimationSpeed), -0.5f, -1.0f * sinf(sunAnimationSpeed), 0.0f);
 		sunDir.Normalize();
@@ -425,25 +428,28 @@ void DX11RenderingAPI::DrawScene()
 
 		//----------------------------------
 
-		ID3D11ShaderResourceView* partitionSRV = ComputeSDSMPartitions();
-		for (u32 partitionIndex = 0; partitionIndex < PARTITIONS; ++partitionIndex)
+		if (mScene.mbDisplayShadows)
 		{
-			RenderShadowDepth(partitionSRV, partitionIndex);
-			//RenderScreenQuad(mShadowDepthTexture->GetShaderResource(), true, mShadowTextureDim, mShadowTextureDim);
-			ConvertToEVSM(mShadowDepthTexture->GetShaderResource(), mShadowEVSMTexture->GetRenderTarget(0), partitionSRV, partitionIndex);
-// 			// Optionally blur the EVSM
-// 			if (mScene.mbEdgeSoftening)
-// 			{
-// 				Vector2 blurSizeLightSpace(0.0f, 0.0f);
-// 				blurSizeLightSpace.x = mScene.mEdgeSofteningAmount * 0.5f * mShadowCamera->mOrthoProj.m11;
-// 				blurSizeLightSpace.y = mScene.mEdgeSofteningAmount * 0.5f * mShadowCamera->mOrthoProj.m22;
-// 				BoxBlur(mShadowEVSMTexture, 0, mShadowEVSMBlurTexture, partitionIndex, partitionSRV, blurSizeLightSpace);
-// 			}
-// 
-			// Generate mipmaps (for all partitions in the array)
-			mDX11Device->md3dImmediateContext->GenerateMips(mShadowEVSMTexture->GetShaderResource());
-			// Lighting accumulation phase
-			AccumulateLighting(mBackbufferRTV, mShadowEVSMTexture->GetShaderResource(), partitionSRV, partitionIndex);
+			ID3D11ShaderResourceView* partitionSRV = ComputeSDSMPartitions();
+			for (u32 partitionIndex = 0; partitionIndex < PARTITIONS; ++partitionIndex)
+			{
+				RenderShadowDepth(partitionSRV, partitionIndex);
+				//RenderScreenQuad(mShadowDepthTexture->GetShaderResource(), true, mShadowTextureDim, mShadowTextureDim);
+				ConvertToEVSM(mShadowDepthTexture->GetShaderResource(), mShadowEVSMTexture->GetRenderTarget(0), partitionSRV, partitionIndex);
+	// 			// Optionally blur the EVSM
+	// 			if (mScene.mbEdgeSoftening)
+	// 			{
+	// 				Vector2 blurSizeLightSpace(0.0f, 0.0f);
+	// 				blurSizeLightSpace.x = mScene.mEdgeSofteningAmount * 0.5f * mShadowCamera->mOrthoProj.m11;
+	// 				blurSizeLightSpace.y = mScene.mEdgeSofteningAmount * 0.5f * mShadowCamera->mOrthoProj.m22;
+	// 				BoxBlur(mShadowEVSMTexture, 0, mShadowEVSMBlurTexture, partitionIndex, partitionSRV, blurSizeLightSpace);
+	// 			}
+	// 
+				// Generate mipmaps (for all partitions in the array)
+				mDX11Device->md3dImmediateContext->GenerateMips(mShadowEVSMTexture->GetShaderResource());
+				// Lighting accumulation phase
+				AccumulateLighting(mBackbufferRTV, mShadowEVSMTexture->GetShaderResource(), partitionSRV, partitionIndex);
+			}
 		}
 	}
 	else
@@ -821,7 +827,7 @@ void DX11RenderingAPI::RenderShadowDepth(ID3D11ShaderResourceView* partitionSRV,
 
 	mDX11Device->md3dImmediateContext->IASetInputLayout(DX11InputLayouts::PosNormalTanTex);
 
-	mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_ShadowMap);
+	//mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_ShadowMap);		// directly set in the shader
 	mDX11Device->md3dImmediateContext->RSSetViewports(1, &mShadowViewport);
 
 	mDX11Device->md3dImmediateContext->OMSetRenderTargets(0, 0, mShadowDepthTexture->GetDepthStencil());
@@ -884,7 +890,7 @@ ID3D11ShaderResourceView* DX11RenderingAPI::ComputeSDSMPartitions()
 	
 	Matrix44 camViewInv = mCamera->mView;
 	camViewInv.Inverse();
-	Matrix44 cameraViewToLightProj = camViewInv * (mShadowCamera->mView*mShadowCamera->mOrthoProj);
+	Matrix44 cameraViewToLightProj = /*camViewInv * */(mShadowCamera->mView*mShadowCamera->mOrthoProj);
 	DX11Effects::SDSMFX->SetNearFar(Vector2(mCamera->mSettings.NearZ, mCamera->mSettings.FarZ));
 	DX11Effects::SDSMFX->SetView(mCamera->mView);
 	DX11Effects::SDSMFX->SetViewToLightProj(cameraViewToLightProj);
@@ -930,6 +936,7 @@ void DX11RenderingAPI::ConvertToEVSM( ID3D11ShaderResourceView* depthInput, ID3D
 
 	mDX11Device->md3dImmediateContext->OMSetRenderTargets(1, &evsmOutput, 0);
 	mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_Solid);
+	mDX11Device->md3dImmediateContext->RSSetViewports(1, &mShadowViewport);
 
 	DX11Effects::EVSMConvertFX->SetShadowMap(depthInput);
 	DX11Effects::EVSMConvertFX->SetPartitionSRV(partitionSRV);
@@ -951,6 +958,7 @@ void DX11RenderingAPI::ConvertToEVSM( ID3D11ShaderResourceView* depthInput, ID3D
 	//mDX11Device->md3dImmediateContext->OMSetRenderTargets(0, 0, 0);
 	ID3D11ShaderResourceView* nullSRV[2] = { 0, 0 };
 	mDX11Device->md3dImmediateContext->PSSetShaderResources( 0, 2, nullSRV);
+	mDX11Device->md3dImmediateContext->RSSetViewports(1, &mScreenViewport);
 
 	PROFILE_GPU_END(L"Convert To EVSM");
 }
@@ -970,7 +978,7 @@ void DX11RenderingAPI::AccumulateLighting( ID3D11RenderTargetView* backBuffer, I
 
 	Matrix44 camViewInv = mCamera->mView;
 	camViewInv.Inverse();
-	Matrix44 cameraViewToLightProj = camViewInv * (mShadowCamera->mView*mShadowCamera->mOrthoProj);
+	Matrix44 cameraViewToLightProj = /*camViewInv * */(mShadowCamera->mView*mShadowCamera->mOrthoProj);
 
 	DX11Effects::ShadowMapFX->SetAmbientLight(mScene.mAmbientLightColor);
 	DX11Effects::ShadowMapFX->SetView(mCamera->mView);
@@ -981,6 +989,7 @@ void DX11RenderingAPI::AccumulateLighting( ID3D11RenderTargetView* backBuffer, I
 	DX11Effects::ShadowMapFX->SetDirLights(mDirLights->GetShaderResource());
 	DX11Effects::ShadowMapFX->SetShadowArray(shadowSRV);
 	DX11Effects::ShadowMapFX->SetEyePosW(mCamera->mTrf.Position);
+	DX11Effects::ShadowMapFX->SetShadowStrength(mScene.mShadowStrength);
 	DX11Effects::ShadowMapFX->SetExponents(mScene.mPositiveExponent, mScene.mNegativeExponent);
 	DX11Effects::ShadowMapFX->SetExponentsState(mScene.mbUsePositiveExponent, mScene.mbUseNegativeExponent);
 	DX11Effects::ShadowMapFX->VisualizePartitions(mScene.mbViewPartitions);

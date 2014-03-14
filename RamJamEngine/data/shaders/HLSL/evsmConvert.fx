@@ -30,7 +30,7 @@ float2 GetEVSMExponents(Partition partition)
 	float2 lightSpaceExponents = float2(gPositiveExponent, gNegativeExponent);
 
 	// Make sure exponents say consistent in light space regardless of partition
-	// scaling. This prevents the exponentials from ever getting too rediculous
+	// scaling. This prevents the exponentials from ever getting too ridiculous
 	// and maintains consistency across partitions.
 	// Clamp to maximum range of fp32 to prevent overflow/underflow
 	return min(lightSpaceExponents / partition.scale.zz, float2(42.0f, 42.0f));

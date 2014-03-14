@@ -209,8 +209,8 @@ void Camera::Update()
 		if( Input::Instance()->GetKeyboard(S) )					mTrf.Position -= mTrf.Forward() * Timer::Instance()->DeltaTime() * mSpeed * mSpeedMultiplier;
 		if( Input::Instance()->GetKeyboard(D) )					mTrf.Position += mTrf.Right()   * Timer::Instance()->DeltaTime() * mSpeed * mSpeedMultiplier;
 		if( Input::Instance()->GetKeyboard(Q) )					mTrf.Position -= mTrf.Right()   * Timer::Instance()->DeltaTime() * mSpeed * mSpeedMultiplier;
-		if( Input::Instance()->GetKeyboard(Spacebar) )			mTrf.Position += Vector3(0,1,0) * Timer::Instance()->DeltaTime() * mSpeed * mSpeedMultiplier;
-		if( Input::Instance()->GetKeyboard(LeftCtrl) )			mTrf.Position -= Vector3(0,1,0) * Timer::Instance()->DeltaTime() * mSpeed * mSpeedMultiplier;
+		if( Input::Instance()->GetKeyboard(E) )					mTrf.Position += Vector3(0,1,0) * Timer::Instance()->DeltaTime() * mSpeed * mSpeedMultiplier;
+		if( Input::Instance()->GetKeyboard(A) )					mTrf.Position -= Vector3(0,1,0) * Timer::Instance()->DeltaTime() * mSpeed * mSpeedMultiplier;
 		mTrf.Rotation = Quaternion(mPitch, mYaw, 0.0f);
 		mLookAt = mTrf.Position + mTrf.Forward();
 		mUp = Vector3::up;

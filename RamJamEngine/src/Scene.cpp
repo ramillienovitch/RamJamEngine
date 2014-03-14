@@ -31,6 +31,7 @@ Scene::Scene()
 	mbViewLightCount       = false;
 	mbViewPerSampleShading = false;
 	//------
+	mbDisplayShadows       = true;
 	mbAlignLightToFrustum  = false;
 	mbViewLightSpace       = false;
 	mbViewPartitions       = false;
@@ -38,6 +39,7 @@ Scene::Scene()
 	mbEdgeSoftening        = false;
 	mEdgeSofteningAmount    = 0.02f;
 	mMaxEdgeSofteningFilter = 16.0f;
+	mShadowStrength         = 1.0f;
 	//------
 	mbUsePositiveExponent = true;
 	mbUseNegativeExponent = true;

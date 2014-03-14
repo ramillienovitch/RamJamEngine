@@ -51,6 +51,7 @@ struct Scene
 	BOOL	mbViewPerSampleShading;
 	BOOL	mbViewLightCount;
 	//---------
+	BOOL	mbDisplayShadows;
 	BOOL	mbAlignLightToFrustum;
 	BOOL	mbViewLightSpace;
 	BOOL	mbViewPartitions;
@@ -59,6 +60,7 @@ struct Scene
 	float	mEdgeSofteningAmount;
 	float	mMaxEdgeSofteningFilter;
 	//---------
+	float	mShadowStrength;
 	BOOL	mbUsePositiveExponent;
 	BOOL	mbUseNegativeExponent;
 	float	mPositiveExponent;

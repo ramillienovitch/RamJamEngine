@@ -225,6 +225,7 @@ struct ShadowMapEffect : public Effect
 	HRESULT SetDirLights(ID3D11ShaderResourceView* lights)					{ return DirLights->SetResource(lights); }
 	HRESULT SetShadowArray(ID3D11ShaderResourceView* shadowarray)			{ return ShadowArray->SetResource(shadowarray); }
 	HRESULT SetEyePosW(const Vector3& v)									{ return EyePosW->SetFloatVector(reinterpret_cast<const float*>(&v)); }
+	HRESULT SetShadowStrength(float strength)								{ return ShadowStrength->SetFloat(strength); }
 	HRESULT SetExponents(float positive, float negative)					{ PositiveExponents->SetFloat(positive); return NegativeExponents->SetFloat(negative); }
 	HRESULT SetExponentsState(BOOL positive, BOOL negative)					{ UsePositiveExponents->SetBool(positive != 0); return UseNegativeExponents->SetBool(negative != 0); }
 	HRESULT VisualizePartitions(BOOL state)									{ return ViewPartitions->SetBool(state != 0); }
@@ -241,6 +242,7 @@ struct ShadowMapEffect : public Effect
 	ID3DX11EffectVectorVariable*			AmbientLight;
 	ID3DX11EffectMatrixVariable*			View;
 	ID3DX11EffectMatrixVariable*			ViewToLightProj;
+	ID3DX11EffectScalarVariable*			ShadowStrength;
 	ID3DX11EffectScalarVariable*			PositiveExponents;
 	ID3DX11EffectScalarVariable*			NegativeExponents;
 	ID3DX11EffectScalarVariable*			UsePositiveExponents;

@@ -229,7 +229,7 @@ bool RequiresPerSampleShading(SurfaceData surface[MSAA_SAMPLES])
 	const float maxZDelta = abs(surface[0].positionDX.z) + abs(surface[0].positionDY.z);
 	const float minNormalDot = 0.99f;        // Allow ~8 degree normal deviations
 
-	[unroll] for (uint i = 1; i < MSAA_SAMPLES; ++i)
+	[unroll] for (uint i = 0; i < MSAA_SAMPLES; ++i)
 	{
 		// Using the position derivatives of the triangle, check if all of the sample depths
 		// could possibly have come from the same triangle/surface
@@ -286,14 +286,14 @@ float3 ProjectIntoLightTexCoord(float3 positionView)
 }
 
 // Get the light space Texture Coordinates from the world space position and the view matrix
-void ComputeLightTexCoord(SurfaceData data, float4x4 view, out float3 lightTexCoord, out float3 lightTexCoordDX, out float3 lightTexCoordDY)
+void ComputeLightTexCoord(SurfaceData data, out float3 lightTexCoord, out float3 lightTexCoordDX, out float3 lightTexCoordDY)
 {
-	float3 positionView   = mul(float4(data.position, 1.0f), view).xyz;
-	float3 positionViewDX = mul(float4(data.positionDX, 1.0f), view).xyz;
-	float3 positionViewDY = mul(float4(data.positionDY, 1.0f), view).xyz;
+// 	float3 positionView   = mul(float4(data.position, 1.0f), view).xyz;
+// 	float3 positionViewDX = mul(float4(data.positionDX, 1.0f), view).xyz;
+// 	float3 positionViewDY = mul(float4(data.positionDY, 1.0f), view).xyz;
 	float deltaPixels = 2.0f;
-	lightTexCoord   = (ProjectIntoLightTexCoord(positionView));
-	lightTexCoordDX = (ProjectIntoLightTexCoord(positionView + deltaPixels * positionViewDX) - lightTexCoord) / deltaPixels;
-	lightTexCoordDY = (ProjectIntoLightTexCoord(positionView + deltaPixels * positionViewDY) - lightTexCoord) / deltaPixels;
+	lightTexCoord   = (ProjectIntoLightTexCoord(data.position));
+	lightTexCoordDX = (ProjectIntoLightTexCoord(data.position + deltaPixels * data.positionDX) - lightTexCoord) / deltaPixels;
+	lightTexCoordDY = (ProjectIntoLightTexCoord(data.position + deltaPixels * data.positionDY) - lightTexCoord) / deltaPixels;
 }
 #endif
