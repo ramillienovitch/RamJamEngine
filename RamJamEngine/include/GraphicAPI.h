@@ -29,6 +29,7 @@ struct GraphicAPI
 	virtual void SetMSAA(UINT MSAA_Samples) = 0;
 	virtual void InstantiateModel(string filename) = 0;
 	virtual void InstantiatePrimitive(string name) = 0;
+	virtual void LoadSkybox(string name) = 0;
 
 	//-----------
 

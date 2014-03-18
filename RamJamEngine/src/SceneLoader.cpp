@@ -4,7 +4,7 @@
 using namespace rapidxml;
 
 //////////////////////////////////////////////////////////////////////////
-void SceneLoader::LoadFromFile( const char* pFilename, std::vector<unique_ptr<GameObject>>& gameobjects )
+void SceneLoader::LoadFromFile( const char* pFilename, std::vector<unique_ptr<GameObject>>& gameobjects, string& skyboxFilename )
 {
 	gameobjects.resize(0);
 
@@ -14,14 +14,16 @@ void SceneLoader::LoadFromFile( const char* pFilename, std::vector<unique_ptr<Ga
 	xmlDoc.parse<0>(xmlFile.data());    // 0 means default parse flags
 
 	if (strcmp(xmlDoc.first_node()->name(), "scene") == 0)
-		ReadScene(xmlDoc.first_node(), gameobjects);
+		ReadScene(xmlDoc.first_node(), gameobjects, skyboxFilename);
 }
 
 //////////////////////////////////////////////////////////////////////////
-void SceneLoader::ReadScene( xml_node<>* scene, std::vector<unique_ptr<GameObject>>& gameobjects )
+void SceneLoader::ReadScene( xml_node<>* scene, std::vector<unique_ptr<GameObject>>& gameobjects, string& skyboxFilename )
 {
 	for (xml_node<> *node = scene->first_node(); node; node = node->next_sibling())
 	{
+		if (strcmp(node->name(), "skybox") == 0)
+			skyboxFilename = string(node->value());
 		if (strcmp(node->name(), "gameobject") == 0)
 			ExtractGameObjects(node, gameobjects);
 	}

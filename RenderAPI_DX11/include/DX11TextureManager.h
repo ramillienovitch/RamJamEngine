@@ -21,6 +21,7 @@ struct DX11TextureManager
 	BOOL IsTextureLoaded(std::string textureName);
 	void LoadTexture(string texturePath, string textureName);
 	void LoadTexture(string keyName, ID3D11ShaderResourceView** shaderResourceView);
+	void LoadTextureFromPath(string texturePath, ID3D11ShaderResourceView** shaderResourceView);
 	void Create2DTextureFixedColor(i32 size, RJE_COLOR::Color color, std::string textureName);
 
 	//------

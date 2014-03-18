@@ -85,6 +85,7 @@ BOOL System::Initialize(int nCmdShow)
 	string scenePath = mDataPath + CIniFile::GetValue("scene", "scenes", mResourcesPath);
 	mScene.LoadFromFile(scenePath.c_str());
 	mScene.Init();
+	mGraphicAPI->LoadSkybox(mScene.mSkyboxName);
 
 	return true;
 }

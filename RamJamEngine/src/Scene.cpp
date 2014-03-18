@@ -27,6 +27,7 @@ Scene::Scene()
 	mbDrawSun         = false;
 	mbAnimateLights   = false;
 	mbAnimateSun      = false;
+	mSunHeight        = 0.5f;
 	//------
 	mbViewLightCount       = false;
 	mbViewPerSampleShading = false;
@@ -60,9 +61,9 @@ Scene::~Scene()
 
 
 //////////////////////////////////////////////////////////////////////////
-void Scene::LoadFromFile( const char* pFile)
+void Scene::LoadFromFile(const char* pFile)
 {
-	mSceneLoader.LoadFromFile(pFile, mGameObjects);
+	mSceneLoader.LoadFromFile(pFile, mGameObjects, mSkyboxName);
 	//---------------
 	mGameObjectEditorTransform	= &mGameObjects[mCurrentEditorGOIdx]->mTransform;
 	mGameObjectEditorName		= mGameObjects[mCurrentEditorGOIdx]->mName;

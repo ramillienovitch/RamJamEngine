@@ -25,8 +25,9 @@ DX11RenderingAPI::DX11RenderingAPI(Scene& scene) : mScene(scene)
 	mProfilerFont = nullptr;
 	mSpriteBatch  = nullptr;
 	//-----------
-	mRjeLogo  = nullptr;
-	mSkyboxVB = nullptr;
+	mRjeLogo   = nullptr;
+	mSkyboxSRV = nullptr;
+	mSkyboxVB  = nullptr;
 	//-----------
 	mScreenQuadVB = nullptr;
 	mScreenQuadIB = nullptr;
@@ -182,7 +183,6 @@ void DX11RenderingAPI::Initialize(int windowWidth, int windowHeight)
 	RJE_CHECK_FOR_SUCCESS(mSpriteBatch-> Initialize(mDX11Device->md3dDevice, mDX11Device->md3dImmediateContext));
 
 	DX11TextureManager::Instance()->LoadTexture("rje_logo", &mRjeLogo);
-	DX11TextureManager::Instance()->LoadTexture("skybox", &mSkyboxSRV);
 	DX11TextureManager::Instance()->Create2DTextureFixedColor(1, RJE_COLOR::Color::TransDarkGray, "_transparentGray");
 	DX11TextureManager::Instance()->Create2DTextureFixedColor(1, RJE_COLOR::Color::White,         "_default");
 	//----------
@@ -258,6 +258,7 @@ void DX11RenderingAPI::Initialize(int windowWidth, int windowHeight)
 	TwAddVarRW(lightBar, "Draw Sun Sphere",      TW_TYPE_BOOLCPP, &mScene.mbDrawSun,         NULL);
 	TwAddVarRW(lightBar, "Animate Point Lights", TW_TYPE_BOOLCPP, &mScene.mbAnimateLights,   NULL);
 	TwAddVarRW(lightBar, "Animate Sun",          TW_TYPE_BOOLCPP, &mScene.mbAnimateSun,      NULL);
+	TwAddVarRW(lightBar, "Sun Height",           TW_TYPE_FLOAT,   &mScene.mSunHeight,      "min=0 max=10 step=0.05");
 	TwAddSeparator(lightBar, NULL, NULL); //===============================================
 	TwAddVarRW(lightBar, "Display Shadows", TW_TYPE_BOOLCPP, &mScene.mbDisplayShadows,      NULL);
 	TwAddVarRW(lightBar, "Shadow Strength", TW_TYPE_FLOAT,   &mScene.mShadowStrength,  "min=0 max=1 step=0.05");
@@ -367,7 +368,7 @@ void DX11RenderingAPI::UpdateScene( float dt )
 		if (mScene.mbAnimateSun)
 			sunAnimationSpeed += 0.1f*dt;
 		
-		Vector4 sunDir = Vector4(-1.0f * cosf(sunAnimationSpeed), -0.5f, -1.0f * sinf(sunAnimationSpeed), 0.0f);
+		Vector4 sunDir = Vector4(-1.0f * cosf(sunAnimationSpeed), -mScene.mSunHeight, -1.0f * sinf(sunAnimationSpeed), 0.0f);
 		sunDir.Normalize();
 		mWorkingDirLights[0].Direction = sunDir;
 		light[0] = mWorkingDirLights[0];
@@ -1688,6 +1689,14 @@ void DX11RenderingAPI::InstantiatePrimitive(string name)
 	
 	gameobject->mDrawable.mMesh->LoadMaterialFromFile("_Default\\default.mat");
 	mScene.mGameObjects.push_back(std::move(gameobject));
+}
+
+//////////////////////////////////////////////////////////////////////////
+void DX11RenderingAPI::LoadSkybox(string name)
+{
+	RJE_SAFE_RELEASE(mSkyboxSRV);
+	string path = System::Instance()->mDataPath + "textures\\skyboxes\\" + name;
+	DX11TextureManager::Instance()->LoadTextureFromPath(path, &mSkyboxSRV);
 }
 
 

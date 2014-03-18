@@ -116,6 +116,7 @@ struct DX11RenderingAPI : GraphicAPI
 	virtual void SetMSAA(u32 MSAAsamples);
 	virtual void InstantiateModel(string filename);
 	virtual void InstantiatePrimitive(string name);
+	virtual void LoadSkybox(string name);
 
 	//////////////////////////////////////////////////////////////////////////
 

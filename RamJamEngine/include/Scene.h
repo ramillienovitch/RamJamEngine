@@ -15,6 +15,8 @@ struct Scene
 	std::vector<unique_ptr<GameObject>> mGameObjects;
 	GameObject*							mEditorGameobject;
 
+	string mSkyboxName;
+
 	//-----------------------------------------------
 	// Gameobject Editor Settings
 	u32				mCurrentEditorGOIdx, mCurrentEditorGOIdxUI;
@@ -41,6 +43,7 @@ struct Scene
 	BOOL	mbAnimateLights;
 	BOOL	mbDrawSun;
 	BOOL	mbAnimateSun;
+	float	mSunHeight;
 	//---------
 	BOOL	mbUseFaceNormals;
 	BOOL	mbOnlyPosition;

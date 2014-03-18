@@ -85,6 +85,32 @@ void DX11TextureManager::LoadTexture(string keyName, ID3D11ShaderResourceView** 
 }
 
 //////////////////////////////////////////////////////////////////////////
+void DX11TextureManager::LoadTextureFromPath(string texturePath, ID3D11ShaderResourceView** shaderResourceView)
+{	
+	string textureExtension = texturePath.substr(texturePath.find('.'));
+	// lower the case so we can compare more easily
+	std::transform(textureExtension.begin(), textureExtension.end(), textureExtension.begin(), ::tolower);
+
+	TexMetadata  metadata;
+	ScratchImage image;
+
+	if (textureExtension.compare(".png") == 0 || textureExtension.compare(".bmp") == 0 || textureExtension.compare(".gif") == 0 ||
+		textureExtension.compare(".jpg") == 0 || textureExtension.compare(".jpeg") == 0)
+	{
+		RJE_CHECK_FOR_SUCCESS(LoadFromWICFile( StringToWString(texturePath).c_str(), WIC_FLAGS::WIC_FLAGS_NONE, &metadata, image ));
+	}
+	else if (textureExtension.compare(".tga") == 0)
+	{
+		RJE_CHECK_FOR_SUCCESS(LoadFromTGAFile( StringToWString(texturePath).c_str(), &metadata, image ));
+	}
+	else if  (textureExtension.compare(".dds") == 0)
+	{
+		RJE_CHECK_FOR_SUCCESS(LoadFromDDSFile( StringToWString(texturePath).c_str(), DDS_FLAGS::DDS_FLAGS_NONE, &metadata, image ));
+	}
+	RJE_CHECK_FOR_SUCCESS(CreateShaderResourceView( mDevice, image.GetImages(), image.GetImageCount(), metadata, shaderResourceView ));
+}
+
+//////////////////////////////////////////////////////////////////////////
 void DX11TextureManager::Create2DTextureFixedColor(i32 size, RJE_COLOR::Color color, std::string textureName)
 {
 	RJE_ASSERT(size >=1);

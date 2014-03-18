@@ -37,7 +37,8 @@ Console::Console()
 	CommandList["msaa"] = SetMSAA;
 	CommandList["instantiateModel"]     = InstantiateModel;
 	CommandList["instantiatePrimitive"] = InstantiatePrimitive;
-	CommandList["loadScene"] = LoadScene;
+	CommandList["loadScene"]  = LoadScene;
+	CommandList["loadSkybox"] = LoadSkybox;
 	// ------- Time -------
 	CommandList["time"] = Time;
 }
@@ -450,6 +451,18 @@ void LoadScene(char* command /* = nullptr */)
 	string name(command);
 	string scene = System::Instance()->mDataPath + "scenes\\" + name + ".xml";
 	System::Instance()->mScene.LoadFromFile(scene.c_str());
+}
+//-----------------------------
+void LoadSkybox(char* command /* = nullptr */)
+{
+	if (command == nullptr)
+	{
+		Console::Instance()->ConcatText(" -> Bad Parameter. Command usage : loadSkybox \"name\"");
+		return;
+	}
+
+	string name(command);
+	System::Instance()->mGraphicAPI->LoadSkybox(command);
 }
 
 

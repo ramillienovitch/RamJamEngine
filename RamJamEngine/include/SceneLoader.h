@@ -18,6 +18,7 @@ struct SceneLoader
 {
 	// Load from an XML file scene and search gameobjects
 	// Example : 
+	//	<skybox>sunsetcube1024.dds</skybox>
 	//	<gameobject>
 	//		<name>dragon</name>
 	//		<transform>
@@ -35,12 +36,12 @@ struct SceneLoader
 	//			<color a="255" r="0" g="255" b="0"/>
 	//		</gizmo>
 	//</gameobject>
-	void LoadFromFile(const char* pFile, std::vector<unique_ptr<GameObject>>& gameobjects);
+	void LoadFromFile(const char* pFile, std::vector<unique_ptr<GameObject>>& gameobjects, string& skyboxFilename);
 
 	//////////////////////////////////////////////////////////////////////////
 
 private:
-	void  ReadScene         (rapidxml::xml_node<>* scene, std::vector<unique_ptr<GameObject>>& gameobjects);
+	void  ReadScene         (rapidxml::xml_node<>* scene, std::vector<unique_ptr<GameObject>>& gameobjects, string& skyboxFilename);
 	void  ExtractGameObjects(rapidxml::xml_node<>* node, std::vector<unique_ptr<GameObject>>& gameobjects);
 	void  ExtractTransform  (rapidxml::xml_node<>* node, Transform& transform);
 	Color ExtractColor      (rapidxml::xml_node<>* node);
