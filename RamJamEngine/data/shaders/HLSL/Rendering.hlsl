@@ -250,9 +250,9 @@ bool RequiresPerSampleShading(SurfaceData surface[MSAA_SAMPLES])
 SurfaceData AverageMSAASamples(SurfaceData surface[MSAA_SAMPLES])
 {
 	SurfaceData surfaceOut;
-	surfaceOut.position   = surface[0].position;
-	surfaceOut.positionDX = surface[0].positionDX;
-	surfaceOut.positionDY = surface[0].positionDY;
+	surfaceOut.position       = surface[0].position;
+	surfaceOut.positionDX     = surface[0].positionDX;
+	surfaceOut.positionDY     = surface[0].positionDY;
 	surfaceOut.normal         = surface[0].normal;
 	surfaceOut.albedo         = surface[0].albedo;
 	surfaceOut.specularAmount = surface[0].specularAmount;
@@ -260,7 +260,7 @@ SurfaceData AverageMSAASamples(SurfaceData surface[MSAA_SAMPLES])
 	surfaceOut.zDepth         = surface[0].zDepth;
 	[unroll] for (uint i = 1; i < MSAA_SAMPLES; ++i)
 	{
-		surfaceOut.position   += surface[i].position;
+		surfaceOut.position       += surface[i].position;
 		surfaceOut.normal         += surface[i].normal;
 		surfaceOut.albedo         += surface[i].albedo;
 		surfaceOut.specularAmount += surface[i].specularAmount;
@@ -268,7 +268,7 @@ SurfaceData AverageMSAASamples(SurfaceData surface[MSAA_SAMPLES])
 		surfaceOut.zDepth         += surface[i].zDepth;
 	}
 	float rcpMSAA = rcp(MSAA_SAMPLES);
-	surfaceOut.position   *= rcpMSAA;
+	surfaceOut.position       *= rcpMSAA;
 	surfaceOut.normal         *= rcpMSAA;
 	surfaceOut.albedo         *= rcpMSAA;
 	surfaceOut.specularAmount *= rcpMSAA;

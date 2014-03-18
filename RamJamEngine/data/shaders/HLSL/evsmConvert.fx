@@ -34,6 +34,7 @@ float2 GetEVSMExponents(Partition partition)
 	// and maintains consistency across partitions.
 	// Clamp to maximum range of fp32 to prevent overflow/underflow
 	return min(lightSpaceExponents / partition.scale.zz, float2(42.0f, 42.0f));
+	//return float2(42.0f, 42.0f);
 }
 
 // Input depth should be in [0, 1]

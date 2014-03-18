@@ -35,7 +35,7 @@ float2 GetEVSMExponents(Partition partition)
 {
 	float2 lightSpaceExponents = float2(gPositiveExponent, gNegativeExponent);
 
-	// Make sure exponents say consistent in light space regardless of partition
+	// Make sure exponents stay consistent in light space regardless of partition
 	// scaling. This prevents the exponentials from ever getting too ridiculous
 	// and maintains consistency across partitions.
 	// Clamp to maximum range of fp32 to prevent overflow/underflow
@@ -72,6 +72,9 @@ SamplerState gShadowSampler
 	AddressV = CLAMP;
 	AddressW = CLAMP;
 	MaxAnisotropy = 16;
+	MipLODBias = 0;
+	ComparisonFunc = NEVER;
+	BorderColor = float4(1.0,1.0,1.0,1.0);
 };
 
 float ChebyshevUpperBound(float2 moments, float mean, float minVariance)
@@ -95,6 +98,7 @@ float ShadowContribution(float3 texCoord, float3 texCoordDX, float3 texCoordDY, 
 	float2 warpedDepth = WarpDepth(depth, exponents);
 
 	float4 occluder = gShadowTexture.SampleGrad(gShadowSampler, float3(texCoord.xy, 0), texCoordDX.xy, texCoordDY.xy);
+	//float4 occluder = gShadowTexture.Sample(gShadowSampler, float3(texCoord.xy, 0));
 
 	// Derivative of warping at depth
 	// TODO: Parameterize min depth stddev
@@ -153,47 +157,38 @@ float4 AccumulateShadowPS(QuadOut input) : SV_Target
 	// Early out if we don't fall into any of the relevant partitions
 	float3 samplePosView = mul(float4(surface.position, 1.0f), gView).xyz;
 	float viewSpaceZ     = samplePosView.z;
-	bool inAnyPartition  = ( viewSpaceZ >= gPartitions[gCurrentPartition].intervalBegin && viewSpaceZ < gPartitions[gCurrentPartition].intervalEnd && surface.zDepth < 1.0);
 
-	if (inAnyPartition) //&& nDotL > 0.0f)
+	Partition partition = gPartitions[gCurrentPartition];
+	bool inAnyPartition = (viewSpaceZ >= partition.intervalBegin && viewSpaceZ < partition.intervalEnd && surface.zDepth < 1.0);
+
+	if (inAnyPartition)
 	{
-		Partition partition = gPartitions[gCurrentPartition];
+		float3 lightTexCoord, lightTexCoordDX, lightTexCoordDY;
+		ComputeLightTexCoord(surface, lightTexCoord, lightTexCoordDX, lightTexCoordDY);
+		float3 texCoord   = lightTexCoord   * partition.scale.xyz + partition.bias.xyz;
+		float3 texCoordDX = lightTexCoordDX * partition.scale.xyz;
+		float3 texCoordDY = lightTexCoordDY * partition.scale.xyz;
+		float depth = clamp(texCoord.z, 0.0f, 1.0f);
 
-		if (viewSpaceZ < partition.intervalEnd)
+		// we use reverse subtract blending where the shadow contributes;
+		float shadowContrib = ShadowContribution(texCoord, texCoordDX, texCoordDY, depth, partition);
+		shadowContrib = (1-shadowContrib) * 0.2f*gShadowStrength;
+		float3 contrib = shadowContrib.xxx;
+
+		if (gVisualizePartitions)
 		{
-			float3 lightTexCoord, lightTexCoordDX, lightTexCoordDY;
-			ComputeLightTexCoord(surface, lightTexCoord, lightTexCoordDX, lightTexCoordDY);
-			float3 texCoord   = lightTexCoord   * partition.scale.xyz + partition.bias.xyz;
-			float3 texCoordDX = lightTexCoordDX * partition.scale.xyz;
-			float3 texCoordDY = lightTexCoordDY * partition.scale.xyz;
-			float depth = clamp(texCoord.z, 0.0f, 1.0f);
-
-			// we use reverse subtract blending were the shadow contributes;
-			float shadowContrib = ShadowContribution(texCoord, texCoordDX, texCoordDY, depth, partition);
-			shadowContrib = 1-shadowContrib;
-			shadowContrib *= 0.2f*gShadowStrength;
-			//return float4(shadowContrib.xxx, 1.0);
-
-			float3 contrib = shadowContrib.xxx;
-			//float3 contrib = shadowContrib * (nDotL * surface.albedo.xyz);
-			//contrib = shadowContrib < 0.9f ? contrib * (shadowContrib*2.0f*gShadowStrength) : contrib * shadowContrib;
-			//contrib *= shadowContrib;
-
-			if (gVisualizePartitions)
-			{
-				contrib = lerp(contrib, GetPartitionColor(gCurrentPartition), 0.25f);
-			}
-
-			// Accumulate lighting
-			lit += contrib;
+			contrib = lerp(contrib, GetPartitionColor(gCurrentPartition), 0.25f);
 		}
+
+		// Accumulate lighting
+		lit += contrib;
 	}
 	else
 	{
 		discard;
 	}
 
-	return float4(lit, 1.0f);
+	return float4(lit, 0.0f);
 }
 
 RasterizerState rsShadowMap { DepthClipEnable = false; };

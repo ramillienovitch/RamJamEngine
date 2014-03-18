@@ -252,15 +252,22 @@ void DX11RenderingAPI::Initialize(int windowWidth, int windowHeight)
 	TwAddSeparator(lightBar, NULL, NULL); //===============================================
 	TwAddVarRW(lightBar, "Dir   Light Count", TW_TYPE_UINT32,  &mDirLightUICount,   "min=0 max=4096 step=8");
 	TwAddVarRW(lightBar, "Point Light Count", TW_TYPE_UINT32,  &mPointLightUICount, "min=0 max=4096 step=8");
-	TwAddVarRW(lightBar, "Spot  Light Count", TW_TYPE_UINT32,  &mSpotLightUICount,  "min=0 max=4096 step=8");
+	//TwAddVarRW(lightBar, "Spot  Light Count", TW_TYPE_UINT32,  &mSpotLightUICount,  "min=0 max=4096 step=8");
 	TwAddSeparator(lightBar, NULL, NULL); //===============================================
 	TwAddVarRW(lightBar, "Draw Light Spheres",   TW_TYPE_BOOLCPP, &mScene.mbDrawLightSphere, NULL);
 	TwAddVarRW(lightBar, "Draw Sun Sphere",      TW_TYPE_BOOLCPP, &mScene.mbDrawSun,         NULL);
 	TwAddVarRW(lightBar, "Animate Point Lights", TW_TYPE_BOOLCPP, &mScene.mbAnimateLights,   NULL);
 	TwAddVarRW(lightBar, "Animate Sun",          TW_TYPE_BOOLCPP, &mScene.mbAnimateSun,      NULL);
 	TwAddSeparator(lightBar, NULL, NULL); //===============================================
-	TwAddVarRW(lightBar, "Display Shadows", TW_TYPE_BOOLCPP, &mScene.mbDisplayShadows, NULL);
+	TwAddVarRW(lightBar, "Display Shadows", TW_TYPE_BOOLCPP, &mScene.mbDisplayShadows,      NULL);
 	TwAddVarRW(lightBar, "Shadow Strength", TW_TYPE_FLOAT,   &mScene.mShadowStrength,  "min=0 max=1 step=0.05");
+	TwAddVarRW(lightBar, "Use Positive Exponent", TW_TYPE_BOOLCPP, &mScene.mbUsePositiveExponent, NULL);
+	TwAddVarRW(lightBar, "Positive Exponent",     TW_TYPE_FLOAT,   &mScene.mPositiveExponent,     NULL);
+	TwAddVarRW(lightBar, "Use Negative Exponent", TW_TYPE_BOOLCPP, &mScene.mbUseNegativeExponent, NULL);
+	TwAddVarRW(lightBar, "Negative Exponent",     TW_TYPE_FLOAT,   &mScene.mNegativeExponent,     NULL);
+	TwAddSeparator(lightBar, NULL, NULL); //===============================================
+	TwAddVarRW(lightBar, "Soft Shadows",          TW_TYPE_BOOLCPP, &mScene.mbEdgeSoftening,      NULL);
+	TwAddVarRW(lightBar, "Edge Softening Amount", TW_TYPE_FLOAT,   &mScene.mEdgeSofteningAmount, "min=0 max=0.5 step=0.005");
 	TwAddSeparator(lightBar, NULL, NULL); //===============================================
 	TwAddVarRW(lightBar, "Align Light To Frustum", TW_TYPE_BOOLCPP, &mScene.mbAlignLightToFrustum, NULL);
 	TwAddVarRW(lightBar, "View Light Space",       TW_TYPE_BOOLCPP, &mScene.mbViewLightSpace,      NULL);
@@ -268,9 +275,9 @@ void DX11RenderingAPI::Initialize(int windowWidth, int windowHeight)
 	//-----------
 	TwBar *gameObjectBar = TwNewBar("GameObject");
 	TwDefine("GameObject iconified=true ");
+	TwSetParam(gameObjectBar, NULL, "size",  TW_PARAM_INT32, 2, barSize);
 	TwAddVarRW(gameObjectBar, "GameObject ", TW_TYPE_UINT32,    &mScene.mCurrentEditorGOIdxUI,  "min=0 step=1");
 	TwAddVarRW(gameObjectBar, "View Gizmo ", TW_TYPE_BOOLCPP,   &mScene.mbEnableGizmo, NULL);
-	TwSetParam(gameObjectBar, NULL, "size",  TW_PARAM_INT32, 2, barSize);
 	TwAddVarRO(gameObjectBar, "Name",        TW_TYPE_STDSTRING, &mScene.mGameObjectEditorName,  "opened=true");
 	TwAddVarRW(gameObjectBar, "Position",    TW_TYPE_DIR3F,     &mScene.mGameObjectEditorPos,   "opened=true");
 	TwAddVarRW(gameObjectBar, "Rotation",    TW_TYPE_QUAT4F,    &mScene.mGameObjectEditorRot,   "opened=true axisx=-x axisy=y axisz=z");
@@ -436,18 +443,14 @@ void DX11RenderingAPI::DrawScene()
 				RenderShadowDepth(partitionSRV, partitionIndex);
 				//RenderScreenQuad(mShadowDepthTexture->GetShaderResource(), true, mShadowTextureDim, mShadowTextureDim);
 				ConvertToEVSM(mShadowDepthTexture->GetShaderResource(), mShadowEVSMTexture->GetRenderTarget(0), partitionSRV, partitionIndex);
-	// 			// Optionally blur the EVSM
-	// 			if (mScene.mbEdgeSoftening)
-	// 			{
-	// 				Vector2 blurSizeLightSpace(0.0f, 0.0f);
-	// 				blurSizeLightSpace.x = mScene.mEdgeSofteningAmount * 0.5f * mShadowCamera->mOrthoProj.m11;
-	// 				blurSizeLightSpace.y = mScene.mEdgeSofteningAmount * 0.5f * mShadowCamera->mOrthoProj.m22;
-	// 				BoxBlur(mShadowEVSMTexture, 0, mShadowEVSMBlurTexture, partitionIndex, partitionSRV, blurSizeLightSpace);
-	// 			}
-	// 
-				// Generate mipmaps (for all partitions in the array)
+				if (mScene.mbEdgeSoftening)
+				{
+					Vector2 blurSizeLightSpace(0.0f, 0.0f);
+					blurSizeLightSpace.x = mScene.mEdgeSofteningAmount * 0.5f * mShadowCamera->mOrthoProj.m11;
+					blurSizeLightSpace.y = mScene.mEdgeSofteningAmount * 0.5f * mShadowCamera->mOrthoProj.m22;
+					BoxBlur(mShadowEVSMTexture, 0, mShadowEVSMBlurTexture, partitionIndex, partitionSRV, blurSizeLightSpace);
+				}
 				mDX11Device->md3dImmediateContext->GenerateMips(mShadowEVSMTexture->GetShaderResource());
-				// Lighting accumulation phase
 				AccumulateLighting(mBackbufferRTV, mShadowEVSMTexture->GetShaderResource(), partitionSRV, partitionIndex);
 			}
 		}
@@ -955,9 +958,10 @@ void DX11RenderingAPI::ConvertToEVSM( ID3D11ShaderResourceView* depthInput, ID3D
 		mDX11Device->md3dImmediateContext->DrawIndexed(6, 0, 0);
 	}
 
-	//mDX11Device->md3dImmediateContext->OMSetRenderTargets(0, 0, 0);
+	mDX11Device->md3dImmediateContext->OMSetRenderTargets(0, 0, 0);
 	ID3D11ShaderResourceView* nullSRV[2] = { 0, 0 };
 	mDX11Device->md3dImmediateContext->PSSetShaderResources( 0, 2, nullSRV);
+	mDX11Device->md3dImmediateContext->VSSetShaderResources( 0, 2, nullSRV);
 	mDX11Device->md3dImmediateContext->RSSetViewports(1, &mScreenViewport);
 
 	PROFILE_GPU_END(L"Convert To EVSM");
@@ -971,6 +975,9 @@ void DX11RenderingAPI::AccumulateLighting( ID3D11RenderTargetView* backBuffer, I
 
 	UINT stride = sizeof(PosNormTanTex);
 	UINT offset = 0;
+
+	mDX11Device->md3dImmediateContext->IASetInputLayout(DX11InputLayouts::PosNormalTanTex);
+	mDX11Device->md3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	mDX11Device->md3dImmediateContext->OMSetRenderTargets(1, &backBuffer, 0);
 	mDX11Device->md3dImmediateContext->OMSetBlendState(DX11CommonStates::sBlendState_LightingBlend, 0, 0xFFFFFFFF);
@@ -1011,6 +1018,49 @@ void DX11RenderingAPI::AccumulateLighting( ID3D11RenderTargetView* backBuffer, I
 	//mDX11Device->md3dImmediateContext->OMSetRenderTargets(0, 0, 0);
 
 	PROFILE_GPU_END(L"Accumulate Lighting");
+}
+
+//////////////////////////////////////////////////////////////////////////
+void DX11RenderingAPI::BoxBlur(Texture2D* texture, u32 textureElement, Texture2D* temp, u32 partitionIndex, ID3D11ShaderResourceView* partitionSRV, const Vector2& filterSize)
+{
+	DX11Effects::EVSMBlurFX->SetFilterSize(filterSize);
+	DX11Effects::EVSMBlurFX->SetCurrentPartitions(partitionIndex);
+
+	// Horizontal pass
+	BoxBlurPass( texture->GetShaderResource(textureElement), temp->GetRenderTarget(0), partitionSRV, partitionIndex, filterSize, 0);
+
+	// Vertical pass
+	BoxBlurPass( temp->GetShaderResource(0), texture->GetRenderTarget(textureElement), partitionSRV, partitionIndex, filterSize, 1);
+}
+
+//////////////////////////////////////////////////////////////////////////
+void DX11RenderingAPI::BoxBlurPass(	ID3D11ShaderResourceView* input, ID3D11RenderTargetView* output, ID3D11ShaderResourceView* partitionSRV,
+									u32 partitionIndex, const Vector2& filterSize, u32 dimension)
+{
+	mDX11Device->md3dImmediateContext->IASetInputLayout(0);
+	mDX11Device->md3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+	mDX11Device->md3dImmediateContext->IASetVertexBuffers(0, 0, 0, 0, 0);
+
+	DX11Effects::EVSMBlurFX->SetDimension(dimension);
+	DX11Effects::EVSMBlurFX->SetInputTexture(input);
+	DX11Effects::EVSMBlurFX->SetPartitions(partitionSRV);
+	DX11Effects::EVSMBlurFX->EVSMBlurTech->GetPassByIndex(0)->Apply(0, mDX11Device->md3dImmediateContext);
+
+	mDX11Device->md3dImmediateContext->RSSetState(DX11CommonStates::sRasterizerState_Solid);
+	mDX11Device->md3dImmediateContext->RSSetViewports(1, &mShadowViewport);
+
+	mDX11Device->md3dImmediateContext->OMSetRenderTargets(1, &output, 0);
+	mDX11Device->md3dImmediateContext->OMSetBlendState(0, 0, 0xffffffff);
+
+	// Full-screen triangle
+	mDX11Device->md3dImmediateContext->Draw(3, 0);
+
+	// Cleanup (aka make the runtime happy)
+	mDX11Device->md3dImmediateContext->OMSetRenderTargets(0, 0, 0);
+	ID3D11ShaderResourceView* nullViews[2] = {0, 0};
+	mDX11Device->md3dImmediateContext->VSSetShaderResources(0, 2, nullViews);
+	mDX11Device->md3dImmediateContext->PSSetShaderResources(0, 2, nullViews);
+	mDX11Device->md3dImmediateContext->RSSetViewports(1, &mScreenViewport);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -1494,7 +1544,7 @@ void DX11RenderingAPI::BuildGBuffer(DXGI_SAMPLE_DESC sampleDesc)
 	// === G-Buffer ===
 	// Albedo / Position / Normal / Specular
 	mGBuffer.push_back(rje_new Texture2D( mDX11Device->md3dDevice, gBufferWidth, gBufferHeight, DXGI_FORMAT_R8G8B8A8_UNORM     , D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE, sampleDesc));
-	mGBuffer.push_back(rje_new Texture2D( mDX11Device->md3dDevice, gBufferWidth, gBufferHeight, DXGI_FORMAT_R16G16B16A16_FLOAT , D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE, sampleDesc));
+	mGBuffer.push_back(rje_new Texture2D( mDX11Device->md3dDevice, gBufferWidth, gBufferHeight, DXGI_FORMAT_R32G32B32A32_FLOAT , D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE, sampleDesc));
 	mGBuffer.push_back(rje_new Texture2D( mDX11Device->md3dDevice, gBufferWidth, gBufferHeight, DXGI_FORMAT_R16G16B16A16_FLOAT , D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE, sampleDesc));
 	mGBuffer.push_back(rje_new Texture2D( mDX11Device->md3dDevice, gBufferWidth, gBufferHeight, DXGI_FORMAT_R16G16_FLOAT ,       D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE, sampleDesc));
 

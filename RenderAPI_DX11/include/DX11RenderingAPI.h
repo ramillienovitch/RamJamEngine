@@ -165,7 +165,7 @@ struct DX11RenderingAPI : GraphicAPI
 	//-----------
 	// EVSM Edge softening
 	void BoxBlurPass(	ID3D11ShaderResourceView* input, ID3D11RenderTargetView* output, ID3D11ShaderResourceView* partitionSRV,
-						u32 partitionIndex, const D3D11_VIEWPORT* viewport, const Vector2& filterSize, unsigned int dimension);
+						u32 partitionIndex, const Vector2& filterSize, u32 dimension);
 	void BoxBlur(Texture2D* texture, u32 textureElement, Texture2D* temp, u32 partitionIndex, ID3D11ShaderResourceView* partitionSRV, const Vector2& filterSize);
 };
 

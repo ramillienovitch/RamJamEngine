@@ -35,9 +35,8 @@ Scene::Scene()
 	mbAlignLightToFrustum  = false;
 	mbViewLightSpace       = false;
 	mbViewPartitions       = false;
-	mbTightPartitionBounds = false;
 	mbEdgeSoftening        = false;
-	mEdgeSofteningAmount    = 0.02f;
+	mEdgeSofteningAmount    = 0.0f;
 	mMaxEdgeSofteningFilter = 16.0f;
 	mShadowStrength         = 1.0f;
 	//------

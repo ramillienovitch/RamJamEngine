@@ -1,0 +1,67 @@
+<?xml version="1.0"?>
+
+<scene>
+	<gameobject>
+		<name>ground</name>
+		<transform>
+			<position x="0" y="0" z="0"/>
+			<rotation x="0" y="0" z="0"/>
+			<scale    x="1" y="1" z="1"/>
+		</transform>
+		<mesh>
+			<primitive>grid</primitive>
+			<parameters width="200" depth="200" x="2" y="2"/>
+			<material>_Default\default.mat</material>
+		</mesh>
+	</gameobject>
+	<gameobject>
+		<name>sphere1</name>
+		<transform>
+			<position x="-5" y="2" z="15"/>
+			<rotation x="0" y="0" z="0"/>
+			<scale    x="1" y="1" z="1"/>
+		</transform>
+		<mesh>
+			<primitive>geosphere</primitive>
+			<parameters radius="2" subdiv="3"/>
+			<material>_Default\default.mat</material>
+		</mesh>
+	</gameobject>
+	<gameobject>
+		<name>sphere2</name>
+		<transform>
+			<position x="0" y="4" z="13"/>
+			<rotation x="0" y="0" z="0"/>
+			<scale    x="1" y="1" z="1"/>
+		</transform>
+		<mesh>
+			<primitive>geosphere</primitive>
+			<parameters radius="1" subdiv="3"/>
+			<material>_Default\default.mat</material>
+		</mesh>
+	</gameobject>
+	<gameobject>
+		<name>radar</name>
+		<transform>
+			<position x="0" y="0" z="0"/>
+			<rotation x="0" y="0" z="0"/>
+			<scale    x="1" y="1" z="1"/>
+		</transform>
+		<mesh>
+			<file>radar.mesh</file>
+			<materialLib>Radar\radar.matlib</materialLib>
+		</mesh>
+	</gameobject>
+	<gameobject>
+		<name>cart</name>
+		<transform>
+			<position x="0" y="0" z="20"/>
+			<rotation x="0" y="0" z="0"/>
+			<scale    x="0.02" y="0.02" z="0.02"/>
+		</transform>
+		<mesh>
+			<file>cart.mesh</file>
+			<materialLib>Cart\cart.matlib</materialLib>
+		</mesh>
+	</gameobject>
+</scene>

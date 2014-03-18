@@ -235,6 +235,7 @@
   </ItemGroup>
   <ItemGroup>
     <Xml Include="..\data\scenes\city.xml" />
+    <Xml Include="..\data\scenes\shadow.xml" />
     <Xml Include="..\data\scenes\simple.xml">
       <SubType>Designer</SubType>
     </Xml>

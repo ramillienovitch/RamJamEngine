@@ -55,7 +55,6 @@ struct Scene
 	BOOL	mbAlignLightToFrustum;
 	BOOL	mbViewLightSpace;
 	BOOL	mbViewPartitions;
-	BOOL	mbTightPartitionBounds;
 	BOOL	mbEdgeSoftening;
 	float	mEdgeSofteningAmount;
 	float	mMaxEdgeSofteningFilter;

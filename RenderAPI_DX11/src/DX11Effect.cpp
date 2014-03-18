@@ -249,7 +249,12 @@ SDSMEffect::~SDSMEffect(){}
 EVSMBlurEffect::EVSMBlurEffect(ID3D11Device* device, const std::string& filename)
 	: Effect(device, filename)
 {
-	EVSMBlurTech = mFX->GetTechniqueByName("EVSMBlur");
+	EVSMBlurTech     = mFX->GetTechniqueByName("EVSMBlur");
+	FilterSize       = mFX->GetVariableByName("mFilterSize")->AsVector();
+	CurrentPartition = mFX->GetVariableByName("mPartition")->AsScalar();
+	Dimension        = mFX->GetVariableByName("mDimension")->AsScalar();
+	InputTexture     = mFX->GetVariableByName("gInputTexture")->AsShaderResource();
+	Partitions       = mFX->GetVariableByName("gPartitions")->AsShaderResource();
 }
 
 EVSMBlurEffect::~EVSMBlurEffect(){}

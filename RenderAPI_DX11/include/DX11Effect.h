@@ -293,7 +293,18 @@ struct EVSMBlurEffect : public Effect
 	EVSMBlurEffect(ID3D11Device* device, const std::string& filename);
 	~EVSMBlurEffect();
 
-	ID3DX11EffectTechnique*		EVSMBlurTech;
+	HRESULT SetInputTexture(ID3D11ShaderResourceView* input)			{ return InputTexture->SetResource(input); }
+	HRESULT SetPartitions(ID3D11ShaderResourceView* partitions)			{ return Partitions->SetResource(partitions); }
+	HRESULT SetFilterSize(const Vector2& v)								{ return FilterSize->SetFloatVector(reinterpret_cast<const float*>(&v)); }
+	HRESULT SetCurrentPartitions(u32 partition)							{ return CurrentPartition->SetInt(partition); }
+	HRESULT SetDimension(u32 dim)										{ return Dimension->SetInt(dim); }
+
+	ID3DX11EffectTechnique*					EVSMBlurTech;
+	ID3DX11EffectVectorVariable*			FilterSize;
+	ID3DX11EffectScalarVariable*			CurrentPartition;
+	ID3DX11EffectScalarVariable*			Dimension;
+	ID3DX11EffectShaderResourceVariable*	InputTexture;
+	ID3DX11EffectShaderResourceVariable*	Partitions;
 };
 
 //////////////////////////////////////////////////////////////////////////

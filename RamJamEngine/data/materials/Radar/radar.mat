@@ -1,0 +1,15 @@
+[shader]
+Name=basic
+# ----------------------
+[properties]
+Transparency=false
+Albedo=1.0|1.0|1.0|1.0
+SpecularAmount=0.0
+SpecularPower=0.0
+# ----------------------
+[textures]
+Texture_Diffuse=textures\white.dds
+Tiling=1.0|1.0
+Offset=0.0|0.0
+Rotation=0.0
+# ----------------------

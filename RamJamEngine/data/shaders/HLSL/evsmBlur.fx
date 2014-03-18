@@ -27,15 +27,15 @@ BlurData ComputeBlurData(float filterSizeTexels)
 	return output;
 }
 
-cbuffer BoxBlurConstants : register(b0)
+cbuffer BoxBlurConstants
 {
 	float2 mFilterSize;     // Filter size in light view space [0,1] (unaffected by partitioning)
 	uint mPartition;        // Which partition this is (for scaling filter regions)
 	uint mDimension;        // Which dimension to blur in (0 = horiz, 1 = vert)
 }
 
-Texture2DArray gInputTexture : register(t0);
-StructuredBuffer<Partition> gPartitions : register(t1);
+Texture2DArray					gInputTexture;
+StructuredBuffer<Partition>		gPartitions;
 
 struct BoxBlurVSOut
 {
