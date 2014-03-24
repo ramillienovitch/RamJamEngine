@@ -9,6 +9,7 @@ SpecularPower=0.0
 # ----------------------
 [textures]
 Texture_Diffuse=textures\floor.dds
+Normal_Map=textures\floor_nmap.dds
 Tiling=30.0|30.0
 Offset=0.0|0.0
 Rotation=0.0

@@ -69,7 +69,7 @@ float LogPartitionFromRange(uint partition, float minZ, float maxZ)
 	{
 		float ratio = maxZ / minZ;
 		float power = float(partition) * (1.0f / float(PARTITIONS));
-		z = minZ * pow(ratio, power);
+		z = minZ * pow(abs(ratio), power);
 	}
 	return z;
 }

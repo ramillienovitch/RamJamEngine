@@ -92,6 +92,7 @@ cbuffer cbPerObject
 	float4x4 gWorld;
 	//float4x4 gWorldInvTranspose;
 	float4x4 gDiffuseMapTrf	: Texture_Diffuse_Trf;
+	float4x4 gNormalMapTrf	: Normal_Map_Trf;
 	//-------
 	bool   gMatUseAlpha			: Transparency;
 	float4 gMatAlbedo			: Albedo;
@@ -106,6 +107,24 @@ cbuffer cbPerObject
 float3 ComputeFaceNormal(float3 position)
 {
 	return cross(ddx_coarse(position), ddy_coarse(position));
+}
+
+float3 NormalSampleToWorldSpace(float3 normalMapSample, float3 unitNormalW, float3 tangentW)
+{
+	// Uncompress each component from [0,1] to [-1,1].
+	float3 normalT = 2.0f*normalMapSample - 1.0f;
+
+		// Build orthonormal basis.
+		float3 N = unitNormalW;
+		float3 T = normalize(tangentW - dot(tangentW, N)*N);
+		float3 B = cross(N, T);
+
+		float3x3 TBN = float3x3(T, B, N);
+
+		// Transform from tangent space to world space.
+		float3 bumpedNormalW = mul(normalT, TBN);
+
+		return bumpedNormalW;
 }
 
 float2 EncodeSphereMap(float3 n)
@@ -147,7 +166,7 @@ uint GetFramebufferSampleAddress(uint2 coords, uint sampleIndex)
 // Deferred
 //--------------------------------------------------------------------------------------
 
-SurfaceData ComputeSurfaceDataFromGeometry(VertexOut input, Texture2D gTexture, SamplerState sam)
+SurfaceData ComputeSurfaceDataFromGeometry(VertexOut input, Texture2D gTexture, Texture2D gNormalMap, SamplerState sam)
 {
 	SurfaceData surface;
 	//surface.position = mul(float4(input.PosW, 1.0f), gView).xyz;
@@ -162,7 +181,25 @@ SurfaceData ComputeSurfaceDataFromGeometry(VertexOut input, Texture2D gTexture, 
 	surface.positionDY = ddy_coarse(surface.position);
 
 	// Optionally use face normal instead of shading normal
-	surface.normal = normalize(gUseFaceNormals? ComputeFaceNormal(input.PosW) : input.NormalW);
+	float3 normal;
+	if (gUseFaceNormals)
+		normal = normalize(ComputeFaceNormal(input.PosW));
+	else if (gUseNormalMaps)
+	{
+		uint2 textureDim;
+		gNormalMap.GetDimensions(textureDim.x, textureDim.y);
+		if (textureDim.x == 0U)
+			normal = normalize(input.NormalW);
+		else
+		{
+			float3 sample = (textureDim.x == 0U ? float3(1.0f, 1.0f, 1.0f) : gNormalMap.Sample(sam, input.Tex).xyz);
+			normal = NormalSampleToWorldSpace(sample, normalize(input.NormalW), input.TanW);
+		}
+	}
+	else
+		normal = normalize(input.NormalW);
+
+	surface.normal = normal;
 
 	// Map NULL diffuse textures to white
 	uint2 textureDim;
@@ -296,4 +333,5 @@ void ComputeLightTexCoord(SurfaceData data, out float3 lightTexCoord, out float3
 	lightTexCoordDX = (ProjectIntoLightTexCoord(data.position + deltaPixels * data.positionDX) - lightTexCoord) / deltaPixels;
 	lightTexCoordDY = (ProjectIntoLightTexCoord(data.position + deltaPixels * data.positionDY) - lightTexCoord) / deltaPixels;
 }
+
 #endif

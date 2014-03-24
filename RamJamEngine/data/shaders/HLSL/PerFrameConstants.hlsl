@@ -30,6 +30,7 @@ cbuffer cbPerFrame : register (b0)
 	uint gFramebufferSizeY;
 	//-----------
 	bool   gUseFaceNormals;
+	bool   gUseNormalMaps;
 	bool   gUseFog;
 	bool   gUseTexture;
 	bool   gUseAlphaClip;

@@ -46,6 +46,7 @@ struct Scene
 	float	mSunHeight;
 	//---------
 	BOOL	mbUseFaceNormals;
+	BOOL	mbUseNormalMaps;
 	BOOL	mbOnlyPosition;
 	BOOL	mbOnlyAlbedo;
 	BOOL	mbOnlyNormals;

@@ -236,6 +236,7 @@ void DX11RenderingAPI::Initialize(int windowWidth, int windowHeight)
 	TwAddVarRW(bar, "Per Sample Shading",       TW_TYPE_BOOLCPP, &mScene.mbViewPerSampleShading, NULL);
 	TwAddVarRW(bar, "View Light Count",         TW_TYPE_BOOLCPP, &mScene.mbViewLightCount,       NULL);
 	TwAddVarRW(bar, "Use Face Normals",         TW_TYPE_BOOLCPP, &mScene.mbUseFaceNormals,       NULL);
+	TwAddVarRW(bar, "Use Normal Maps",          TW_TYPE_BOOLCPP, &mScene.mbUseNormalMaps,        NULL);
 	TwAddVarRW(bar, "Use Fog",                  TW_TYPE_BOOLCPP, &mScene.mbUseFog,               NULL);
 	TwAddVarRW(bar, "Fog Color", TW_TYPE_COLOR4F, &mScene.mFogColor, NULL);
 	TwAddVarRW(bar, "Fog Start", TW_TYPE_FLOAT, &mScene.mFogStart, "min=10 max=100");
@@ -637,6 +638,7 @@ void DX11RenderingAPI::RenderGBuffer()
 	DX11Effects::BasicFX->SetFogRange(    mScene.mFogRange);
 	DX11Effects::BasicFX->SetFogState(    mScene.mbUseFog);
 	DX11Effects::BasicFX->UseFaceNormals( mScene.mbUseFaceNormals);
+	DX11Effects::BasicFX->UseNormalMaps(  mScene.mbUseNormalMaps);
 	DX11Effects::BasicFX->SetTextureState(mScene.mbUseTexture);
 
 	ID3DX11EffectTechnique* activeTech = DX11Effects::BasicFX->DeferredTech;

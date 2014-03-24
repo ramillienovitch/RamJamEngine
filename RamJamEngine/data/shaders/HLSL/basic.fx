@@ -6,6 +6,7 @@
 #include "Rendering.hlsl"
 
 Texture2D		gDiffuseMap : Texture_Diffuse;
+Texture2D		gNormaMap   : Normal_Map;
 SamplerState	gTextureSampler;
 
 //////////////////////////////////////////////////////////////////////////
@@ -144,7 +145,7 @@ float4 PS(VertexOut pin) : SV_Target
 Gbuffer GbufferPS(VertexOut pin)
 {
 	Gbuffer gbuffer;
-	SurfaceData surface = ComputeSurfaceDataFromGeometry(pin, gDiffuseMap, gTextureSampler);
+	SurfaceData surface = ComputeSurfaceDataFromGeometry(pin, gDiffuseMap, gNormaMap, gTextureSampler);
 
 	gbuffer.Position     = surface.position;
 	gbuffer.Albedo       = surface.albedo;

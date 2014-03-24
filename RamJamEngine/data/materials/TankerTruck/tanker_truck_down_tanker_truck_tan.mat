@@ -9,6 +9,7 @@ SpecularPower=0.0
 # ----------------------
 [textures]
 Texture_Diffuse=textures\tanker\tanker_truck_tank_d.dds
+Normal_Map=NONE
 Tiling=1.0|1.0
 Offset=0.0|0.0
 Rotation=0.0

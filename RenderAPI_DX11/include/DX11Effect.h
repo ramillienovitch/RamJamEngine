@@ -36,6 +36,7 @@ struct BasicEffect : public Effect
 	HRESULT SetView(Matrix44& M)                             { return View->SetMatrix(reinterpret_cast<const float*>(&M)); }
 	HRESULT SetEyePosW(const Vector3& v)                     { return EyePosW->SetFloatVector(reinterpret_cast<const float*>(&v)); }
 	HRESULT UseFaceNormals(BOOL state)                       { return FaceNormals->SetBool(state != 0); }
+	HRESULT UseNormalMaps(BOOL state)                        { return NormalMaps->SetBool(state != 0); }
 	HRESULT SetFogState(BOOL state)                          { return FogEnabled->SetBool(state != 0); }
 	HRESULT SetAlphaClipState(BOOL state)                    { return AlphaClipEnabled->SetBool(state != 0); }
 	HRESULT SetTextureState(BOOL state)                      { return TextureEnabled->SetBool(state != 0); }
@@ -64,6 +65,7 @@ struct BasicEffect : public Effect
 	ID3DX11EffectVectorVariable*			FogColor;
 	//-------
 	ID3DX11EffectScalarVariable*			FaceNormals;
+	ID3DX11EffectScalarVariable*			NormalMaps;
 	ID3DX11EffectScalarVariable*			FogEnabled;
 	ID3DX11EffectScalarVariable*			AlphaClipEnabled;
 	ID3DX11EffectScalarVariable*			TextureEnabled;

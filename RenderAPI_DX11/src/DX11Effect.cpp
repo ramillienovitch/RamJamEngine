@@ -29,6 +29,7 @@ BasicEffect::BasicEffect(ID3D11Device* device, const std::string& filename)
 	EyePosW           = mFX->GetVariableByName("gEyePosW")->AsVector();
 	FogColor          = mFX->GetVariableByName("gFogColor")->AsVector();
 	FaceNormals       = mFX->GetVariableByName("gUseFaceNormals")->AsScalar();
+	NormalMaps        = mFX->GetVariableByName("gUseNormalMaps")->AsScalar();
 	FogEnabled        = mFX->GetVariableByName("gUseFog")->AsScalar();
 	AlphaClipEnabled  = mFX->GetVariableByName("gUseAlphaClip")->AsScalar();
 	TextureEnabled    = mFX->GetVariableByName("gUseTexture")->AsScalar();

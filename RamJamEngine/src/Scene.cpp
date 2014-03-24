@@ -16,6 +16,7 @@ Scene::Scene()
 	mbUseBlending    = true;
 	mbWireframe      = false;
 	mbUseFaceNormals = false;
+	mbUseNormalMaps  = true;
 	//------
 	mbOnlyPosition = false;
 	mbOnlyAlbedo   = false;
