@@ -72,6 +72,10 @@ struct Scene
 	Vector3 mSceneCenter;
 	Vector3 mSceneExtents;
 	float   mSceneRadius;
+	//---------
+	// Point Light Editor values
+	float mPointLightRadius;
+	float mPointLightHeight;
 	//-----------------------------------------------
 	Scene();
 	~Scene();

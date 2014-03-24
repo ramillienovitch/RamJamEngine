@@ -55,9 +55,10 @@ DX11RenderingAPI::DX11RenderingAPI(Scene& scene) : mScene(scene)
 	Vector4 black = Color(Color::Black).GetVector4RGBANorm();
 	for (int i = 0; i < MAX_LIGHTS; i++)
 	{
-		float radius = RJE::Math::Rand(0.0f,1.0f);
-		mPointLightsRadius[i]    = sqrt(radius) * 15.0f;
-		mPointLightsHeight[i]    = /*0.5f;//*/RJE::Math::Rand(0.0f, 10.0f);
+		float radius = RJE::Math::Rand(0.0f, 1.0f);
+		float height = RJE::Math::Rand(0.0f, 1.0f);
+		mPointLightsRadius[i]    = sqrt(radius);
+		mPointLightsHeight[i]    = sqrt(height);
 		mPointLightsAngle[i]     = RJE::Math::Rand(0.0f,RJE::Math::Pi_Two_f);
 		mPointLightsAnimSpeed[i] = RJE::Math::Rand(0.1f,2.0f);
 		//--------
@@ -273,6 +274,9 @@ void DX11RenderingAPI::Initialize(int windowWidth, int windowHeight)
 	TwAddVarRW(lightBar, "Align Light To Frustum", TW_TYPE_BOOLCPP, &mScene.mbAlignLightToFrustum, NULL);
 	TwAddVarRW(lightBar, "View Light Space",       TW_TYPE_BOOLCPP, &mScene.mbViewLightSpace,      NULL);
 	TwAddVarRW(lightBar, "View Partitions",        TW_TYPE_BOOLCPP, &mScene.mbViewPartitions,      NULL);
+	TwAddSeparator(lightBar, NULL, NULL); //===============================================
+	TwAddVarRW(lightBar, "Point Light Radius", TW_TYPE_FLOAT,   &mScene.mPointLightRadius, "min=0 max=100 step=0.5");
+	TwAddVarRW(lightBar, "Point Light Height", TW_TYPE_FLOAT,   &mScene.mPointLightHeight, "min=-100 max=100 step=0.5");
 	//-----------
 	TwBar *gameObjectBar = TwNewBar("GameObject");
 	TwDefine("GameObject iconified=true ");
@@ -388,9 +392,9 @@ void DX11RenderingAPI::UpdateScene( float dt )
 		{
 			float pointLightSpeed = mScene.mbAnimateLights ? mPointLightsAnimSpeed[i] : 0.0f;
 
-			mWorkingPointLights[i].Position.x = mPointLightsRadius[i] * cosf(mPointLightsAngle[i] + timer * pointLightSpeed );
-			mWorkingPointLights[i].Position.y = mPointLightsHeight[i];
-			mWorkingPointLights[i].Position.z = mPointLightsRadius[i] * sinf(mPointLightsAngle[i] + timer * pointLightSpeed );
+			mWorkingPointLights[i].Position.x = mPointLightsRadius[i] * mScene.mPointLightRadius * cosf(mPointLightsAngle[i] + timer * pointLightSpeed );
+			mWorkingPointLights[i].Position.y = mPointLightsHeight[i] * mScene.mPointLightHeight;
+			mWorkingPointLights[i].Position.z = mPointLightsRadius[i] * mScene.mPointLightRadius * sinf(mPointLightsAngle[i] + timer * pointLightSpeed );
 			light[i] = mWorkingPointLights[i];
 		}
 		mPointLights->Unmap(mDX11Device->md3dImmediateContext);
@@ -436,8 +440,11 @@ void DX11RenderingAPI::DrawScene()
 
 		//----------------------------------
 
-		if (mScene.mbDisplayShadows)
+		if (mScene.mbDisplayShadows && mDirLightCount > 0)
 		{
+			PROFILE_CPU("Render Shadows");
+			PROFILE_GPU_START(L"Render Shadows");
+
 			ID3D11ShaderResourceView* partitionSRV = ComputeSDSMPartitions();
 			for (u32 partitionIndex = 0; partitionIndex < PARTITIONS; ++partitionIndex)
 			{
@@ -454,6 +461,8 @@ void DX11RenderingAPI::DrawScene()
 				mDX11Device->md3dImmediateContext->GenerateMips(mShadowEVSMTexture->GetShaderResource());
 				AccumulateLighting(mBackbufferRTV, mShadowEVSMTexture->GetShaderResource(), partitionSRV, partitionIndex);
 			}
+
+			PROFILE_GPU_END(L"Render Shadows");
 		}
 	}
 	else
@@ -823,9 +832,6 @@ void DX11RenderingAPI::RenderSkybox(BOOL deferredRendering)
 //////////////////////////////////////////////////////////////////////////
 void DX11RenderingAPI::RenderShadowDepth(ID3D11ShaderResourceView* partitionSRV, u32 currentPartition)
 {
-	PROFILE_CPU("Render Shadow Map");
-	PROFILE_GPU_START(L"Render Shadow Map");
-
 	// Clear shadow depth buffer
 	mDX11Device->md3dImmediateContext->ClearDepthStencilView(mShadowDepthTexture->GetDepthStencil(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 
@@ -882,16 +888,11 @@ void DX11RenderingAPI::RenderShadowDepth(ID3D11ShaderResourceView* partitionSRV,
 
 	ID3D11ShaderResourceView* dummySRV[1] = {0};
 	mDX11Device->md3dImmediateContext->VSSetShaderResources(0, 1, dummySRV);
-
-	PROFILE_GPU_END(L"Render Shadow Map");
 }
 
 //////////////////////////////////////////////////////////////////////////
 ID3D11ShaderResourceView* DX11RenderingAPI::ComputeSDSMPartitions()
 {
-	PROFILE_CPU("Compute Partitions");
-	PROFILE_GPU_START(L"Compute Partitions");
-	
 	Matrix44 camViewInv = mCamera->mView;
 	camViewInv.Inverse();
 	Matrix44 cameraViewToLightProj = /*camViewInv * */(mShadowCamera->mView*mShadowCamera->mOrthoProj);
@@ -924,17 +925,12 @@ ID3D11ShaderResourceView* DX11RenderingAPI::ComputeSDSMPartitions()
 																							partitionBorderLightSpace, maxPartitionScale, 
 																							mWindowWidth, mWindowHeight);
 
-	PROFILE_GPU_END(L"Compute Partitions");
-
 	return partitions;
 }
 
 //////////////////////////////////////////////////////////////////////////
 void DX11RenderingAPI::ConvertToEVSM( ID3D11ShaderResourceView* depthInput, ID3D11RenderTargetView* evsmOutput, ID3D11ShaderResourceView* partitionSRV, u32 partitionIndex)
 {
-	PROFILE_CPU("Convert To EVSM");
-	PROFILE_GPU_START(L"Convert To EVSM");
-
 	UINT stride = sizeof(PosNormTanTex);
 	UINT offset = 0;
 
@@ -964,16 +960,11 @@ void DX11RenderingAPI::ConvertToEVSM( ID3D11ShaderResourceView* depthInput, ID3D
 	mDX11Device->md3dImmediateContext->PSSetShaderResources( 0, 2, nullSRV);
 	mDX11Device->md3dImmediateContext->VSSetShaderResources( 0, 2, nullSRV);
 	mDX11Device->md3dImmediateContext->RSSetViewports(1, &mScreenViewport);
-
-	PROFILE_GPU_END(L"Convert To EVSM");
 }
 
 //////////////////////////////////////////////////////////////////////////
 void DX11RenderingAPI::AccumulateLighting( ID3D11RenderTargetView* backBuffer, ID3D11ShaderResourceView* shadowSRV, ID3D11ShaderResourceView* partitionSRV, u32 partitionIndex)
 {
-	PROFILE_CPU("Accumulate Lighting");
-	PROFILE_GPU_START(L"Accumulate Lighting");
-
 	UINT stride = sizeof(PosNormTanTex);
 	UINT offset = 0;
 
@@ -1017,8 +1008,6 @@ void DX11RenderingAPI::AccumulateLighting( ID3D11RenderTargetView* backBuffer, I
 	ID3D11ShaderResourceView* nullSRV[10] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 	mDX11Device->md3dImmediateContext->PSSetShaderResources( 0, 10, nullSRV);
 	//mDX11Device->md3dImmediateContext->OMSetRenderTargets(0, 0, 0);
-
-	PROFILE_GPU_END(L"Accumulate Lighting");
 }
 
 //////////////////////////////////////////////////////////////////////////

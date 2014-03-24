@@ -451,6 +451,7 @@ void LoadScene(char* command /* = nullptr */)
 	string name(command);
 	string scene = System::Instance()->mDataPath + "scenes\\" + name + ".xml";
 	System::Instance()->mScene.LoadFromFile(scene.c_str());
+	System::Instance()->mGraphicAPI->LoadSkybox(System::Instance()->mScene.mSkyboxName);
 }
 //-----------------------------
 void LoadSkybox(char* command /* = nullptr */)

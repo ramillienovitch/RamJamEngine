@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <scene>
-	<skybox>sunsetcube1024.dds</skybox>
+	<skybox>desertcube1024.dds</skybox>
 	<gameobject>
 		<name>ground</name>
 		<transform>

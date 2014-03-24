@@ -33,7 +33,7 @@ Scene::Scene()
 	mbViewPerSampleShading = false;
 	//------
 	mbDisplayShadows       = true;
-	mbAlignLightToFrustum  = false;
+	mbAlignLightToFrustum  = true;
 	mbViewLightSpace       = false;
 	mbViewPartitions       = false;
 	mbEdgeSoftening        = false;
@@ -49,6 +49,9 @@ Scene::Scene()
 	mCurrentEditorGOIdx   = 0;
 	mCurrentEditorGOIdxUI = 0;
 	mbEnableGizmo = false;
+	//------
+	mPointLightRadius = 20.0f;
+	mPointLightHeight = 5.0f;
 }
 
 //////////////////////////////////////////////////////////////////////////
