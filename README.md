@@ -5,8 +5,8 @@ The RamJam Engine is a game/rendering engine for learning and personal showcase 
  
 The RJE is coded in C++ and uses DirectX 11 features (especially compute shaders).
 I wanted to do my own 3D engine while reading these 2 books : 
-    + Game Engine Architecture (by Jason Gregory - http://www.gameenginebook.com/)
-    + Introduction to 3D Game Programming with Direct3D 11.0 (http://www.d3dcoder.net/)
+ - Game Engine Architecture (by Jason Gregory - http://www.gameenginebook.com/)
+ - Introduction to 3D Game Programming with Direct3D 11.0 (http://www.d3dcoder.net/)
     
 Videos and descritpions can be found on my website : http://rramillien.wix.com/ramjam
 
