@@ -180,7 +180,6 @@ SurfaceData ComputeSurfaceDataFromGeometry(VertexOut input, Texture2D gTexture, 
 	surface.positionDX = ddx_coarse(surface.position);
 	surface.positionDY = ddy_coarse(surface.position);
 
-	// Optionally use face normal instead of shading normal
 	float3 normal;
 	if (gUseFaceNormals)
 		normal = normalize(ComputeFaceNormal(input.PosW));
@@ -192,7 +191,7 @@ SurfaceData ComputeSurfaceDataFromGeometry(VertexOut input, Texture2D gTexture, 
 			normal = normalize(input.NormalW);
 		else
 		{
-			float3 sample = (textureDim.x == 0U ? float3(1.0f, 1.0f, 1.0f) : gNormalMap.Sample(sam, input.Tex).xyz);
+			float3 sample = gNormalMap.Sample(sam, input.Tex).xyz;
 			normal = NormalSampleToWorldSpace(sample, normalize(input.NormalW), input.TanW);
 		}
 	}

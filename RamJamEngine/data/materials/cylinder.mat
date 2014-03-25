@@ -9,7 +9,7 @@ SpecularPower=0.0
 # ----------------------
 [textures]
 Texture_Diffuse=textures\bricks.dds
-Normal_Map=NONE
+Normal_Map=textures\bricks_nmap.dds
 Tiling=1.0|1.0
 Offset=0.0|0.0
 Rotation=0.0
